@@ -1,10 +1,25 @@
 import React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DepMi",
-  description: "The Social Commerce Platform for African Vendors",
+  title: "DepMi — Buy Here. Build Here. Grow Here.",
+  description:
+    "The social commerce platform for African entrepreneurs. Discover products, request what you need, and transact with trust.",
+  openGraph: {
+    title: "DepMi — Social Commerce for Africa",
+    description:
+      "Buy, sell, and discover products with trust. Earn Deps, bid on demand requests, and grow your business.",
+    siteName: "DepMi",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#00C853",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -14,9 +29,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta name="theme-color" content="#00C853" />
-      </head>
       <body>{children}</body>
     </html>
   );

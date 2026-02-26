@@ -1,0 +1,72 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--card-bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logoMark svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+.logoText {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.headerActions {
+    display: flex;
+    gap: 8px;
+}
+
+.iconBtn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--text-main);
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    position: relative;
+}
+
+.iconBtn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.iconBtn:active {
+    transform: scale(0.92);
+}
+
+.notifDot {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    background: #FF3B30;
+    border-radius: 50%;
+    border: 2px solid var(--card-bg);
+}
