@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  phoneNumber     String?   @unique
+  role            Role      @default(BUYER)
+  deps            Int       @default(0) // The Trust Token
+  isVerified      Boolean   @default(false)
+  
+  // KYC / Escrow Info
+  encryptedBvn    String?   // AES-256 encrypted BVN
+  encryptedNin    String?   // AES-256 encrypted NIN
+  paystackSubcode String?   // Paystack split payment subaccount code
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  demands         Demand[]  @relation("UserDemands")
+  products        Product[] @relation("StoreProducts")
+  bids            Bid[]     @relation("VendorBids")
+  ordersAsBuyer   Order[]   @relation("BuyerOrders")
+  ordersAsSeller  Order[]   @relation("SellerOrders")
+}
+
+enum Role {
+  BUYER
+  VENDOR
+  AGENT
+  ADMIN
+}
+
+model Demand {
+  id          String    @id @default(uuid())
+  userId      String    
+  user        User      @relation("UserDemands", fields: [userId], references: [id])
+  
+  text        String    // Description of what the buyer wants
+  budget      Decimal   @db.Decimal(10, 2)
+  urgency     DateTime? // Optional deadline for the demand
+  isActive    Boolean   @default(true) // Turns false when fulfilled or expired
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  bids        Bid[]
+}
+
+model Bid {
+  id          String   @id @default(uuid())
+  demandId    String
+  demand      Demand   @relation(fields: [demandId], references: [id])
+  
+  vendorId    String
+  vendor      User     @relation("VendorBids", fields: [vendorId], references: [id])
+  
+  amount      Decimal  @db.Decimal(10, 2)
+  proposal    String?  // Optional text explaining the vendor's offer
+  isAccepted  Boolean  @default(false)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  storeId     String
+  store       User     @relation("StoreProducts", fields: [storeId], references: [id])
+  
+  title       String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  location    String?
+  imageUrl    String?
+  viewCount   Int      @default(0)
+  inStock     Boolean  @default(true)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  buyerId     String
+  buyer       User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  
+  sellerId    String
+  seller      User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  totalAmount Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING_PAYMENT)
+  
+  // Escrow details
+  paystackRef String?     @unique
+  isEscrowed  Boolean     @default(true)
+
+  // Timestamps
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  items       OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_ESCROWED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DISPUTED
+  FUNDS_RELEASED
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2) // Price at the time of purchase
+}
