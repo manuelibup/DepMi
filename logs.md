@@ -75,11 +75,62 @@
 
 ---
 
-## Session 3 — Feb 26, 2026
-**Agent:** Antigravity (Current Session)
+
+---
+
+## Session 3 — Feb 26, 2026 (08:00–09:00 WAT)
+**Agent:** Antigravity
 **Human:** Manuel
 
 ### What was done:
-- **Review:** Validated Claude's component architecture (`Header`, `DemandCard`, `ProductCard`, etc.) as highly modular and perfectly aligned with Next.js best practices.
-- **Documentation:** Created `tips.md` guide covering AI prompting strategies, enforcing industry standards (Component architecture, SVG usage), and transitioning from UI builds to backend engines.
-- **Next Step Defined:** Moving into the "Commercial Core" engine. Proposed initializing the PostgreSQL Database Schema (via Prisma or Drizzle) to build the data layer for the `DemandEngine` and dual-role `Profiles`.
+- **Antigravity** reviewed Gemini's initial `schema.prisma` and found 7 issues
+- **Antigravity** rewrote `schema.prisma` with fixes:
+  - Moved `DATABASE_URL` to `prisma.config.ts` (Prisma 7 breaking change)
+  - Changed `role: Role` → `roles: Role[]` for dual-role users
+  - Replaced `deps: Int` with a `DepTransaction` audit table
+  - Added `KycStatus` model (stores reference tokens, not raw BVN/NIN)
+  - Added `ProductImage` table for product carousels
+  - Added `category` + `location` fields for the Demand Engine
+  - Added `@@index` on Demand and Product for query performance
+- **Manuel** pushed everything to GitHub and deployed to Vercel
+- **Issue:** `depmi.vercel.app` returned `404 NOT_FOUND`
+
+---
+
+## Session 4 — Feb 26, 2026 (08:00–22:00 WAT) — Vercel 404 Incident
+**Agent:** Antigravity
+**Human:** Manuel
+
+### Incident Summary: Vercel 404 Despite Successful Local Build
+
+**Root Cause (confirmed):** Vercel was restoring a **stale build cache** (`node_modules`) from an earlier deployment that was made *before* the Root Directory was set to `web/`. That cached install had ~0 real packages (from the repo root which has an empty `package.json`). When Vercel's Next.js adapter tried to trace the output files, the wrong `node_modules` caused it to generate an incomplete `/vercel/output`, resulting in `404` for every route.
+
+A **secondary issue**: `turbopack.root` in `next.config.ts` was set to `import.meta.dirname` (the `web/` path), which conflicted with Vercel's own `outputFileTracingRoot` setting (`/vercel/path0`). The warning in the build logs confirmed this conflict.
+
+**Timeline of fixes tried:**
+1. Identified Root Directory not set → Manuel set it to `web` in Vercel Settings ❌ still 404
+2. Deleted empty root `package-lock.json` that was confusing the build system ❌ still 404
+3. Added `turbopack.root` to `next.config.ts` → actually made it **worse** (conflicted with Vercel's tracing)
+4. Fixed `turbopack.root` to use `import.meta.dirname` (ESM fix) ❌ still 404
+5. **Removed all `turbopack` config from `next.config.ts`** (clean slate) + **Redeployed with "Clear Build Cache" checked** ✅ **FIXED**
+
+**The fix that worked:** Redeploy → three dots on deployment → Redeploy → **uncheck "Use existing Build Cache"** → Deploy. Fresh `npm install` pulled 427 correct packages.
+
+**Build proof:**
+```
+✅ Detected Next.js version: 16.1.6
+✅ added 427 packages in 16s
+✅ Compiled successfully in 4.0s
+✅ Generating static pages (4/4)
+✅ Deployment completed
+```
+
+### If This Happens Again:
+1. **First check:** Does the unique deployment URL (e.g. `depmi-abc123.vercel.app`) also 404? If yes → it's a build/serving issue, not a domain issue.
+2. **Check build logs:** `added X packages in Ys` means fresh install. `up to date in <2s` means cache was used → **suspect stale cache**.
+3. **Fix:** Redeploy → three dots → Redeploy → **uncheck "Use existing Build Cache"** → confirm.
+4. **Avoid:** Never add `turbopack.root` to `next.config.ts` when deploying on Vercel — Vercel sets its own `outputFileTracingRoot` and they conflict.
+
+### What Manuel Did Wrong (and how to handle it better):
+See `tips.md` → Section 5 (Deployment Debugging).
+

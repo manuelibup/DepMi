@@ -27,3 +27,39 @@ Working with AI coding agents (like me or Claude) requires a specific approach t
 ## 🚀 4. Moving from UI to "Engine"
 
 *   Once the UI looks good, the next prompt should shift focus to data: "Now that the UI is componentized, let's build the backend engine. Define the PostgreSQL database schema for Users, Products, and Demand Requests, and create the Next.js API routes to serve the feed data."
+
+---
+
+## 🚨 5. Deployment Debugging Protocol (Vercel)
+
+*This section was written after a 14-hour debugging session on a Vercel 404 that had a simple fix.*
+
+### The 3-Layer Mental Model
+Always triage in this order — each layer rules out the next:
+
+| Layer | Question | How to check |
+|-------|----------|-------------|
+| **1. Build** | Did the code compile on Vercel? | Check **Deployments → Build Logs** — look for `✓ Compiled successfully` and `Deployment completed` |
+| **2. Serving** | Is the output being served? | Visit the **unique deployment URL** (e.g. `depmi-abc123.vercel.app`) from the deployment detail page — not your main domain |
+| **3. Domain** | Is the domain pointing to the right project? | Go to **Settings → Domains** — check the domain status is `Valid Configuration` and pointing to `Production` |
+
+**Only fix the layer that's actually broken.** Don't change code if it's a domain problem. Don't change domain settings if it's a build problem.
+
+### Red Flags in Build Logs
+- `up to date in <2s` or `up to date in 923ms` → **cache was used, not a fresh install.** If followed by 404, try redeploying with cache cleared.
+- `⚠ Both outputFileTracingRoot and turbopack.root are set` → **conflict in next.config.ts.** Remove `turbopack.root`.
+- `added N packages in Xs` (e.g. `added 427 packages in 16s`) → ✅ Fresh install, this is healthy.
+
+### What NOT to Do
+- ❌ Don't push random code changes hoping to "trigger" a successful deployment
+- ❌ Don't change the Root Directory setting in Vercel without immediately clearing the build cache on the next deployment
+- ❌ Don't add `turbopack.root` to `next.config.ts` for Vercel deployments — Vercel sets its own `outputFileTracingRoot` and they will conflict
+- ❌ Don't assume browser console errors are relevant — extensions like MetaMask and uBlock Origin pollute the console with unrelated errors
+
+### The Fix Checklist for a Vercel 404
+1. Build logs show `Deployment completed`? → Move to step 2
+2. Unique deployment URL also 404? → It's a serving issue, not domain
+3. Build logs show `up to date in <2s`? → **Redeploy with "Clear Build Cache" unchecked**
+4. Framework Preset set to "Next.js" in Settings → General? → If not, fix it and redeploy
+5. Still stuck? Paste the full build logs to your AI agent and ask specifically: "Why is Vercel returning 404 after a successful build?"
+
