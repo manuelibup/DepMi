@@ -135,3 +135,34 @@ A **secondary issue** (introduced during debugging): `turbopack.root` in `next.c
 ### What Manuel Did Wrong (and how to handle it better):
 See `tips.md` → Section 5 (Deployment Debugging).
 
+---
+
+## Session 5 — Feb 26, 2026 (22:30–23:00 WAT) — Schema Restructure
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+
+#### Schema Architecture Overhaul
+- **Antigravity** split User (personal identity) from Store (business identity) — Facebook Pages model
+- **Antigravity** added multi-provider auth via `Account` model:
+  - Email + password (bcrypt, 12+ salt rounds)
+  - Google OAuth
+  - WhatsApp phone verification
+- **Antigravity** added `KycTier` enum with 6 tiers (UNVERIFIED → BUSINESS)
+- **Manuel** decided: BVN verification (TIER_2) required before creating a Store
+- Products, Bids, Orders-as-seller now relate to `Store`, not `User`
+- Dep scores tracked separately: buyer trust on User, seller trust on Store
+- Added `Notification` model with 10 typed events
+- Added `Bid.productId` — vendors can attach existing products when bidding
+- Added `Order.demandId` + `Order.bidId` — full origin tracing
+
+#### Documentation
+- Updated `agent.md` with new architecture (User/Store model, auth, KYC tiers, data architecture section)
+- Updated `logs.md` (this entry)
+- Created `.agents/workflows/update-docs.md` — ensures all AI agents auto-update logs/tips/agent.md
+
+#### Validations
+- ✅ `prisma validate` — schema valid
+- ✅ `next build` — compiles clean
+
