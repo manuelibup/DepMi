@@ -1,0 +1,67 @@
+# DepMi Strategic Analysis & Implementation Plan
+
+DepMi ("Buy Here") is envisioned as a social commerce operating system for Africa, bridging the gap between social discovery (Instagram/WhatsApp) and structured commerce.
+
+## Strategic Overview & Validation
+
+### 1. Market Validation
+- **Gap:** Existing solutions are either "pure commerce" (Jumia/Konga) which lack social trust, or "pure social" (Instagram/WhatsApp) which lack commerce infrastructure.
+- **The "Killer Feature":** The **Demand Engine**. Your observation about "asking around" proves it.
+- **MVP Timeline:** Optimized **6-week launch** plan focused on the Demand Engine and trust tokens.
+
+### 2. Financial Realism (Revised)
+- **Moderate Forecast:** **₦3.5B - ₦5B (~$2.2M - $3.2M) in Year 5.** 
+- **Rationale:** ₦11B is possible with 3M buyers, but ₦3.5B is a more realistic target for a "Social Commerce" startup capturing 0.5% of the informal digital market, allowing for slower adoption of digital payments in rural areas.
+- **Key Factor:** We win by converting "WhatsApp status sales" into "DepMi transactions."
+
+## Technical Implementation Plan
+
+### 1. Technology Stack (Magnitude-Ready)
+To handle user discovery, social feeds, and secure payments at scale:
+
+| Layer | Recommended Tech | Rationale |
+| :--- | :--- | :--- |
+| **Mobile** | **React Native (Expo)** | Cross-platform (iOS/Android) with rapid iteration. |
+| **Web** | **Next.js** | SEO-friendly storefronts and robust vendor dashboards. |
+| **Backend** | **Node.js (NestJS)** | High throughput, TypeScript for safety, excellent API support. |
+| **Database** | **PostgreSQL** | ACID compliance for payments and inventory management. |
+| **Caching** | **Redis** | Essential for instant social feed delivery and session management. |
+| **Search** | **Typesense / Meilisearch** | Lightning-fast, typo-tolerant search for the Demand Engine. |
+| **Storage** | **Cloudflare R2** | Scalable asset storage with zero egress fees. |
+| **AI** | **OpenAI / Gemini API** | Powers @DepMiBot parsing and visual search. |
+
+### 2. Scalable Data Architecture
+- **Identificaton Data (KYC):** Use **Smile ID** or **Dojah** APIs. Store only the *status* and *reference tokens* locally. Avoid storing raw BVN/NIN numbers directly to minimize security liability.
+- **Post/Feed Data:** Use a **Relational-Document Hybrid** approach. PostgreSQL for core relationships, but cache pre-computed feeds in Redis for performance.
+- **Privacy:** Implement **NDPR (Nigerian Data Protection Regulation)** compliance (data encryption at rest, clear consent logs, and data deletion workflows).
+
+### 2. The 6-Week MVP Roadmap
+To get a high-quality product in users' hands quickly, we focus on the **Transaction Loop** and **Demand Engine**:
+
+*   **Weeks 1-2 (Auth & Profiles):** WhatsApp/Google Auth + Buyer/Seller Dual Profiles + "Deps" logic.
+*   **Weeks 3-4 (Commercial Core):** Product Listings + "Demand Feed" (Product Requests) + Search.
+*   **Weeks 5-6 (Payments & Trust):** Paystack Split Payment (Escrow-light) + Delivery Confirmation + Vendor Payouts.
+
+## Critical Strategic Pivot Suggestions
+
+> [!IMPORTANT]
+> **Trust: The "Escrow-over-Wallet" Model**
+> DepMi can absolutely implement the "pay-only-on-arrival" feel. Technically, the money sits in the **Paystack Marketplace Balance**, not an internal DepMi wallet.
+> 1. Buyer Pays (Money is moved out of their account).
+> 2. Money is "Locked" (Held by Paystack subaccount API).
+> 3. Buyer Confirms Receipt in-app.
+> 4. Money is Released to Vendor.
+> *This solves the regulatory block (no MMO license needed) while giving buyers the "Trust" they crave.*
+
+> [!TIP]
+> **The "Deps" as a Social Protocol**
+> Make "Deps" verifiable and shareable *outside* the app. If a seller can show a "Trusted on DepMi" badge on their WhatsApp status or Instagram bio with a live link to their proof-of-work, you own the trust layer for the entire informal economy.
+
+## Verification Plan
+### Automated Testing
+- Stress test the "Split Payment" logic with edge cases (refunds, partial deliveries).
+- Benchmarking search latency for the "Demand Engine" under 100k+ mock products.
+
+### Manual Verification
+- **Pilot Program:** Onboard 20 trusted vendors in Akwa Ibom/Uyo. 
+- **Beta Test:** Manually tag `@DepMiBot` on Instagram to verify AI extraction accuracy.

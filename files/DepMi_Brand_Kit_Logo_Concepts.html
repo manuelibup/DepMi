@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DepMi Brand Kit & Logo Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#f0f0f0;overflow-x:hidden}
+
+.section{padding:60px 40px;max-width:1200px;margin:0 auto}
+h1{font-family:'Space Grotesk',sans-serif;font-size:48px;margin-bottom:8px}
+h2{font-family:'Space Grotesk',sans-serif;font-size:32px;margin-bottom:20px;color:#00C853}
+h3{font-size:20px;margin-bottom:12px;color:#ccc}
+p{line-height:1.7;color:#aaa;font-size:15px;max-width:700px}
+.subtitle{color:#00C853;font-size:18px;margin-bottom:40px;font-weight:500}
+
+/* HERO */
+.hero{text-align:center;padding:100px 40px 60px;background:radial-gradient(ellipse at 50% 0%,#002211 0%,#0a0a0a 70%)}
+.hero h1{font-size:56px;background:linear-gradient(135deg,#00C853,#00E676,#69F0AE);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{margin:0 auto;color:#888}
+
+/* LOGO GRID */
+.logo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;margin-top:30px}
+.logo-card{background:#141414;border:1px solid #222;border-radius:16px;padding:40px 30px;text-align:center;transition:all .3s ease;position:relative;overflow:hidden}
+.logo-card:hover{border-color:#00C853;transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,200,83,.1)}
+.logo-card .badge{position:absolute;top:16px;right:16px;background:#00C853;color:#000;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase}
+.logo-card svg{width:120px;height:120px;margin:0 auto 24px;display:block}
+.logo-card h3{color:#fff;margin-bottom:8px;font-size:18px}
+.logo-card p{font-size:13px;color:#888;margin:0 auto}
+
+/* COLOR PALETTE */
+.palette{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-top:24px}
+.color-swatch{border-radius:16px;overflow:hidden;background:#141414;border:1px solid #222}
+.color-swatch .swatch{height:120px;display:flex;align-items:flex-end;padding:12px}
+.color-swatch .info{padding:16px}
+.color-swatch .info h4{font-size:14px;margin-bottom:4px}
+.color-swatch .info code{font-size:12px;color:#888;font-family:monospace}
+
+/* TYPOGRAPHY */
+.type-demo{background:#141414;border:1px solid #222;border-radius:16px;padding:40px;margin-top:24px}
+.type-row{display:flex;align-items:baseline;gap:20px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1a1a1a}
+.type-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.type-label{width:100px;flex-shrink:0;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:1px}
+
+/* COMPARISON TABLE */
+.table-wrap{overflow-x:auto;margin-top:24px;border-radius:16px;border:1px solid #222}
+table{width:100%;border-collapse:collapse;background:#141414;font-size:14px}
+th{background:#1a1a1a;padding:14px 18px;text-align:left;color:#00C853;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:14px 18px;border-top:1px solid #1f1f1f;color:#ccc;vertical-align:top}
+tr:hover td{background:#1a1a1a}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-green{background:#00C85322;color:#00C853}
+.tag-yellow{background:#FFD60022;color:#FFD600}
+.tag-red{background:#FF525222;color:#FF5252}
+.tag-blue{background:#448AFF22;color:#448AFF}
+
+/* RECOMMENDATION BOX */
+.rec-box{background:linear-gradient(135deg,#001a0d,#0d2818);border:1px solid #00C85344;border-radius:16px;padding:32px;margin-top:24px}
+.rec-box h3{color:#00E676;margin-bottom:12px}
+.rec-box p{color:#a0d8b0}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,#333,transparent);margin:60px 0}
+
+/* SOCIAL HANDLES TABLE */
+.handles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:24px}
+.handle-card{background:#141414;border:1px solid #222;border-radius:12px;padding:20px;text-align:center}
+.handle-card .platform{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.handle-card .handle{font-size:18px;font-weight:700;color:#00C853}
+.handle-card .bot{font-size:14px;color:#888;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>DepMi</h1>
+  <p class="subtitle">Brand Kit & Logo Concepts</p>
+  <p>Your dad is right — a symbol logo is stronger than a wordmark for a platform. Here are six icon concepts, each representing a different aspect of DepMi's identity, plus the complete brand system.</p>
+</div>
+
+<!-- ==================== LOGO CONCEPTS ==================== -->
+<div class="section">
+<h2>Logo Concepts</h2>
+<p>Each logo works as an app icon, favicon, watermark, and social media avatar. They're designed to be recognizable at any size — from a 16px favicon to a billboard.</p>
+
+<div class="logo-grid">
+
+  <!-- CONCEPT 1: THE DEP MARK -->
+  <div class="logo-card">
+    <div class="badge">★ Top Pick</div>
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00C853"/>
+          <stop offset="100%" style="stop-color:#00E676"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g1)"/>
+      <!-- Stylized "d" that looks like a shopping bag with a handle -->
+      <path d="M58 30 C42 30, 32 42, 32 58 C32 74, 42 86, 58 86 L62 86 L62 30 Z" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+      <line x1="62" y1="30" x2="62" y2="86" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+      <path d="M72 30 L72 86" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+      <!-- dot for the "i" -->
+      <circle cx="84" cy="36" r="5" fill="#fff"/>
+      <line x1="84" y1="48" x2="84" y2="86" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+    <h3>The "di" Lettermark</h3>
+    <p>Lowercase "d" and "i" fused together. The "d" curves like a shopping bag. Clean, modern, instantly recognizable. Think: Instagram's camera, but for commerce.</p>
+  </div>
+
+  <!-- CONCEPT 2: THE SHOPPING BAG -->
+  <div class="logo-card">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00C853"/>
+          <stop offset="50%" style="stop-color:#00BFA5"/>
+          <stop offset="100%" style="stop-color:#00E676"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g2)"/>
+      <!-- Shopping bag body -->
+      <rect x="30" y="44" width="60" height="48" rx="8" fill="none" stroke="#fff" stroke-width="5"/>
+      <!-- Bag handle that forms a "D" shape -->
+      <path d="M45 44 C45 28, 60 22, 75 28 C82 31, 82 38, 82 44" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <!-- Arrow pointing down inside bag = "buy/deposit" -->
+      <line x1="60" y1="56" x2="60" y2="78" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <polyline points="50,70 60,80 70,70" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h3>The Smart Bag</h3>
+    <p>A shopping bag with a downward arrow inside — symbolizing "buy here" (Dep Mi). The bag handle subtly forms a "D" shape. Universal commerce symbol with a twist.</p>
+  </div>
+
+  <!-- CONCEPT 3: THE CONVERSATION CART -->
+  <div class="logo-card">
+    <div class="badge">Social Focus</div>
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00E676"/>
+          <stop offset="100%" style="stop-color:#00C853"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g3)"/>
+      <!-- Chat bubble that's also a price tag -->
+      <path d="M30 35 L90 35 C93 35, 95 37, 95 40 L95 70 C95 73, 93 75, 90 75 L50 75 L38 88 L38 75 L30 75 C27 75, 25 73, 25 70 L25 40 C25 37, 27 35, 30 35 Z" fill="#fff" fill-opacity="0.95"/>
+      <!-- Shopping cart inside the bubble -->
+      <path d="M42 50 L48 50 L54 65 L72 65" fill="none" stroke="#00C853" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="48,50 52,42 76,42 72,56 54,56" fill="none" stroke="#00C853" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="56" cy="72" r="3.5" fill="#00C853"/>
+      <circle cx="70" cy="72" r="3.5" fill="#00C853"/>
+    </svg>
+    <h3>Chat + Cart</h3>
+    <p>A speech bubble containing a shopping cart — social commerce in one symbol. Represents the core idea: conversation-driven buying. Social meets marketplace.</p>
+  </div>
+
+  <!-- CONCEPT 4: THE DEP COIN -->
+  <div class="logo-card">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00C853"/>
+          <stop offset="100%" style="stop-color:#1B5E20"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g4)"/>
+      <!-- Circle (coin/dep) -->
+      <circle cx="60" cy="60" r="32" fill="none" stroke="#fff" stroke-width="5"/>
+      <!-- D inside -->
+      <path d="M50 42 L50 78 L58 78 C72 78, 80 70, 80 60 C80 50, 72 42, 58 42 Z" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Small sparkle/star -->
+      <circle cx="86" cy="34" r="2.5" fill="#fff"/>
+      <line x1="86" y1="28" x2="86" y2="40" stroke="#fff" stroke-width="2"/>
+      <line x1="80" y1="34" x2="92" y2="34" stroke="#fff" stroke-width="2"/>
+    </svg>
+    <h3>The Dep Coin</h3>
+    <p>A "D" inside a coin shape with a sparkle — directly represents the Deps credibility system. Every transaction mints a Dep. This logo IS the currency of trust.</p>
+  </div>
+
+  <!-- CONCEPT 5: THE HANDSHAKE/CONNECTION -->
+  <div class="logo-card">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g5" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00E676"/>
+          <stop offset="100%" style="stop-color:#00BFA5"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g5)"/>
+      <!-- Two people/dots connecting through commerce -->
+      <circle cx="38" cy="48" r="10" fill="#fff"/>
+      <circle cx="82" cy="48" r="10" fill="#fff"/>
+      <!-- Connection arc -->
+      <path d="M48 52 C55 70, 65 70, 72 52" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <!-- Shopping bag at the center bottom -->
+      <rect x="50" y="68" width="20" height="22" rx="4" fill="#fff"/>
+      <path d="M54 68 C54 62, 60 58, 66 62 C67 63, 66 68, 66 68" fill="none" stroke="#00BFA5" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h3>The Connect</h3>
+    <p>Two people connected by a commerce arc with a shopping bag at the meeting point. Buyer meets seller. Social meets commerce. Community meets trust.</p>
+  </div>
+
+  <!-- CONCEPT 6: THE STOREFRONT -->
+  <div class="logo-card">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g6" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#00C853"/>
+          <stop offset="100%" style="stop-color:#00E676"/>
+        </linearGradient>
+      </defs>
+      <rect rx="24" width="120" height="120" fill="url(#g6)"/>
+      <!-- Storefront awning -->
+      <path d="M28 50 C28 42, 38 36, 45 44 C52 36, 60 36, 60 44 C60 36, 68 36, 75 44 C82 36, 92 42, 92 50" fill="#fff" fill-opacity="0.3" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Store body -->
+      <rect x="32" y="50" width="56" height="36" fill="none" stroke="#fff" stroke-width="4"/>
+      <!-- Door -->
+      <rect x="50" y="62" width="20" height="24" rx="2" fill="#fff" fill-opacity="0.25" stroke="#fff" stroke-width="3"/>
+      <!-- Location pin dot above -->
+      <circle cx="60" cy="28" r="4" fill="#fff"/>
+    </svg>
+    <h3>The Storefront</h3>
+    <p>A storefront with a wavy awning and a location pin — "your store, right here." Represents every vendor having their own digital storefront on DepMi.</p>
+  </div>
+
+</div>
+
+<div class="rec-box" style="margin-top:32px">
+  <h3>🏆 My Recommendation: Concept 1 (The "di" Lettermark) or Concept 2 (The Smart Bag)</h3>
+  <p>Concept 1 works like Instagram's camera or Facebook's "f" — a letter-based icon that's instantly associated with the brand. Concept 2 is more universal (shopping bag = commerce) with the clever "buy here" arrow. Either works brilliantly as an app icon. The final choice should be made by a professional designer who refines these concepts into pixel-perfect vectors — these are directional concepts to guide that conversation.</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== BRAND COLORS ==================== -->
+<div class="section">
+<h2>Brand Colors & What They Mean</h2>
+<p>Color psychology is real and measurable. Here's what each color communicates, and why I'm recommending a specific palette for DepMi.</p>
+
+<div class="table-wrap" style="margin-bottom:32px">
+<table>
+<tr><th>Color</th><th>Psychology</th><th>Who Uses It</th><th>Fit for DepMi?</th></tr>
+<tr><td style="color:#00C853">🟢 Green</td><td>Trust, growth, money, prosperity, nature, safety. The color of "go." Universal signal for financial health.</td><td>OPay, Grab, Spotify, WhatsApp, Robinhood, Cash App, Gojek</td><td><span class="tag tag-green">PERFECT</span> Commerce + trust + money. Exactly what DepMi needs.</td></tr>
+<tr><td style="color:#FF5252">🔴 Red</td><td>Urgency, passion, aggression, energy, appetite. Creates excitement but also signals danger.</td><td>Coca-Cola, YouTube, Netflix, Airtel, Pinterest</td><td><span class="tag tag-yellow">RISKY</span> Too aggressive for a trust-based commerce platform. Can signal danger in finance.</td></tr>
+<tr><td style="color:#FFD600">🟡 Yellow</td><td>Optimism, warmth, attention, happiness. Eye-catching but can feel cheap if overused.</td><td>Snapchat, MTN, McDonald's, Bumble, Flutterwave</td><td><span class="tag tag-yellow">DECENT</span> Energetic but doesn't signal trust/money. Better as an accent.</td></tr>
+<tr><td style="color:#448AFF">🔵 Blue</td><td>Trust, professionalism, reliability, calm. The most "safe" color in tech.</td><td>Facebook, PayPal, Twitter (old), Samsung, Paystack</td><td><span class="tag tag-yellow">OVERUSED</span> Every fintech uses blue. DepMi needs to stand out.</td></tr>
+<tr><td style="color:#7C4DFF">🟣 Purple</td><td>Creativity, luxury, royalty, wisdom. Modern tech vibe.</td><td>Cadbury, Kuda, Nubank, Twitch</td><td><span class="tag tag-yellow">MEH</span> Feels more luxury/banking. Doesn't say "marketplace."</td></tr>
+<tr><td>⚫ Black</td><td>Premium, power, elegance, sophistication. Bold and authoritative.</td><td>Uber, Nike, Apple, X, Moniepoint</td><td><span class="tag tag-green">GREAT ACCENT</span> Perfect as secondary color for premium feel.</td></tr>
+<tr><td style="color:#FF9100">🟠 Orange</td><td>Energy, fun, affordable, friendly. Between red's urgency and yellow's warmth.</td><td>Jumia, Fanta, PalmPay, Shopee</td><td><span class="tag tag-yellow">TOO PLAYFUL</span> Feels discount/budget. DepMi should feel premium-accessible.</td></tr>
+</table>
+</div>
+
+<h3>The DepMi Color Palette</h3>
+<p>Green as primary — it simultaneously says "money," "trust," "growth," and "go." This is the same psychological territory as OPay and Cash App, but with a more vibrant, distinctly African energy. Here's the complete palette:</p>
+
+<div class="palette">
+  <div class="color-swatch">
+    <div class="swatch" style="background:#00C853"><span style="color:#003311;font-weight:700;font-size:12px">PRIMARY</span></div>
+    <div class="info"><h4>DepMi Green</h4><code>#00C853</code><br><code>RGB(0, 200, 83)</code></div>
+  </div>
+  <div class="color-swatch">
+    <div class="swatch" style="background:#00E676"><span style="color:#003311;font-weight:700;font-size:12px">SECONDARY</span></div>
+    <div class="info"><h4>DepMi Mint</h4><code>#00E676</code><br><code>RGB(0, 230, 118)</code></div>
+  </div>
+  <div class="color-swatch">
+    <div class="swatch" style="background:#0D1117"><span style="color:#fff;font-weight:700;font-size:12px">DARK</span></div>
+    <div class="info"><h4>DepMi Black</h4><code>#0D1117</code><br><code>RGB(13, 17, 23)</code></div>
+  </div>
+  <div class="color-swatch">
+    <div class="swatch" style="background:#1B4332"><span style="color:#69F0AE;font-weight:700;font-size:12px">DEEP</span></div>
+    <div class="info"><h4>DepMi Forest</h4><code>#1B4332</code><br><code>RGB(27, 67, 50)</code></div>
+  </div>
+  <div class="color-swatch">
+    <div class="swatch" style="background:#FFFFFF;border-bottom:1px solid #222"><span style="color:#333;font-weight:700;font-size:12px">LIGHT</span></div>
+    <div class="info"><h4>White</h4><code>#FFFFFF</code><br><code>RGB(255, 255, 255)</code></div>
+  </div>
+  <div class="color-swatch">
+    <div class="swatch" style="background:#FFD600"><span style="color:#333;font-weight:700;font-size:12px">ACCENT</span></div>
+    <div class="info"><h4>DepMi Gold</h4><code>#FFD600</code><br><code>Deps badges, Gold tier, premium</code></div>
+  </div>
+</div>
+
+<div class="rec-box" style="margin-top:24px">
+  <h3>Why This Palette Works</h3>
+  <p><strong>Primary Green (#00C853):</strong> Vibrant, energetic, unmistakable. It's the exact shade that says "this app handles money and you can trust it." Not the dark corporate green of old banks — this is a modern, tech-forward green.<br><br>
+  <strong>Mint Secondary (#00E676):</strong> Used for gradients, hover states, and highlights. Creates depth and movement when paired with the primary.<br><br>
+  <strong>DepMi Black (#0D1117):</strong> Not pure black — it's a warm dark with a hint of blue-green. Used for backgrounds, text, and the dark mode theme. Feels premium without being cold.<br><br>
+  <strong>Forest (#1B4332):</strong> Deep green for cards, containers, and secondary backgrounds. Creates the "depth" layer in the UI hierarchy.<br><br>
+  <strong>Gold Accent (#FFD600):</strong> Reserved ONLY for premium elements: Gold verification badge, Elite/Legend Deps tiers, special promotions. Scarcity makes it feel valuable.<br><br>
+  This palette differentiates DepMi from Paystack (blue), Jumia (orange), Kuda (purple), and PalmPay (green-orange). The closest competitor in color is OPay (green), but DepMi's green is brighter and more energetic — OPay's is darker and more corporate.</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== PAYMENT COMPARISON ==================== -->
+<div class="section">
+<h2>Payment Gateway Comparison: Is There Cheaper Than Paystack?</h2>
+<p style="margin-bottom:24px">Here's the honest answer: OPay, PalmPay, Moniepoint, and Paga are <strong>NOT</strong> payment gateway APIs — they're mobile money operators and POS providers. They don't offer the marketplace split payment API that DepMi needs. The real comparison is between these:</p>
+
+<div class="table-wrap">
+<table>
+<tr><th>Provider</th><th>Local Fee</th><th>Cap</th><th>Split Payments?</th><th>Settlement</th><th>Best For</th></tr>
+<tr>
+  <td><strong>Flutterwave</strong></td>
+  <td>1.4%</td>
+  <td>₦2,000</td>
+  <td><span class="tag tag-green">YES — Subaccounts</span></td>
+  <td>T+1 (next day)</td>
+  <td>Pan-African expansion. Supports 30+ African countries. Slightly cheaper than Paystack.</td>
+</tr>
+<tr>
+  <td><strong>Paystack</strong></td>
+  <td>1.5% + ₦100</td>
+  <td>₦2,000 (₦100 waived under ₦2,500)</td>
+  <td><span class="tag tag-green">YES — Transaction Splits</span></td>
+  <td>T+1 (next day)</td>
+  <td>Best docs, best dashboard, most reliable in Nigeria. Stripe-backed.</td>
+</tr>
+<tr>
+  <td><strong>Korapay (Kora)</strong></td>
+  <td>1.5%</td>
+  <td>Varies</td>
+  <td><span class="tag tag-green">YES — via API</span></td>
+  <td>24 hours</td>
+  <td>Developer-focused. Great for custom payment flows. Growing fast.</td>
+</tr>
+<tr>
+  <td><strong>Squad (GTCO)</strong></td>
+  <td>1.5% + ₦25</td>
+  <td>₦2,000</td>
+  <td><span class="tag tag-yellow">LIMITED</span></td>
+  <td>Instant!</td>
+  <td>Instant settlement is huge for seller trust. GTBank-backed credibility.</td>
+</tr>
+<tr>
+  <td><strong>Monnify</strong></td>
+  <td>1.5%</td>
+  <td>₦2,000</td>
+  <td><span class="tag tag-green">YES — Sub-accounts</span></td>
+  <td>Same day / T+1</td>
+  <td>Great for bank-transfer-heavy platforms. Virtual account collection.</td>
+</tr>
+<tr style="background:#111">
+  <td colspan="6" style="padding:20px;text-align:center;border:none">
+    <strong style="color:#FF5252">OPay, PalmPay, Moniepoint, Paga</strong><br>
+    <span style="color:#888;font-size:13px">These are mobile wallets / POS providers, NOT online payment gateway APIs. They don't offer marketplace split payments, subaccounts, or checkout APIs for your app. They can be FUNDING SOURCES (users pay from their OPay/PalmPay wallet), but they can't replace Paystack/Flutterwave as your payment processor.</span>
+  </td>
+</tr>
+</table>
+</div>
+
+<div class="rec-box" style="margin-top:24px">
+  <h3>💰 My Recommendation: Start with Flutterwave</h3>
+  <p><strong>Flutterwave is 0.1% cheaper than Paystack</strong> (1.4% vs 1.5%) and the fee is capped at ₦2,000. On a ₦10,000 transaction, you save ₦10. That's small — but at scale (1M transactions/year), it's ₦10M in savings.<br><br>
+  More importantly, Flutterwave supports <strong>30+ African countries</strong> out of the box, which aligns with DepMi's pan-African expansion plan. Paystack only covers Nigeria, Ghana, Kenya, and South Africa.<br><br>
+  <strong>The smartest approach:</strong> Use Flutterwave as your primary gateway and integrate Paystack as a backup/alternative. Many Nigerian platforms run both simultaneously. If Flutterwave has downtime, payments fail over to Paystack automatically. This also lets you A/B test which has better success rates for your specific user base.<br><br>
+  For accepting OPay/PalmPay as payment METHODS (so users can pay from their wallets), both Flutterwave and Paystack support this through bank transfer — when a user pays via bank transfer, they can use their OPay or PalmPay app to complete the transfer. No extra integration needed.</p>
+</div>
+
+<h3 style="margin-top:32px">The Real Math: Your Cost Per Transaction</h3>
+<div class="table-wrap">
+<table>
+<tr><th>Order Value</th><th>Flutterwave Fee (1.4%)</th><th>Paystack Fee (1.5% + ₦100)</th><th>Your 2% Platform Fee</th><th>Your NET Revenue</th></tr>
+<tr><td>₦5,000</td><td>₦70</td><td>₦175</td><td>₦100</td><td>₦100 (Flutterwave) or ₦100 (Paystack) — same</td></tr>
+<tr><td>₦10,000</td><td>₦140</td><td>₦250</td><td>₦200</td><td>₦200 — your 2% is always separate from gateway fee</td></tr>
+<tr><td>₦50,000</td><td>₦700</td><td>₦850</td><td>₦1,000</td><td>₦1,000</td></tr>
+<tr><td>₦100,000</td><td>₦1,400</td><td>₦1,600</td><td>₦2,000</td><td>₦2,000 — both capped at ₦2,000 at this point</td></tr>
+<tr><td>₦200,000</td><td>₦2,000 (capped)</td><td>₦2,000 (capped)</td><td>₦4,000</td><td>₦4,000</td></tr>
+</table>
+</div>
+<p style="margin-top:16px;font-size:13px;color:#666">Note: The gateway fee (Flutterwave/Paystack) is typically deducted from the total BEFORE the split. So the seller bears this cost, not DepMi. Your 2% platform fee is separate and always comes to you. On large orders (₦100K+), both gateways cost the same due to the ₦2,000 cap.</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- ==================== SOCIAL HANDLES ==================== -->
+<div class="section">
+<h2>Social Media Handle Strategy</h2>
+<p style="margin-bottom:8px">Separate accounts for brand vs bot. Consistent naming across all platforms.</p>
+
+<div class="handles-grid">
+  <div class="handle-card">
+    <div class="platform">Instagram</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">Bot: @depmi.bot</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">X (Twitter)</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">Bot: @depmibot</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">TikTok</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">Bot: @depmibot</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">Facebook</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">Bot: @depmibot</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">Telegram</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">Bot: @DepMiBot</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">YouTube</div>
+    <div class="handle">@depmiHQ</div>
+    <div class="bot">—</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">LinkedIn</div>
+    <div class="handle">depmi</div>
+    <div class="bot">—</div>
+  </div>
+  <div class="handle-card">
+    <div class="platform">GitHub</div>
+    <div class="handle">depmi</div>
+    <div class="bot">—</div>
+  </div>
+</div>
+
+<div class="rec-box" style="margin-top:24px">
+  <h3>Bot Account Separation Strategy</h3>
+  <p>The bot accounts (@depmibot) are completely separate from the main brand accounts (@depmiHQ). If Instagram flags @depmi.bot for automated behavior, your main @depmiHQ account with all your followers and content is untouched. The bot accounts should:<br><br>
+  • Be registered under a separate email (bot@depmi.com)<br>
+  • Have their own phone number verification<br>
+  • Have a clear bio: "Official DepMi Bot 🤖 Tag me in your product post to auto-list on DepMi. Powered by @depmiHQ"<br>
+  • NEVER post organic content — only respond to tags/mentions<br>
+  • For Telegram specifically, create a real Telegram Bot via @BotFather (named @DepMiBot) — this is different from a regular account and has built-in bot API access</p>
+</div>
+
+<div class="rec-box" style="margin-top:16px;background:linear-gradient(135deg,#1a1a00,#282800);border-color:#FFD60044">
+  <h3 style="color:#FFD600">Getting @depmi on X</h3>
+  <p style="color:#d4c870">Since the account has been inactive since 2013, it almost certainly qualifies for X's Handle Marketplace. Here's your action plan:<br><br>
+  1. Subscribe to X Premium+ (~$16/month or ₦22K/month) immediately<br>
+  2. Go to x.com/handles and join the waitlist<br>
+  3. Request @depmi — as a 5-letter multi-word name inactive for 12+ years, it should qualify as a "Priority" handle (free with Premium+ subscription)<br>
+  4. If it's classified as "Rare" (unlikely for a non-English word), the cost starts at $2,500<br>
+  5. While waiting, use @depmiHQ across all platforms<br><br>
+  Even if you eventually get @depmi on X, keep @depmiHQ registered as a redirect/backup. And continue using @depmiHQ on all other platforms for consistency.</p>
+</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<div class="section" style="text-align:center;padding-bottom:100px">
+  <h2 style="text-align:center">Next Steps</h2>
+  <p style="margin:0 auto;text-align:center">1. Pick your logo direction → hire a designer to refine it (Fiverr/99designs: $50-$300)<br>
+  2. Secure depmi.com + depmi.co + depmi.app today<br>
+  3. Register @depmiHQ and @depmibot on ALL platforms today<br>
+  4. Sign up for Flutterwave business account<br>
+  5. Join X Premium+ and request @depmi from the Handle Marketplace</p>
+</div>
+
+</body>
+</html>

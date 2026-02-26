@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DepMi Logo V3 - Tech + Culture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0a0a0a; color: white; font-family: 'Outfit', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
+        .card { background: #111; padding: 40px; border-radius: 24px; border: 1px solid #222; text-align: center; }
+        h2 { color: #00C853; margin-bottom: 20px; }
+        svg { width: 150px; height: 150px; margin-bottom: 20px; }
+        p { color: #888; font-size: 14px; line-height: 1.6; }
+        .weave-pattern { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 0.5; }
+    </style>
+</head>
+<body>
+    <h1>DepMi Logo V3</h1>
+    <p style="margin-bottom: 40px;">Refining the "M-in-D" Sketch with a Tech + Culture Fusion</p>
+
+    <div class="grid">
+        <!-- CONCEPT 1: THE TECH-WEAVE MONOGRAM -->
+        <div class="card">
+            <h2>1. The Tech-Weave</h2>
+            <svg viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00C853" />
+                        <stop offset="100%" style="stop-color:#00E676" />
+                    </linearGradient>
+                    <pattern id="weave" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <path d="M0 5 L10 5 M5 0 L5 10" stroke="white" stroke-opacity="0.2" stroke-width="0.5"/>
+                    </pattern>
+                </defs>
+                <!-- Outer D -->
+                <path d="M25 20 L25 80 L55 80 C75 80, 85 68, 85 50 C85 32, 75 20, 55 20 Z" fill="url(#grad1)" />
+                <!-- Subtle Weave Texture on D -->
+                <path d="M25 20 L25 80 L55 80 C75 80, 85 68, 85 50 C85 32, 75 20, 55 20 Z" fill="url(#weave)" />
+                <!-- Inner M (Negative Space) -->
+                <path d="M35 70 L35 40 L50 60 L65 40 L65 70" fill="none" stroke="#0a0a0a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p>The "M" is carved out of the "D". The "D" features a subtle African weave texture (Culture) while using a sharp, high-tech gradient (Tech).</p>
+        </div>
+
+        <!-- CONCEPT 2: THE DOORWAY (UDUA) -->
+        <div class="card">
+            <h2>2. The Market Door</h2>
+            <svg viewBox="0 0 100 100">
+                <!-- D Outer Frame -->
+                <path d="M30 20 H55 C75 20 85 35 85 50 C85 65 75 80 55 80 H30 V20" fill="none" stroke="#00C853" stroke-width="4" />
+                <!-- M styled as a Traditional Door/Archway -->
+                <path d="M40 80 V50 C40 40, 60 40, 60 50 V80" fill="none" stroke="#00C853" stroke-width="4" stroke-linecap="round" />
+                <path d="M40 65 H60" stroke="#00C853" stroke-width="2" />
+                <!-- "i" dot -->
+                <circle cx="60" cy="35" r="4" fill="#FFD600" />
+            </svg>
+            <p>The "M" is styled as an open archway (the entrance to the market), nested inside the "D". The gold dot represents the "Deps" earned inside.</p>
+        </div>
+
+        <!-- CONCEPT 3: GEOMETRIC SYMMETRY -->
+        <div class="card">
+            <h2>3. Precision Sync</h2>
+            <svg viewBox="0 0 100 100">
+                <rect width="100" height="100" rx="20" fill="#00C853" />
+                <!-- M and D Interlocked -->
+                <path d="M30 30 V70 M30 30 H50 C65 30 70 40 70 50 C70 60 65 70 50 70 H30" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M30 70 V50 L50 70 L70 50 V70" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.6" />
+            </svg>
+            <p>A minimalist, heavy-tech approach. The M and D share a common foundation. This is "Corporate Tech" with a vibrant African green background.</p>
+        </div>
+    </div>
+    
+    <div style="margin-top: 50px; max-width: 600px; text-align: center;">
+        <h3 style="color: #FFD600;">Foundational Check:</h3>
+        <p>Does the **Concept 1 (Tech-Weave)** resonate? It uses your sketch directly but adds that professional "texture" that separates a logo from a drawing.</p>
+    </div>
+</body>
+</html>
