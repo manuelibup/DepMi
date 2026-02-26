@@ -103,18 +103,18 @@
 
 ### Incident Summary: Vercel 404 Despite Successful Local Build
 
-**Root Cause (confirmed):** Vercel was restoring a **stale build cache** (`node_modules`) from an earlier deployment that was made *before* the Root Directory was set to `web/`. That cached install had ~0 real packages (from the repo root which has an empty `package.json`). When Vercel's Next.js adapter tried to trace the output files, the wrong `node_modules` caused it to generate an incomplete `/vercel/output`, resulting in `404` for every route.
+**Root Cause (confirmed by Manuel):** When Manuel changed the Root Directory in Vercel Settings from `/` to `web`, it **silently reset the Framework Preset from "Next.js" to "Other"**. With Framework Preset set to "Other", Vercel ran `npm run build` (so compilation succeeded), but did NOT use the Next.js serving adapter to route requests. Vercel had no idea the output was a Next.js app, so it couldn't serve any routes — resulting in 404 on every URL including `/`.
 
-A **secondary issue**: `turbopack.root` in `next.config.ts` was set to `import.meta.dirname` (the `web/` path), which conflicted with Vercel's own `outputFileTracingRoot` setting (`/vercel/path0`). The warning in the build logs confirmed this conflict.
+A **secondary issue** (introduced during debugging): `turbopack.root` in `next.config.ts` was conflicting with Vercel's `outputFileTracingRoot`. This was a mistake introduced while trying to fix the original problem.
 
 **Timeline of fixes tried:**
-1. Identified Root Directory not set → Manuel set it to `web` in Vercel Settings ❌ still 404
-2. Deleted empty root `package-lock.json` that was confusing the build system ❌ still 404
-3. Added `turbopack.root` to `next.config.ts` → actually made it **worse** (conflicted with Vercel's tracing)
-4. Fixed `turbopack.root` to use `import.meta.dirname` (ESM fix) ❌ still 404
-5. **Removed all `turbopack` config from `next.config.ts`** (clean slate) + **Redeployed with "Clear Build Cache" checked** ✅ **FIXED**
+1. Manuel set Root Directory to `web` in Vercel Settings ❌ still 404 (this is also what caused the Framework Preset to reset)
+2. Deleted empty root `package-lock.json` ❌ still 404
+3. Added `turbopack.root` to `next.config.ts` ❌ made it worse (new conflict)
+4. Cleared build cache on redeploy ❌ still 404 on its own
+5. **Changed Framework Preset from "Other" → "Next.js"** in Settings → General + **cleared build cache** ✅ **FIXED**
 
-**The fix that worked:** Redeploy → three dots on deployment → Redeploy → **uncheck "Use existing Build Cache"** → Deploy. Fresh `npm install` pulled 427 correct packages.
+**The fix that worked:** Settings → General → Build & Development Settings → **Framework Preset → change from "Other" to "Next.js"** → Save → Redeploy with cache cleared.
 
 **Build proof:**
 ```
@@ -126,10 +126,11 @@ A **secondary issue**: `turbopack.root` in `next.config.ts` was set to `import.m
 ```
 
 ### If This Happens Again:
-1. **First check:** Does the unique deployment URL (e.g. `depmi-abc123.vercel.app`) also 404? If yes → it's a build/serving issue, not a domain issue.
-2. **Check build logs:** `added X packages in Ys` means fresh install. `up to date in <2s` means cache was used → **suspect stale cache**.
-3. **Fix:** Redeploy → three dots → Redeploy → **uncheck "Use existing Build Cache"** → confirm.
-4. **Avoid:** Never add `turbopack.root` to `next.config.ts` when deploying on Vercel — Vercel sets its own `outputFileTracingRoot` and they conflict.
+1. **First check:** Does the unique deployment URL also 404? If yes → it's a serving issue, not a domain issue.
+2. **Go to Settings → General → Build & Development Settings** → Is **Framework Preset** set to **"Next.js"**? If it says "Other", that's the problem — change it, save, and redeploy.
+3. **When changing Root Directory in Vercel, ALWAYS re-check Framework Preset immediately after saving.** Vercel silently resets it to "Other".
+4. Redeploy with "Clear Build Cache" unchecked to avoid leftover artifacts.
+5. **Avoid:** Never add `turbopack.root` to `next.config.ts` for Vercel deployments — Vercel manages this internally.
 
 ### What Manuel Did Wrong (and how to handle it better):
 See `tips.md` → Section 5 (Deployment Debugging).

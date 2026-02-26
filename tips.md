@@ -45,10 +45,16 @@ Always triage in this order — each layer rules out the next:
 
 **Only fix the layer that's actually broken.** Don't change code if it's a domain problem. Don't change domain settings if it's a build problem.
 
+### ⚠️ The #1 Vercel Gotcha: Framework Preset Reset
+Whenever you **change Root Directory** in Vercel Settings, Vercel silently resets **Framework Preset to "Other"**. This is the most common cause of a 404 where the build succeeds but nothing is served. Always verify Framework Preset after changing Root Directory.
+
+**Settings → General → Build & Development Settings → Framework Preset → must be "Next.js"**
+
 ### Red Flags in Build Logs
-- `up to date in <2s` or `up to date in 923ms` → **cache was used, not a fresh install.** If followed by 404, try redeploying with cache cleared.
-- `⚠ Both outputFileTracingRoot and turbopack.root are set` → **conflict in next.config.ts.** Remove `turbopack.root`.
-- `added N packages in Xs` (e.g. `added 427 packages in 16s`) → ✅ Fresh install, this is healthy.
+- No line saying `Detected Next.js version: X.X.X` → Framework Preset is NOT set to Next.js
+- `up to date in <2s` → cache was used; try redeploying with cache cleared if you suspect staleness
+- `⚠ Both outputFileTracingRoot and turbopack.root are set` → conflict in `next.config.ts`. Remove `turbopack.root`.
+- `added N packages in Xs` (e.g. `added 427 packages in 16s`) → ✅ Fresh install, healthy
 
 ### What NOT to Do
 - ❌ Don't push random code changes hoping to "trigger" a successful deployment
@@ -57,9 +63,9 @@ Always triage in this order — each layer rules out the next:
 - ❌ Don't assume browser console errors are relevant — extensions like MetaMask and uBlock Origin pollute the console with unrelated errors
 
 ### The Fix Checklist for a Vercel 404
-1. Build logs show `Deployment completed`? → Move to step 2
-2. Unique deployment URL also 404? → It's a serving issue, not domain
-3. Build logs show `up to date in <2s`? → **Redeploy with "Clear Build Cache" unchecked**
-4. Framework Preset set to "Next.js" in Settings → General? → If not, fix it and redeploy
-5. Still stuck? Paste the full build logs to your AI agent and ask specifically: "Why is Vercel returning 404 after a successful build?"
+1. Unique deployment URL (e.g. `depmi-abc123.vercel.app`) also 404? → It's a serving issue, not domain
+2. **Settings → General → Framework Preset = "Next.js"?** → If it shows "Other", change it, save, redeploy. This is the most common fix.
+3. Build logs don't say `Detected Next.js version`? → Same as above — framework not detected
+4. Build logs say `up to date in <2s`? → Redeploy with **"Clear Build Cache" unchecked**
+5. Still stuck? Share the full build logs with your AI agent and ask: *"The build succeeds but every route returns 404. The Framework Preset is set to Next.js. What else could cause this?"*
 
