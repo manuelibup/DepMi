@@ -4,118 +4,23 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model User {
-  id              String    @id @default(uuid())
-  name            String
-  email           String    @unique
-  phoneNumber     String?   @unique
-  role            Role      @default(BUYER)
-  deps            Int       @default(0) // The Trust Token
-  isVerified      Boolean   @default(false)
-  
-  // KYC / Escrow Info
-  encryptedBvn    String?   // AES-256 encrypted BVN
-  encryptedNin    String?   // AES-256 encrypted NIN
-  paystackSubcode String?   // Paystack split payment subaccount code
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relations
-  demands         Demand[]  @relation("UserDemands")
-  products        Product[] @relation("StoreProducts")
-  bids            Bid[]     @relation("VendorBids")
-  ordersAsBuyer   Order[]   @relation("BuyerOrders")
-  ordersAsSeller  Order[]   @relation("SellerOrders")
-}
+// ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum Role {
   BUYER
   VENDOR
-  AGENT
   ADMIN
 }
 
-model Demand {
-  id          String    @id @default(uuid())
-  userId      String    
-  user        User      @relation("UserDemands", fields: [userId], references: [id])
-  
-  text        String    // Description of what the buyer wants
-  budget      Decimal   @db.Decimal(10, 2)
-  urgency     DateTime? // Optional deadline for the demand
-  isActive    Boolean   @default(true) // Turns false when fulfilled or expired
-  
-  // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  bids        Bid[]
-}
-
-model Bid {
-  id          String   @id @default(uuid())
-  demandId    String
-  demand      Demand   @relation(fields: [demandId], references: [id])
-  
-  vendorId    String
-  vendor      User     @relation("VendorBids", fields: [vendorId], references: [id])
-  
-  amount      Decimal  @db.Decimal(10, 2)
-  proposal    String?  // Optional text explaining the vendor's offer
-  isAccepted  Boolean  @default(false)
-
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Product {
-  id          String   @id @default(uuid())
-  storeId     String
-  store       User     @relation("StoreProducts", fields: [storeId], references: [id])
-  
-  title       String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  location    String?
-  imageUrl    String?
-  viewCount   Int      @default(0)
-  inStock     Boolean  @default(true)
-
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  orderItems  OrderItem[]
-}
-
-model Order {
-  id          String      @id @default(uuid())
-  buyerId     String
-  buyer       User        @relation("BuyerOrders", fields: [buyerId], references: [id])
-  
-  sellerId    String
-  seller      User        @relation("SellerOrders", fields: [sellerId], references: [id])
-  
-  totalAmount Decimal     @db.Decimal(10, 2)
-  status      OrderStatus @default(PENDING_PAYMENT)
-  
-  // Escrow details
-  paystackRef String?     @unique
-  isEscrowed  Boolean     @default(true)
-
-  // Timestamps
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  items       OrderItem[]
+enum DepTier {
+  SEEDLING  // 0–50 Deps
+  RISING    // 51–200 Deps
+  TRUSTED   // 201–500 Deps
+  ELITE     // 501–1000 Deps
+  LEGEND    // 1000+ Deps
 }
 
 enum OrderStatus {
@@ -124,17 +29,197 @@ enum OrderStatus {
   OUT_FOR_DELIVERY
   DELIVERED
   DISPUTED
+  REFUNDED
   FUNDS_RELEASED
 }
 
-model OrderItem {
+enum Category {
+  FASHION
+  GADGETS
+  BEAUTY
+  FOOD
+  FURNITURE
+  VEHICLES
+  SERVICES
+  OTHER
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String?  @unique
+  phoneNumber String?  @unique
+
+  // Dual-role: a user can be a BUYER, VENDOR, or both
+  roles       Role[]   @default([BUYER])
+  depTier     DepTier  @default(SEEDLING)
+
+  // KYC — store only STATUS + reference tokens, never raw BVN/NIN
+  kycStatus   KycStatus?
+
+  // Paystack split payment subaccount code (set after vendor onboarding)
+  paystackSubcode String?
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  demands         Demand[]           @relation("UserDemands")
+  products        Product[]          @relation("StoreProducts")
+  bids            Bid[]              @relation("VendorBids")
+  ordersAsBuyer   Order[]            @relation("BuyerOrders")
+  ordersAsSeller  Order[]            @relation("SellerOrders")
+  depTransactions DepTransaction[]   @relation("UserDepTransactions")
+}
+
+// KYC status record — one-to-one with User, created on first KYC step
+model KycStatus {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id])
+
+  // Each field stores the Smile ID / Dojah reference token, not the raw data
+  socialVerified  Boolean @default(false)  // Tier 0: IG/FB/X linked
+  ninRef          String? // Tier 1: Smile ID NIN lookup reference
+  bvnRef          String? // Tier 2: Smile ID BVN lookup reference
+  proofOfAddress  Boolean @default(false)  // Tier 3: utility bill uploaded
+  cacNumber       String? // Business: CAC RC number (stored, low-sensitivity)
+  tinNumber       String? // Business: Tax ID number
+
+  updatedAt       DateTime @updatedAt
+}
+
+// Audit trail for Deps — this is the source of truth
+// Never manually update User.deps; derive it from this table or use triggers
+model DepTransaction {
   id        String   @id @default(uuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id])
-  
+  userId    String
+  user      User     @relation("UserDepTransactions", fields: [userId], references: [id])
+
+  amount    Int      // +1 completed sale / +1 completed purchase
+  reason    String   // "Order #xyz completed" | "Sale confirmed by buyer"
+  orderId   String?  // Link to the order that triggered this dep
+
+  createdAt DateTime @default(now())
+}
+
+model Demand {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation("UserDemands", fields: [userId], references: [id])
+
+  text     String
+  budget   Decimal  @db.Decimal(10, 2)
+  category Category @default(OTHER)
+  location String?  // e.g. "Uyo, Akwa Ibom" — for local matching
+
+  closesAt DateTime? // Optional demand deadline
+  isActive Boolean   @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  bids      Bid[]
+
+  @@index([isActive, category, location]) // Speed up demand engine queries
+}
+
+model Bid {
+  id       String  @id @default(uuid())
+  demandId String
+  demand   Demand  @relation(fields: [demandId], references: [id])
+
+  vendorId   String
+  vendor     User    @relation("VendorBids", fields: [vendorId], references: [id])
+
+  amount     Decimal @db.Decimal(10, 2)
+  proposal   String? // Vendor's pitch message
+  isAccepted Boolean @default(false)
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Product {
+  id       String   @id @default(uuid())
+  storeId  String
+  store    User     @relation("StoreProducts", fields: [storeId], references: [id])
+
+  title       String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  category    Category @default(OTHER)
+  location    String?  // Vendor's location for local search
+
+  viewCount   Int     @default(0)
+  inStock     Boolean @default(true)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  images      ProductImage[] // Multiple images per product
+  orderItems  OrderItem[]
+
+  @@index([category, location, inStock]) // Speed up feed/search queries
+}
+
+// Separate image table so each product can have a carousel of photos
+model ProductImage {
+  id        String  @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  
-  quantity  Int      @default(1)
-  price     Decimal  @db.Decimal(10, 2) // Price at the time of purchase
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String  // Cloudflare R2 / CDN URL
+  order     Int     @default(0) // Display order (0 = primary/cover image)
+}
+
+model Order {
+  id       String @id @default(uuid())
+  buyerId  String
+  buyer    User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+
+  sellerId String
+  seller   User   @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  totalAmount Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING_PAYMENT)
+
+  // Escrow / Paystack
+  paystackRef    String?  @unique // Paystack transaction reference
+  isEscrowed     Boolean  @default(true)
+
+  // Delivery
+  deliveryAddress String?
+  deliveryNote    String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity  Int     @default(1)
+  price     Decimal @db.Decimal(10, 2) // Snapshot — locked at time of purchase
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
