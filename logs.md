@@ -7,6 +7,7 @@
 - [Session 4 — Feb 26, 2026 (08:00–22:00 WAT) — Vercel 404 Incident](#session-4--feb-26-2026-08002200-wat--vercel-404-incident)
 - [Session 5 — Feb 26, 2026 (22:30–23:00 WAT) — Schema Restructure](#session-5--feb-26-2026-22302300-wat--schema-restructure)
 - [Session 6 — Feb 27, 2026 (17:00–18:30 WAT) — Code Quality & Design Enhancements](#session-6--feb-27-2026-17001830-wat--code-quality--design-enhancements)
+- [Session 7 — Feb 27, 2026 (18:30–19:00 WAT) — Auth & Profile Scaffolding](#session-7--feb-27-2026-18301900-wat--auth--profile-scaffolding)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -201,3 +202,35 @@ See `tips.md` → Section 5 (Deployment Debugging).
 
 ### Pending
 - Build testing via Vercel.
+
+---
+
+## Session 7 — Feb 27, 2026 (18:30–19:00 WAT) — Auth & Profile Scaffolding
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+
+#### User Model Updates (Prisma)
+- Added `username` (unique string)
+- Added `displayName` (required string)
+- Added `dateOfBirth` (DateTime) to enforce Age Gating restrictions
+
+#### NextAuth Setup
+- Integrated **NextAuth.js (Auth.js)** v4 using `PrismaAdapter`.
+- Configured `.env.local` to securely house JWT secrets and Google OAuth secrets.
+- Configured `CredentialsProvider` to use `bcrypt` with 12 salt rounds for Password authentication.
+- Configured `GoogleProvider` for seamless social sign-on.
+- Configured `Providers.tsx` (`SessionProvider`) and wrapped `layout.tsx`.
+- Created robust `middleware.ts` to seamlessly protect all internal routes, enforcing authentication before users can access their dashboard, while leaving `/login`, `/register`, and `/` public.
+
+#### UI Scaffolding
+- Built the new Register Page (`/register`) incorporating fields for Username, Display Name, Date of Birth, Email, and Password. Added robust client & server-side API error handling.
+- Built the Login Page (`/login`) utilizing NextAuth's built-in `signIn()` logic.
+- Built Modular UI components: `InputField` and `SocialLoginButton`.
+- Used `zod` for strictly typing and validating form payload inputs in the Server (`/api/auth/register`).
+- Applied global form styling utilizing our standard design tokens mapping (`tokens.css`).
+
+#### Result
+- Successfully completed the MVP Roadmap **Phase 1: Week 1**.
+- The build passed ESLint type validations perfectly (`npm run lint` clean).
