@@ -1,6 +1,12 @@
 # DepMi — Development Log
 
----
+## Table of Contents
+- [Session 1 — Feb 26, 2026 (Pre-dawn)](#session-1--feb-26-2026-pre-dawn)
+- [Session 2 — Feb 26, 2026 (07:00 WAT)](#session-2--feb-26-2026-0700-wat)
+- [Session 3 — Feb 26, 2026 (08:00–09:00 WAT)](#session-3--feb-26-2026-08000900-wat)
+- [Session 4 — Feb 26, 2026 (08:00–22:00 WAT) — Vercel 404 Incident](#session-4--feb-26-2026-08002200-wat--vercel-404-incident)
+- [Session 5 — Feb 26, 2026 (22:30–23:00 WAT) — Schema Restructure](#session-5--feb-26-2026-22302300-wat--schema-restructure)
+- [Session 6 — Feb 27, 2026 (17:00–18:30 WAT) — Code Quality & Design Enhancements](#session-6--feb-27-2026-17001830-wat--code-quality--design-enhancements)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -166,3 +172,32 @@ See `tips.md` → Section 5 (Deployment Debugging).
 - ✅ `prisma validate` — schema valid
 - ✅ `next build` — compiles clean
 
+---
+
+## Session 6 — Feb 27, 2026 (17:00–18:30 WAT) — Code Quality & Design Enhancements
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+
+#### Codebase & Architecture Refactoring
+- **Restructured Components**: Moved all 6 components (`Header`, `FilterBar`, `StoriesBar`, `DemandCard`, `ProductCard`, `BottomNav`) into dedicated subfolders (`src/components/[Name]/index.tsx`) along with their respective `.module.css` files.
+- **TypeScript Enhancements**: Added explicit prop interfaces (`DemandCardProps`, `ProductCardProps`, `FilterBarProps`) for stronger type safety.
+- **Styling**: Created `src/styles/tokens.css` to centralize design tokens (`--primary`, `--card-bg-glass`, etc.) and integrated them across all CSS modules. Verified dark mode support.
+
+#### UI & Asset Updates
+- **New Logo**: Generated a new, premium monogram "DM" logo with a transparent background. 
+- **Header Update**: Replaced the inline SVG in `Header.tsx` with the Next.js `<Image>` component pointing to the new DM logo.
+- **Cleanup**: Removed the default Next.js `vercel.svg` asset from the `public/` directory.
+
+#### SEO & Accessibility
+- **Metadata**: Enhanced `layout.tsx` with comprehensive SEO metadata (OpenGraph, Twitter Cards, Canonical URL, and Favicon icon).
+- **Accessibility**: Added `aria-labels` to all icon-only buttons in `ProductCard`, `DemandCard`, and `Header`. Added `focus-visible` styling in `globals.css` for better keyboard navigation.
+
+#### Documentation & DX
+- **Table of Contents**: Added Table of Contents to both `agent.md` and `logs.md` for easier navigation.
+- **Performance Checklist**: Built a new `performance_checklist.md` artifact covering bundle size, image optimization, dynamic imports, and Web Vitals best practices.
+- **Verification**: `npm run lint` passed with 0 errors.
+
+### Pending
+- Build testing via Vercel.

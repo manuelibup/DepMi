@@ -2,23 +2,13 @@
 
 import React from 'react';
 import styles from './Header.module.css';
+import Image from 'next/image';
 
 export default function Header() {
     return (
         <header className={styles.header}>
             <div className={styles.logo}>
-                <div className={styles.logoMark}>
-                    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="28" height="28" rx="7" fill="url(#logoGrad)" />
-                        <path d="M7 9h4l3 5 3-5h4v10h-3.5v-5.5L14.5 18h-1L10.5 13.5V19H7V9z" fill="white" />
-                        <defs>
-                            <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
-                                <stop stopColor="#00E676" />
-                                <stop offset="1" stopColor="#00C853" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
+                <Image src="/depmi_dm_logo.png" alt="DepMi logo" width={32} height={32} className={styles.logoMark} />
                 <h1 className={styles.logoText}>DepMi</h1>
             </div>
             <div className={styles.headerActions}>

@@ -1,5 +1,14 @@
 # DepMi (Buy Here) - Project Blueprint
 
+## Table of Contents
+- [1. Core Vision](#1-core-vision)
+- [2. Foundational Features](#2-foundational-features)
+- [3. Brand Identity (Tech + Culture)](#3-brand-identity-tech--culture)
+- [4. Financial & Regulatory Model (Phase 1)](#4-financial--regulatory-model-phase-1)
+- [5. 6-Week MVP Roadmap](#5-6-week-mvp-roadmap)
+- [6. Data Architecture (Current Schema)](#6-data-architecture-current-schema)
+- [7. Development Guidelines](#7-development-guidelines)
+
 ## 1. Core Vision
 DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for African entrepreneurs. It bridges the gap between social discovery (Instagram/Facebook) and structured commerce (Shopify/Jumia).
 

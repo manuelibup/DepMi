@@ -3,16 +3,29 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://depmi.com'),
   title: "DepMi — Buy Here. Build Here. Grow Here.",
   description:
     "The social commerce platform for African entrepreneurs. Discover products, request what you need, and transact with trust.",
+  icons: {
+    icon: '/depmi_dm_logo.png',
+  },
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "DepMi — Social Commerce for Africa",
     description:
       "Buy, sell, and discover products with trust. Earn Deps, bid on demand requests, and grow your business.",
     siteName: "DepMi",
     type: "website",
+    url: 'https://depmi.com',
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "DepMi — Social Commerce for Africa",
+    description: "The social commerce platform for African entrepreneurs.",
+  }
 };
 
 export const viewport: Viewport = {

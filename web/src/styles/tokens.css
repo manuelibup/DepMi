@@ -1,0 +1,10 @@
+:root {
+    --primary: #00C853;
+    --primary-light: #00E676;
+    --accent-gold: #FFD600;
+    --text-main: #212121;
+    --card-bg-glass: rgba(255, 255, 255, 0.12);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --radius-full: 9999px;
+    --transition-fast: 0.2s ease;
+}
