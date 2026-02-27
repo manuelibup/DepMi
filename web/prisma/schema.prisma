@@ -11,28 +11,28 @@ datasource db {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 enum AuthProvider {
-  EMAIL       // Email + password (bcrypt hashed)
-  GOOGLE      // Google OAuth
-  WHATSAPP    // WhatsApp phone verification
+  EMAIL // Email + password (bcrypt hashed)
+  GOOGLE // Google OAuth
+  WHATSAPP // WhatsApp phone verification
 }
 
 enum DepTier {
-  SEEDLING  // 0–50 Deps
-  RISING    // 51–200 Deps
-  TRUSTED   // 201–500 Deps
-  ELITE     // 501–1000 Deps
-  LEGEND    // 1000+ Deps
+  SEEDLING // 0–50 Deps
+  RISING // 51–200 Deps
+  TRUSTED // 201–500 Deps
+  ELITE // 501–1000 Deps
+  LEGEND // 1000+ Deps
 }
 
 // KYC tiers — each tier unlocks platform features
 // Store creation requires TIER_2 (BVN verified) minimum
 enum KycTier {
-  UNVERIFIED    // No KYC — can browse and create demands
-  TIER_0        // Social accounts linked — can bid (limited)
-  TIER_1        // NIN verified — can buy via escrow
-  TIER_2        // BVN verified — can CREATE A STORE, sell, receive payouts
-  TIER_3        // Proof of address — full access, higher transaction limits
-  BUSINESS      // CAC + TIN verified — business account, highest limits
+  UNVERIFIED // No KYC — can browse and create demands
+  TIER_0 // Social accounts linked — can bid (limited)
+  TIER_1 // NIN verified — can buy via escrow
+  TIER_2 // BVN verified — can CREATE A STORE, sell, receive payouts
+  TIER_3 // Proof of address — full access, higher transaction limits
+  BUSINESS // CAC + TIN verified — business account, highest limits
 }
 
 enum OrderStatus {
@@ -57,16 +57,16 @@ enum Category {
 }
 
 enum NotificationType {
-  BID_RECEIVED      // Store owner: "A vendor bid on your demand"
-  BID_ACCEPTED      // Bidder: "Your bid was accepted"
-  ORDER_PLACED      // Store owner: "New order received"
-  ORDER_ESCROWED    // Both: "Payment secured in escrow"
-  ORDER_SHIPPED     // Buyer: "Your order has been shipped"
-  ORDER_DELIVERED   // Both: "Order marked as delivered"
-  ORDER_DISPUTED    // Both: "A dispute has been raised"
-  FUNDS_RELEASED    // Store owner: "Funds released to your account"
-  DEP_EARNED        // Both: "You earned a Dep!"
-  SYSTEM            // Generic system notifications
+  BID_RECEIVED // Store owner: "A vendor bid on your demand"
+  BID_ACCEPTED // Bidder: "Your bid was accepted"
+  ORDER_PLACED // Store owner: "New order received"
+  ORDER_ESCROWED // Both: "Payment secured in escrow"
+  ORDER_SHIPPED // Buyer: "Your order has been shipped"
+  ORDER_DELIVERED // Both: "Order marked as delivered"
+  ORDER_DISPUTED // Both: "A dispute has been raised"
+  FUNDS_RELEASED // Store owner: "Funds released to your account"
+  DEP_EARNED // Both: "You earned a Dep!"
+  SYSTEM // Generic system notifications
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -74,37 +74,39 @@ enum NotificationType {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model User {
-  id          String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // Profile
-  name        String
-  email       String?  @unique
-  phoneNumber String?  @unique
+  username    String?   @unique
+  displayName String
+  dateOfBirth DateTime? // Used for age gating
+  email       String?   @unique
+  phoneNumber String?   @unique
   avatarUrl   String?
 
   // Auth — supports multiple providers per user
   // e.g. sign up with email, later link Google
-  accounts    Account[]
+  accounts Account[]
 
   // Trust score (as a buyer — stores have their own seller trust)
-  depCount    Int      @default(0) // Atomic counter, incremented with DepTransaction
-  depTier     DepTier  @default(SEEDLING)
+  depCount Int     @default(0) // Atomic counter, incremented with DepTransaction
+  depTier  DepTier @default(SEEDLING)
 
   // KYC — determines what the user can do
   // UNVERIFIED → browse/demand | TIER_1 → buy | TIER_2 → CREATE STORES + sell
-  kycTier     KycTier  @default(UNVERIFIED)
-  kycStatus   KycStatus?
+  kycTier   KycTier    @default(UNVERIFIED)
+  kycStatus KycStatus?
 
   // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations — personal account
-  stores          Store[]            @relation("UserStores") // Like Facebook Pages — 0, 1, or many
-  demands         Demand[]           @relation("UserDemands")
-  ordersAsBuyer   Order[]            @relation("BuyerOrders")
-  depTransactions DepTransaction[]   @relation("UserDepTransactions")
-  notifications   Notification[]     @relation("UserNotifications")
+  stores          Store[]          @relation("UserStores") // Like Facebook Pages — 0, 1, or many
+  demands         Demand[]         @relation("UserDemands")
+  ordersAsBuyer   Order[]          @relation("BuyerOrders")
+  depTransactions DepTransaction[] @relation("UserDepTransactions")
+  notifications   Notification[]   @relation("UserNotifications")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -112,19 +114,19 @@ model User {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Account {
-  id          String       @id @default(uuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  provider    AuthProvider
-  providerId  String?      // Google subject ID, WhatsApp phone ID — null for EMAIL
+  provider   AuthProvider
+  providerId String? // Google subject ID, WhatsApp phone ID — null for EMAIL
 
   // Email/password auth only
   // Password MUST be hashed with bcrypt (12+ salt rounds) in app layer
   // NEVER store plaintext passwords
   passwordHash String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([provider, providerId]) // Can't have two accounts with same provider + ID
   @@index([userId])
@@ -136,19 +138,19 @@ model Account {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model KycStatus {
-  id              String  @id @default(uuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
   // Each step stores the verification provider's reference token
-  socialVerified  Boolean @default(false)  // → bumps to TIER_0
-  ninRef          String? // → bumps to TIER_1 (can buy)
-  bvnRef          String? // → bumps to TIER_2 (can create stores + sell)
-  proofOfAddress  Boolean @default(false)  // → bumps to TIER_3
-  cacNumber       String? // → bumps to BUSINESS (with tinNumber)
-  tinNumber       String? // → bumps to BUSINESS (with cacNumber)
+  socialVerified Boolean @default(false) // → bumps to TIER_0
+  ninRef         String? // → bumps to TIER_1 (can buy)
+  bvnRef         String? // → bumps to TIER_2 (can create stores + sell)
+  proofOfAddress Boolean @default(false) // → bumps to TIER_3
+  cacNumber      String? // → bumps to BUSINESS (with tinNumber)
+  tinNumber      String? // → bumps to BUSINESS (with cacNumber)
 
-  updatedAt       DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -158,36 +160,36 @@ model KycStatus {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Store {
-  id          String  @id @default(uuid())
-  ownerId     String  // The personal account that owns this store
-  owner       User    @relation("UserStores", fields: [ownerId], references: [id])
+  id      String @id @default(uuid())
+  ownerId String // The personal account that owns this store
+  owner   User   @relation("UserStores", fields: [ownerId], references: [id])
 
   // Public storefront info
-  name        String  @unique  // Appears in /store/[slug]
-  slug        String  @unique  // URL-safe version of name
+  name        String  @unique // Appears in /store/[slug]
+  slug        String  @unique // URL-safe version of name
   description String?
   bannerUrl   String?
   logoUrl     String?
   location    String? // Primary business location
 
   // Trust score (as a seller — separate from owner's buyer trust)
-  depCount    Int     @default(0)
-  depTier     DepTier @default(SEEDLING)
+  depCount Int     @default(0)
+  depTier  DepTier @default(SEEDLING)
 
   // Paystack split payment subaccount (for auto-settlement)
   paystackSubcode String?
 
-  isActive    Boolean  @default(true)
+  isActive Boolean @default(true)
 
   // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  products        Product[]          @relation("StoreProducts")
-  bids            Bid[]              @relation("StoreBids")
-  ordersAsSeller  Order[]            @relation("SellerOrders")
-  depTransactions DepTransaction[]   @relation("StoreDepTransactions")
+  products        Product[]        @relation("StoreProducts")
+  bids            Bid[]            @relation("StoreBids")
+  ordersAsSeller  Order[]          @relation("SellerOrders")
+  depTransactions DepTransaction[] @relation("StoreDepTransactions")
 
   @@index([ownerId])
   @@index([slug])
@@ -200,17 +202,17 @@ model Store {
 // Source of truth for trust scores
 // App logic: create DepTransaction + atomically increment User.depCount or Store.depCount
 model DepTransaction {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // Either userId OR storeId is set — deps for buying vs selling
-  userId    String?
-  user      User?    @relation("UserDepTransactions", fields: [userId], references: [id])
-  storeId   String?
-  store     Store?   @relation("StoreDepTransactions", fields: [storeId], references: [id])
+  userId  String?
+  user    User?   @relation("UserDepTransactions", fields: [userId], references: [id])
+  storeId String?
+  store   Store?  @relation("StoreDepTransactions", fields: [storeId], references: [id])
 
-  amount    Int      // +1 completed purchase (user) / +1 completed sale (store)
-  reason    String   // "Order #xyz completed"
-  orderId   String?  // Link to the order that triggered this dep
+  amount  Int // +1 completed purchase (user) / +1 completed sale (store)
+  reason  String // "Order #xyz completed"
+  orderId String? // Link to the order that triggered this dep
 
   createdAt DateTime @default(now())
 
@@ -223,9 +225,9 @@ model DepTransaction {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Demand {
-  id       String   @id @default(uuid())
-  userId   String
-  user     User     @relation("UserDemands", fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("UserDemands", fields: [userId], references: [id])
 
   text     String
   budget   Decimal  @db.Decimal(10, 2)
@@ -239,33 +241,33 @@ model Demand {
   updatedAt DateTime @updatedAt
 
   // Relations
-  bids      Bid[]
-  orders    Order[]  @relation("DemandOrders")
+  bids   Bid[]
+  orders Order[] @relation("DemandOrders")
 
   @@index([isActive, category])
   @@index([userId])
 }
 
 model Bid {
-  id       String  @id @default(uuid())
+  id       String @id @default(uuid())
   demandId String
-  demand   Demand  @relation(fields: [demandId], references: [id])
+  demand   Demand @relation(fields: [demandId], references: [id])
 
-  storeId    String
-  store      Store   @relation("StoreBids", fields: [storeId], references: [id])
+  storeId String
+  store   Store  @relation("StoreBids", fields: [storeId], references: [id])
 
-  amount     Decimal  @db.Decimal(10, 2)
-  proposal   String?
-  productId  String?
-  product    Product? @relation("BidProduct", fields: [productId], references: [id])
+  amount    Decimal  @db.Decimal(10, 2)
+  proposal  String?
+  productId String?
+  product   Product? @relation("BidProduct", fields: [productId], references: [id])
 
   isAccepted Boolean @default(false)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  order      Order?  @relation("BidOrder")
+  order Order? @relation("BidOrder")
 
   @@index([demandId])
   @@index([storeId])
@@ -276,25 +278,25 @@ model Bid {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Product {
-  id       String   @id @default(uuid())
-  storeId  String
-  store    Store    @relation("StoreProducts", fields: [storeId], references: [id])
+  id      String @id @default(uuid())
+  storeId String
+  store   Store  @relation("StoreProducts", fields: [storeId], references: [id])
 
   title       String
   description String?
   price       Decimal  @db.Decimal(10, 2)
   category    Category @default(OTHER)
 
-  viewCount   Int     @default(0)
-  inStock     Boolean @default(true)
+  viewCount Int     @default(0)
+  inStock   Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  images      ProductImage[]
-  orderItems  OrderItem[]
-  bids        Bid[]          @relation("BidProduct")
+  images     ProductImage[]
+  orderItems OrderItem[]
+  bids       Bid[]          @relation("BidProduct")
 
   @@index([category, inStock])
   @@index([storeId])
@@ -305,8 +307,8 @@ model ProductImage {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  url       String
-  order     Int     @default(0)
+  url   String
+  order Int    @default(0)
 
   @@index([productId])
 }
@@ -316,9 +318,9 @@ model ProductImage {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Order {
-  id       String @id @default(uuid())
-  buyerId  String
-  buyer    User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+  id      String @id @default(uuid())
+  buyerId String
+  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id])
 
   sellerId String
   seller   Store  @relation("SellerOrders", fields: [sellerId], references: [id])
@@ -327,14 +329,14 @@ model Order {
   status      OrderStatus @default(PENDING_PAYMENT)
 
   // Origin tracking
-  demandId    String?
-  demand      Demand?  @relation("DemandOrders", fields: [demandId], references: [id])
-  bidId       String?  @unique
-  bid         Bid?     @relation("BidOrder", fields: [bidId], references: [id])
+  demandId String?
+  demand   Demand? @relation("DemandOrders", fields: [demandId], references: [id])
+  bidId    String? @unique
+  bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
 
   // Escrow / Paystack
-  paystackRef    String?  @unique
-  isEscrowed     Boolean  @default(true)
+  paystackRef String? @unique
+  isEscrowed  Boolean @default(true)
 
   // Delivery
   deliveryAddress String?
@@ -344,7 +346,7 @@ model Order {
   updatedAt DateTime @updatedAt
 
   // Relations
-  items     OrderItem[]
+  items OrderItem[]
 
   @@index([buyerId])
   @@index([sellerId])
@@ -352,15 +354,15 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
-  quantity  Int     @default(1)
-  price     Decimal @db.Decimal(10, 2)
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -373,15 +375,15 @@ model OrderItem {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Notification {
-  id       String           @id @default(uuid())
-  userId   String
-  user     User             @relation("UserNotifications", fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id])
 
-  type     NotificationType
-  title    String
-  body     String
-  link     String?
-  isRead   Boolean          @default(false)
+  type   NotificationType
+  title  String
+  body   String
+  link   String?
+  isRead Boolean          @default(false)
 
   createdAt DateTime @default(now())
 

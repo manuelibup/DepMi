@@ -8,6 +8,8 @@
 - [Session 5 — Feb 26, 2026 (22:30–23:00 WAT) — Schema Restructure](#session-5--feb-26-2026-22302300-wat--schema-restructure)
 - [Session 6 — Feb 27, 2026 (17:00–18:30 WAT) — Code Quality & Design Enhancements](#session-6--feb-27-2026-17001830-wat--code-quality--design-enhancements)
 - [Session 7 — Feb 27, 2026 (18:30–19:00 WAT) — Auth & Profile Scaffolding](#session-7--feb-27-2026-18301900-wat--auth--profile-scaffolding)
+- [Session 8 — Feb 27, 2026 (19:30–20:00 WAT) — Auth Code Review & Bug Fixes](#session-8--feb-27-2026-19302000-wat--auth-code-review--bug-fixes)
+- [Session 9 — Feb 27, 2026 (19:50–19:55 WAT) — Prisma Auth Error Fix](#session-9--feb-27-2026-19501955-wat--prisma-auth-error-fix)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -234,3 +236,69 @@ See `tips.md` → Section 5 (Deployment Debugging).
 #### Result
 - Successfully completed the MVP Roadmap **Phase 1: Week 1**.
 - The build passed ESLint type validations perfectly (`npm run lint` clean).
+
+#### Known Issues at Session End (fixed in Session 8)
+- `PrismaAdapter` incompatible with custom Account schema → Google OAuth would break in production.
+- `name` field referenced in code but does not exist in the Prisma User schema → Prisma client type error.
+- Age validation calculated by year subtraction only → off by up to 11 months.
+- Missing `@types/bcrypt` dev dependency.
+
+---
+
+## Session 8 — Feb 27, 2026 (19:30–20:00 WAT) — Auth Code Review & Bug Fixes
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was done:
+
+#### Code Review of Session 7 (Gemini) Output
+- Full review of `auth.ts`, `register/route.ts`, `middleware.ts`, `login/page.tsx`, `register/page.tsx`, `Auth.module.css`, `InputField.tsx`, `SocialLoginButton.tsx`, and `schema.prisma`.
+
+#### Bugs Fixed
+
+**1. Critical — PrismaAdapter removed from `auth.ts`**
+- The `@next-auth/prisma-adapter` expects NextAuth's standard schema format (`type String`, `providerAccountId`, `access_token`, `refresh_token`, etc.). DepMi's custom `Account` model uses an `AuthProvider` enum, `providerId`, and `passwordHash` — completely incompatible.
+- **Fix:** Dropped the adapter entirely. Replaced with a manual `signIn` callback that creates/links Google accounts directly using DepMi's schema (`provider: "GOOGLE"`, `providerId: account.providerAccountId`). Added a `jwt` callback that looks up the real DB user ID by email for OAuth sign-ins.
+
+**2. Bug — `name` field doesn't exist in User schema**
+- `register/route.ts` sent `name: displayName` to `prisma.user.create()` — field does not exist in the schema. Would cause a Prisma client type error once client is regenerated.
+- `auth.ts` referenced `user.name` — same non-existent field.
+- **Fix:** Removed `name: displayName` from create data. Changed authorize return to use `user.displayName`.
+
+**3. Bug — Age calculation was off by up to 11 months**
+- `new Date().getFullYear() - new Date(date).getFullYear()` ignores whether the birthday has passed yet in the current year. A user born Dec 31, 2013 would incorrectly pass validation today (Feb 27, 2026: 2026-2013=13, but they're actually 12).
+- **Fix:** Proper age calculation accounting for month + day delta.
+
+**4. Hint — Zod v4 deprecation**
+- `z.string().email()` is deprecated in Zod v4.3.6. Updated to `z.email()`.
+
+#### Dependency Fix
+- Installed `@types/bcrypt` as devDependency (`bcrypt` had no type declarations, causing TS7016 error).
+
+#### What Gemini did well (preserved as-is)
+- bcrypt at 12 rounds, never plaintext ✅
+- JWT session strategy (correct for custom schema) ✅
+- Auto sign-in after registration ✅
+- Separate 409 errors for email vs username conflict ✅
+- Zod validation on API route ✅
+- Middleware regex correctly excludes `/`, `/login`, `/register` ✅
+- CSS using design tokens from `tokens.css` ✅
+
+### Pending / Next Steps (Week 2)
+- Run `npx prisma db push` to sync schema to Neon DB.
+- Week 2: KYC system (Smile ID/Dojah integration) + Deps counter (atomic `depCount` + `DepTransaction` audit trail).
+
+---
+
+## Session 9 — Feb 27, 2026 (19:50–19:55 WAT) — Prisma Auth Error Fix
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was done:
+- Fixed a Prisma Client type error (`Module '"@prisma/client"' has no exported member 'AuthProvider'`).
+- Ran `npx prisma generate` to successfully generate the updated Prisma client types based on the latest `schema.prisma`.
+- Pushed the accumulated authentication feature code and fixes (from Session 7 & 8) to the GitHub repository.
+
+### Pending / Next Steps (Week 2)
+- Run `npx prisma db push` to sync schema to Neon DB.
+- Week 2: KYC system (Smile ID/Dojah integration) + Deps counter (atomic `depCount` + `DepTransaction` audit trail).

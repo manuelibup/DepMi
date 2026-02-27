@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install --save-dev @types/bcrypt)",
+      "Bash(npx prisma generate)",
+      "Bash(npx tsc --noEmit)"
+    ]
+  }
+}

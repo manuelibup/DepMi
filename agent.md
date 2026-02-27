@@ -26,10 +26,11 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 
 ### B. Multi-Provider Auth
 - **Email + Password** (bcrypt hashed, 12+ salt rounds — never plaintext)
-- **Google OAuth** (subject ID stored)
-- **WhatsApp** (phone verification)
+- **Google OAuth** (subject ID stored as `providerId` in Account table)
+- **WhatsApp** (phone verification — Phase 2)
 - Users can link multiple providers to one account (e.g. sign up with email, link Google later).
 - All auth records live in the `Account` table, referencing a single `User`.
+- **Implementation note:** Do NOT use `@next-auth/prisma-adapter`. DepMi's custom `Account` schema (`AuthProvider` enum, `providerId`, `passwordHash`) is incompatible with the adapter's expected format. Google OAuth is wired manually via the NextAuth `signIn` callback.
 
 ### C. The "Deps" System (Credibility Currency)
 - **Concept:** A trust score based on real transaction history — tracked via `DepTransaction` audit table.
