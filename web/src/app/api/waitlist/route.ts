@@ -27,7 +27,9 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: 'Successfully joined waitlist' });
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Waitlist POST error:', error);
+
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { message: 'Please enter a valid email address.' },
@@ -35,7 +37,10 @@ export async function POST(req: Request) {
             );
         }
         return NextResponse.json(
-            { message: 'Something went wrong. Please try again later.' },
+            {
+                message: 'Something went wrong.',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Database error or missing configuration'
+            },
             { status: 500 }
         );
     }
