@@ -10,6 +10,8 @@
 - [Session 7 — Feb 27, 2026 (18:30–19:00 WAT) — Auth & Profile Scaffolding](#session-7--feb-27-2026-18301900-wat--auth--profile-scaffolding)
 - [Session 8 — Feb 27, 2026 (19:30–20:00 WAT) — Auth Code Review & Bug Fixes](#session-8--feb-27-2026-19302000-wat--auth-code-review--bug-fixes)
 - [Session 9 — Feb 27, 2026 (19:50–19:55 WAT) — Prisma Auth Error Fix](#session-9--feb-27-2026-19501955-wat--prisma-auth-error-fix)
+- [Session 10 — Feb 27, 2026 — KYC Architecture Decision](#session-10--feb-27-2026--kyc-architecture-decision)
+- [Session 11 — Feb 28, 2026 — Secure Vendor Invite System](#session-11--feb-28-2026--secure-vendor-invite-system)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -302,3 +304,95 @@ See `tips.md` → Section 5 (Deployment Debugging).
 ### Pending / Next Steps (Week 2)
 - Run `npx prisma db push` to sync schema to Neon DB.
 - Week 2: KYC system (Smile ID/Dojah integration) + Deps counter (atomic `depCount` + `DepTransaction` audit trail).
+
+---
+
+## Session 10 — Feb 27, 2026 — KYC Architecture Decision
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### KYC Deferral — MVP Strategy Change
+- **Decision:** Dojah/Smile ID KYC integration is deferred from Week 2. Full reasoning documented below.
+- Storing encrypted NIN/BVN without verifying = no trust signal. Encrypted wrong data is still wrong. If collecting sensitive IDs, might as well call Dojah ($0.06) to get actual verification. Don't store raw NIN/BVN under any approach.
+- **TIER_1 (NIN) skipped entirely** — it is friction before TIER_2 (BVN). NIN adds no unique value in the buyer flow for a pilot.
+- **Buyers:** Email + WhatsApp OTP phone verification only (TIER_0). Zero NIN/BVN collected. Scales automatically to 200+ users without manual work.
+- **Pilot sellers (first ~20):** Admin manually elevates `kycTier` to TIER_2 via admin route. User personally knows them.
+- **KYC Trigger:** Dojah BVN integration added as a feature flag when seller demand scales (~seller #25+). Budget: ~$0.06/verification.
+
+#### Roadmap Updated
+- `agent.md` revised: W1 marked complete, W2 reframed as "Phone OTP & Deps", W3 includes User Profile page + connecting Discover feed to real DB data, W4 includes in-app Notifications.
+
+### Pending / Next Steps (Week 2)
+- Run `npx prisma db push` to sync schema to Neon DB.
+- Add `phone` field to User schema for OTP storage.
+- Choose OTP provider: Africa's Talking (cheapest for Nigeria) vs Twilio (global).
+- Build: WhatsApp/SMS OTP send + verify API routes.
+- Build: Deps system (atomic `depCount` + `DepTransaction` audit trail in a Prisma transaction).
+- Build: Admin route to manually elevate `kycTier` for pilot vendors.
+
+---
+
+## Session 11 — Feb 28, 2026 — Secure Vendor Invite System
+**Agent:** Antigravity 
+**Human:** Manuel
+
+### What was done:
+
+#### Schema & Database
+- Implemented `OtpType` and `InviteStatus` enums.
+- Added `OtpToken` model for expiring secure phone verification codes.
+- Added `StoreInvite` model for 48-hour secure vendor onboarding links.
+- Added `phoneVerified` boolean to the `User` model.
+- Synced changes to Neon DB via `npx prisma db push --accept-data-loss`.
+- Fixed widespread Prisma Constructor / Edge Runtime crash blocking the build by upgrading `@prisma/client` and `prisma` CLI to 7.4.2.
+
+#### Features Built
+- **Admin Invite Generator (`/admin`)**: Protected route allowing Manuel to input an email and instantly copy a secure 48hr invite link to send directly to pilot vendors via DM.
+- **Vendor Identity Verification (`/invite/[id]`)**: The frontend gate for vendors. Validates the URL token, prompts the vendor to log in, and securely collects their 11-digit BVN.
+- **Backend Logic**: API routes (`/api/admin/invite`, `/api/invite/validate`, `/api/invite/accept`) fully built with mocked Dojah integration for the pilot phase. Successful processing elevates buyer to `TIER_2` (Vendor status).
+
+#### Code Quality & Fixes
+- Resolved Next.js 16 Middleware deprecation errors regarding `export { default }`.
+- Removed direct `auth.ts` Prisma hooks in JWT callbacks that crashed Vercel Edge Runtime.
+- Cleaned all TypeScript (`any` types) and ESLint (`unused vars`) warnings.
+
+### Pending / Next Steps (Week 2)
+- Build: WhatsApp/SMS OTP send + verify API routes for Buyers (`TIER_0`).
+- Build: Deps System (`depCount` + `DepTransaction` audit trail).
+
+---
+
+## Session 12 — Feb 28, 2026 — Auth Regression Fix & Doc Update
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was done:
+
+#### Schema Update (Gemini)
+Gemini correctly applied all planned Week 2 schema additions to `web/prisma/schema.prisma`:
+- Added `phoneVerified Boolean @default(false)` to User model.
+- Added `OtpType` enum (`PHONE_VERIFICATION`, `EMAIL_RESET`).
+- Added `InviteStatus` enum (`PENDING`, `ACCEPTED`, `EXPIRED`).
+- Added `OtpToken` model: hashed OTP storage with expiry + single-use guard.
+- Added `StoreInvite` model: 48hr invite-link flow for exclusive vendor onboarding.
+- Added `otpTokens OtpToken[]` and `storeInvite StoreInvite?` relations to User.
+
+#### Auth Regression Fixed (Antigravity)
+Gemini accidentally broke `auth.ts` while working on the schema. The `jwt` callback lost the Google OAuth DB lookup — the `account` parameter was silently removed and the code that resolves Google profile ID → Neon DB UUID was deleted (only the comment remained). This would have caused `session.user.id` to return the Google profile ID (not the DB UUID) for all Google sign-in users, breaking every DB query downstream.
+- **Fix:** Restored `account` parameter and the `prisma.user.findUnique` lookup in the `jwt` callback.
+
+#### Vendor Strategy Finalised
+- Store creation: invite-only, `StoreInvite` token sent to pre-vetted vendors via DM.
+- ₦2,500 one-time store creation fee (deferred for first 20 pilot vendors; full payment via Paystack in Week 5).
+- NIN (TIER_1) skipped entirely. BVN verification deferred until ~seller #25.
+- "Deps as a Social Protocol": public `/u/[username]` profile page (shareable trust badge) flagged as high-priority Week 3 add-on.
+
+### Pending / Next Steps
+- Run `npx prisma db push` to sync new schema (OtpToken, StoreInvite, phoneVerified) to Neon DB.
+- Choose OTP delivery provider: Africa's Talking (Nigeria-native, cheaper) vs Twilio.
+- Build: `/api/auth/send-otp` + `/api/auth/verify-otp` routes.
+- Build: `/api/admin/invite` route to generate StoreInvite token + send email.
+- Build: `/invite/[id]` page — vendor claims invite, completes BVN form.
+- Build: Deps system (atomic `depCount` + `DepTransaction` in Prisma transaction).
