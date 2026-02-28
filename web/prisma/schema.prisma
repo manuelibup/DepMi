@@ -16,6 +16,17 @@ enum AuthProvider {
   WHATSAPP // WhatsApp phone verification
 }
 
+enum OtpType {
+  PHONE_VERIFICATION
+  EMAIL_RESET
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
 enum DepTier {
   SEEDLING // 0–50 Deps
   RISING // 51–200 Deps
@@ -80,9 +91,10 @@ model User {
   username    String?   @unique
   displayName String
   dateOfBirth DateTime? // Used for age gating
-  email       String?   @unique
-  phoneNumber String?   @unique
-  avatarUrl   String?
+  email         String?   @unique
+  phoneNumber   String?   @unique
+  phoneVerified Boolean   @default(false)
+  avatarUrl     String?
 
   // Auth — supports multiple providers per user
   // e.g. sign up with email, later link Google
@@ -107,6 +119,8 @@ model User {
   ordersAsBuyer   Order[]          @relation("BuyerOrders")
   depTransactions DepTransaction[] @relation("UserDepTransactions")
   notifications   Notification[]   @relation("UserNotifications")
+  otpTokens       OtpToken[]
+  storeInvite     StoreInvite?
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -143,7 +157,7 @@ model KycStatus {
   user   User   @relation(fields: [userId], references: [id])
 
   // Each step stores the verification provider's reference token
-  socialVerified Boolean @default(false) // → bumps to TIER_0
+  socialVerified Boolean @default(false) // → bumps to TIER_0 (Phone OTP)
   ninRef         String? // → bumps to TIER_1 (can buy)
   bvnRef         String? // → bumps to TIER_2 (can create stores + sell)
   proofOfAddress Boolean @default(false) // → bumps to TIER_3
@@ -388,4 +402,34 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: VENDOR INVITE & OTP SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model OtpToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      OtpType  @default(PHONE_VERIFICATION)
+  codeHash  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model StoreInvite {
+  id        String       @id @default(uuid())
+  email     String
+  expiresAt DateTime
+  status    InviteStatus @default(PENDING)
+  userId    String?      @unique
+  user      User?        @relation(fields: [userId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  
+  @@index([email])
 }

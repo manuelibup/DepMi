@@ -147,8 +147,8 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
             }
-            // Google sign-in: user object has the Google profile id, not the DB id.
-            // Look up the real DB user id by email.
+            // Google sign-in: user.id is the Google profile id, NOT the Neon DB id.
+            // Must look up the real DB user id by email.
             if (account?.provider === "google" && token.email) {
                 const dbUser = await prisma.user.findUnique({
                     where: { email: token.email },

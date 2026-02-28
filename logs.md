@@ -12,6 +12,7 @@
 - [Session 9 — Feb 27, 2026 (19:50–19:55 WAT) — Prisma Auth Error Fix](#session-9--feb-27-2026-19501955-wat--prisma-auth-error-fix)
 - [Session 10 — Feb 27, 2026 — KYC Architecture Decision](#session-10--feb-27-2026--kyc-architecture-decision)
 - [Session 11 — Feb 28, 2026 — Secure Vendor Invite System](#session-11--feb-28-2026--secure-vendor-invite-system)
+- [Session 12 — Feb 28, 2026 — Termii SMS, Resend Email & Deps Engine](#session-12--feb-28-2026--termii-sms-resend-email--deps-engine)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -390,9 +391,35 @@ Gemini accidentally broke `auth.ts` while working on the schema. The `jwt` callb
 - "Deps as a Social Protocol": public `/u/[username]` profile page (shareable trust badge) flagged as high-priority Week 3 add-on.
 
 ### Pending / Next Steps
-- Run `npx prisma db push` to sync new schema (OtpToken, StoreInvite, phoneVerified) to Neon DB.
-- Choose OTP delivery provider: Africa's Talking (Nigeria-native, cheaper) vs Twilio.
-- Build: `/api/auth/send-otp` + `/api/auth/verify-otp` routes.
-- Build: `/api/admin/invite` route to generate StoreInvite token + send email.
-- Build: `/invite/[id]` page — vendor claims invite, completes BVN form.
+- Build: WhatsApp/SMS OTP routes for buyers (`/api/auth/send-otp`, `/api/auth/verify-otp`).
 - Build: Deps system (atomic `depCount` + `DepTransaction` in Prisma transaction).
+- Choose OTP delivery provider: Africa's Talking (Nigeria-native, cheaper) vs Twilio.
+
+---
+
+## Session 12 — Feb 28, 2026 — Termii SMS, Resend Email & Deps Engine
+**Agent:** Antigravity 
+**Human:** Manuel
+
+### What was done:
+
+#### OTP Integration Plan Execution
+Based on the `messaging-setup-guide.md` strategy, we completely refactored the OTP routing and integrated production-grade platforms with local security handling:
+- **Resend (Email OTP):** Created `/api/auth/send-email-otp` to verify personal accounts using the free tier limits. Stored hashes logically in `OtpToken`.
+- **Termii (SMS OTP):** Discarded WhatsApp & Africa's Talking. Dropped in Termii for Nigeria-centric SMS verification on the `dnd` channel. Built `/api/auth/send-phone-otp` + `/api/auth/verify-phone-otp` to properly capture the returned Termii `pinId` and bump user `kycTier` to `TIER_0` upon validation.
+- Termii SDK implementation fully decoupled from local `bcrypt` logic.
+
+#### Dep Engine Architecture
+- Built the foundational `/api/deps/award` endpoint to support atomic transactions.
+- Wraps `Prisma.$transaction` to guarantee 100% integrity when writing `DepTransaction` audit log lines while immediately incrementing global `depCount` points on the `User` (Buyer) or `Store` (Seller) definitions.
+- Automated `DepTier` promotions (SEEDLING -> RISING, etc.) directly on the database mutation layer.
+
+#### Typings and Compilation
+- Resolved deep compiler discrepancies regarding `PrismaClient` cached model structures. Triggered a `db pull` to rectify `schema.prisma` mapping with the DB.
+- Ensured NextAuth configuration logic (especially the `jwt` Google ID DB lookup mapping) was functionally preserved intact.
+
+### Pending / Next Steps
+- Implement frontend UI logic to allow users to trigger and engage with the new Email OTP flows.
+- Build Vendor Store Creation: Implemented the gated store creation process, matching TIER_2 KYC plus Paystack handling.
+- Build out the User Profile page to display `depCount` globally alongside custom banners.
+- Connect the Discover feed to live Neon DB products.

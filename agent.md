@@ -21,13 +21,13 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 ### A. User/Store Architecture (Facebook Pages Model)
 - **Personal Account (User):** Every user starts as a buyer. Auth, KYC, purchasing, and demands live here.
 - **Business Account (Store):** A separate entity, like a Facebook Page. A user can own 0, 1, or many stores.
-- **KYC Gate:** Users must complete **BVN verification (TIER_2)** before they can create a Store.
+- **KYC Gate:** Store creation requires **BVN verification (TIER_2)**. For the MVP pilot, pilot vendors are manually elevated by admin. Dojah/Smile ID integration is added when Store creation demand scales (~seller #25+).
 - **Account Switching:** Users can switch between their personal account and any store they own (like Facebook profile ↔ Pages).
 
 ### B. Multi-Provider Auth
 - **Email + Password** (bcrypt hashed, 12+ salt rounds — never plaintext)
 - **Google OAuth** (subject ID stored as `providerId` in Account table)
-- **WhatsApp** (phone verification — Phase 2)
+- **WhatsApp OTP** (phone verification — active in Week 2; primary verification path for buyers)
 - Users can link multiple providers to one account (e.g. sign up with email, link Google later).
 - All auth records live in the `Account` table, referencing a single `User`.
 - **Implementation note:** Do NOT use `@next-auth/prisma-adapter`. DepMi's custom `Account` schema (`AuthProvider` enum, `providerId`, `passwordHash`) is incompatible with the adapter's expected format. Google OAuth is wired manually via the NextAuth `signIn` callback.
@@ -46,11 +46,13 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 
 ### D. Tiered KYC Verification
 - **UNVERIFIED:** Can browse and create demands.
-- **TIER_0:** Social accounts linked (IG/FB/X) — can bid (limited).
-- **TIER_1:** NIN verified — can buy via escrow.
-- **TIER_2:** BVN verified — **can CREATE A STORE, sell, receive payouts.**
-- **TIER_3:** Proof of address — full access, higher transaction limits.
-- **BUSINESS:** CAC + TIN verified — highest limits.
+- **TIER_0:** Email + phone OTP verified — can buy via escrow. *(Active from Week 2)*
+- **TIER_1:** NIN verified — higher limits. *(Deferred — skipped in MVP)*
+- **TIER_2:** BVN verified — **can CREATE A STORE, sell, receive payouts.** *(Deferred — manual elevation for pilot vendors)*
+- **TIER_3:** Proof of address — full access, higher transaction limits. *(Post-MVP)*
+- **BUSINESS:** CAC + TIN verified — highest limits. *(Post-MVP)*
+
+> **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with email + WhatsApp OTP (TIER_0). NIN (TIER_1) is skipped entirely. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN integration is added as a feature flag when Store creation demand justifies it. **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
 
 ### E. @DepMiBot (The Onboarding Hack)
 - **Workflow:** Vendor tags `@depmibot` on an Instagram/Facebook post.
@@ -92,12 +94,12 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (Deps) to prove the core concept within 42 days.
 
 ### **Phase 1: Identity & Trust (Weeks 1–2)**
-*   **W1: Auth & Profiles:** Implement Email/Password + Google + WhatsApp auth (Account model). User creation with personal profiles.
-*   **W2: KYC & Deps:** Integrate Smile ID/Dojah for tiered KYC (NIN → BVN → Address). Build Deps system (DepTransaction audit trail + atomic counter).
+*   **W1: Auth & Profiles:** Implement Email/Password + Google OAuth (Account model). User creation with personal profiles. ✅ *Complete.*
+*   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail).
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
-*   **W3: Stores & Products:** KYC-gated Store creation (TIER_2+). Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`).
-*   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch) to match demands to listings.
+*   **W3: Stores & Products:** Store creation (gated by TIER_2 + ₦2,500 one-time fee via Paystack - fee deferred for first 20 pilot vendors). Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+*   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**
 *   **W5: Secure Payments:** Paystack Split Payments with escrow. Order creation from accepted bids (origin tracing: demandId + bidId).
