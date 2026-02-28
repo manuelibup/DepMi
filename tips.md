@@ -116,3 +116,15 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Cause**: Next.js App Router uses Server Components by default. Any file that uses interactive hooks (`useState`, `useEffect`, `useSession`, `useRouter`) MUST be marked as a Client Component.
 - **The Fix**: Add the `"use client"` directive at the **very top** of the file (before any imports).
 - **Watch out**: When refactoring or merging, it's easy to accidentally delete this line. Always check the top of your page/component files if the build fails with Hydration or Hook errors.
+
+---
+
+## 🍪 10. Session Caching & JWT Refresh (Auth Debugging)
+
+*This tip was added after a "missing username" redirect wasn't triggering for an existing user.*
+
+- **The Issue**: You've added new fields to the database or logic to the user session (like a `username` check), but existing users don't see the changes.
+- **The Cause**: NextAuth sessions are cached in a JWT (JSON Web Token) cookie. This token is only refreshed on sign-in or through an explicit session update. If a user is already logged in, their browser still has the "old" identity.
+- **The Fix**: 
+  - **Option A (The Hammer):** Sign out via `/api/auth/signout` and sign back in. This completely replaces the cookie.
+  - **Option B (The Scalpel):** Use the `update()` function from the `useSession` hook in your React component to refresh the session programmatically.

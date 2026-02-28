@@ -533,6 +533,7 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 #### Fixes
 - **Vercel Build Fix:** Restored the `"use client"` directive to `src/app/page.tsx` after it was accidentally dropped during the onboarding redirect update. This resolved the Turbopack build error on Vercel.
 - **Secret Management:** Verified Google OAuth credentials in `web/.env.local` and deleted the source JSON file from `files/` to prevent accidental commits to Git.
+- **Onboarding Redirect Debug:** Resolved an issue where the onboarding redirect wouldn't trigger on localhost due to session caching. Advised the user to sign out via `/api/auth/signout` and sign back in to refresh the JWT with the latest user data (missing username).
 
 #### Deployment
 - **Push Confirmed:** All changes (Onboarding API, Profiles UI, and the Build Fix) have been pushed to `main` and are deploying on Vercel.
