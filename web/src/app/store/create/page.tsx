@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 export default function StoreCreatePage() {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
     const router = useRouter();
 
     const [form, setForm] = useState({

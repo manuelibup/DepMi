@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styles from './page.module.css';
+import WaitlistHome from '@/components/WaitlistHome';
 
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
@@ -61,6 +62,10 @@ const PRODUCT_ITEMS: ProductData[] = [
 ];
 
 export default function Home() {
+  if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
+    return <WaitlistHome />;
+  }
+
   return (
     <main className={styles.main}>
       <Header />

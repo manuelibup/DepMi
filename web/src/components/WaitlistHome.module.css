@@ -1,0 +1,217 @@
+/* Waitlist styling */
+.main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-color);
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
+}
+
+.bgBlob1 {
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    animation: float1 10s ease-in-out infinite alternate;
+}
+
+.bgBlob2 {
+    position: absolute;
+    bottom: -10%;
+    right: -10%;
+    width: 40vw;
+    height: 40vw;
+    background: radial-gradient(circle, rgba(255, 214, 0, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    animation: float2 12s ease-in-out infinite alternate;
+}
+
+@keyframes float1 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(10%, 10%) scale(1.1);
+    }
+}
+
+@keyframes float2 {
+    0% {
+        transform: translate(0, 0) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-10%, -10%) scale(1);
+    }
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--card-bg-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.pulseDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    box-shadow: 0 0 0 0 var(--primary-glow);
+    animation: pulseDot 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulseDot {
+    to {
+        box-shadow: 0 0 0 10px rgba(0, 200, 83, 0);
+    }
+}
+
+.title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.titleHighlight {
+    background: linear-gradient(135deg, var(--primary) 0%, #00e676 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.6;
+    animation: fadeInUp 1s ease-out;
+}
+
+.formCard {
+    width: 100%;
+    padding: 8px;
+    background: var(--card-bg-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeInUp 1.2s ease-out;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.formCard:focus-within {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--primary-light);
+}
+
+.inputWrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+}
+
+.inputIcon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.input {
+    width: 100%;
+    height: 48px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: var(--text-main);
+    outline: none;
+}
+
+.input::placeholder {
+    color: var(--text-muted);
+}
+
+.submitBtn {
+    height: 48px;
+    padding: 0 24px;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: scale(1.02);
+}
+
+.submitBtn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.messageSuccess {
+    color: var(--primary);
+}
+
+.messageError {
+    color: #FF3B30;
+}

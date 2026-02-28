@@ -70,6 +70,7 @@ export async function POST(req: Request) {
         }
 
         // 4. Success! Mark OTP as used and update User Profile
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await prisma.$transaction(async (tx: any) => {
             await tx.otpToken.update({
                 where: { id: otpRecord.id },
