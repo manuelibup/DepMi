@@ -105,3 +105,14 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 1. `DATABASE_URL`: Your Neon connection string.
 2. `NEXTAUTH_SECRET`: A random long string for session security.
 3. `NEXT_PUBLIC_SHOW_WAITLIST`: Set to `true` to toggle the waitlist landing page.
+
+---
+
+## 🏗️ 9. The "Use Client" Rule (React Hooks)
+
+*This tip was added after a Turbopack build error on Vercel.*
+
+- **The Issue**: You see an error like `You're importing a component that needs useEffect. This React Hook only works in a Client Component.`
+- **The Cause**: Next.js App Router uses Server Components by default. Any file that uses interactive hooks (`useState`, `useEffect`, `useSession`, `useRouter`) MUST be marked as a Client Component.
+- **The Fix**: Add the `"use client"` directive at the **very top** of the file (before any imports).
+- **Watch out**: When refactoring or merging, it's easy to accidentally delete this line. Always check the top of your page/component files if the build fails with Hydration or Hook errors.

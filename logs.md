@@ -17,6 +17,7 @@
 - [Session 14 — Feb 28, 2026 — Email OTP Frontend & Prisma Connection Fix](#session-14--feb-28-2026--email-otp-frontend--prisma-connection-fix)
 - [Session 15 — Feb 28, 2026 — Waitlist Deployment & Vercel Fixes](#session-15--feb-28-2026--waitlist-deployment--vercel-fixes)
 - [Session 16 — Feb 28, 2026 — User Onboarding & Public Profiles](#session-16--feb-28-2026--user-onboarding--public-profiles)
+- [Session 17 — Feb 28, 2026 — Vercel Client Fix & Secret Cleanup](#session-17--feb-28-2026--vercel-client-fix--secret-cleanup)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -520,3 +521,21 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 ### Pending / Next Steps
 - Implement gated Vendor Store Creation (`/store/create`).
 - Connect live DB feeds into the Discover page.
+
+---
+
+## Session 17 — Feb 28, 2026 — Vercel Client Fix & Secret Cleanup
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+
+#### Fixes
+- **Vercel Build Fix:** Restored the `"use client"` directive to `src/app/page.tsx` after it was accidentally dropped during the onboarding redirect update. This resolved the Turbopack build error on Vercel.
+- **Secret Management:** Verified Google OAuth credentials in `web/.env.local` and deleted the source JSON file from `files/` to prevent accidental commits to Git.
+
+#### Deployment
+- **Push Confirmed:** All changes (Onboarding API, Profiles UI, and the Build Fix) have been pushed to `main` and are deploying on Vercel.
+
+### Pending / Next Steps
+- Launch the Vendor Store creation flow.
