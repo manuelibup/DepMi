@@ -65,6 +65,11 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Bid→Product Link:** Vendors can attach an existing product from their store when bidding.
 - **Order Tracing:** Orders track their origin (Demand + Bid), so the demand→bid→order flow is auditable.
 
+### G. Reshare to Earn (Affiliate Commission)
+- **Concept:** Every user gets a custom generated link for products. If a user reshares a product and a sale happens through that link, they earn a commission (like Amazon Affiliates).
+- **Vendor Control:** Sellers explicitly activate this feature on a per-product (or store) basis, deciding the commission percentage (deducted from their profit).
+- **Non-Commissioned Shares:** If a vendor turns this off, the sharer doesn't earn fiat money, but they *do* earn "Deps" (credibility points) for driving a completed sale. This keeps the incentive alive even without cash rewards.
+
 ---
 
 ## 3. Brand Identity (Tech + Culture)
@@ -102,7 +107,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**
-*   **W5: Secure Payments:** Paystack Split Payments with escrow. Order creation from accepted bids (origin tracing: demandId + bidId).
+*   **W5: Secure Payments & Affiliates:** Paystack Split Payments with escrow. Order creation from accepted bids (origin tracing: demandId + bidId). Implement "Reshare to Earn" commission splits for affiliate links.
 *   **W6: The Loop:** Order status tracking (7 statuses). "Confirm Receipt" triggers vendor payout + Dep for both parties. Notification system (10 event types). Launch Pilot with first 20 vendors.
 
 ---

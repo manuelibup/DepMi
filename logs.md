@@ -13,6 +13,7 @@
 - [Session 10 — Feb 27, 2026 — KYC Architecture Decision](#session-10--feb-27-2026--kyc-architecture-decision)
 - [Session 11 — Feb 28, 2026 — Secure Vendor Invite System](#session-11--feb-28-2026--secure-vendor-invite-system)
 - [Session 12 — Feb 28, 2026 — Termii SMS, Resend Email & Deps Engine](#session-12--feb-28-2026--termii-sms-resend-email--deps-engine)
+- [Session 13 — Feb 28, 2026 — Affiliate System Strategy](#session-13--feb-28-2026--affiliate-system-strategy)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -423,3 +424,41 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 - Build Vendor Store Creation: Implemented the gated store creation process, matching TIER_2 KYC plus Paystack handling.
 - Build out the User Profile page to display `depCount` globally alongside custom banners.
 - Connect the Discover feed to live Neon DB products.
+
+---
+
+## Session 13 — Feb 28, 2026 — Affiliate System Strategy
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was discussed:
+- **Reshare to Earn (Affiliate System):** Manuel introduced a new growth mechanic. Users can generate custom buy links for products. If a product with the feature enabled is bought via the link, the sharer earns a commission (similar to Amazon Affiliates).
+- **Incentive design:** For sellers who opt out of giving cash commissions, users who share their products will instead earn **Deps** (credibility points) if the share leads to a sale, ensuring there's always an incentive to drive traffic.
+- **Roadmap Placement:** Decided to slot the affiliate payment split logic into **Phase 3 (Week 5)** alongside the Paystack Split Payments integration, as it relies on the same escrow/split flow.
+
+### Documentation Updates:
+- Updated `agent.md` to include "Reshare to Earn" in Foundational Features.
+- Updated `agent.md` MVP Roadmap, adding Affiliate mechanics to Phase 3.
+
+---
+
+## Session 14 — Feb 28, 2026 — Email OTP Frontend & Prisma Connection Fix
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+
+#### Email OTP Frontend Component
+- **UI Scaffold:** Built `/verify-email` frontend route handling the Email OTP Verification user flow.
+- **Client Hooks:** Connected the `send-email-otp` and `verify-email-otp` backend functions successfully into a 2-step unified React form.
+- **Session Protection:** Enforced `useSession()` blocks to mandate that the requesting user's active token is securely aligned with the requested Resend email targeting.
+
+#### Prisma Architecture Downgrade
+- **The Crash:** The `/admin` and DB-connected API endpoints threw an instantiation crash: `Using engine type "client" requires either "adapter" or "accelerateUrl" to be provided to PrismaClient constructor`.
+- **Diagnosis:** Prisma `v7.4` inherently wiped the ability to use native connection URL parameter setups from `schema.prisma` without specifically bootstrapping serverless HTTP edge adapters.
+- **Resolution:** Re-installed the stable Prisma v6 stack (`@prisma/client@6.4.1`, `prisma@6.4.1`) to restore standard relational URLs without over-engineering the application layer. The Admin invite interface is now operational.
+
+### Pending / Next Steps
+- Execute Vendor Store Creation implementation: build the gated `/store/create` step incorporating TIER_2 checks.
+- Build the Public User Profile component (`/u/[username]`).
+- Connect live DB feeds into `page.tsx` Discover queries.

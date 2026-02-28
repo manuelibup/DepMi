@@ -69,3 +69,14 @@ Whenever you **change Root Directory** in Vercel Settings, Vercel silently reset
 4. Build logs say `up to date in <2s`? → Redeploy with **"Clear Build Cache" unchecked**
 5. Still stuck? Share the full build logs with your AI agent and ask: *"The build succeeds but every route returns 404. The Framework Preset is set to Next.js. What else could cause this?"*
 
+---
+
+## 💡 6. Prisma Database Connection Gotcha (v6 vs v7)
+
+*This section was added after an accidental `npm install prisma` upgrade broke global DB connectivity with a `PrismaClientConstructorValidationError`.*
+
+- **The Issue**: You encounter a crash stating `Using engine type "client" requires either "adapter" or "accelerateUrl"`.
+- **The Cause**: Prisma version 7 represents a massive breaking change that dropped native support for parsing `url` variables inside `schema.prisma` natively without explicit Edge database driver configurations. 
+- **The Fix**: The fastest way to restore standard PostgreSQL DB parsing out of the box—without configuring generic edge setups (like `@prisma/adapter-neon`) inside `src/lib/prisma.ts`—is to aggressively downgrade to the stable **v6** tree! 
+  - Run `npm install prisma@^6.4.1 @prisma/client@^6.4.1`
+  - Make sure `url = env("DATABASE_URL")` is stored under `datasource db` in your `schema.prisma`.
