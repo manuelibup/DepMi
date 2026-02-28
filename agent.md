@@ -24,7 +24,13 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **KYC Gate:** Store creation requires **BVN verification (TIER_2)**. For the MVP pilot, pilot vendors are manually elevated by admin. Dojah/Smile ID integration is added when Store creation demand scales (~seller #25+).
 - **Account Switching:** Users can switch between their personal account and any store they own (like Facebook profile ↔ Pages).
 
-### B. Multi-Provider Auth
+### B. Waitlist Mode (Pre-launch Strategy)
+- **Waitlist UI:** High-fidelity landing page with glassmorphism and animated background blobs.
+- **Persistence:** Collects and validates email addresses in the `Waitlist` model via `/api/waitlist`.
+- **Conditional Toggle:** Site conditionally renders the Waitlist based on the `NEXT_PUBLIC_SHOW_WAITLIST` environment variable.
+- **Goal:** Public pre-launch phase to build hype and capture leads while dev continues.
+
+### C. Multi-Provider Auth
 - **Email + Password** (bcrypt hashed, 12+ salt rounds — never plaintext)
 - **Google OAuth** (subject ID stored as `providerId` in Account table)
 - **WhatsApp OTP** (phone verification — active in Week 2; primary verification path for buyers)

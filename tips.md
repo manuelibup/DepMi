@@ -80,3 +80,28 @@ Whenever you **change Root Directory** in Vercel Settings, Vercel silently reset
 - **The Fix**: The fastest way to restore standard PostgreSQL DB parsing out of the box—without configuring generic edge setups (like `@prisma/adapter-neon`) inside `src/lib/prisma.ts`—is to aggressively downgrade to the stable **v6** tree! 
   - Run `npm install prisma@^6.4.1 @prisma/client@^6.4.1`
   - Make sure `url = env("DATABASE_URL")` is stored under `datasource db` in your `schema.prisma`.
+
+---
+
+## 🚀 7. Prisma on Vercel: The Postinstall Requirement
+
+*This tip was added after a "Prisma Client not found" build error on Vercel.*
+
+- **The Issue**: Vercel builds fail or throw library initialization errors even though Prisma is in `package.json`.
+- **The Cause**: Vercel's build environment doesn't automatically generate the Prisma Client from your `schema.prisma` unless explicitly told to.
+- **The Fix**: Add a `postinstall` script to your `package.json`:
+  ```json
+  "scripts": {
+    "postinstall": "prisma generate"
+  }
+  ```
+- **Why?**: This ensures that every time `npm install` runs on Vercel (during build), the special Prisma Client folder is generated into `node_modules`.
+
+---
+
+## 🔑 8. Vercel Environment Variable Checklist
+
+Don't forget to set these in **Project Settings > Environment Variables** for any DepMi deployment:
+1. `DATABASE_URL`: Your Neon connection string.
+2. `NEXTAUTH_SECRET`: A random long string for session security.
+3. `NEXT_PUBLIC_SHOW_WAITLIST`: Set to `true` to toggle the waitlist landing page.

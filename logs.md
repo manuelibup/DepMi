@@ -14,6 +14,8 @@
 - [Session 11 — Feb 28, 2026 — Secure Vendor Invite System](#session-11--feb-28-2026--secure-vendor-invite-system)
 - [Session 12 — Feb 28, 2026 — Termii SMS, Resend Email & Deps Engine](#session-12--feb-28-2026--termii-sms-resend-email--deps-engine)
 - [Session 13 — Feb 28, 2026 — Affiliate System Strategy](#session-13--feb-28-2026--affiliate-system-strategy)
+- [Session 14 — Feb 28, 2026 — Email OTP Frontend & Prisma Connection Fix](#session-14--feb-28-2026--email-otp-frontend--prisma-connection-fix)
+- [Session 15 — Feb 28, 2026 — Waitlist Deployment & Vercel Fixes](#session-15--feb-28-2026--waitlist-deployment--vercel-fixes)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -462,3 +464,31 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 - Execute Vendor Store Creation implementation: build the gated `/store/create` step incorporating TIER_2 checks.
 - Build the Public User Profile component (`/u/[username]`).
 - Connect live DB feeds into `page.tsx` Discover queries.
+
+---
+
+## Session 15 — Feb 28, 2026 — Waitlist Deployment & Vercel Fixes
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+
+#### Waitlist Implementation
+- **Prisma Schema:** Added a `Waitlist` model for collecting email leads.
+- **API Route:** Created `/api/waitlist` with Zod validation to securely store leads in Neon DB.
+- **UI Component:** Created a high-fidelity `WaitlistHome` component with glassmorphism, animated background blobs, and a premium "Coming Soon" vibe.
+- **Conditional Landing:** Modified `src/app/page.tsx` to conditionally render the Waitlist instead of the feed based on `NEXT_PUBLIC_SHOW_WAITLIST` being `true`.
+
+#### Vercel Deployment & Fixes
+- **Prisma Postinstall:** Added `"postinstall": "prisma generate"` to `package.json`. This is critical for Vercel to rebuild the Prisma client during the deployment build phase.
+- **Environment Variables:** Documented the requirement for `DATABASE_URL` and `NEXTAUTH_SECRET` in Vercel settings.
+- **Prisma Import Fix:** Corrected a named vs default import mismatch for `prisma` in the waitlist route.
+- **Database Sync:** Ran `npx prisma db push` to ensure the live Neon database schema matches the new local model.
+
+#### Result
+- The live site (`depmi.vercel.app`) now successfully shows the Waitlist page to public users.
+- Manuel can still see and work on the actual social feed locally.
+
+### Pending / Next Steps
+- Implement gated Vendor Store Creation (`/store/create`).
+- Connect live DB feeds into the Discover page for users who join/bypass waitlist.
