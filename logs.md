@@ -16,6 +16,7 @@
 - [Session 13 — Feb 28, 2026 — Affiliate System Strategy](#session-13--feb-28-2026--affiliate-system-strategy)
 - [Session 14 — Feb 28, 2026 — Email OTP Frontend & Prisma Connection Fix](#session-14--feb-28-2026--email-otp-frontend--prisma-connection-fix)
 - [Session 15 — Feb 28, 2026 — Waitlist Deployment & Vercel Fixes](#session-15--feb-28-2026--waitlist-deployment--vercel-fixes)
+- [Session 16 — Feb 28, 2026 — User Onboarding & Public Profiles](#session-16--feb-28-2026--user-onboarding--public-profiles)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -492,3 +493,30 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 ### Pending / Next Steps
 - Implement gated Vendor Store Creation (`/store/create`).
 - Connect live DB feeds into the Discover page for users who join/bypass waitlist.
+
+---
+
+## Session 16 — Feb 28, 2026 — User Onboarding & Public Profiles
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+
+#### User Onboarding Flow
+- **Auth Session Update:** Modified `src/lib/auth.ts` to include `username` in the Session and JWT objects. Now the app can detect if a user has a complete identity.
+- **Onboarding API:** Created `/api/user/onboarding` to allow users (especially Google OAuth sign-ups) to securely choose their `@username` and `displayName`.
+- **Onboarding UI:** Built a premium, glassmorphic onboarding page at `/onboarding` with real-time feedback and session updating.
+- **Redirect Logic:** Integrated a profile-completion check in the home page (`src/app/page.tsx`). Logged-in users without a username are now gracefully guided to the onboarding screen.
+
+#### Public Profile Pages
+- **Dynamic Routing:** Implemented `/u/[username]` to display public user data from the Neon DB.
+- **Trust Visualization:** The profile highlights the user's **Deps** (Trust Score) and **Tier Badge** (Seedling, Rising, etc.), making user credibility verifiable.
+- **Responsive Design:** Used modern CSS tokens for a premium, mobile-first profile layout.
+
+### Result
+- Google Sign-in users now have a clear path to set up their identity.
+- Every user on DepMi has a public, shareable URL (`/u/username`) that visualizes their on-platform trust.
+
+### Pending / Next Steps
+- Implement gated Vendor Store Creation (`/store/create`).
+- Connect live DB feeds into the Discover page.

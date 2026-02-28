@@ -1,6 +1,6 @@
-'use client';
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import WaitlistHome from '@/components/WaitlistHome';
 
@@ -62,6 +62,15 @@ const PRODUCT_ITEMS: ProductData[] = [
 ];
 
 export default function Home() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (session?.user && !session.user.username) {
+      router.push('/onboarding');
+    }
+  }, [session, router]);
+
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
     return <WaitlistHome />;
   }

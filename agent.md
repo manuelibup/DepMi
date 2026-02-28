@@ -105,8 +105,8 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (Deps) to prove the core concept within 42 days.
 
 ### **Phase 1: Identity & Trust (Weeks 1–2)**
-*   **W1: Auth & Profiles:** Implement Email/Password + Google OAuth (Account model). User creation with personal profiles. ✅ *Complete.*
-*   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail).
+*   **W1: Auth & Profiles:** Implement Email/Password + Google OAuth (Account model). User onboarding flow for Google OAuth users. Public User Profiles (`/u/[username]`) with trust visualization (Deps & Tiers). ✅ *Complete.*
+*   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail). [/] *In Progress.*
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
 *   **W3: Stores & Products:** Store creation (gated by TIER_2 + ₦2,500 one-time fee via Paystack - fee deferred for first 20 pilot vendors). Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.

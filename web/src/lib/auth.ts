@@ -10,6 +10,7 @@ declare module "next-auth" {
     interface Session {
         user: {
             id: string;
+            username?: string | null;
             name?: string | null;
             email?: string | null;
             image?: string | null;
@@ -138,6 +139,7 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             if (token && session.user) {
                 session.user.id = token.id as string;
+                session.user.username = token.username as string | undefined;
             }
             return session;
         },
@@ -146,16 +148,20 @@ export const authOptions: NextAuthOptions = {
             // Credentials sign-in: user.id is the DB id returned by authorize()
             if (user) {
                 token.id = user.id;
+                // For credentials, username might already be in the user object
+                // but let's ensure it's fetched or passed.
+                // Actually, authorize() returns what we define.
             }
-            // Google sign-in: user.id is the Google profile id, NOT the Neon DB id.
-            // Must look up the real DB user id by email.
-            if (account?.provider === "google" && token.email) {
+
+            // Always fetch the latest from DB to be sure (username, id, etc.)
+            if (token.email) {
                 const dbUser = await prisma.user.findUnique({
                     where: { email: token.email },
-                    select: { id: true },
+                    select: { id: true, username: true },
                 });
                 if (dbUser) {
                     token.id = dbUser.id;
+                    token.username = dbUser.username;
                 }
             }
             return token;
