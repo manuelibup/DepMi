@@ -1,0 +1,129 @@
+import React from 'react';
+import { prisma } from '@/lib/prisma';
+import styles from './page.module.css';
+import Link from 'next/link';
+
+import Header from '@/components/Header';
+import BottomNav from '@/components/BottomNav';
+
+const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
+
+export default async function SearchPage() {
+    // Top 5 stores by Dep Count
+    const topStores = await prisma.store.findMany({
+        where: { isActive: true },
+        orderBy: { depCount: 'desc' },
+        take: 5,
+        select: { id: true, name: true, slug: true, depCount: true, logoUrl: true }
+    });
+
+    // Recent Products
+    const products = await prisma.product.findMany({
+        where: { inStock: true },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { images: true }
+    });
+
+    return (
+        <main className={styles.main}>
+            <Header />
+
+            {/* Sticky Search Bar */}
+            <div className={styles.searchHeader}>
+                <div className={styles.searchInputWrap}>
+                    <svg className={styles.searchIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" className={styles.searchInput} placeholder="Search products, stores, demands..." />
+                </div>
+            </div>
+
+            {/* Categories */}
+            <section className={styles.section} style={{ paddingTop: '8px' }}>
+                <div className={styles.categoriesScroll}>
+                    {CATEGORIES.map((cat, i) => (
+                        <Link key={cat} href={`/search?category=${cat}`} className={`${styles.categoryPill} ${i === 0 ? styles.active : ''}`}>
+                            {cat}
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {/* Featured Stores Carousel */}
+            {topStores.length > 0 && (
+                <section className={styles.section} style={{ paddingTop: '0' }}>
+                    <div className={styles.sectionTitle}>
+                        <span>Featured Stores 🏆</span>
+                    </div>
+                    <div className={styles.featuredStores}>
+                        {topStores.map((store, i) => {
+                            const colors = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+                            const colorIndex = (store.name.length + i) % colors.length;
+
+                            return (
+                                <Link href={`/store/${store.slug}`} key={store.id} className={styles.storeCard}>
+                                    <div className={styles.storeLogo} style={{ background: store.logoUrl ? 'transparent' : colors[colorIndex] }}>
+                                        {store.logoUrl ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={store.logoUrl} alt={store.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <span style={{ color: '#fff' }}>{store.name.charAt(0).toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                    <span className={styles.storeName}>{store.name}</span>
+                                    <span className={styles.storeDeps}>{store.depCount} Deps</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* Organic Products Feed */}
+            <section className={styles.section}>
+                <div className={styles.sectionTitle}>
+                    <span>Recent Finds 📦</span>
+                </div>
+
+                {products.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                        <p>No products found around you.</p>
+                    </div>
+                ) : (
+                    <div className={styles.productsGrid}>
+                        {products.map(product => (
+                            <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: '1px solid var(--card-border)' }}>
+                                <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--bg-elevated)', position: 'relative' }}>
+                                    {product.images && product.images.length > 0 ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={product.images[0].url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: 'var(--text-muted)' }}>
+                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                <circle cx="9" cy="9" r="2" />
+                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ padding: '12px' }}>
+                                    <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {product.title}
+                                    </h3>
+                                    <p style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+                                        ₦{Number(product.price).toLocaleString()}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <BottomNav />
+        </main>
+    );
+}

@@ -144,7 +144,7 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
 
-        async jwt({ token, user, account }) {
+        async jwt({ token, user }) {
             // Credentials sign-in: user.id is the DB id returned by authorize()
             if (user) {
                 token.id = user.id;

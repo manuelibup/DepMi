@@ -5,7 +5,7 @@ import path from 'path';
 // Load .env.local
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-const apiKey = process.env.RESEND_API_KEY;
+const apiKey = process.env.RESEND_API_KEY as string;
 const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 if (!apiKey) {

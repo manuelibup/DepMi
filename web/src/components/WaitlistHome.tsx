@@ -33,6 +33,7 @@ export default function WaitlistHome() {
             setStatus('success');
             setMessage(data.message);
             setEmail('');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             setStatus('error');
             setMessage(error.message);
