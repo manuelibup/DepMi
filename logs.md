@@ -862,3 +862,53 @@ Home  |  Discover  |  ➕  |  Demand Engine  |  Profile
 ### Pending / Next Steps
 - Transition to Phase 2 Week 4: Demand Engine.
 - Finalize the `+` bottom sheet architecture if contextual creation flow is desired over direct routing.
+
+---
+
+## Session 25 — Mar 1, 2026 — Nav Architecture Finalised (Post-Gemini Critique)
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Gemini Nav Critique — All 5 Points Valid, All Addressed
+
+**1. "Demand Engine" tab name → renamed "Requests"**
+"Demand Engine" is internal jargon. "Requests" is immediately self-explanatory for both buyers ("requests I can browse") and vendors ("requests I can bid on"). The screen can still be branded "Demand Engine" once they land there.
+
+**2. ➕ friction for single-option users → smart routing**
+- Buyer (no store): ➕ routes directly to `/demand/new`. No sheet.
+- Store owner: ➕ opens sheet with two options ("Post a Request" / "Add a Product").
+- Unauthenticated: redirects to `/login`.
+
+**3. Global search discoverability → header icon**
+Search icon added to header (top-right) on Home and Requests tabs. Routes to `/discover?focus=search`. No nav slot wasted.
+
+**4. Orders tab removed — mitigated via Profile priority**
+Orders stays inside Profile tab but must be the first visible element — "My Orders" and "Active Bids" as prominent cards, NOT buried in a settings list. Avoids 6th tab while keeping high-anxiety order tracking immediately accessible.
+
+**5. Home vs Discover boundary — enforced**
+- Home = only stores/people you follow. Organic, no algorithmic strangers.
+- Discover = algorithmic, trending, suggested. Exploration tab.
+Rule must be enforced in data queries, not just design.
+
+#### Final Nav (Locked)
+```
+Home  |  Discover  |  ➕  |  Requests  |  Profile
+```
+| Tab | Route | Purpose |
+|---|---|---|
+| Home | `/` | Followed stores/users feed only |
+| Discover | `/discover` | Algorithmic + embedded search bar |
+| ➕ (centre) | Sheet or direct | Buyer → direct to demand; Seller → sheet |
+| Requests | `/requests` | Demand Engine feed (renamed for clarity) |
+| Profile | `/profile` | My Orders + Active Bids first, settings below |
+
+### agent.md Updated
+- Navigation architecture section: full rewrite with final decisions and refinements.
+
+### Pending / Next Steps
+- Implement BottomNav with final 5-tab structure (rename Demand Engine tab to Requests)
+- Move `/search` route → `/discover` (search is embedded there, not its own route)
+- Build `/requests` route (Demand Engine feed — Week 4)
+- Profile page: restructure to show My Orders + Active Bids as top cards

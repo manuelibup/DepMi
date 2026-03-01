@@ -143,18 +143,19 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W3: Stores & Products:** Store creation gated by TIER_2 (BVN + NIN both required). Pilot vendors use admin invite code bypass — Dojah integration added at ~seller #25. Free to list — no subscription on store creation. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
     - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
     - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled "Sponsored"). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
-    - **Navigation Architecture (Final):** 5-tab bottom nav restructured as:
+    - **Navigation Architecture (Final — post Gemini critique):** 5-tab bottom nav:
       ```
-      Home  |  Discover  |  ➕  |  Demand Engine  |  Profile
+      Home  |  Discover  |  ➕  |  Requests  |  Profile
       ```
-      - **Home** — Social feed: follows, activity, Deps earned. Organic only.
-      - **Discover** — Browse products/stores with an embedded search bar at the top. Category filters below.
-      - **➕ (Centre, raised)** — Contextual creation sheet (bottom drawer):
-        - Always shows: "📣 Post a Demand" (buyer posts what they're looking for)
-        - Only shown if user has a store: "📦 Add a Product"
-      - **Demand Engine** — Dedicated tab for the demand request feed. Buyers browse open demands; vendors see bidding opportunities. Gets its own permanent tab because it is the core differentiator.
-      - **Profile** — Personal account, store switcher, settings.
-      - **Search** removed as a standalone tab. Lives in: (a) header top-right icon, (b) embedded search bar within the Discover tab. Both are where users instinctively look for search.
+      - **Home** (`/`) — Social feed of stores/people you **follow** only. Organic, never algorithmic strangers. Deps activity, recent sales by followed stores.
+      - **Discover** (`/discover`) — Algorithmic, trending, suggested. Embedded search bar at top. Category filters below. This is exploration; Home is connection.
+      - **➕ (Centre, raised)** — Smart routing:
+        - **Buyer (no store):** Tapping ➕ routes **directly** to `/demand/new` — no sheet, no friction.
+        - **Store owner:** Tapping ➕ opens a bottom sheet with two options: "📣 Post a Request" and "📦 Add a Product".
+        - **Unauthenticated:** Redirects to `/login`.
+      - **Requests** (`/requests`) — The Demand Engine feed, renamed for clarity. Buyers browse open product requests; vendors see bidding opportunities. The core differentiator gets its own permanent tab.
+      - **Profile** (`/profile`) — Opens to **"My Orders"** and **"Active Bids"** as the first visible cards (not buried in settings). Store switcher and account settings below.
+      - **Search** — Not a standalone tab. Lives as: (a) header top-right icon on Home and Requests tabs, routing to `/discover?focus=search`, (b) embedded bar within Discover tab.
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**
