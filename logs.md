@@ -912,3 +912,54 @@ Home  |  Discover  |  ➕  |  Requests  |  Profile
 - Move `/search` route → `/discover` (search is embedded there, not its own route)
 - Build `/requests` route (Demand Engine feed — Week 4)
 - Profile page: restructure to show My Orders + Active Bids as top cards
+
+---
+
+## Session 26 — Mar 1, 2026 — Nav Architecture Truly Finalised
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Gemini Proposed Final Nav — Accepted in Full
+Gemini's second critique proposed a stronger architecture. Accepted after analysis.
+
+**Final nav (locked — no further changes):**
+```
+Home  |  Requests  |  ➕  |  Orders  |  Profile
+```
+
+| Tab | Route | Purpose |
+|---|---|---|
+| Home | `/` | Combined feed (MVP: all content; Phase 2: follows + algorithmic) |
+| Requests | `/requests` | Demand Engine — post requests, bid on them |
+| ➕ (centre) | Smart routing | Buyer → direct to /demand/new; Store owner → sheet |
+| Orders | `/orders` | Dedicated order tracking + active bids |
+| Profile | `/profile` | Account, store switcher, settings |
+
+**Search** → Global header icon (🔍) on every screen. Opens `/search` with keyboard focused + trending/nearby shown before typing. Universal pattern, not a nav tab.
+
+**Why Discover tab was dropped:**
+- Follows-vs-algorithmic distinction is meaningless with 0–500 users (no social graph)
+- Orders dedicated > Discover dedicated for a commerce app
+- Discover content is served through Home feed + Search page
+
+**Why Orders gets a dedicated tab:**
+- Post-purchase order tracking is the #1 return reason for commerce app opens
+- "Where is my order?" is high-anxiety — one tap should answer it
+- Orders prominence = DepMi signals it takes transactions seriously
+
+**Why global header search beats a Discover tab:**
+- Always accessible regardless of active tab
+- Opens to trending/nearby content = passive discovery even without a query
+- YouTube/Instagram/Twitter universal pattern — no user training needed
+
+### agent.md Updated
+- Navigation architecture: replaced with truly final version.
+
+### Pending / Next Steps (Implementation)
+- Update `BottomNav.tsx`: 5 tabs — Home, Requests, ➕, Orders, Profile
+- Update `Header.tsx`: add 🔍 search icon to top-right on all screens
+- Build `/requests` route (Demand Engine feed — Week 4)
+- Build `/orders` route (order tracking page)
+- Build `/search` route (focused keyboard + trending/nearby default state)
