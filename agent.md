@@ -53,12 +53,12 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 ### D. Tiered KYC Verification
 - **UNVERIFIED:** Can browse and create demands.
 - **TIER_0:** Email + phone OTP verified — can buy via escrow. *(Active from Week 2)*
-- **TIER_1:** NIN verified — higher limits. *(Deferred — skipped in MVP)*
-- **TIER_2:** BVN verified — **can CREATE A STORE, sell, receive payouts.** *(Deferred — manual elevation for pilot vendors)*
-- **TIER_3:** Proof of address — full access, higher transaction limits. *(Post-MVP)*
-- **BUSINESS:** CAC + TIN verified — highest limits. *(Post-MVP)*
+- **TIER_1:** NIN verified — skipped as a standalone gate; NIN is bundled into TIER_2 for store creators.
+- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Buyers only need TIER_0; the higher bar applies to store creators who receive real money. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
+- **TIER_3 / Verified Business Badge:** BVN + NIN + CAC registration. DepMi assists with CAC filing (see Financial Model). Verified badge issued on CAC confirmation.
+- **BUSINESS:** TIN verified — highest transaction limits. *(Post-MVP)*
 
-> **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with email + WhatsApp OTP (TIER_0). NIN (TIER_1) is skipped entirely. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN integration is added as a feature flag when Store creation demand justifies it. **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
+> **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with email + phone OTP (TIER_0) only. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN + NIN verification added as a feature flag when store creation demand scales (~seller #25+). **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
 
 ### E. @DepMiBot (The Onboarding Hack)
 - **Workflow:** Vendor tags `@depmibot` on an Instagram/Facebook post.
@@ -113,7 +113,16 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
   - ₦2,500/week (Category top-spot placement)
   - Clearly labelled "Sponsored" — organic content below is never paid.
 - **Secondary Revenue — Demand Engine Bid Boost:** ₦300–₦500 to pin a vendor's bid response to the top of an open demand request. Impulse-spend; high perceived value.
-- **Annual — Verified Business Badge:** ₦15,000/year. Renewable annually. Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy. Long-term goal: DepMi Verified becomes the African industry standard for business trust — verifiable via a public badge link on WhatsApp/Instagram/TikTok bio.
+- **Verified Business Badge — Subscription (Revocable):**
+  - Monthly: ₦1,500 · 6 Months: ₦8,000 · Annual: ₦15,000
+  - Renewable. Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy. The revocability is what gives the badge real weight.
+  - Long-term vision: DepMi Verified becomes the African industry trust standard — linkable on WhatsApp/Instagram/TikTok bio. Backed by real CAC registration, not just a self-reported check.
+- **CAC Registration Assistance (Service Fee):**
+  - DepMi partners with a CAC filing service (e.g. Approve.ng, Simplifycac) to offer in-app CAC registration.
+  - Business Name: ₦10,000 (official CAC fee) + ₦5,000 (DepMi service fee) = **₦15,000 total**.
+  - Private Limited (Ltd): ₦25,000 (official) + ₦10,000 (service fee) = **₦35,000 total**.
+  - Vendors with an existing CAC number can enter it directly to skip filing. DepMi confirms and issues the Verified badge.
+  - Vendors without CAC are guided through the in-app filing flow. Badge issued on CAC confirmation (2–5 business days).
 - **Phase 2 — Fixed Influencer Deals:** Stores and affiliates negotiate flat-rate promotion deals in-app. DepMi takes **10%** of the agreed deal value for facilitating the agreement.
 - **Phase 2 — Pro Subscription (Deferred):** Monthly/quarterly/bi-annual/annual plans introduced only after vendors are already profitable on the platform and organically requesting advanced tools (unlimited products, priority bidding, same-day payouts, detailed analytics). Forcing subscriptions before value is proven risks vendor churn and competitor advantage.
 - **Wallet Strategy:** No internal holding of funds in Phase 1 (Avoids ₦4B CBN requirement). Funds auto-settle to vendor bank accounts (T+1).
@@ -129,8 +138,9 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail). [/] *In Progress.*
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
-*   **W3: Stores & Products:** Store creation (gated by TIER_2; pilot vendors use admin invite code bypass). No subscription on store creation — free to list. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
-    - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
+*   **W3: Stores & Products:** Store creation gated by TIER_2 (BVN + NIN both required). Pilot vendors use admin invite code bypass — Dojah integration added at ~seller #25. Free to list — no subscription on store creation. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+    - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
+    - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled "Sponsored"). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
     - **Navigation Change:** Bottom nav centre button changed from `+` (PlusCircle) to Magnifying Glass (Search). Search-first approach helps buyers find products immediately.
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 

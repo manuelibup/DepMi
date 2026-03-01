@@ -694,3 +694,53 @@ NEXT_PUBLIC_APP_URL=https://depmi.vercel.app  # used in invite URL generation
 - Build product listing flow
 - Change bottom nav centre icon to Search (Magnifying Glass)
 - Connect Discover feed to real DB data with featured/organic split layout
+
+---
+
+## Session 21 — Mar 1, 2026 — Verification Model & CAC Assistance Strategy
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Verified Business Badge — Pricing Revised
+- Changed from one-off annual fee to a subscription model:
+  - Monthly: ₦1,500
+  - 6 Months: ₦8,000 (saves ₦1,000)
+  - Annual: ₦15,000 (saves ₦3,000)
+- Badge remains revocable by DepMi for fraud or illegitimacy.
+
+#### KYC Tier 2 — Now Requires BVN + NIN (Both)
+- Store creation now gates on BVN + NIN (not just BVN).
+- Buyers remain at TIER_0 (email + phone OTP only).
+- TIER_1 (NIN standalone) stays skipped — NIN is bundled into TIER_2 for store creators.
+- Pilot vendors continue to be elevated manually via admin invite bypass.
+- Dojah BVN + NIN integration added as feature flag at ~seller #25.
+
+#### CAC Registration Assistance — New Revenue Stream
+- DepMi to partner with a CAC filing service (Approve.ng / Simplifycac) for in-app CAC registration.
+- Pricing:
+  - Business Name: ₦10,000 (CAC fee) + ₦5,000 (DepMi service fee) = ₦15,000
+  - Private Limited: ₦25,000 (CAC fee) + ₦10,000 (DepMi service fee) = ₦35,000
+- Vendors with existing CAC number enter it directly; DepMi confirms and issues badge.
+- Vendors without CAC are guided through in-app filing flow; badge issued in 2–5 business days.
+- Strategic rationale: CAC registration through DepMi creates strong platform lock-in. Backed by legal registration, not just an ID check — gives the Verified badge real weight.
+
+#### Verification Journey (Full Flow Documented)
+```
+Store Creation → BVN + NIN (TIER_2)
+     ↓
+Store Settings → "Apply for Verified"
+     ├─ Have CAC? → Enter number → DepMi confirms → Badge + subscription
+     └─ No CAC? → In-app filing → Partner handles paperwork → Badge issued on confirmation
+```
+
+### agent.md Updated
+- KYC tiers: TIER_2 updated to require BVN + NIN. TIER_3 now = Verified Business Badge (CAC-backed).
+- Financial model: Verified badge pricing table added. CAC assistance service fees documented.
+- Week 3 roadmap: Verified badge application flow + BVN+NIN store gate noted.
+
+### Pending / Next Steps
+- Same as Session 20 — no code written this session (strategy only)
+- When building store creation: ensure Dojah mock accepts both BVN + NIN fields
+- Research CAC filing partner API options (Approve.ng, Simplifycac) before Phase 2
