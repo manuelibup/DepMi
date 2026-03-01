@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [1. Core Vision](#1-core-vision)
-- [2. Foundational Features](#2-foundational-features)
+- [2. Foundational Features](#2-foundational-features) *(A–H)*
 - [3. Brand Identity (Tech + Culture)](#3-brand-identity-tech--culture)
 - [4. Financial & Regulatory Model (Phase 1)](#4-financial--regulatory-model-phase-1)
 - [5. 6-Week MVP Roadmap](#5-6-week-mvp-roadmap)
@@ -106,11 +106,16 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 
 ## 4. Financial & Regulatory Model (Phase 1)
 - **Gateway:** Flutterwave (Primary - 1.4% fee) / Paystack (Secondary).
-- **Platform Fee:** 5% per transaction (Deducted via Transaction Splits).
-- **Store Subscription Model:** 
-  - **Initial Trial:** 2 months free to build the vendor presence.
-  - **Paid Plans:** Monthly, 3-month, 6-month, and 12-month subscriptions.
-  - **Prices:** (TBD - e.g. ₦3,000/mo)
+- **Core Principle:** Free to list — vendors only pay when they sell. This maximises vendor acquisition and avoids subscription friction before users see value.
+- **Primary Revenue — Transaction Fee:** **5% per completed order** (deducted via payment splits at checkout). This is the only cost a new vendor ever sees.
+- **Secondary Revenue — Featured Listings (Discovery Page):**
+  - ₦800/day · ₦4,000/week · ₦12,000/month (sponsored carousel on Discovery)
+  - ₦2,500/week (Category top-spot placement)
+  - Clearly labelled "Sponsored" — organic content below is never paid.
+- **Secondary Revenue — Demand Engine Bid Boost:** ₦300–₦500 to pin a vendor's bid response to the top of an open demand request. Impulse-spend; high perceived value.
+- **Annual — Verified Business Badge:** ₦15,000/year. Renewable annually. Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy. Long-term goal: DepMi Verified becomes the African industry standard for business trust — verifiable via a public badge link on WhatsApp/Instagram/TikTok bio.
+- **Phase 2 — Fixed Influencer Deals:** Stores and affiliates negotiate flat-rate promotion deals in-app. DepMi takes **10%** of the agreed deal value for facilitating the agreement.
+- **Phase 2 — Pro Subscription (Deferred):** Monthly/quarterly/bi-annual/annual plans introduced only after vendors are already profitable on the platform and organically requesting advanced tools (unlimited products, priority bidding, same-day payouts, detailed analytics). Forcing subscriptions before value is proven risks vendor churn and competitor advantage.
 - **Wallet Strategy:** No internal holding of funds in Phase 1 (Avoids ₦4B CBN requirement). Funds auto-settle to vendor bank accounts (T+1).
 - **Withdrawal Fee:** 0.5% (Introduced in Phase 2 with Partner Wallets).
 
@@ -124,7 +129,9 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail). [/] *In Progress.*
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
-*   **W3: Stores & Products:** Store creation (gated by TIER_2 + Subscription logic). Initial trial period of 1–2 months is automatically granted upon store setup. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+*   **W3: Stores & Products:** Store creation (gated by TIER_2; pilot vendors use admin invite code bypass). No subscription on store creation — free to list. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+    - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
+    - **Navigation Change:** Bottom nav centre button changed from `+` (PlusCircle) to Magnifying Glass (Search). Search-first approach helps buyers find products immediately.
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**

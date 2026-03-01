@@ -20,6 +20,7 @@
 - [Session 17 — Feb 28, 2026 — Vercel Client Fix & Secret Cleanup](#session-17--feb-28-2026--vercel-client-fix--secret-cleanup)
 - [Session 18 — Feb 28, 2026 — Week 2 Code Review & Bug Fixes](#session-18--feb-28-2026--week-2-code-review--bug-fixes)
 - [Session 19 — Feb 28, 2026 — Week 3 Features Review & Security Fixes](#session-19--feb-28-2026--week-3-features-review--security-fixes)
+- [Session 20 — Mar 1, 2026 — Monetisation Strategy & Feature Architecture](#session-20--mar-1-2026--monetisation-strategy--feature-architecture)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -632,3 +633,64 @@ NEXT_PUBLIC_APP_URL=https://depmi.vercel.app  # used in invite URL generation
 - Build `/store/[slug]` public storefront page (Week 3)
 - Build product listing flow (vendor can add products to their store)
 - Connect Discover feed to real DB data
+
+---
+
+## Session 20 — Mar 1, 2026 — Monetisation Strategy & Feature Architecture
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Monetisation Model — Subscriptions Deferred
+- **Decision:** Monthly store subscriptions removed from Phase 1. Free-to-list is the new core pitch. Vendors only pay when they sell (5% transaction fee). Subscriptions will be reintroduced as Phase 2 Pro when vendors are already profitable and organically asking for advanced tools.
+- **Rationale:** Subscriptions before proven value risks vendor churn and gives competitors an easy "free forever" angle to steal market share during the growth phase.
+
+#### Phase 1 Revenue Stack (Finalised)
+| Stream | Model | Amount |
+|---|---|---|
+| Transaction fee | Per completed order | 5% |
+| Featured listing (Discovery) | Per day / week / month | ₦800 / ₦4,000 / ₦12,000 |
+| Category top-spot | Per week | ₦2,500 |
+| Demand Engine bid boost | Per boost | ₦300–₦500 |
+| Verified Business Badge | Annual, revocable | ₦15,000/year |
+
+#### Discovery Page Architecture (Finalised)
+- **Home feed:** 100% organic/social — follows, activity, Deps earned. Never paid placement.
+- **Discovery page:** Paid "Featured Today" sponsored carousel at top (clearly labelled "Sponsored"), then organic category browse and trending-by-location below.
+- **Rationale:** Polluting the home feed with ads before scale kills trust. Discovery is where exploratory buyers already expect commercial intent.
+
+#### Navigation Change
+- Bottom nav centre button: `+` (PlusCircle) → Magnifying Glass (Search icon).
+- Search-first approach aligns with buyer behaviour and the Demand Engine vision.
+
+#### Verified Business Badge (Finalised)
+- ₦15,000/year, annual renewal required.
+- Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy (the revocability is what gives the badge weight).
+- Long-term vision: DepMi Verified becomes the African industry trust standard — comparable to how Duolingo became accepted for language certification. Badge is publicly linkable and shareable on WhatsApp/Instagram bio.
+
+#### Affiliate & Influencer System (Architecture Confirmed)
+- Normal user accounts gain an "Affiliate" layer — no separate account type needed.
+- Brand badges appear on `/u/[username]` profile for each affiliated store, creating a visible portfolio.
+- **Two earning modes:** Commission (% per sale via affiliate link, vendor-set) and Fixed Deal (flat-rate negotiated in-app; DepMi takes 10% of deal value).
+- Reshare to Earn remains a paid activation for stores (not all stores generate commissionable links by default).
+
+#### Resell / Internal Dropshipping (Phase 2.5, Architecture Set)
+- Any user can resell any product on their DepMi profile at a marked-up price.
+- Payment auto-splits at checkout: vendor gets their price, reseller keeps markup, DepMi takes 5%.
+- Minimum 10% markup enforced to protect vendor pricing integrity.
+- No reseller down payment needed — existing escrow model handles trust for all parties.
+- Prerequisite: Paystack split payment (Week 5-6) must be solid first.
+
+### agent.md Updated
+- Section 4 (Financial Model): full rewrite to reflect new revenue stack.
+- Section G (Reshare to Earn): expanded to full Affiliate & Reshare System.
+- Section H (Resell/Dropshipping): new section added.
+- Week 3 roadmap note: Discovery page architecture + nav change documented.
+
+### Pending / Next Steps
+- Implement store creation flow (pilot invite-code bypass, no subscription gate)
+- Build `/store/[slug]` public storefront page
+- Build product listing flow
+- Change bottom nav centre icon to Search (Magnifying Glass)
+- Connect Discover feed to real DB data with featured/organic split layout
