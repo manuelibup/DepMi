@@ -143,7 +143,18 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W3: Stores & Products:** Store creation gated by TIER_2 (BVN + NIN both required). Pilot vendors use admin invite code bypass — Dojah integration added at ~seller #25. Free to list — no subscription on store creation. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
     - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
     - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled "Sponsored"). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
-    - **Navigation Change:** Bottom nav centre button changed from `+` (PlusCircle) to Magnifying Glass (Search). Search-first approach helps buyers find products immediately.
+    - **Navigation Architecture (Final):** 5-tab bottom nav restructured as:
+      ```
+      Home  |  Discover  |  ➕  |  Demand Engine  |  Profile
+      ```
+      - **Home** — Social feed: follows, activity, Deps earned. Organic only.
+      - **Discover** — Browse products/stores with an embedded search bar at the top. Category filters below.
+      - **➕ (Centre, raised)** — Contextual creation sheet (bottom drawer):
+        - Always shows: "📣 Post a Demand" (buyer posts what they're looking for)
+        - Only shown if user has a store: "📦 Add a Product"
+      - **Demand Engine** — Dedicated tab for the demand request feed. Buyers browse open demands; vendors see bidding opportunities. Gets its own permanent tab because it is the core differentiator.
+      - **Profile** — Personal account, store switcher, settings.
+      - **Search** removed as a standalone tab. Lives in: (a) header top-right icon, (b) embedded search bar within the Discover tab. Both are where users instinctively look for search.
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**

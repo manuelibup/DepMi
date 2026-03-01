@@ -789,3 +789,49 @@ Selling ad slots to a 200-user audience burns vendor trust. Discovery carousel i
 - Build product listing flow (vendor dashboard → add product)
 - Change BottomNav centre icon to Search (Magnifying Glass)
 - Connect Discovery feed to real DB with Dep-score ordering
+
+---
+
+## Session 23 — Mar 1, 2026 — Bottom Nav Architecture Decision
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Bottom Nav — Restructured (Pending Gemini Critique)
+Old nav had a redundancy: separate Discover and Search tabs with a Search centre button.
+
+New nav architecture:
+```
+Home  |  Discover  |  ➕  |  Demand Engine  |  Profile
+```
+
+| Tab | Route | Purpose |
+|---|---|---|
+| Home | `/` | Social feed — follows, activity, Deps earned |
+| Discover | `/discover` | Browse products/stores + embedded search bar at top |
+| ➕ (centre) | Bottom sheet | Contextual: "Post a Demand" (all users) + "Add a Product" (store owners only) |
+| Demand Engine | `/demand` | Dedicated demand request feed — buyers browse, vendors bid |
+| Profile | `/profile` | Personal account, store switcher, settings |
+
+**Search** removed as a standalone nav tab. Now lives in: (a) header top-right icon, (b) embedded bar within Discover tab.
+
+**Key logic for ➕ sheet:**
+- Every authenticated user sees "Post a Demand"
+- Only users with a store (any store) see "Add a Product"
+- Unauthenticated users tapping ➕ are redirected to `/login`
+
+**Rationale:**
+- Demand Engine is the killer feature — it deserves its own permanent tab, not burial inside Discover
+- ➕ in centre drives creation from both user types simultaneously
+- Discover + Search bar = one tab, not two
+- Pattern matches Instagram/TikTok (+ in centre) which users already understand
+
+**Status:** Architecture agreed. Sending to Gemini for critique before implementation.
+
+### Pending / Next Steps
+- Gemini to critique nav architecture
+- Implement BottomNav with new 5-tab structure
+- Build `/demand` route (Demand Engine feed, Week 4)
+- Build `/store/[slug]` public storefront
+- Build product listing flow
