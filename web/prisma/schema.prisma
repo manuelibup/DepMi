@@ -36,6 +36,13 @@ enum DepTier {
   LEGEND // 1000+ Deps
 }
 
+enum StoreTier {
+  TRIAL
+  FREE
+  BASIC
+  PRO
+}
+
 // KYC tiers — each tier unlocks platform features
 // Store creation requires TIER_2 (BVN verified) minimum
 enum KycTier {
@@ -195,6 +202,11 @@ model Store {
   paystackSubcode String?
 
   isActive Boolean @default(true)
+
+  // Subscription Details
+  tier               StoreTier @default(TRIAL)
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
 
   // Timestamps
   createdAt DateTime @default(now())

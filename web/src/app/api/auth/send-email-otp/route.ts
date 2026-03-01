@@ -3,11 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcrypt";
-import { Resend } from "resend";
+import { resend } from "@/lib/resend";
 
 export async function POST(req: Request) {
     try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
         const session = await getServerSession(authOptions);
 
         if (!session?.user?.id) {

@@ -18,6 +18,8 @@
 - [Session 15 — Feb 28, 2026 — Waitlist Deployment & Vercel Fixes](#session-15--feb-28-2026--waitlist-deployment--vercel-fixes)
 - [Session 16 — Feb 28, 2026 — User Onboarding & Public Profiles](#session-16--feb-28-2026--user-onboarding--public-profiles)
 - [Session 17 — Feb 28, 2026 — Vercel Client Fix & Secret Cleanup](#session-17--feb-28-2026--vercel-client-fix--secret-cleanup)
+- [Session 18 — Feb 28, 2026 — Week 2 Code Review & Bug Fixes](#session-18--feb-28-2026--week-2-code-review--bug-fixes)
+- [Session 19 — Feb 28, 2026 — Week 3 Features Review & Security Fixes](#session-19--feb-28-2026--week-3-features-review--security-fixes)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -540,3 +542,93 @@ Based on the `messaging-setup-guide.md` strategy, we completely refactored the O
 
 ### Pending / Next Steps
 - Launch the Vendor Store creation flow.
+
+---
+
+## Session 18 — Feb 28, 2026 — Week 2 Code Review & Bug Fixes
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+
+#### Week 2 Review (Gemini's output)
+Audited all files produced by Gemini's Week 2 sprint: Email OTP (Resend), Phone OTP (Termii), Deps award engine, and the `/verify` phone verification page. Found and fixed three bugs.
+
+#### Bug 1 — Wrong API paths in `/verify` page (Critical)
+The `/verify` phone verification page was calling non-existent routes:
+- `/api/otp/send` → fixed to `/api/auth/send-phone-otp`
+- `/api/otp/verify` → fixed to `/api/auth/verify-phone-otp`
+Both calls would have returned 404s at runtime.
+
+#### Bug 2 — `@next-auth/prisma-adapter` re-added (Critical)
+Gemini re-added `@next-auth/prisma-adapter` to `package.json`. This adapter is incompatible with DepMi's custom `Account` schema (uses `AuthProvider` enum, `providerId`, `passwordHash` — the adapter expects `type String`, `providerAccountId`, `access_token`). Removed from `package.json` and uninstalled from `node_modules`.
+
+#### Bug 3 — No admin guard on `/api/deps/award` (Security)
+Any authenticated user could call the Deps award endpoint for any `userId` or `storeId`. Replaced the session check with an `x-internal-secret` header guard backed by `INTERNAL_API_SECRET` env var. This route is now internal-only — only callable from server-side order-completion logic, never from the client.
+
+#### Confirmed clean
+- `auth.ts` jwt callback: Google DB lookup intact ✅
+- Deps `$transaction` atomicity: correct ✅
+- OTP token invalidation logic: correct ✅
+- Termii `channel: "dnd"` set: correct ✅
+
+### New env var required
+```
+INTERNAL_API_SECRET=<long-random-string>  # guards /api/deps/award
+```
+
+### Pending / Next Steps
+- Sign up for Resend (free tier) → verify depmi.com domain → add `RESEND_API_KEY` to Vercel env
+- Sign up for Termii → register Sender ID "DepMi" (24-48hr) → add `TERMII_API_KEY` to Vercel env
+- Add `INTERNAL_API_SECRET` to Vercel env
+- Run `npx prisma db push` (OtpToken + StoreInvite tables not yet pushed)
+- Week 3: Vendor Store creation (`/store/create`, TIER_2 gated), public storefronts (`/store/[slug]`), connect Discover to real DB data
+
+---
+
+## Session 19 — Feb 28, 2026 — Week 3 Features Review & Security Fixes
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+
+#### Full Codebase Audit (after Gemini's continued work)
+Surveyed all files built by Gemini during the hours Claude was offline: Store creation API + UI, `auth.ts` jwt callback changes, public profile page, vendor invite page.
+
+#### Security Fix — Admin Invite Route (Critical)
+`/api/admin/invite/route.ts` only checked if a user was authenticated, NOT if they were the admin. Any registered user who knew the URL could generate vendor invite links and bypass the exclusivity gate.
+- **Fix:** Added `ADMIN_EMAIL` env var check. Only the email matching `process.env.ADMIN_EMAIL` can call this route.
+- **Action required:** Add `ADMIN_EMAIL=your@email.com` to `.env.local` and Vercel environment variables.
+
+#### Bug Fix — Next.js 16 Async Params (Profile Page)
+`/u/[username]/page.tsx` used synchronous `params.username` in a server component. Next.js 15+ requires params to be awaited in server components.
+- **Fix:** Changed `params` type to `Promise<{ username: string }>` and added `await params`.
+- Also added emoji badges to TIER_META matching the spec (🌱 Seedling, ⭐ Rising, 🔥 Trusted, 💎 Elite, 🏆 Legend).
+
+#### Bug Fix — Store Create Success Redirect
+After creating a store, the page redirected to `/` (home feed). The store slug is returned in the API response so we can redirect directly to the new store.
+- **Fix:** Changed redirect to `/store/${data.store.slug}` — will show 404 until `/store/[slug]` page is built in Week 3, but the routing is correct.
+
+#### Confirmed Clean (Gemini's work)
+- `auth.ts` jwt callback ✅ — Gemini simplified it to always fetch username+id from DB on every refresh. Performance trade-off acceptable for MVP. Google OAuth still correctly resolves to DB UUID.
+- Store creation API ✅ — Proper TIER_2 gate, slug normalization, name/slug collision checks, `isActive: true` on create.
+- Store create UI ✅ — Auto-slug generation from name, `@handle` input pattern, preview URL — all correct.
+- Vendor invite flow ✅ — VALID/EXPIRED/ACCEPTED states, BVN collection, mock Dojah, TIER_2 elevation, StoreInvite status update.
+
+#### Noted (Not Fixed — Future Work)
+- `auth.ts` jwt callback does a DB query on every session refresh. Fine for MVP (<500 users). In production: gate with `trigger === "update"` to only query on explicit session updates.
+- Admin page (`/admin`) shows the form to all authenticated users — non-admins only see the error AFTER submitting. Acceptable for pilot where Manuel is the only one testing.
+- Store create page does not check KYC tier client-side before showing the form. Non-TIER_2 users get the form, fill it out, then see the rejection. A future improvement is to fetch the user's tier and show a gate screen upfront.
+- `/u/[username]/page.tsx` uses `<img>` instead of `next/image` for avatars — may cause LCP warning. Switch to `<Image>` when optimizing.
+
+### New env vars required
+```
+ADMIN_EMAIL=your@email.com       # guards /api/admin/invite
+NEXT_PUBLIC_APP_URL=https://depmi.vercel.app  # used in invite URL generation
+```
+
+### Pending / Next Steps
+- Add `ADMIN_EMAIL` + `NEXT_PUBLIC_APP_URL` to `.env.local` and Vercel
+- Build `/store/[slug]` public storefront page (Week 3)
+- Build product listing flow (vendor can add products to their store)
+- Connect Discover feed to real DB data

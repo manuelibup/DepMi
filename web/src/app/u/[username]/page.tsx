@@ -5,22 +5,22 @@ import styles from './page.module.css';
 import Link from 'next/link';
 
 interface ProfilePageProps {
-    params: {
+    params: Promise<{
         username: string;
-    };
+    }>;
 }
 
-// Map DepTier to label and color
+// Map DepTier to label and emoji (matches agent.md spec)
 const TIER_META = {
-    SEEDLING: { label: 'Seedling', style: '' },
-    RISING: { label: 'Rising', style: '' },
-    TRUSTED: { label: 'Trusted', style: '' },
-    ELITE: { label: 'Elite', style: '' },
-    LEGEND: { label: 'Legend', style: styles.tierLegend },
+    SEEDLING: { label: '🌱 Seedling', style: '' },
+    RISING:   { label: '⭐ Rising',   style: '' },
+    TRUSTED:  { label: '🔥 Trusted',  style: '' },
+    ELITE:    { label: '💎 Elite',    style: '' },
+    LEGEND:   { label: '🏆 Legend',   style: styles.tierLegend },
 };
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
-    const { username } = params;
+    const { username } = await params;
 
     const user = await prisma.user.findUnique({
         where: { username },

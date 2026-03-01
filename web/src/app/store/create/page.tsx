@@ -49,8 +49,8 @@ export default function StoreCreatePage() {
             const data = await res.json();
 
             if (res.ok) {
-                // Push them back to the feed for now, or to a custom store dashboard
-                router.push('/');
+                // Redirect to the new store's public page (Week 3: /store/[slug])
+                router.push(`/store/${data.store.slug}`);
             } else {
                 if (res.status === 403) {
                     // TIER_2 Restriction

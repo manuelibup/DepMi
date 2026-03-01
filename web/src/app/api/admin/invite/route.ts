@@ -7,11 +7,15 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
 
-        // TODO: Replace this with a real Admin Role check in Phase 2
-        // For now, we restrict this route to authenticated users only. Let's assume you (Manuel) 
-        // are the only one testing it locally, so you are the admin.
+        // Admin guard — only the email in ADMIN_EMAIL env var can use this route.
+        // Add ADMIN_EMAIL=your@email.com to .env.local and Vercel environment variables.
         if (!session?.user?.id) {
-            return NextResponse.json({ message: "Unauthorized. Admin only." }, { status: 401 });
+            return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+        }
+
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (!adminEmail || session.user.email !== adminEmail) {
+            return NextResponse.json({ message: "Forbidden. Admin access only." }, { status: 403 });
         }
 
         const body = await req.json();

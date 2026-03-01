@@ -71,10 +71,21 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Bid→Product Link:** Vendors can attach an existing product from their store when bidding.
 - **Order Tracing:** Orders track their origin (Demand + Bid), so the demand→bid→order flow is auditable.
 
-### G. Reshare to Earn (Affiliate Commission)
-- **Concept:** Every user gets a custom generated link for products. If a user reshares a product and a sale happens through that link, they earn a commission (like Amazon Affiliates).
-- **Vendor Control:** Sellers explicitly activate this feature on a per-product (or store) basis, deciding the commission percentage (deducted from their profit).
-- **Non-Commissioned Shares:** If a vendor turns this off, the sharer doesn't earn fiat money, but they *do* earn "Deps" (credibility points) for driving a completed sale. This keeps the incentive alive even without cash rewards.
+### G. Affiliate & Reshare System
+- **Reshare to Earn:** Every user gets a custom affiliate link for any product. If a sale happens through their link, they earn a commission set by the vendor (5–20%, deducted from vendor's profit). Resharing is a paid feature activation for stores — only stores that have enabled it generate commissionable links.
+- **Non-Commissioned Shares:** Vendors who opt out of cash commissions still allow sharing; sharers earn **Deps** instead of fiat on successful sales, keeping the incentive alive.
+- **Affiliate Profiles:** Users who affiliate with stores earn visible **brand badges** on their public profile (`/u/[username]`). The badge grid is a living portfolio of brand partnerships — visible to all buyers, functioning as passive marketing for those brands. More badges = more influence = more buyer trust.
+- **Two Earning Modes:**
+  - **Commission** — % of every sale through their affiliate link (vendor sets the rate per product or store-wide).
+  - **Fixed Deal** — A store proposes a flat-rate deal to an affiliate (e.g. ₦10,000 to promote for 2 weeks). DepMi takes **10%** of the deal value for facilitating the agreement. Terms and duration are set in-app.
+- **Roadmap:** Commission splits ship in Phase 3 (Week 5) alongside Paystack escrow. Fixed influencer deals in Phase 2.
+
+### H. Resell / Internal Dropshipping *(Phase 2.5)*
+- **Concept:** Any user can "resell" another store's product on their own DepMi profile or storefront, marking it up above the vendor's original price.
+- **Flow:** Buyer pays the reseller's price → payment auto-splits at checkout (vendor gets their original price, reseller keeps the markup, DepMi takes 5% of the total transaction).
+- **Minimum Markup Guard:** A minimum **10% markup** is enforced to prevent resellers from listing below or at the original vendor price and undercutting their store.
+- **No down payment needed:** Escrow protects all parties. The reseller never holds funds — the split routes correctly at checkout after buyer confirms receipt.
+- **Prerequisite:** Requires Phase 3 Paystack split payment infrastructure to be solid and a meaningful product catalog to exist. Targeted for **Phase 2.5**.
 
 ---
 
@@ -96,6 +107,10 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 ## 4. Financial & Regulatory Model (Phase 1)
 - **Gateway:** Flutterwave (Primary - 1.4% fee) / Paystack (Secondary).
 - **Platform Fee:** 5% per transaction (Deducted via Transaction Splits).
+- **Store Subscription Model:** 
+  - **Initial Trial:** 2 months free to build the vendor presence.
+  - **Paid Plans:** Monthly, 3-month, 6-month, and 12-month subscriptions.
+  - **Prices:** (TBD - e.g. ₦3,000/mo)
 - **Wallet Strategy:** No internal holding of funds in Phase 1 (Avoids ₦4B CBN requirement). Funds auto-settle to vendor bank accounts (T+1).
 - **Withdrawal Fee:** 0.5% (Introduced in Phase 2 with Partner Wallets).
 
@@ -109,7 +124,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail). [/] *In Progress.*
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
-*   **W3: Stores & Products:** Store creation (gated by TIER_2 + ₦2,500 one-time fee via Paystack - fee deferred for first 20 pilot vendors). Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+*   **W3: Stores & Products:** Store creation (gated by TIER_2 + Subscription logic). Initial trial period of 1–2 months is automatically granted upon store setup. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
 *   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**
