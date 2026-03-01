@@ -54,8 +54,8 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **UNVERIFIED:** Can browse and create demands.
 - **TIER_0:** Email + phone OTP verified — can buy via escrow. *(Active from Week 2)*
 - **TIER_1:** NIN verified — skipped as a standalone gate; NIN is bundled into TIER_2 for store creators.
-- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Buyers only need TIER_0; the higher bar applies to store creators who receive real money. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
-- **TIER_3 / Verified Business Badge:** BVN + NIN + CAC registration. DepMi assists with CAC filing (see Financial Model). Verified badge issued on CAC confirmation.
+- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Automatically grants a free, permanent **"BVN Verified" blue checkmark** on the store — proves real identity, no payment required. Buyers only need TIER_0. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
+- **TIER_3 / "DepMi Certified" Badge (Paid):** BVN + NIN + CAC registration. Distinct from the free TIER_2 checkmark. Carries CAC backing, priority dispute resolution, and future algorithm boosts. DepMi assists with CAC filing (see Financial Model). Badge issued on CAC confirmation.
 - **BUSINESS:** TIN verified — highest transaction limits. *(Post-MVP)*
 
 > **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with email + phone OTP (TIER_0) only. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN + NIN verification added as a feature flag when store creation demand scales (~seller #25+). **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
@@ -108,15 +108,17 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Gateway:** Flutterwave (Primary - 1.4% fee) / Paystack (Secondary).
 - **Core Principle:** Free to list — vendors only pay when they sell. This maximises vendor acquisition and avoids subscription friction before users see value.
 - **Primary Revenue — Transaction Fee:** **5% per completed order** (deducted via payment splits at checkout). This is the only cost a new vendor ever sees.
-- **Secondary Revenue — Featured Listings (Discovery Page):**
+- **Secondary Revenue — Featured Listings (Discovery Page):** *(Locked until 10,000 MAU)*
   - ₦800/day · ₦4,000/week · ₦12,000/month (sponsored carousel on Discovery)
   - ₦2,500/week (Category top-spot placement)
   - Clearly labelled "Sponsored" — organic content below is never paid.
+  - **Pre-10k MAU:** Discovery carousel is algorithmic only — curated by Dep score to reward high-trust stores and train buyer behaviour. No paid slots until there are enough DAU for vendor ROI to be real. Selling ad placements to a 200-user audience burns vendor trust permanently.
 - **Secondary Revenue — Demand Engine Bid Boost:** ₦300–₦500 to pin a vendor's bid response to the top of an open demand request. Impulse-spend; high perceived value.
-- **Verified Business Badge — Subscription (Revocable):**
+- **"DepMi Certified" Badge — Subscription (Revocable, CAC-backed):**
   - Monthly: ₦1,500 · 6 Months: ₦8,000 · Annual: ₦15,000
-  - Renewable. Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy. The revocability is what gives the badge real weight.
-  - Long-term vision: DepMi Verified becomes the African industry trust standard — linkable on WhatsApp/Instagram/TikTok bio. Backed by real CAC registration, not just a self-reported check.
+  - Separate from the free TIER_2 "BVN Verified" checkmark. New vendors see the free badge first — the Certified badge is an upgrade once they're already profitable.
+  - Renewable. Revocable by DepMi for fraud, unresolved disputes, or verified illegitimacy.
+  - Long-term vision: DepMi Certified becomes the African industry trust standard — CAC-backed and linkable on WhatsApp/Instagram/TikTok bio.
 - **CAC Registration Assistance (Service Fee):**
   - DepMi partners with a CAC filing service (e.g. Approve.ng, Simplifycac) to offer in-app CAC registration.
   - Business Name: ₦10,000 (official CAC fee) + ₦5,000 (DepMi service fee) = **₦15,000 total**.
@@ -168,4 +170,5 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Communication:** Use WhatsApp/Telegram over native push notifications for vendor alerts.
 - **Trust Over Profit:** Prioritize escrow safety and Dep accuracy over aggressive monetization.
 - **Speed to Market:** Ship the Demand Engine early; polish the social feed later.
+- **Monetisation Gates:** Paid features (Discovery ads, Bid Boost, Certified badge billing) are documented but NOT built until the platform has real users. Build the commerce loop first; add monetisation once there is an audience for it to work on.
 - **Documentation:** Always update `logs.md`, `tips.md`, and `agent.md` after every session. See `.agents/workflows/update-docs.md`.

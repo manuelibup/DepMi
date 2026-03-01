@@ -744,3 +744,48 @@ Store Settings → "Apply for Verified"
 - Same as Session 20 — no code written this session (strategy only)
 - When building store creation: ensure Dojah mock accepts both BVN + NIN fields
 - Research CAC filing partner API options (Approve.ng, Simplifycac) before Phase 2
+
+---
+
+## Session 22 — Mar 1, 2026 — Strategy Review & MVP Scope Lock
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+
+#### Gemini Critique Review (4 points assessed)
+Gemini raised four critique points. Evaluated and acted on as follows:
+
+**1. Resell Markup Guard — Valid, irrelevant now.**
+Transparent marketplace + forced markup = buyer always goes to cheaper original vendor. Fix (collapse resell into affiliate commission model) is correct. But resell is Phase 2.5 — nothing to change in the build queue.
+
+**2. 5% Fee Margin — Valid concern, wrong time to engineer.**
+Gateway fees (~1.5%) + refunds on disputes do compress the 5% margin. Variable fees by category (7-8% for high-dispute goods) is the right long-term answer. Deferred to Phase 2 when dispute patterns emerge from real data.
+
+**3. Verified Badge Psychology — Right. Fixed immediately.**
+Free "BVN Verified" checkmark for all TIER_2 stores (no payment). Paid badge renamed "DepMi Certified" — CAC-backed, premium, only shown as upgrade after vendor is already making sales. Prevents new vendors feeling like second-class citizens before they've earned anything.
+
+**4. Sponsored Discovery Carousel — Right. Fixed immediately.**
+Selling ad slots to a 200-user audience burns vendor trust. Discovery carousel is now algorithmic-only (ordered by Dep score) until 10,000 MAU. Paid placement logic not built in MVP.
+
+#### MVP Scope Locked — Monetisation Deferred
+- All payment/monetisation features are documented and architected, but NOT built until the commerce loop is live with real users.
+- **Build queue (MVP only):**
+  1. `/store/[slug]` public storefront
+  2. Product listing flow (vendor adds/edits products)
+  3. Discovery feed → real DB, algorithmic Dep-score ordering (no paid tier)
+  4. Bottom nav centre → Search icon
+  5. Demand Engine (Week 4)
+  6. Payments + Escrow (Week 5-6, where monetisation actually ships)
+
+### agent.md Updated
+- TIER_2 now grants free permanent "BVN Verified" blue checkmark automatically.
+- TIER_3 renamed "DepMi Certified" (paid, CAC-backed, separate from free checkmark).
+- Financial model: Discovery ads gated behind 10k MAU note added.
+- Dev Guidelines: "Monetisation Gates" principle added.
+
+### Pending / Next Steps — Start Building
+- Build `/store/[slug]` public storefront page
+- Build product listing flow (vendor dashboard → add product)
+- Change BottomNav centre icon to Search (Magnifying Glass)
+- Connect Discovery feed to real DB with Dep-score ordering
