@@ -30,14 +30,8 @@ export const authOptions: NextAuthOptions = {
     },
     providers: [
         GoogleProvider({
-            clientId: (() => {
-                if (!process.env.GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is not set");
-                return process.env.GOOGLE_CLIENT_ID;
-            })(),
-            clientSecret: (() => {
-                if (!process.env.GOOGLE_CLIENT_SECRET) throw new Error("GOOGLE_CLIENT_SECRET is not set");
-                return process.env.GOOGLE_CLIENT_SECRET;
-            })(),
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         }),
         CredentialsProvider({
             name: "Credentials",

@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import Image from 'next/image';
 
 // Simple mapping for categories
 const CATEGORIES = [
@@ -128,15 +130,26 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Image URL (Optional)</label>
-                    <input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        value={form.imageUrl}
-                        onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                        style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none' }}
-                        disabled={loading}
-                    />
+                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Product Image (Optional)</label>
+                    {form.imageUrl ? (
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--card-border)' }}>
+                            <Image src={form.imageUrl} alt="Product preview" fill style={{ objectFit: 'cover' }} />
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, imageUrl: '' })}
+                                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ) : (
+                        <CloudinaryUploader 
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, imageUrl: res.secure_url })} 
+                            accept="image/*"
+                            maxSizeMB={10} 
+                            buttonText="Upload Photo" 
+                        />
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
