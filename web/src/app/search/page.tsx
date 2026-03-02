@@ -2,6 +2,7 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
 import Link from 'next/link';
+import Image from 'next/image';
 import ClientNotifyButton from './ClientNotifyButton';
 
 import Header from '@/components/Header';
@@ -37,7 +38,10 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
         },
         orderBy: { createdAt: 'desc' },
         take: 20,
-        include: { images: true }
+        include: { 
+            images: true,
+            store: { select: { name: true } }
+        }
     });
 
     return (
@@ -58,11 +62,14 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
             {/* Categories */}
             <section className={styles.section} style={{ paddingTop: '8px' }}>
                 <div className={styles.categoriesScroll}>
-                    {CATEGORIES.map((cat, i) => (
-                        <Link key={cat} href={`/search?category=${cat}`} className={`${styles.categoryPill} ${i === 0 ? styles.active : ''}`}>
-                            {cat}
-                        </Link>
-                    ))}
+                    {CATEGORIES.map((c) => {
+                        const isActive = c === 'All' ? (!cat || cat === 'All') : cat === c;
+                        return (
+                            <Link key={c} href={`/search?category=${c}`} className={`${styles.categoryPill} ${isActive ? styles.active : ''}`}>
+                                {c}
+                            </Link>
+                        );
+                    })}
                 </div>
             </section>
 
@@ -81,8 +88,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
                                 <Link href={`/store/${store.slug}`} key={store.id} className={styles.storeCard}>
                                     <div className={styles.storeLogo} style={{ background: store.logoUrl ? 'transparent' : colors[colorIndex] }}>
                                         {store.logoUrl ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={store.logoUrl} alt={store.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <Image src={store.logoUrl} alt={store.name} width={64} height={64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         ) : (
                                             <span style={{ color: '#fff' }}>{store.name.charAt(0).toUpperCase()}</span>
                                         )}
@@ -131,8 +137,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
                             <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: '1px solid var(--card-border)' }}>
                                 <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--bg-elevated)', position: 'relative' }}>
                                     {product.images && product.images.length > 0 ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={product.images[0].url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <Image src={product.images[0].url} alt={product.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 480px) 50vw, 33vw" />
                                     ) : (
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: 'var(--text-muted)' }}>
                                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -144,6 +149,9 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
                                     )}
                                 </div>
                                 <div style={{ padding: '12px' }}>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 4px', fontWeight: 600 }}>
+                                        Sold by {product.store.name}
+                                    </p>
                                     <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {product.title}
                                     </h3>

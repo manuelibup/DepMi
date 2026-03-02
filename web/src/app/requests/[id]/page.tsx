@@ -6,6 +6,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import BidActionGate from './BidActionGate';
 import BidForm from './BidForm';
+import AcceptBidButton from './AcceptBidButton';
+import BottomNav from '@/components/BottomNav';
 import styles from './RequestDetail.module.css';
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
@@ -129,8 +131,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                                            <span>Attached: {bid.product.title}</span>
                                        </div>
                                    )}
-                                   {isPoster && (
-                                       <button className={styles.acceptBtn}>Accept Bid</button>
+                                   {isPoster && demand.isActive && (
+                                       <AcceptBidButton bidId={bid.id} demandId={demand.id} />
+                                   )}
+                                   {isPoster && !demand.isActive && bid.isAccepted && (
+                                       <p className={styles.successState} style={{ padding: '8px', marginTop: 4, textAlign: 'center' }}>✓ Accepted Bid</p>
                                    )}
                                </div>
                            ))
@@ -139,6 +144,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                </div>
 
             </div>
+            <BottomNav />
         </main>
     );
 }

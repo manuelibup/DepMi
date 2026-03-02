@@ -1173,3 +1173,12 @@ if (status === 'unauthenticated') {
 ### Pending / Next Steps:
 - Execute Phase 3: Transactions & Logistics (Week 5-6)
 - Implement Paystack Split Payments + Escrow logic.
+
+## Session 31 — Mar 2, 2026 — Vercel Build Fix (Google Auth)
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Crash:** The deployment failed during static page collection for \/api/admin/invite\ because \uth.ts\ threw an error when \GOOGLE_CLIENT_ID\ wasn't present in the build environment.
+- **Fix:** Removed the \	hrow new Error\ inside the GoogleProvider instantiation. Replaced it with a graceful fallback (\process.env.GOOGLE_CLIENT_ID || \"\"\) so NextAuth can compile statically without crashing the build phase.
+

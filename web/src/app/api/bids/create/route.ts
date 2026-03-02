@@ -46,6 +46,9 @@ export async function POST(req: Request) {
         if (!demand) {
             return NextResponse.json({ message: 'Demand not found' }, { status: 404 });
         }
+        if (!demand.isActive) {
+            return NextResponse.json({ message: 'This demand is closed and no longer accepting bids' }, { status: 400 });
+        }
 
         if (demand.userId === session.user.id) {
             return NextResponse.json({ message: 'You cannot bid on your own demand' }, { status: 400 });

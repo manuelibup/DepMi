@@ -14,7 +14,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     const [errorMsg, setErrorMsg] = useState('');
 
     const [formData, setFormData] = useState({
-        text: defaultQuery ? `I am looking for: ${defaultQuery}` : '',
+        text: defaultQuery ? defaultQuery : '',
         category: 'OTHER',
         budget: '',
         location: '',
