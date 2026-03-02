@@ -54,7 +54,7 @@ export default function CloudinaryUploader({
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
-        } catch (err) {
+        } catch {
             setError('Could not read video metadata.');
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;

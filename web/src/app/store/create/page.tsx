@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import Image from 'next/image';
 
 export default function StoreCreatePage() {
     const { status } = useSession();
@@ -12,7 +14,8 @@ export default function StoreCreatePage() {
         name: '',
         slug: '',
         description: '',
-        location: ''
+        location: '',
+        logoUrl: ''
     });
 
     const [loading, setLoading] = useState(false);
@@ -157,6 +160,31 @@ export default function StoreCreatePage() {
                             }}
                         />
                     </div>
+
+                    {/* Logo Upload */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Store Logo (Optional)</label>
+                        {form.logoUrl ? (
+                            <div style={{ position: 'relative', width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--border)', backgroundColor: 'var(--bg-elevated)' }}>
+                                <Image src={form.logoUrl} alt="Store Logo" fill style={{ objectFit: 'cover' }} />
+                                <button
+                                    type="button"
+                                    onClick={() => setForm({ ...form, logoUrl: '' })}
+                                    style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ) : (
+                            <CloudinaryUploader 
+                                onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, logoUrl: res.secure_url })} 
+                                accept="image/*"
+                                maxSizeMB={5} 
+                                buttonText="Upload Logo" 
+                            />
+                        )}
+                    </div>
+
 
                     {/* Location */}
                     <div>
