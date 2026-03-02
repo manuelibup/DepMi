@@ -24,6 +24,7 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Business Account (Store):** A separate entity, like a Facebook Page. A user can own 0, 1, or many stores.
 - **KYC Gate:** Store creation requires **BVN verification (TIER_2)**. For the MVP pilot, pilot vendors are manually elevated by admin. Dojah/Smile ID integration is added when Store creation demand scales (~seller #25+).
 - **Account Switching:** Users can switch between their personal account and any store they own (like Facebook profile ↔ Pages).
+- **Browse-First Access:** Unauthenticated guests can browse all public content — home feed, store pages, product listings, demand requests, public profiles, and search — without an account. Auth is required only at the action level (buying, bidding, posting demands, viewing personal orders/profile). Enforced via middleware private-route allowlist + `AuthGateProvider` modal (in-page action gates). Implemented in Session 29.
 
 ### B. Waitlist Mode (Pre-launch Strategy)
 - **Waitlist UI:** High-fidelity landing page with glassmorphism and animated background blobs.
@@ -140,7 +141,7 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
   - Vendors with an existing CAC number can enter it directly to skip filing. DepMi confirms and issues the Verified badge.
   - Vendors without CAC are guided through the in-app filing flow. Badge issued on CAC confirmation (2–5 business days).
 - **Phase 2 — Fixed Influencer Deals:** Stores and affiliates negotiate flat-rate promotion deals in-app. DepMi takes **10%** of the agreed deal value for facilitating the agreement.
-- **Phase 2 — Pro Subscription (Deferred):** Monthly/quarterly/bi-annual/annual plans introduced only after vendors are already profitable on the platform and organically requesting advanced tools (unlimited products, priority bidding, same-day payouts, detailed analytics). Forcing subscriptions before value is proven risks vendor churn and competitor advantage.
+- **Phase 2 — Pro Subscription (Deferred):** Monthly/quarterly/bi-annual/annual plans introduced only after vendors are already profitable on the platform and organically requesting advanced tools (unlimited products, priority bidding, same-day payouts, detailed analytics, **scheduled AI catalog re-sync**). Forcing subscriptions before value is proven risks vendor churn and competitor advantage. The AI catalog import is free for initial onboarding (up to 500 products) — the recurring sync is the Pro hook, not the first import.
 - **Wallet Strategy:** No internal holding of funds in Phase 1 (Avoids ₦4B CBN requirement). Funds auto-settle to vendor bank accounts (T+1).
 - **Withdrawal Fee:** 0.5% (Introduced in Phase 2 with Partner Wallets).
 
@@ -160,6 +161,13 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
     - **Search UX — empty state:** If query returns 0 results, show: (1) "Request This Product" button → pre-fills a Demand post; (2) "Notify Me When Available" toggle → creates a `ProductWatch` record.
     - **Store Public Profile Page (`/store/[slug]`):** Store bio, Dep score badge, product grid, ratings summary, social links, "Follow" button.
     - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
+    - **Media Infrastructure (Cloudinary):** All product images and videos hosted on Cloudinary CDN. Direct browser-to-CDN upload via signed tokens from `GET /api/upload/sign` — server never handles file bytes. Auto-compression via `q_auto` at delivery. Video limits: **100MB max file size, 60 seconds max duration** (enforced client-side before upload). DB stores clean Cloudinary URLs; originals preserved; watermarked URLs delivered to clients.
+    - **Vendor Catalog Import — Three Paths:**
+      1. **Single product form** — Mobile-first. One product at a time. Category icon grid (not a dropdown), ₦-prefixed price field, camera tap for photos. <5 minutes per product.
+      2. **CSV bulk import** — Vendor uploads any spreadsheet export. DepMi validates rows, shows preview ("204 valid · 3 errors"), vendor confirms → atomic batch insert. Free. Template available for download.
+      3. **AI-powered import (Claude Haiku)** — Accepts ANY format: Excel, PDF, photo of handwritten price list, WhatsApp catalog screenshot. AI parses to DepMi product schema, vendor reviews preview table, confirms. **Free for initial onboarding (up to 500 products). Scheduled re-sync is a Pro feature.** API cost ~₦30 per 300-product import — negligible. Prompt-injection hardened server-side.
+    - **ISBN Auto-Fill (Book Vendors):** Vendor enters ISBN → Open Library API → Google Books API fallback → if both fail, manual entry with photo upload. Cover image auto-populated. Failed lookups contribute to DepMi's own African book catalog for future vendors.
+    - **Batch Import Security:** 10MB file size cap; MIME type whitelist (CSV/Excel only); CSV injection sanitization (strip leading `=`, `+`, `-`, `@`); row-level Zod validation with error report; atomic Prisma `$transaction` (all-or-nothing); rate limit (1 bulk import per store per 10 minutes); imports >500 rows run as background jobs with `/api/catalog/import-status/[jobId]` polling.
     - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled "Sponsored"). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
     - **Navigation Architecture (FINAL — do not change):** 5-tab bottom nav:
       ```
@@ -204,6 +212,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
+- **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
 - **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category` field (enum or FK to Category), `inStock` (Boolean).
 - **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
 - **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
@@ -223,6 +232,8 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 - **Resell / Internal Dropshipping:** Requires mature product catalog and split payment infrastructure (Phase 2.5 target — see Section H).
 - **Pro Subscription:** Only after vendors are organically profitable and requesting advanced tools.
 - **Meilisearch / Typesense:** Upgrade from Postgres full-text search if p99 search latency exceeds 300ms at scale.
+- **DepMi Watermark on All Media:** Cloudinary overlay transform (`l_depmi_logo,g_south_east,o_50`) applied to all delivered product photos and videos. Downloads carry the DepMi brand — same viral model as TikTok/Snapchat. Originals stored clean; watermark applied at CDN delivery URL. One afternoon to implement once Cloudinary is live. Target: Phase 2.
+- **GitHub Org Migration (`github.com/depmi`):** Transfer repo from `web5manuel` personal account to a DepMi company org for clean IP ownership. GitHub preserves redirect links (no broken URLs). Vercel reconnects to new repo location in ~10 minutes. Defer until first co-founder added or investment round — not needed while solo.
 
 ---
 
@@ -234,3 +245,6 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 - **Speed to Market:** Ship the Demand Engine early; polish the social feed later.
 - **Monetisation Gates:** Paid features (Discovery ads, Bid Boost, Certified badge billing) are documented but NOT built until the platform has real users. Build the commerce loop first; add monetisation once there is an audience for it to work on.
 - **Documentation:** Always update `logs.md`, `tips.md`, and `agent.md` after every session. See `.agents/workflows/update-docs.md`.
+- **Browse-First UX (non-negotiable):** Never block content browsing behind auth. Guests can see all public content. Auth gates fire only at action points (buy, bid, post demand, view profile). Use `openGate(hint, callbackUrl)` from `AuthGateProvider` context — never `router.push('/login')` from within a page. Middleware handles hard-blocked private routes only.
+- **Media uploads always go through Cloudinary.** Never store file bytes in the DB. Never handle file streams in Vercel functions. Always use signed upload tokens via `GET /api/upload/sign`. Store only the resulting Cloudinary URL.
+- **Batch import is free for onboarding, Pro for sync.** Initial AI catalog import (up to 500 products) is a free onboarding tool. Scheduled re-sync is a Pro subscription feature. Do not gate the first import.

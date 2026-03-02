@@ -1182,3 +1182,76 @@ if (status === 'unauthenticated') {
 - **Vercel Build Crash:** The deployment failed during static page collection for \/api/admin/invite\ because \uth.ts\ threw an error when \GOOGLE_CLIENT_ID\ wasn't present in the build environment.
 - **Fix:** Removed the \	hrow new Error\ inside the GoogleProvider instantiation. Replaced it with a graceful fallback (\process.env.GOOGLE_CLIENT_ID || \"\"\) so NextAuth can compile statically without crashing the build phase.
 
+
+---
+
+## Session 30 — Mar 2, 2026 — Infrastructure Strategy & Roadmap Expansion
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was decided:
+Pure product and infrastructure strategy session. No code written. Multiple major architectural decisions locked in and added to agent.md.
+
+### Decisions Made
+
+#### 1. Browse-First Guest Access (implemented Session 29 — documented here)
+- Middleware loosened to private-route allowlist only
+- `AuthGateProvider` + `useAuthGate()` hook for in-page action gates
+- Guests browse freely; auth fires only at action points (buy, bid, post, profile)
+- Pattern for all future action components: `openGate(hint, callbackUrl)` — never `router.push('/login')`
+
+#### 2. Media Storage: Cloudinary (locked)
+- All product images, videos, store assets, avatars → Cloudinary CDN
+- Direct browser-to-CDN uploads via signed tokens from `GET /api/upload/sign`
+- Server never handles file bytes — keeps Vercel functions lightweight
+- `q_auto` compression at CDN delivery — auto WebP/AVIF, 40-70% size reduction
+- Video limits: 100MB max file size, 60-second max duration (client-side gate before upload)
+- DB stores only Cloudinary URLs; originals stored clean; watermarked URLs delivered to clients
+
+#### 3. DepMi Watermark on All Media (Phase 2)
+- Cloudinary overlay: logo bottom-right, 50% opacity, on all delivered photos + videos
+- Downloads carry DepMi brand — TikTok/Snapchat viral model (free marketing)
+- One afternoon to implement once Cloudinary is live
+- Parked: Phase 2 backlog, not MVP blocking
+
+#### 4. Vendor Catalog Import (W3 — required before first vendor pilot)
+Three upload paths for different vendor types:
+- **Single product form** — mobile-first, category icon grid, camera tap for photos, price nudge from similar items
+- **CSV bulk import** — any spreadsheet → preview with per-row error report → atomic batch insert. Template downloadable. Free.
+- **AI-powered import (Claude Haiku)** — accepts ANY format (Excel, PDF, photo of handwritten list, WhatsApp screenshot). AI parses to DepMi product schema. Vendor reviews preview table. Confirms → batch insert. **Free for initial onboarding (up to 500 products). Scheduled re-sync is a Pro feature.**
+
+#### 5. ISBN Auto-Fill for Book Vendors (W3)
+- Vendor enters/scans ISBN → Open Library API → Google Books API fallback → manual form if both fail
+- Cover images auto-populated from API responses
+- Failed lookups contribute to DepMi's own African book catalog for future vendors
+
+#### 6. Batch Import Security (required before pilot)
+- 10MB file cap; MIME type whitelist (CSV/XLSX only)
+- CSV injection sanitization (strip leading `=`, `+`, `-`, `@`)
+- Row-level Zod validation with full error report
+- Atomic Prisma `$transaction` (all-or-nothing commits)
+- Rate limit: 1 bulk import per store per 10 minutes
+- Imports >500 rows: background job + `/api/catalog/import-status/[jobId]` polling
+
+#### 7. AI Import Monetisation: Free Onboarding, Pro Sync
+- Initial AI import up to 500 products: **FREE** — onboarding tool, not a recurring feature
+- Scheduled re-sync: **Pro subscription gate** (future)
+- Rationale: paywalling the first import contradicts free-to-list principle and kills large-catalog vendor acquisition
+
+#### 8. GitHub Org Migration — Deferred
+- Plan: create `github.com/depmi` org, transfer repo for clean company IP ownership
+- **Defer until:** first co-founder joins OR first investment round
+- GitHub preserves redirect links (no broken URLs); Vercel reconnects to new repo in ~10 min
+- web5manuel personal GitHub stays as personal/web3 identity; DepMi org = company IP
+
+### Files updated:
+- `agent.md` — Sections 2A, 5 (W3), 6, 4, 7, 8
+
+### Build Order for W3 (before first vendor pilot):
+1. Cloudinary account + env vars (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`)
+2. `GET /api/upload/sign` — signed upload token endpoint
+3. Image upload component (drag-and-drop → direct to Cloudinary → returns URL)
+4. `POST /api/catalog/import` — CSV parser + Zod validation + atomic batch insert
+5. AI import layer (Claude Haiku → JSON → preview table → confirm)
+6. `GET /api/books/isbn/[isbn]` — ISBN auto-fill endpoint
+7. DepMi watermark overlay: Phase 2, ~1 afternoon after Cloudinary is configured

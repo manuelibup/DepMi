@@ -33,8 +33,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     const isPoster = userId === demand.userId;
     
     // Check if the current user has a store
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let userStores: any[] = [];
+    let userStores: { id: string; name: string }[] = [];
     if (userId) {
         userStores = await prisma.store.findMany({
             where: { ownerId: userId, isActive: true },
@@ -44,8 +43,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     const hasStore = userStores.length > 0;
     
     // If they have a store, fetch their products for the bid dropdown
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let storeProducts: any[] = [];
+    let storeProducts: { id: string; title: string; price: string | number }[] = [];
     const selectedStoreId = userStores[0]?.id; // Just pick the first store for MVP
     
     if (selectedStoreId && !isPoster) {

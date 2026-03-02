@@ -52,7 +52,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Product watch created', watch }, { status: 201 });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('ProductWatch Creation Error:', error);
         return NextResponse.json({ message: 'Internal server error while creating product watch' }, { status: 500 });
