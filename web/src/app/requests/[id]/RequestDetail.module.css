@@ -1,0 +1,331 @@
+.container {
+    padding: 0;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.demandHeader {
+    padding: 20px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.posterInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+}
+
+.posterName {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 2px;
+    color: var(--text-main);
+}
+
+.meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.badge {
+    background: rgba(9, 132, 227, 0.1);
+    color: #0984E3;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.demandBody {
+    padding: 0 20px 24px;
+}
+
+.demandText {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-main);
+    margin: 0 0 16px;
+}
+
+.budgetRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.budgetLabel {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.budgetValue {
+    font-size: 1.2rem;
+    color: #00B894;
+    font-weight: 800;
+}
+
+.location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.divider {
+    height: 8px;
+    background: var(--bg-hover);
+    width: 100%;
+}
+
+.bidsSection {
+    padding: 24px 20px 100px;
+}
+
+.bidsTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0 0 20px;
+    color: var(--text-main);
+}
+
+/* Auth Gates */
+.buyerGate {
+    background: var(--bg-hover);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.noStoreGate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gateMsg {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.gateBtn {
+    background: var(--text-main);
+    color: var(--bg-color);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+}
+
+.gateBtn:hover {
+    opacity: 0.9;
+}
+
+/* Vendor Form Options */
+.vendorFormArea {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.bidForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.inputGroup label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.input, .textarea, .select {
+    width: 100%;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+    border-radius: var(--radius-md);
+    padding: 12px;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-family: inherit;
+    transition: border-color var(--transition-fast);
+}
+
+.input:focus, .textarea:focus, .select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.helpText {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.submitBtn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: var(--radius-full);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity var(--transition-fast);
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.submitBtn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.errorText {
+    color: #D63031;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.successState {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #00B894;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: rgba(0, 184, 148, 0.1);
+    padding: 16px;
+    border-radius: var(--radius-md);
+}
+
+/* Bid List rendering */
+.bidList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.emptyBids {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color, rgba(0,0,0,0.1));
+}
+
+.bidCard {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bidHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.bidPrice {
+    font-weight: 800;
+    color: #00B894;
+}
+
+.bidProposal {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.attachedProduct {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-hover);
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.productIcon {
+    color: var(--text-muted);
+    display: flex;
+}
+
+.acceptBtn {
+    background: var(--text-main);
+    color: var(--bg-color);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity var(--transition-fast);
+}
+
+.acceptBtn:hover {
+    opacity: 0.9;
+}

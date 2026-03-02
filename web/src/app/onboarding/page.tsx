@@ -64,8 +64,9 @@ export default function OnboardingPage() {
 
             router.push('/');
             router.refresh();
-        } catch (err: any) {
-            setError(err.message);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+            setError(e.message);
         } finally {
             setLoading(false);
         }

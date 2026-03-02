@@ -1139,3 +1139,37 @@ if (status === 'unauthenticated') {
 - Gate individual action buttons as they are built: Buy, Bid, Save (Week 4–5)
 - Build `/requests` page (Demand Engine feed)
 - Build `/orders` page (order tracking)
+
+---
+
+## Session 29 — Mar 2, 2026 — Phase 2 Week 4: Demand Engine Implementation
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was done:
+
+#### ProductWatch & Empty States
+- Modified `src/app/search/page.tsx` with Full-Text Search emulation for products.
+- Created `ClientNotifyButton.tsx` and empty state logic to gracefully handle 0-result queries.
+- Created `/api/product-watch/create/route.ts` API backend to securely record ProductWatch interests into Neon DB.
+
+#### Demand Engine (The Buyer)
+- Created `/demand/new` RSC page wrapper and `DemandForm.tsx` Client Component cleanly separating session logic from view logic. Route protected globally by `middleware.ts`.
+- Created `/api/demands/create/route.ts` backend to commit Demands to Postgres.
+
+#### Bidding Engine (The Seller & Global Feed)
+- Created the main `/requests` discovery feed showcasing active user demands using Prisma case-insensitive search logic.
+- Engineered `/requests/[id]` with a robust **4-Quadrant View Matrix**:
+  1. **Guests:** See existing bids (Read-Only) + `AuthGate` triggered on CTA click.
+  2. **Auth Buyer (No Store):** Access blocked for bidding with a direct CTA to `/store/create`.
+  3. **Demand Owner:** Sees incoming bids with (future) Accept/Reject states.
+  4. **Store Owner:** Sees the active `BidForm` dropdown.
+- Created `/api/bids/create/route.ts` utilizing `Prisma.$transaction` to atomically insert a `Bid` and simultaneously insert a `Notification` (`type: BID_RECEIVED`) targeted to the Demand owner.
+- Implemented `<select>` UI matching vendors' active inventory so they can attach their own `productId` to their bids.
+
+### Code Quality
+- Cleaned the entire codebase of `any` types and Unescaped Entity warnings. `npm run build` exits with a perfect 0 code!
+
+### Pending / Next Steps:
+- Execute Phase 3: Transactions & Logistics (Week 5-6)
+- Implement Paystack Split Payments + Escrow logic.

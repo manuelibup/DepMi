@@ -227,6 +227,7 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 ---
 
 ## 8. Development Guidelines
+- **Identity & Admin:** The supreme administrator and creator of DepMi is **Manuel**. `web5manuel` is his established crypto/web3 persona (used for GitHub, X). Agents must recognize "Manuel" as the actual human name and supreme admin, relating gracefully to both the web2 (Manuel) and web3 (web5manuel) contexts.
 - **Web-First MVP:** Prioritize a frictionless Next.js web application first. No forced app downloads.
 - **Communication:** Use WhatsApp/Telegram over native push notifications for vendor alerts.
 - **Trust Over Profit:** Prioritize escrow safety and Dep accuracy over aggressive monetization.

@@ -42,6 +42,7 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: "Onboarding complete" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ message: error.issues[0].message }, { status: 400 });

@@ -74,6 +74,7 @@ export default async function Home() {
         ) : (
           feed.map((item, index) => {
             if (item.type === 'demand') {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const demand = item.data as any;
               const dData = {
                 user: demand.user.displayName,
@@ -85,6 +86,7 @@ export default async function Home() {
               };
               return <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
             } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const product = item.data as any;
               // Generate deterministic color based on store name
               const colors = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];

@@ -2,13 +2,17 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
 import Link from 'next/link';
+import ClientNotifyButton from './ClientNotifyButton';
 
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 
 const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
 
-export default async function SearchPage() {
+export default async function SearchPage({ searchParams }: { searchParams: { q?: string, category?: string } }) {
+    const q = searchParams.q || '';
+    const cat = searchParams.category;
+
     // Top 5 stores by Dep Count
     const topStores = await prisma.store.findMany({
         where: { isActive: true },
@@ -17,9 +21,20 @@ export default async function SearchPage() {
         select: { id: true, name: true, slug: true, depCount: true, logoUrl: true }
     });
 
-    // Recent Products
+    // Recent Products with FTS emulation
     const products = await prisma.product.findMany({
-        where: { inStock: true },
+        where: { 
+            inStock: true,
+            ...(q ? {
+                OR: [
+                    { title: { contains: q, mode: 'insensitive' } },
+                    { description: { contains: q, mode: 'insensitive' } },
+                    { store: { name: { contains: q, mode: 'insensitive' } } }
+                ]
+            } : {}),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ...(cat && cat !== 'All' ? { category: cat as any } : {})
+        },
         orderBy: { createdAt: 'desc' },
         take: 20,
         include: { images: true }
@@ -31,13 +46,13 @@ export default async function SearchPage() {
 
             {/* Sticky Search Bar */}
             <div className={styles.searchHeader}>
-                <div className={styles.searchInputWrap}>
+                <form action="/search" method="GET" className={styles.searchInputWrap}>
                     <svg className={styles.searchIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="8" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-                    <input type="text" className={styles.searchInput} placeholder="Search products, stores, demands..." />
-                </div>
+                    <input type="search" name="q" defaultValue={q} className={styles.searchInput} placeholder="Search products, stores, demands..." />
+                </form>
             </div>
 
             {/* Categories */}
@@ -89,7 +104,26 @@ export default async function SearchPage() {
 
                 {products.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                        <p>No products found around you.</p>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: 16 }}>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', margin: '0 0 8px' }}>
+                            {q ? `No products match "${q}"` : 'No products found'}
+                        </h3>
+                        <p style={{ margin: '0 0 24px' }}>Don&apos;t give up! You can request this item directly from vendors or get notified if it drops.</p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                            <Link 
+                                href={`/demand/new${q ? `?q=${encodeURIComponent(q)}` : ''}`} 
+                                style={{ background: 'var(--primary)', color: '#fff', padding: '14px 24px', borderRadius: 'var(--radius-full)', textDecoration: 'none', fontWeight: 600, width: '100%', maxWidth: '280px' }}
+                            >
+                                Request This Product
+                            </Link>
+                            {/* Note: In a client component this would use fetch, but here we can link to a lightweight client wrapper if we want to be fancy. For simplicity, we just render the button that triggers the watcher */}
+                            <ClientNotifyButton searchQuery={q} />
+                        </div>
                     </div>
                 ) : (
                     <div className={styles.productsGrid}>
