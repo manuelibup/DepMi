@@ -21,6 +21,8 @@
 - [Session 18 — Feb 28, 2026 — Week 2 Code Review & Bug Fixes](#session-18--feb-28-2026--week-2-code-review--bug-fixes)
 - [Session 19 — Feb 28, 2026 — Week 3 Features Review & Security Fixes](#session-19--feb-28-2026--week-3-features-review--security-fixes)
 - [Session 20 — Mar 1, 2026 — Monetisation Strategy & Feature Architecture](#session-20--mar-1-2026--monetisation-strategy--feature-architecture)
+- [Session 27 — Mar 1, 2026 — BottomNav Implementation](#session-27--mar-1-2026--bottomnav-implementation)
+- [Session 28 — Mar 2, 2026 — Product Strategy Review & Blueprint Update](#session-28--mar-2-2026--product-strategy-review--blueprint-update)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -960,6 +962,180 @@ Home  |  Requests  |  ➕  |  Orders  |  Profile
 ### Pending / Next Steps (Implementation)
 - Update `BottomNav.tsx`: 5 tabs — Home, Requests, ➕, Orders, Profile
 - Update `Header.tsx`: add 🔍 search icon to top-right on all screens
+- ~~Update `BottomNav.tsx`~~ ✅ Done in Session 27
+- ~~Update `Header.tsx`: add 🔍 search icon~~ ✅ Already present from Session 24
 - Build `/requests` route (Demand Engine feed — Week 4)
 - Build `/orders` route (order tracking page)
 - Build `/search` route (focused keyboard + trending/nearby default state)
+
+---
+
+## Session 27 — Mar 1, 2026 — BottomNav Implementation
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What was done:
+
+#### BottomNav rebuilt with final 5-tab architecture
+- Replaced old tabs (Home, Discover, Search-centre, Orders, Profile) with final locked architecture.
+- **New tabs:** Home (`/`) | Requests (`/requests`) | ➕ | Orders (`/orders`) | Profile (`/profile`)
+- **Discover tab removed** — content served through Home + Search.
+- **Centre Search button removed** — search already lives in the global header (confirmed in `Header/index.tsx`).
+
+#### Smart ➕ routing implemented
+- **Unauthenticated** → redirects to `/login`
+- **Authenticated, no store** → routes directly to `/demand/new` (no friction, buyer flow)
+- **Authenticated, has store** → opens animated bottom sheet with 2 options:
+  - 📣 Post a Request → `/demand/new`
+  - 📦 Add a Product → `/store/[slug]/products/new` (uses first store's slug)
+
+#### New API endpoint: `GET /api/user/stores`
+- Lightweight endpoint returning `{ stores: { slug, name }[] }` for the authenticated user.
+- Used by BottomNav to determine store ownership on mount (fetched once, cached in state).
+
+#### Bottom sheet UI added
+- Animated overlay + slide-up sheet with handle bar.
+- Dismiss on overlay tap. Stops propagation on sheet click.
+- All styles added to `BottomNav.module.css` (`sheetOverlay`, `sheet`, `sheetHandle`, `sheetOption`, etc.).
+- `slideUp` + `fadeIn` keyframe animations.
+
+### Files changed:
+- `web/src/components/BottomNav/index.tsx` — full rewrite
+- `web/src/components/BottomNav/BottomNav.module.css` — sheet styles appended
+- `web/src/app/api/user/stores/route.ts` — new file
+
+### Validations:
+- No TypeScript errors (3 unused variable hints cleaned up)
+- Header already had 🔍 search icon — no change needed
+
+### Pending / Next Steps:
+- Build `/requests` page (Demand Engine feed)
+- Build `/orders` page (order tracking)
+- Ensure `npx prisma db push` has been run (OtpToken + StoreInvite tables)
+
+---
+
+## Session 28 — Mar 2, 2026 — Product Strategy Review & Blueprint Update
+**Agent:** Antigravity (Claude Sonnet 4.6)
+**Human:** Manuel
+
+### What was done:
+Pure product strategy session — no code written. Evaluated 4 product ideas and locked in several architectural decisions, then updated `agent.md` comprehensively.
+
+### Ideas Evaluated
+
+#### 1. Cross-App Referral Links ("Can't find it on DepMi? Check appX")
+**Decision: Rejected as plain referral. Only acceptable via affiliate programs.**
+- Sending users away for free trains them that DepMi's catalog is incomplete.
+- If implemented post-MVP, must use Amazon Associates / Konga Affiliate to earn a cut on exits.
+- Replaced by: "Request This Product" button (keeps user in ecosystem, drives vendor supply).
+
+#### 2. QR Weekly Auction (Highest Bidder Gets Featured Store QR)
+**Decision: Parked to Post-MVP Backlog. Revisit at 1,000 MAU.**
+- Core mechanic is sound (scarcity + revenue + discovery).
+- 24h cycle is too short for vendor ROI — changed to 7-day cycle.
+- Physical QR codes printed by vendors would go stale; URL redirect layer needed.
+- Not worth building before there's an audience for vendors to bid to reach.
+
+#### 3. Third-Party Marketplace Integration (Amazon, Konga, Jiji, eBay)
+**Decision: Rejected for MVP and near-term. Focus depth before breadth.**
+- Engineering cost enormous (each platform has different APIs, rate limits, ToS).
+- Most platforms actively prevent this; Amazon TOS issues are real.
+- Undercuts DepMi's own vendors by competing with Amazon on the same platform.
+- Price comparison sub-feature evaluated and also deferred.
+- Answer confirmed: focus on getting the app in as many hands as possible with a tight product.
+
+#### 4. Fast Onboarding + Escrow + NIN Auto-Fetch
+**Decision: Core feature — build this.**
+- Escrow model is the primary trust mechanism for informal African commerce.
+- NIN auto-fetch via NIMC API requires licensed verification partner status — deferred; use Dojah/BVN instead.
+- Tiered limits confirmed for buyers.
+
+### Decisions Locked In
+
+#### Buyer KYC Transaction Limits
+| Tier | Max per transaction | Cumulative cap | Reset |
+|------|-------------------|---------------|-------|
+| TIER_0 (phone OTP only) | ₦50,000 | ₦200,000 | Rolling 30-day window |
+| TIER_1 / TIER_2 | ₦500,000 | No cap | — |
+
+- **Rolling 30-day window** chosen (vs. lifetime or calendar month) — user-friendliest model.
+- Soft nudge banner at ₦150,000; hard modal block at ₦200,000 with single CTA to verify.
+- NIN help text in UI: "Don't have your NIN? Dial *346# on your MTN line."
+- **Vendor side**: TIER_2 verification is mandatory before creating a store or accepting payment. No exceptions.
+
+#### "Request This Product" Button — Phase 2
+- Surfaces on `/search` when query returns 0 DepMi results.
+- One tap pre-fills a Demand post. This is the primary UI entry point to the Demand Engine.
+
+#### "Notify Me When Available" — Phase 2 (UI + DB) / Phase 3 (delivery)
+- Shown on empty search results AND out-of-stock product cards.
+- Creates `ProductWatch { userId, searchQuery?, productId?, createdAt, notified }`.
+- Phase 3: cron matches new listings against open watches → notifies via Termii SMS (primary) or Resend (fallback).
+
+### `agent.md` Updates Made
+- **Section D (KYC):** Added tier limits table, soft nudge / hard block rules, NIN help text, vendor no-exceptions rule.
+- **Section F (Demand Engine):** Added "Request This Product" and "Notify Me When Available" with phase split.
+- **Phase 2 W3:** Added product categories/taxonomy requirement, Postgres full-text search spec (replaces vague Meilisearch mention), search empty-state UX, store public profile page spec.
+- **Phase 2 W4:** Updated to include ProductWatch DB record scope.
+- **Phase 3 W5:** Added KYC limit enforcement at checkout spec.
+- **Phase 3 W6:** Added full order state machine (10 states), dispute resolution (48h vendor window, 7-day buyer dispute window, admin arbitration), vendor payout schedule (T+3), refund flow, review & rating system, ProductWatch notification delivery, notification channel hierarchy.
+- **Section 6 (Data Architecture):** Updated all models with new fields: `cumulativeSpend` on User, `ProductWatch` model, `Review` model, `category` on Product/Demand, full Order status enum, `escrowStatus`, 10-event Notification enum, `rating`/`reviewCount` on Store.
+- **Section 7 (Post-MVP Backlog):** New section — QR weekly auction, affiliate cross-app links, @DepMiBot, resell/dropshipping, Pro subscription, Meilisearch upgrade.
+- **TOC updated** to reflect new Section 7 (Post-MVP Backlog) and renumbered Development Guidelines to Section 8.
+
+### Pending / Next Steps:
+- Schema update: add `ProductWatch`, `Review`, `cumulativeSpend` on User, `category` on Product/Demand, full Order status enum
+- `npx prisma db push` after schema update
+- Build Phase 2: stores, products, search, Demand Engine feed, ProductWatch UI
+
+---
+
+## Session 29 — Mar 2, 2026 — Browse-First Guest Access
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### Decision:
+Implement browse-first UX — guests explore freely, auth only required at the moment of action (buy, bid, post, view profile). Mirrors Pinterest/Airbnb/Etsy. Critical for vendor shareability: store links shared on WhatsApp/Instagram must load immediately for guests, not bounce to a login wall.
+
+### What was done:
+
+#### Middleware — private route allowlist
+- Replaced broad blocker with targeted private-route allowlist.
+- **Now blocked (hard redirect to `/login`):** `/orders`, `/profile`, `/demand/new`, `/store/create`, `/store/*/products/new`, `/store/*/products/*/edit`, `/admin`
+- **Now open to guests:** `/`, `/store/[slug]`, `/u/[username]`, `/requests`, `/search`
+
+#### AuthGate context + modal (`src/context/AuthGate.tsx` + `AuthGate.module.css`)
+- `AuthGateProvider` wraps the entire app.
+- `useAuthGate()` hook exposes `openGate(hint?, callbackUrl?)` to any component.
+- Opens animated bottom sheet with contextual message + "Create Account" / "Log in" CTAs.
+- `callbackUrl` passed through to NextAuth — returns user to where they were after auth.
+
+#### Providers.tsx — `AuthGateProvider` added inside `SessionProvider`
+
+#### BottomNav updates
+- ➕ button: `openGate('post a request or list a product', pathname)` for guests
+- Profile tab: renders as `<button>` calling `openGate('view your profile', pathname)` for guests
+- Added `.navBtn` CSS reset class
+
+### Files changed:
+- `web/src/middleware.ts` — rewritten
+- `web/src/context/AuthGate.tsx` — new
+- `web/src/context/AuthGate.module.css` — new
+- `web/src/components/Providers.tsx` — AuthGateProvider added
+- `web/src/components/BottomNav/index.tsx` — openGate integration
+- `web/src/components/BottomNav/BottomNav.module.css` — navBtn class added
+
+### Usage pattern for future action components:
+```tsx
+const { openGate } = useAuthGate();
+if (status === 'unauthenticated') {
+    openGate('buy this product', pathname);
+    return;
+}
+```
+
+### Pending / Next Steps:
+- Gate individual action buttons as they are built: Buy, Bid, Save (Week 4–5)
+- Build `/requests` page (Demand Engine feed)
+- Build `/orders` page (order tracking)

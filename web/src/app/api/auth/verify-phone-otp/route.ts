@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -64,14 +65,14 @@ export async function POST(req: Request) {
 
         const termiiData = await termiiResponse.json();
 
-        if (!termiiResponse.ok || termiiData.verified !== true && termiiData.verified !== "true") {
+        const isVerified = termiiData.verified === true || termiiData.verified === "true";
+        if (!termiiResponse.ok || !isVerified) {
             const errorMsg = termiiData.message || "Invalid or expired verification code.";
             return NextResponse.json({ message: errorMsg }, { status: 400 });
         }
 
         // 4. Success! Mark OTP as used and update User Profile
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await prisma.$transaction(async (tx: any) => {
+        await prisma.$transaction(async (tx) => {
             await tx.otpToken.update({
                 where: { id: otpRecord.id },
                 data: { used: true }
@@ -95,6 +96,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Phone number verified successfully!" }, { status: 200 });
 
     } catch (error: unknown) {
+        // Phone number claimed by another user between our pre-check and the DB update
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            return NextResponse.json(
+                { message: "Phone number already verified on another account." },
+                { status: 409 }
+            );
+        }
         console.error("OTP Verification Error:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }

@@ -30,6 +30,11 @@ export async function POST(req: Request) {
             );
         }
 
+        if (!process.env.TERMII_API_KEY) {
+            console.error("TERMII_API_KEY is not set");
+            return NextResponse.json({ message: "SMS service is not configured." }, { status: 503 });
+        }
+
         // Termii requires OTP sent via external request for DND support
         const termiiPayload = {
             api_key: process.env.TERMII_API_KEY,

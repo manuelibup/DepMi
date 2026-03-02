@@ -1,0 +1,98 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 300;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border-radius: 24px 24px 0 0;
+    padding: 14px 24px max(env(safe-area-inset-bottom, 20px), 28px);
+    text-align: center;
+    animation: slideUp 0.22s ease;
+}
+
+.handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--card-border);
+    margin: 0 auto 20px;
+}
+
+.icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.body {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.primaryBtn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.primaryBtn:hover {
+    opacity: 0.9;
+}
+
+.primaryBtn:active {
+    transform: scale(0.97);
+}
+
+.secondaryBtn {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    transition: color var(--transition-fast);
+}
+
+.secondaryBtn:hover {
+    color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}

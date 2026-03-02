@@ -7,7 +7,8 @@
 - [4. Financial & Regulatory Model (Phase 1)](#4-financial--regulatory-model-phase-1)
 - [5. 6-Week MVP Roadmap](#5-6-week-mvp-roadmap)
 - [6. Data Architecture (Current Schema)](#6-data-architecture-current-schema)
-- [7. Development Guidelines](#7-development-guidelines)
+- [7. Post-MVP Backlog](#7-post-mvp-backlog)
+- [8. Development Guidelines](#8-development-guidelines)
 
 ## 1. Core Vision
 DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for African entrepreneurs. It bridges the gap between social discovery (Instagram/Facebook) and structured commerce (Shopify/Jumia).
@@ -52,13 +53,24 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 
 ### D. Tiered KYC Verification
 - **UNVERIFIED:** Can browse and create demands.
-- **TIER_0:** Email + phone OTP verified — can buy via escrow. *(Active from Week 2)*
+- **TIER_0:** Phone OTP verified — can buy via escrow. Transaction limits apply (see below). *(Active from Week 2)*
 - **TIER_1:** NIN verified — skipped as a standalone gate; NIN is bundled into TIER_2 for store creators.
-- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Automatically grants a free, permanent **"BVN Verified" blue checkmark** on the store — proves real identity, no payment required. Buyers only need TIER_0. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
+- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Automatically grants a free, permanent **"BVN Verified" blue checkmark** on the store — proves real identity, no payment required. Vendors are buyer-side exempt from spending limits. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
 - **TIER_3 / "DepMi Certified" Badge (Paid):** BVN + NIN + CAC registration. Distinct from the free TIER_2 checkmark. Carries CAC backing, priority dispute resolution, and future algorithm boosts. DepMi assists with CAC filing (see Financial Model). Badge issued on CAC confirmation.
 - **BUSINESS:** TIN verified — highest transaction limits. *(Post-MVP)*
 
-> **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with email + phone OTP (TIER_0) only. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN + NIN verification added as a feature flag when store creation demand scales (~seller #25+). **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
+#### Buyer Transaction Limits by Tier
+| Tier | Max per transaction | Cumulative cap | Reset |
+|------|-------------------|---------------|-------|
+| TIER_0 (phone only) | ₦50,000 | ₦200,000 | Rolling 30-day window |
+| TIER_1 / TIER_2 | ₦500,000 | No cap | — |
+
+- **Soft nudge at ₦150,000 cumulative:** Banner prompts user to verify (non-blocking).
+- **Hard block at ₦200,000:** Modal with single CTA — "Verify now to continue". No bypass.
+- **NIN help text in UI:** "Don't have your NIN? Dial *346# on your MTN line."
+- **Vendor side:** Verification (TIER_2) is **mandatory before creating a store or accepting any payment**. No unverified selling — no exceptions.
+
+> **MVP Strategy (0–500 users):** KYC via Dojah/Smile ID is deferred. Buyers verify with phone OTP (TIER_0) only and operate within the ₦50k/₦200k rolling limits. Pilot sellers are manually elevated to TIER_2 by admin. Dojah BVN + NIN verification added as a feature flag when store creation demand scales (~seller #25+). **Raw NIN/BVN numbers must never be stored — only Dojah reference tokens.**
 
 ### E. @DepMiBot (The Onboarding Hack)
 - **Workflow:** Vendor tags `@depmibot` on an Instagram/Facebook post.
@@ -70,6 +82,8 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Loop:** Relevant store owners get notified to "Bid" with their listings.
 - **Bid→Product Link:** Vendors can attach an existing product from their store when bidding.
 - **Order Tracing:** Orders track their origin (Demand + Bid), so the demand→bid→order flow is auditable.
+- **"Request This Product" button:** Surfaces on `/search` when a query returns 0 DepMi results. One tap → pre-fills a Demand post with the search query. This is the primary UI entry point into the Demand Engine for buyers.
+- **"Notify Me When Available":** Shown on (a) empty search results and (b) out-of-stock product cards. Creates a `ProductWatch` record. When a matching product is listed or restocked, DepMi notifies the user via SMS (Termii) or email (Resend). Phase 2: UI + DB record. Phase 3: notification delivery.
 
 ### G. Affiliate & Reshare System
 - **Reshare to Earn:** Every user gets a custom affiliate link for any product. If a sale happens through their link, they earn a commission set by the vendor (5–20%, deducted from vendor's profit). Resharing is a paid feature activation for stores — only stores that have enabled it generate commissionable links.
@@ -141,6 +155,10 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
 *   **W3: Stores & Products:** Store creation gated by TIER_2 (BVN + NIN both required). Pilot vendors use admin invite code bypass — Dojah integration added at ~seller #25. Free to list — no subscription on store creation. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+    - **Product Categories / Taxonomy:** Required for search filtering, Demand Engine matching, and ProductWatch. Define a fixed top-level category list at launch (e.g. Fashion, Electronics, Food, Beauty, Home, Services). Products and Demands must have a category field.
+    - **Search Implementation:** Postgres full-text search (`tsvector` on Product title + description + Store name). No external search service needed at MVP. Extend to Meilisearch/Typesense post-MVP if latency becomes an issue.
+    - **Search UX — empty state:** If query returns 0 results, show: (1) "Request This Product" button → pre-fills a Demand post; (2) "Notify Me When Available" toggle → creates a `ProductWatch` record.
+    - **Store Public Profile Page (`/store/[slug]`):** Store bio, Dep score badge, product grid, ratings summary, social links, "Follow" button.
     - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
     - **Discovery Page Architecture:** Top section = paid "Featured Today" sponsored carousel (clearly labelled "Sponsored"). Below = organic category browse + trending by location. Home feed remains 100% organic/social — never paid placement.
     - **Navigation Architecture (FINAL — do not change):** 5-tab bottom nav:
@@ -156,28 +174,59 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
       - **Orders** (`/orders`) — Dedicated order tracking + active bids. High-anxiety post-purchase = deserves its own tab. Never buried in Profile.
       - **Profile** (`/profile`) — Account, store switcher, settings.
       - **🔍 Search** — Global header icon (top-right) present on **every screen**. Opens `/search` with keyboard immediately focused + shows "Trending" and "Popular Near You" before typing. Not a bottom nav tab — universal header pattern (YouTube/Instagram/Twitter model).
-*   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Search (Meilisearch/Postgres full-text) to match demands to listings. Notifications system (in-app).
+*   **W4: The Demand Engine:** "Product Request" feed. Bid system (vendor attaches product). Postgres full-text search to match demands to listings. `ProductWatch` DB records for "Notify Me" (UI + DB only — delivery in Phase 3). In-app notification system.
 
 ### **Phase 3: Transactions & Logistics (Weeks 5–6)**
 *   **W5: Secure Payments & Affiliates:** Paystack Split Payments with escrow. Order creation from accepted bids (origin tracing: demandId + bidId). Implement "Reshare to Earn" commission splits for affiliate links.
-*   **W6: The Loop:** Order status tracking (7 statuses). "Confirm Receipt" triggers vendor payout + Dep for both parties. Notification system (10 event types). Launch Pilot with first 20 vendors.
+    - **KYC Limit Enforcement at Checkout:** Before processing any payment, check `session.user.kycTier` and sum of transactions in the last 30 days (`cumulativeSpend`). Block if TIER_0 and (single tx > ₦50,000 OR rolling total > ₦200,000). On block: show modal → verification flow. On success: record transaction and update rolling spend.
+    - **Verification Upgrade UX:** Soft nudge banner at ₦150,000 rolling spend. Hard modal block at ₦200,000 with single CTA: "Verify to continue" (NIN/BVN flow).
+*   **W6: The Loop:** Order status tracking + "Confirm Receipt" triggers payout + Deps.
+    - **Order State Machine (COMPLETE — do not simplify):**
+      `PENDING → CONFIRMED → SHIPPED → DELIVERED → COMPLETED`
+      Failure paths: `→ CANCELLED` (before SHIPPED), `→ DISPUTED` (buyer raises issue), `→ RESOLVED_BUYER | RESOLVED_VENDOR` (admin arbitration), `→ REFUNDED`
+    - **Dispute Resolution:**
+      - Vendor has **48 hours** after order is CONFIRMED to mark as SHIPPED (update tracking). If not done, buyer can raise a dispute.
+      - Buyer can raise a dispute within **7 days** of delivery confirmation.
+      - MVP: DepMi admin resolves manually via admin panel. Post-MVP: automated rules.
+      - Escrow states: `HELD → RELEASING → RELEASED` (happy path) | `HELD → DISPUTED → RESOLVED_BUYER | RESOLVED_VENDOR`
+    - **Vendor Payout Schedule:** Funds release T+3 days after buyer confirms delivery (COMPLETED status). Auto-confirm after 7 days of no dispute if buyer does not confirm. Payout via Paystack Transfer API to vendor's registered bank account.
+    - **Refund Flow:** REFUNDED status = auto-refund to buyer's original payment method within 5 business days. Triggered by RESOLVED_BUYER outcome or CANCELLED before shipment.
+    - **Review & Rating System:** Post-delivery (COMPLETED status), buyer is prompted to rate vendor 1–5 stars + optional text review. Rating feeds into Store's Dep score calculation. One review per order.
+    - **ProductWatch Notification Delivery:** Cron job (or listing webhook): when a new Product is published, match its category + keywords against open `ProductWatch` records. Notify matched users via Termii SMS (primary) or Resend email (fallback). Mark `ProductWatch.notified = true`.
+    - **Push Notification Hierarchy (all 3 channels):** In-app first → SMS (Termii) for high-priority events → email (Resend) for transactional receipts. Never fire all 3 for the same event.
+    - **Notification System (10 event types):** BID_RECEIVED, BID_ACCEPTED, ORDER_PLACED, ORDER_CONFIRMED, ORDER_SHIPPED, ORDER_DELIVERED, PAYMENT_RELEASED, DISPUTE_OPENED, DISPUTE_RESOLVED, PRODUCT_AVAILABLE (ProductWatch).
+    - **Launch Pilot** with first 20 vendors.
 
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps).
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum and `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement).
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
-- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score.
-- **Product + ProductImage** — Catalog with multi-image carousel support.
-- **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product).
-- **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order).
+- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
+- **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category` field (enum or FK to Category), `inStock` (Boolean).
+- **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
+- **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
+- **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`.
+- **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
 - **DepTransaction** — Audit trail for trust scores (buyer + seller tracked separately).
-- **Notification** — 10 typed events (BID_RECEIVED, ORDER_PLACED, FUNDS_RELEASED, etc.).
+- **Notification** — 10 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE`.
 
 ---
 
-## 7. Development Guidelines
+## 7. Post-MVP Backlog (Do Not Build During 6-Week Sprint)
+These are evaluated ideas parked for after the first 20-vendor pilot:
+
+- **QR Weekly Auction:** Highest weekly bidder gets a featured store QR code. 7-day cycle (not 24h — too short for vendor ROI). Physical QR codes point to a redirect URL that updates each week. Revisit at 1,000 MAU.
+- **Affiliate Cross-App Links:** "Can't find it on DepMi?" referral links to Konga/Amazon — but only via affiliate programs (Amazon Associates, Konga Affiliate). Never plain links. Earns DepMi a commission on exits. Evaluate at 5,000 MAU when catalog gaps are measurable.
+- **@DepMiBot (Instagram/FB tag-to-list):** AI bot that parses vendor posts and auto-creates draft listings. Deferred — requires ML pipeline and Meta API approval.
+- **Resell / Internal Dropshipping:** Requires mature product catalog and split payment infrastructure (Phase 2.5 target — see Section H).
+- **Pro Subscription:** Only after vendors are organically profitable and requesting advanced tools.
+- **Meilisearch / Typesense:** Upgrade from Postgres full-text search if p99 search latency exceeds 300ms at scale.
+
+---
+
+## 8. Development Guidelines
 - **Web-First MVP:** Prioritize a frictionless Next.js web application first. No forced app downloads.
 - **Communication:** Use WhatsApp/Telegram over native push notifications for vendor alerts.
 - **Trust Over Profit:** Prioritize escrow safety and Dep accuracy over aggressive monetization.

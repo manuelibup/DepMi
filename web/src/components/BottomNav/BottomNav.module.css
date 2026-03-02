@@ -31,6 +31,14 @@
     transform: scale(0.88);
 }
 
+/* Button reset for nav items rendered as <button> (e.g. Profile gate) */
+.navBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
 .navItem.active {
     color: var(--primary);
 }
@@ -73,4 +81,88 @@
 
 .addBtn:active {
     transform: scale(0.92);
+}
+
+/* ── Bottom sheet ── */
+.sheetOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px max(env(safe-area-inset-bottom, 16px), 24px);
+    animation: slideUp 0.2s ease;
+}
+
+.sheetHandle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--card-border);
+    margin: 0 auto 16px;
+}
+
+.sheetTitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.sheetOption {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 12px;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.sheetOption:hover,
+.sheetOption:active {
+    background: var(--card-bg-glass);
+}
+
+.sheetOptionIcon {
+    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg-glass);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.sheetOptionLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.sheetOptionDesc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }

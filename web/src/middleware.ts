@@ -1,11 +1,21 @@
 import middleware from "next-auth/middleware";
+
 export { middleware };
 
 export const config = {
-    // Protect all routes by default, EXCEPT:
-    // - public routes: /login, /register, /
-    // - public static files: images (*.png), favicon.ico
-    // - next internals: _next/static, _next/image
-    // - api routes (they have their own protection logic)
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login|register|.*\\.png$|$).*)"],
+    // Only protect routes that require authentication to view at all.
+    // Browse-first: store pages, requests, search, and public profiles are open to guests.
+    // Actions inside those pages (buy, bid, post) gate via the AuthGate modal client-side.
+    matcher: [
+        "/orders",
+        "/orders/(.*)",
+        "/profile",
+        "/profile/(.*)",
+        "/demand/new",
+        "/store/create",
+        "/store/(.+)/products/new",
+        "/store/(.+)/products/(.+)/edit",
+        "/admin",
+        "/admin/(.*)",
+    ],
 };

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 
@@ -23,22 +24,11 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { email, password, username, displayName, dateOfBirth } = registerSchema.parse(body);
 
-        const existingUserByEmail = await prisma.user.findUnique({
-            where: { email },
-        });
-        if (existingUserByEmail) {
-            return NextResponse.json({ message: "Email already exists" }, { status: 409 });
-        }
-
-        const existingUserByUsername = await prisma.user.findUnique({
-            where: { username },
-        });
-        if (existingUserByUsername) {
-            return NextResponse.json({ message: "Username is already taken" }, { status: 409 });
-        }
-
         const hashedPassword = await bcrypt.hash(password, 12);
 
+        // Rely on DB unique constraints (email, username) rather than pre-checking.
+        // This eliminates the TOCTOU race condition where two concurrent requests
+        // could both pass the check and then both attempt to insert.
         const newUser = await prisma.user.create({
             data: {
                 email,
@@ -59,11 +49,19 @@ export async function POST(req: Request) {
             { message: "User created successfully", userId: newUser.id },
             { status: 201 }
         );
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return NextResponse.json({ message: "Validation error", errors: (error as any).errors }, { status: 400 });
+            return NextResponse.json({ message: "Validation error", errors: error.errors }, { status: 400 });
+        }
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            const target = error.meta?.target as string[] | undefined;
+            if (target?.includes("email")) {
+                return NextResponse.json({ message: "Email already exists" }, { status: 409 });
+            }
+            if (target?.includes("username")) {
+                return NextResponse.json({ message: "Username is already taken" }, { status: 409 });
+            }
+            return NextResponse.json({ message: "Account already exists" }, { status: 409 });
         }
         console.error("Registration error:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });

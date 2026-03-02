@@ -166,10 +166,10 @@ model KycStatus {
 
   // Each step stores the verification provider's reference token
   socialVerified Boolean @default(false) // → bumps to TIER_0 (Phone OTP)
-  ninRef         String? // → bumps to TIER_1 (can buy)
-  bvnRef         String? // → bumps to TIER_2 (can create stores + sell)
+  ninRef         String? @unique // → bumps to TIER_1 (can buy)
+  bvnRef         String? @unique // → bumps to TIER_2 (can create stores + sell)
   proofOfAddress Boolean @default(false) // → bumps to TIER_3
-  cacNumber      String? // → bumps to BUSINESS (with tinNumber)
+  cacNumber      String? @unique // → bumps to BUSINESS (with tinNumber)
   tinNumber      String? // → bumps to BUSINESS (with cacNumber)
 
   updatedAt DateTime @updatedAt
