@@ -55,13 +55,22 @@ enum KycTier {
 }
 
 enum OrderStatus {
-  PENDING_PAYMENT
-  PAYMENT_ESCROWED
-  OUT_FOR_DELIVERY
+  PENDING
+  CONFIRMED
+  SHIPPED
   DELIVERED
+  COMPLETED
+  CANCELLED
   DISPUTED
+  RESOLVED_BUYER
+  RESOLVED_VENDOR
   REFUNDED
-  FUNDS_RELEASED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASING
+  RELEASED
 }
 
 enum Category {
@@ -76,16 +85,18 @@ enum Category {
 }
 
 enum NotificationType {
-  BID_RECEIVED // Store owner: "A vendor bid on your demand"
-  BID_ACCEPTED // Bidder: "Your bid was accepted"
-  ORDER_PLACED // Store owner: "New order received"
-  ORDER_ESCROWED // Both: "Payment secured in escrow"
-  ORDER_SHIPPED // Buyer: "Your order has been shipped"
-  ORDER_DELIVERED // Both: "Order marked as delivered"
-  ORDER_DISPUTED // Both: "A dispute has been raised"
-  FUNDS_RELEASED // Store owner: "Funds released to your account"
-  DEP_EARNED // Both: "You earned a Dep!"
-  SYSTEM // Generic system notifications
+  BID_RECEIVED
+  BID_ACCEPTED
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  PAYMENT_RELEASED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  PRODUCT_AVAILABLE
+  DEP_EARNED
+  SYSTEM
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -112,6 +123,9 @@ model User {
   depCount Int     @default(0) // Atomic counter, incremented with DepTransaction
   depTier  DepTier @default(SEEDLING)
 
+  // Shopping tracking for TIER_0 limits
+  cumulativeSpend Int @default(0)
+
   // KYC — determines what the user can do
   // UNVERIFIED → browse/demand | TIER_1 → buy | TIER_2 → CREATE STORES + sell
   kycTier   KycTier    @default(UNVERIFIED)
@@ -129,6 +143,8 @@ model User {
   notifications   Notification[]   @relation("UserNotifications")
   otpTokens       OtpToken[]
   storeInvite     StoreInvite?
+  productWatches  ProductWatch[]
+  reviewsLeft     Review[]         @relation("BuyerReviews")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -197,6 +213,9 @@ model Store {
   // Trust score (as a seller — separate from owner's buyer trust)
   depCount Int     @default(0)
   depTier  DepTier @default(SEEDLING)
+  
+  rating      Float @default(0)
+  reviewCount Int   @default(0)
 
   // Paystack split payment subaccount (for auto-settlement)
   paystackSubcode String?
@@ -217,6 +236,7 @@ model Store {
   bids            Bid[]            @relation("StoreBids")
   ordersAsSeller  Order[]          @relation("SellerOrders")
   depTransactions DepTransaction[] @relation("StoreDepTransactions")
+  reviews         Review[]         @relation("StoreReviews")
 
   @@index([ownerId])
   @@index([slug])
@@ -321,9 +341,10 @@ model Product {
   updatedAt DateTime @updatedAt
 
   // Relations
-  images     ProductImage[]
-  orderItems OrderItem[]
-  bids       Bid[]          @relation("BidProduct")
+  images        ProductImage[]
+  orderItems    OrderItem[]
+  bids          Bid[]          @relation("BidProduct")
+  productWatches ProductWatch[]
 
   @@index([category, inStock])
   @@index([storeId])
@@ -353,7 +374,7 @@ model Order {
   seller   Store  @relation("SellerOrders", fields: [sellerId], references: [id])
 
   totalAmount Decimal     @db.Decimal(10, 2)
-  status      OrderStatus @default(PENDING_PAYMENT)
+  status      OrderStatus @default(PENDING)
 
   // Origin tracking
   demandId String?
@@ -362,8 +383,8 @@ model Order {
   bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
 
   // Escrow / Paystack
-  paystackRef String? @unique
-  isEscrowed  Boolean @default(true)
+  paystackRef  String? @unique
+  escrowStatus EscrowStatus @default(HELD)
 
   // Delivery
   deliveryAddress String?
@@ -373,7 +394,8 @@ model Order {
   updatedAt DateTime @updatedAt
 
   // Relations
-  items OrderItem[]
+  items  OrderItem[]
+  review Review?
 
   @@index([buyerId])
   @@index([sellerId])
@@ -455,4 +477,44 @@ model Waitlist {
   id        String   @id @default(uuid())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: PRODUCT WATCH & REVIEWS (PHASE 2/3)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model ProductWatch {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  searchQuery  String?  // If they clicked "Notify Me" on a search that returned 0 results
+  productId    String?  // If they clicked "Notify Me" on an out-of-stock product
+  product      Product? @relation(fields: [productId], references: [id])
+
+  notified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  buyerId   String
+  buyer     User     @relation("BuyerReviews", fields: [buyerId], references: [id])
+
+  storeId   String
+  store     Store    @relation("StoreReviews", fields: [storeId], references: [id])
+
+  rating    Int      // 1-5
+  text      String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([buyerId])
+  @@index([storeId])
 }

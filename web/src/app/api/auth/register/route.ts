@@ -22,7 +22,13 @@ const registerSchema = z.object({
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { email, password, username, displayName, dateOfBirth } = registerSchema.parse(body);
+        const parseResult = registerSchema.safeParse(body);
+
+        if (!parseResult.success) {
+            return NextResponse.json({ message: "Validation error", errors: parseResult.error.issues }, { status: 400 });
+        }
+
+        const { email, password, username, displayName, dateOfBirth } = parseResult.data;
 
         const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -50,9 +56,6 @@ export async function POST(req: Request) {
             { status: 201 }
         );
     } catch (error: unknown) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ message: "Validation error", errors: error.errors }, { status: 400 });
-        }
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
             const target = error.meta?.target as string[] | undefined;
             if (target?.includes("email")) {

@@ -55,9 +55,9 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **UNVERIFIED:** Can browse and create demands.
 - **TIER_0:** Phone OTP verified — can buy via escrow. Transaction limits apply (see below). *(Active from Week 2)*
 - **TIER_1:** NIN verified — skipped as a standalone gate; NIN is bundled into TIER_2 for store creators.
-- **TIER_2:** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Automatically grants a free, permanent **"BVN Verified" blue checkmark** on the store — proves real identity, no payment required. Vendors are buyer-side exempt from spending limits. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
-- **TIER_3 / "DepMi Certified" Badge (Paid):** BVN + NIN + CAC registration. Distinct from the free TIER_2 checkmark. Carries CAC backing, priority dispute resolution, and future algorithm boosts. DepMi assists with CAC filing (see Financial Model). Badge issued on CAC confirmation.
-- **BUSINESS:** TIN verified — highest transaction limits. *(Post-MVP)*
+- **TIER_2 (Identity Verified):** **BVN + NIN** — required to **CREATE A STORE, sell, receive payouts.** Proves real identity, no payment required. Vendors are buyer-side exempt from spending limits. *(Manual elevation for pilot vendors — Dojah integration added at ~seller #25)*
+- **Blue Badge (High Deps / Organic Trust):** Awarded automatically to users/stores that achieve high Dep scores (e.g., > 150 Deps) through transaction volume and flawless escrow history. Represents community credibility ("aura farming"). High Dep scores directly boost algorithmic discovery.
+- **Gold Badge / "DepMi Certified" (Paid CAC):** BVN + NIN + CAC registration. The premium business tier. Carries full CAC backing, priority dispute resolution, and future pro perks. DepMi assists with CAC filing. Badge issued on CAC confirmation.
 
 #### Buyer Transaction Limits by Tier
 | Tier | Max per transaction | Cumulative cap | Reset |
