@@ -1346,3 +1346,13 @@ umber\ or \string\. Mapped the raw database \indMany\ result to explicitly pars
 - **Fix:** Restored the \process.env.GOOGLE_CLIENT_ID || \"\"\ fallback inside the \GoogleProvider\ instantiation and pushed to Vercel.
 - **Notes:** Manuel was also actively working locally, as untracked files for Cloudinary (\/api/upload/sign/route.ts\ and \CloudinaryUploader.tsx\) were safely committed and pushed alongside the fix.
 
+
+## Session 35 — Mar 2, 2026 — Vercel Build Fix (Resend API Key)
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Crash:** The deployment failed during Next.js static page collection for `/api/auth/send-email-otp` because `RESEND_API_KEY` wasn`t defined in the build environment, and `lib/resend.ts` threw a top-level error upon import.
+- **Systemic Audit:** Audited the codebase for any other top-level rigid `process.env` checks that would crash Next.js static exports. Confirmed all other variables (Termii, Cloudinary, Internal JWT) are safely verified at *runtime* via request handlers, not at build time.
+- **Fix:** Removed the `throw new Error` check in `lib/resend.ts` and replaced the instantiation with a graceful fallback: `process.env.RESEND_API_KEY || "missing_key_for_build"`. Pushed to unblock Vercel.
+
