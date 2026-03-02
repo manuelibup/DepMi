@@ -1336,3 +1336,13 @@ pm run build\) phase. The error occurred in \/requests/[id]/page.tsx\: \Type err
 - **Fix:** Prisma returns \Decimal\ objects for exact financial rounding, but our frontend \BidForm\ component expects a standard Javascript \
 umber\ or \string\. Mapped the raw database \indMany\ result to explicitly parse \Number(p.price)\ before passing it to the client component.
 
+
+## Session 34 — Mar 2, 2026 — Vercel Build Fix (Google Auth Revert)
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Crash:** The deployment failed again during static page collection for \/api/admin/invite\ because the \GOOGLE_CLIENT_ID\ graceful fallback in \uth.ts\ had been accidentally reverted. 
+- **Fix:** Restored the \process.env.GOOGLE_CLIENT_ID || \"\"\ fallback inside the \GoogleProvider\ instantiation and pushed to Vercel.
+- **Notes:** Manuel was also actively working locally, as untracked files for Cloudinary (\/api/upload/sign/route.ts\ and \CloudinaryUploader.tsx\) were safely committed and pushed alongside the fix.
+
