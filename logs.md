@@ -1255,3 +1255,16 @@ Three upload paths for different vendor types:
 5. AI import layer (Claude Haiku → JSON → preview table → confirm)
 6. `GET /api/books/isbn/[isbn]` — ISBN auto-fill endpoint
 7. DepMi watermark overlay: Phase 2, ~1 afternoon after Cloudinary is configured
+
+## Session 32 � Mar 2, 2026 � Missing Component Build Fix & Architecture Expansion
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Fix:** Resolved a Turbopack build error (\Module not found: Can't resolve './AcceptBidButton'\). The component and its corresponding \/api/bids/accept\ API route were created but accidentally excluded from the previous git commit. Added, committed, and pushed the missing files.
+- **Architecture Updates (by Manuel):** Manuel updated \gent.md\ to define several crucial constraints and systems for Phase 2:
+  - **Browse-First UX:** Non-negotiable constraint to allow unauthenticated browsing, gating only actions (buy, bid, demand) via \AuthGateProvider\.
+  - **Media Infrastructure:** Cloudinary required for all uploads (direct browser-to-CDN). Video limit: 100MB / 60s. Auto-compression and DepMi watermarks.
+  - **Vendor Catalog Import:** Three paths defined (Single Form, CSV Upload, AI-powered Import for unstructured data like handwritten photos).
+  - **GitHub Migration:** Planned migration to a DepMi GitHub organization when scaling beyond solo development.
+
