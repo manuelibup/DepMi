@@ -49,10 +49,10 @@ export default function AcceptBidButton({ bidId, demandId }: { bidId: string, de
                       >
                           Confirm
                       </button>
-                      <button 
-                          onClick={() => setStatus('idle')} 
-                          className={styles.navBtn}
-                          style={{ flex: 1, backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--card-border)' }}
+                      <button
+                          onClick={() => setStatus('idle')}
+                          className={styles.acceptBtn}
+                          style={{ flex: 1, backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--card-border)', color: 'var(--text-main)' }}
                       >
                           Cancel
                       </button>

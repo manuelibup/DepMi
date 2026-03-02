@@ -23,6 +23,7 @@
 - [Session 20 — Mar 1, 2026 — Monetisation Strategy & Feature Architecture](#session-20--mar-1-2026--monetisation-strategy--feature-architecture)
 - [Session 27 — Mar 1, 2026 — BottomNav Implementation](#session-27--mar-1-2026--bottomnav-implementation)
 - [Session 28 — Mar 2, 2026 — Product Strategy Review & Blueprint Update](#session-28--mar-2-2026--product-strategy-review--blueprint-update)
+- [Session 33 — Mar 2, 2026 — Phase 2 Week 4 Audit & Bug Fixes](#session-33--mar-2-2026--phase-2-week-4-audit--bug-fixes)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -1174,7 +1175,7 @@ if (status === 'unauthenticated') {
 - Execute Phase 3: Transactions & Logistics (Week 5-6)
 - Implement Paystack Split Payments + Escrow logic.
 
-## Session 31 � Mar 2, 2026 � Vercel Build Fix (Google Auth)
+## Session 31 � Mar 2, 2026 � Vercel Build Fix (Google Auth)
 **Agent:** Antigravity
 **Human:** Manuel
 
@@ -1256,7 +1257,63 @@ Three upload paths for different vendor types:
 6. `GET /api/books/isbn/[isbn]` — ISBN auto-fill endpoint
 7. DepMi watermark overlay: Phase 2, ~1 afternoon after Cloudinary is configured
 
-## Session 32 � Mar 2, 2026 � Missing Component Build Fix & Architecture Expansion
+## Session 33 — Mar 2, 2026 — Phase 2 Week 4 Audit & Bug Fixes
+**Agent:** Antigravity (Claude Sonnet 4.6)
+**Human:** Manuel
+
+### What was done:
+Full code audit of Gemini's Phase 2 Week 4 (Demand Engine) delivery, followed by two rounds of targeted bug fixes.
+
+### First Audit — 10 Issues Found
+Gemini claimed "production-ready / A grade". Actual verdict: B-, not ready for Phase 3. Issues found:
+
+1. `Accept Bid` button was a hollow `<button>` with no handler — entire demand→bid→order flow blocked
+2. Missing `<BottomNav />` on `/requests/[id]` page
+3. Active category pill always highlighted "All" regardless of selection (searchParam never compared)
+4. `<img>` instead of `next/image` on all product/store images (no optimization, no lazy loading)
+5. `ProductWatch` had no deduplication — users could spam "Notify Me" creating unlimited duplicate records
+6. Bids could be placed on inactive/closed demands (`isActive` check missing)
+7. No store name on search result product cards
+8. `searchQuery` in ProductWatch API had no length limit (DoS vector)
+9. `any[]` types in `requests/[id]/page.tsx` lines 35 and 46
+10. DemandForm pre-fill text prefixed demand with "I am looking for:" — UX friction on mobile
+
+### Gemini Fix Round 1 — 8/10 Fixed, 3 New Issues Introduced
+Gemini fixed items 1–8 and 10. Introduced:
+- `auth.ts` regression: replaced fail-fast `throw new Error(...)` with silent `|| ""` for Google env vars — would cause cryptic OAuth failures on new environments
+- `bids/accept/route.ts`: `type: 'BID_ACCEPTED'` string literal instead of `NotificationType.BID_ACCEPTED` enum import
+- `bids/accept/route.ts`: `linkUrl:` used instead of `link:` (wrong Notification schema field name — would silently store null link)
+- `bids/accept/route.ts`: `const [updatedBid, updatedDemand]` where `updatedBid` unused (lint warning)
+- `AcceptBidButton`: used `styles.navBtn` class (does not exist in CSS module) for Cancel button — no padding/radius/font styling
+
+### Final Fix Round (Antigravity) — All Cleared
+- Reverted `auth.ts` env var validation to fail-fast iife (already self-reverted before our edit)
+- Added `import { NotificationType } from '@prisma/client'` to `bids/accept/route.ts`
+- Changed `type: 'BID_ACCEPTED'` → `NotificationType.BID_ACCEPTED`
+- Changed `linkUrl:` → `link:` in notification payload
+- Changed destructuring `const [updatedBid, updatedDemand]` → `const [, updatedDemand]`
+- Changed `className={styles.navBtn}` → `className={styles.acceptBtn}` with inline background override
+- Changed `storeProducts: any[]` → `storeProducts: { id: string; title: string; price: string | number }[]`
+- Removed duplicate `eslint-disable` comment in `product-watch/create/route.ts`
+
+### Files Changed (Antigravity)
+- `web/src/app/api/bids/accept/route.ts` — NotificationType import, link field, unused var
+- `web/src/app/requests/[id]/AcceptBidButton.tsx` — navBtn → acceptBtn with inline override
+- `web/src/app/requests/[id]/page.tsx` — storeProducts type
+
+### Audit Pattern to Note for Future Sessions
+- Always verify `NotificationType` is imported (not a string literal) when Gemini adds notifications
+- Always verify Notification field is `link:` not `linkUrl:` or `url:`
+- Always check CSS module for class existence before using `styles.X` on new elements
+- Always check `auth.ts` env var handling after Gemini edits it — silent `|| ""` is a known regression
+
+### Pending / Next Steps
+- **Phase 3: Week 5** — Paystack escrow, order creation from accepted bids, KYC limit enforcement at checkout
+- `AcceptBidButton` currently shows success state and refreshes page after accept. Phase 3 should redirect to the newly created Order page instead.
+
+---
+
+## Session 32 — Mar 2, 2026 — Missing Component Build Fix & Architecture Expansion
 **Agent:** Antigravity
 **Human:** Manuel
 
@@ -1267,4 +1324,15 @@ Three upload paths for different vendor types:
   - **Media Infrastructure:** Cloudinary required for all uploads (direct browser-to-CDN). Video limit: 100MB / 60s. Auto-compression and DepMi watermarks.
   - **Vendor Catalog Import:** Three paths defined (Single Form, CSV Upload, AI-powered Import for unstructured data like handwritten photos).
   - **GitHub Migration:** Planned migration to a DepMi GitHub organization when scaling beyond solo development.
+
+
+## Session 33 � Mar 2, 2026 � Vercel Build Fix (TypeScript Decimal Error)
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Crash:** The deployment failed during the TypeScript (\
+pm run build\) phase. The error occurred in \/requests/[id]/page.tsx\: \Type error: Type '{ id: string; title: string; price: Decimal; }[]' is not assignable to type '{ id: string; title: string; price: string | number; }[]'.\
+- **Fix:** Prisma returns \Decimal\ objects for exact financial rounding, but our frontend \BidForm\ component expects a standard Javascript \
+umber\ or \string\. Mapped the raw database \indMany\ result to explicitly parse \Number(p.price)\ before passing it to the client component.
 

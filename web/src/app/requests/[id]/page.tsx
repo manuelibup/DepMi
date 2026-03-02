@@ -47,10 +47,15 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     const selectedStoreId = userStores[0]?.id; // Just pick the first store for MVP
     
     if (selectedStoreId && !isPoster) {
-        storeProducts = await prisma.product.findMany({
+        const rawProducts = await prisma.product.findMany({
             where: { storeId: selectedStoreId, inStock: true },
             select: { id: true, title: true, price: true }
         });
+        storeProducts = rawProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: Number(p.price)
+        }));
     }
 
     // Format text

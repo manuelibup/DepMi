@@ -51,6 +51,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ message: 'Product watch created', watch }, { status: 201 });
 
+     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('ProductWatch Creation Error:', error);

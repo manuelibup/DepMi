@@ -27,6 +27,7 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: 'Successfully joined waitlist' });
+     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Waitlist POST error:', error);
