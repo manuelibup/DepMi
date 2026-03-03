@@ -10,18 +10,21 @@ interface Props {
     subtotal: number;
     deliveryFee: number;
     defaultPhone: string;
+    defaultAddress: string;
+    defaultCity: string;
+    defaultState: string;
 }
 
-export default function ClientCheckoutForm({ productId, total, subtotal, deliveryFee, defaultPhone }: Props) {
+export default function ClientCheckoutForm({ productId, total, subtotal, deliveryFee, defaultPhone, defaultAddress, defaultCity, defaultState }: Props) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Address State
     const [name, setName] = useState('');
     const [phone, setPhone] = useState(defaultPhone);
-    const [address, setAddress] = useState('');
-    const [city, setCity] = useState('');
-    const [state, setState] = useState('');
+    const [address, setAddress] = useState(defaultAddress);
+    const [city, setCity] = useState(defaultCity);
+    const [state, setState] = useState(defaultState);
 
     const handlePayClick = async (e: React.FormEvent) => {
         e.preventDefault();

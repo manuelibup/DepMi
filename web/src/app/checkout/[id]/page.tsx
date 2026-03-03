@@ -29,10 +29,10 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
     const deliveryFee = 2500; // Mock fixed delivery fee for Phase 3 UI preview
     const total = Number(product.price) + deliveryFee;
 
-    // Try to get user data to pre-fill phone number
+    // Try to get user data to pre-fill phone and address
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { phone: true }
+        select: { phoneNumber: true, address: true, city: true, state: true }
     });
 
     return (
@@ -67,7 +67,16 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
                     </div>
                 </section>
 
-                <ClientCheckoutForm productId={product.id} total={total} deliveryFee={deliveryFee} subtotal={Number(product.price)} defaultPhone={user?.phone || ''} />
+                <ClientCheckoutForm 
+                    productId={product.id} 
+                    total={total} 
+                    deliveryFee={deliveryFee} 
+                    subtotal={Number(product.price)} 
+                    defaultPhone={user?.phone || ''}
+                    defaultAddress={user?.address || ''}
+                    defaultCity={user?.city || ''}
+                    defaultState={user?.state || ''}
+                />
             </div>
         </main>
     );

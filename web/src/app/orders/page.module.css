@@ -1,0 +1,225 @@
+.main {
+    min-height: 100vh;
+    background: var(--bg-main);
+    padding: 0 0 100px;
+    font-family: var(--font-heading);
+}
+
+.header {
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.headerTitle {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.tabs {
+    display: flex;
+    gap: 16px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+    position: sticky;
+    top: 60px;
+    z-index: 90;
+    overflow-x: auto;
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 16px 8px;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+}
+
+.tab.active {
+    color: var(--text-main);
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 3px 3px 0 0;
+}
+
+.container {
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.orderCard {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.orderHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 16px;
+}
+
+.orderId {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.statusBadge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Colors */
+.status_PENDING_PAYMENT, .status_ESCROW_HELD {
+    background: rgba(253, 203, 110, 0.15);
+    color: #FDCB6E;
+    border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.status_SHIPPED {
+    background: rgba(9, 132, 227, 0.15);
+    color: #0984E3;
+    border: 1px solid rgba(9, 132, 227, 0.3);
+}
+
+.status_COMPLETED {
+    background: rgba(0, 184, 148, 0.15);
+    color: #00B894;
+    border: 1px solid rgba(0, 184, 148, 0.3);
+}
+
+.orderItem {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.itemImage {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+}
+
+.itemInfo {
+    flex: 1;
+}
+
+.itemTitle {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.itemMeta {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.itemPrice {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.orderAction {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.actionBtn {
+    background: var(--bg-elevated);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionBtn.primary {
+    background: var(--primary);
+    color: #000;
+    border: none;
+}
+
+.actionBtn:hover {
+    transform: translateY(-2px);
+    background: var(--hover-main);
+}
+
+.actionBtn.primary:hover {
+    background: #e6b800;
+}
+
+.celebration {
+    background: rgba(0, 184, 148, 0.1);
+    border: 1px solid #00B894;
+    padding: 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.celebrationIcon {
+    font-size: 2rem;
+}
+
+.celebrationText h3 {
+    margin: 0 0 4px;
+    color: #00B894;
+    font-size: 1.1rem;
+}
+
+.celebrationText p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}

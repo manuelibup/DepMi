@@ -131,4 +131,14 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Cause**: NextAuth sessions are cached in a JWT (JSON Web Token) cookie. This token is only refreshed on sign-in or through an explicit session update. If a user is already logged in, their browser still has the "old" identity.
 - **The Fix**: 
   - **Option A (The Hammer):** Sign out via `/api/auth/signout` and sign back in. This completely replaces the cookie.
-  - **Option B (The Scalpel):** Use the `update()` function from the `useSession` hook in your React component to refresh the session programmatically.
+- **Option B (The Scalpel):** Use the `update()` function from the `useSession` hook in your React component to refresh the session programmatically.
+
+---
+
+## 🛑 11. Vercel Build Crashes: Top-Level Env Checks & Types
+
+*This tip was added after a dozen "red deployments" caused by environment variables and Prisma type mismatches.*
+
+- **The Strict Build Environment:** Next.js statically evaluates page and API routes during the build phase (`npm run build`) on Vercel. If your files have rigid environment variable checks (e.g., `if (!process.env.API_KEY) throw new Error(...)`) at the **top level** of the file, importing this file will crash the entire Next.js build. 
+- **The Fix:** Move those error checks *inside* the function handler (e.g., inside `export async function POST`), or provide a graceful fallback string at the module level (like `process.env.API_KEY || "missing_for_build"`).
+- **Prisma Type Safety:** Vercel's TypeScript compiler is unforgiving. If you misspell a field in a `select` object (e.g., querying `{ phone: true }` instead of `{ phoneNumber: true }` based on your `schema.prisma`), it works locally but fatally crashes the Vercel build. Always double-check your schema fields and run `npx prisma generate` locally before pushing checkout/DB logic!

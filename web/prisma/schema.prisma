@@ -107,18 +107,18 @@ model User {
   id String @id @default(uuid())
 
   // Profile
-  username    String?   @unique
-  displayName String
-  dateOfBirth DateTime? // Used for age gating
+  username      String?   @unique
+  displayName   String
+  dateOfBirth   DateTime? // Used for age gating
   email         String?   @unique
   phoneNumber   String?   @unique
   phoneVerified Boolean   @default(false)
   avatarUrl     String?
 
   // Delivery / Shipping
-  address     String?
-  city        String?
-  state       String?
+  address String?
+  city    String?
+  state   String?
 
   // Auth — supports multiple providers per user
   // e.g. sign up with email, later link Google
@@ -218,7 +218,7 @@ model Store {
   // Trust score (as a seller — separate from owner's buyer trust)
   depCount Int     @default(0)
   depTier  DepTier @default(SEEDLING)
-  
+
   rating      Float @default(0)
   reviewCount Int   @default(0)
 
@@ -339,7 +339,7 @@ model Product {
   price       Decimal  @db.Decimal(10, 2)
   category    Category @default(OTHER)
 
-  videoUrl  String?  // Optional Cloudinary video URL for product demo
+  videoUrl        String? // Optional Cloudinary video URL for product demo
   isPortfolioItem Boolean @default(false) // If true, showcases past work/portfolio instead of immediate sale
 
   viewCount Int     @default(0)
@@ -349,9 +349,9 @@ model Product {
   updatedAt DateTime @updatedAt
 
   // Relations
-  images        ProductImage[]
-  orderItems    OrderItem[]
-  bids          Bid[]          @relation("BidProduct")
+  images         ProductImage[]
+  orderItems     OrderItem[]
+  bids           Bid[]          @relation("BidProduct")
   productWatches ProductWatch[]
 
   @@index([category, inStock])
@@ -391,7 +391,7 @@ model Order {
   bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
 
   // Escrow / Paystack
-  paystackRef  String? @unique
+  paystackRef  String?      @unique
   escrowStatus EscrowStatus @default(HELD)
 
   // Delivery
@@ -460,7 +460,7 @@ model OtpToken {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
-  
+
   @@index([userId])
 }
 
@@ -473,7 +473,7 @@ model StoreInvite {
   user      User?        @relation(fields: [userId], references: [id])
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  
+
   @@index([email])
 }
 
@@ -492,35 +492,35 @@ model Waitlist {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model ProductWatch {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  searchQuery  String?  // If they clicked "Notify Me" on a search that returned 0 results
-  productId    String?  // If they clicked "Notify Me" on an out-of-stock product
-  product      Product? @relation(fields: [productId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  notified     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  searchQuery String? // If they clicked "Notify Me" on a search that returned 0 results
+  productId   String? // If they clicked "Notify Me" on an out-of-stock product
+  product     Product? @relation(fields: [productId], references: [id])
+
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([productId])
 }
 
 model Review {
-  id        String   @id @default(uuid())
-  orderId   String   @unique
-  order     Order    @relation(fields: [orderId], references: [id])
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  buyerId   String
-  buyer     User     @relation("BuyerReviews", fields: [buyerId], references: [id])
+  buyerId String
+  buyer   User   @relation("BuyerReviews", fields: [buyerId], references: [id])
 
-  storeId   String
-  store     Store    @relation("StoreReviews", fields: [storeId], references: [id])
+  storeId String
+  store   Store  @relation("StoreReviews", fields: [storeId], references: [id])
 
-  rating    Int      // 1-5
-  text      String?
-  
+  rating Int // 1-5
+  text   String?
+
   createdAt DateTime @default(now())
 
   @@index([buyerId])

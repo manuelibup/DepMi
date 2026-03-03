@@ -1377,3 +1377,13 @@ umber\ or \string\. Mapped the raw database \indMany\ result to explicitly pars
 - **Store Catalog UI:** Manuel introduced a multitude of vendor files covering product creation (`CreateProductForm.tsx`, Video Upload handling, `VideoPlayer.tsx`), mock checkout navigation (`/checkout/`), user update logic (`/api/user/update`), and book imports (`/api/books/`).
 - **Code Pushed:** Staged, committed, and pushed these massive Phase 2 developments to the `main` branch.
 
+
+## Session 37 — Mar 3, 2026 — Vercel Build Fix (Checkout Prisma Error)
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Vercel Build Crash:** The Next.js Turbopack build failed because of a Prisma Type Error in \/checkout/[id]/page.tsx\ (requesting \phone\ instead of the correct \phoneNumber\ field from the User schema).
+- **Fix:** Corrected the Prisma query selector to match the schema.
+- **Documentation:** Logged lessons about Vercel build checks and Prisma type safety inside \	ips.md\.
+
