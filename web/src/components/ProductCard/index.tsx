@@ -2,6 +2,9 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuthGate } from '@/context/AuthGate';
+import { useSession } from 'next-auth/react';
 import styles from './ProductCard.module.css';
 
 export interface ProductData {
@@ -15,6 +18,7 @@ export interface ProductData {
     location: string;
     image: string;
     viewers?: number;
+    id?: string;
 }
 
 interface ProductCardProps {
@@ -34,6 +38,30 @@ function getDepIcon(tier: string): string {
 }
 
 export default function ProductCard({ data, index = 0 }: ProductCardProps) {
+    const { openGate } = useAuthGate();
+    const { status } = useSession();
+    const router = useRouter();
+
+    const handleAction = (e: React.MouseEvent, action: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (status === 'unauthenticated') {
+            openGate();
+            return;
+        }
+        
+        if (action === 'buy') {
+            // Wait for checkout page implementation, then router.push
+            if (data.id) {
+                router.push(`/checkout/${data.id}`);
+            } else {
+                console.log('Product ID missing for checkout route');
+            }
+        } else {
+            console.log(`Action triggered: ${action}`);
+        }
+    };
+
     return (
         <article
             className={styles.card}
@@ -120,13 +148,13 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
 
             {/* CTA */}
             <div className={styles.actions}>
-                <button className={styles.buyBtn}>
+                <button className={styles.buyBtn} onClick={(e) => handleAction(e, 'buy')}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
                     </svg>
                     Buy via Escrow
                 </button>
-                <button className={styles.chatBtn}>
+                <button className={styles.chatBtn} onClick={(e) => handleAction(e, 'chat')}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>

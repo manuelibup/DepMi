@@ -105,6 +105,7 @@ export default async function Home() {
                 location: 'Nationwide',
                 image: product.images && product.images.length > 0 ? product.images[0].url : '/placeholder.png',
                 viewers: product.viewCount,
+                id: product.id,
               };
               return (
                 <Link href={`/p/${product.id}`} key={`p-${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>

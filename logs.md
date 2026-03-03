@@ -1356,3 +1356,24 @@ umber\ or \string\. Mapped the raw database \indMany\ result to explicitly pars
 - **Systemic Audit:** Audited the codebase for any other top-level rigid `process.env` checks that would crash Next.js static exports. Confirmed all other variables (Termii, Cloudinary, Internal JWT) are safely verified at *runtime* via request handlers, not at build time.
 - **Fix:** Removed the `throw new Error` check in `lib/resend.ts` and replaced the instantiation with a graceful fallback: `process.env.RESEND_API_KEY || "missing_key_for_build"`. Pushed to unblock Vercel.
 
+
+
+## Session 36 - Mar 3, 2026 - Roadmap & Schema Update for New Features
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Roadmap Planning:** Evaluated new feature ideas for a Cart, Wishlists, Shipping location, Auctions, and Vendor Portfolio.
+- **Agent.md Update:** Added Wishlists and Portfolio Mode to Phase 2. Moved Universal Cart and Forward Auctions to the Post-MVP Backlog. Added `address`, `city`, `state` to Phase 1 (Delivery friction reduction).
+- **Database Schema Update:** Updated `User` model to include `address`, `city`, `state`, and `Product` model to include `isPortfolioItem` flag.
+
+## Session 36 — Mar 3, 2026 — Product Catalog UI & Flow Enhancements
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Prisma Schema Update:** Appended `videoUrl` (String, optional) to the `Product` schema in `schema.prisma`.
+- **Navigation Tweaks (BottomNav):** Adjusted the central ? button behavior. It now unconditionally opens the bottom sheet. Buyers with no store are shown an "Open a Store" option leading to `/store/create`. Store owners see the "Add a Product" option.
+- **Store Catalog UI:** Manuel introduced a multitude of vendor files covering product creation (`CreateProductForm.tsx`, Video Upload handling, `VideoPlayer.tsx`), mock checkout navigation (`/checkout/`), user update logic (`/api/user/update`), and book imports (`/api/books/`).
+- **Code Pushed:** Staged, committed, and pushed these massive Phase 2 developments to the `main` branch.
+

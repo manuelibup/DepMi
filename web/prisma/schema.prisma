@@ -115,6 +115,11 @@ model User {
   phoneVerified Boolean   @default(false)
   avatarUrl     String?
 
+  // Delivery / Shipping
+  address     String?
+  city        String?
+  state       String?
+
   // Auth — supports multiple providers per user
   // e.g. sign up with email, later link Google
   accounts Account[]
@@ -333,6 +338,9 @@ model Product {
   description String?
   price       Decimal  @db.Decimal(10, 2)
   category    Category @default(OTHER)
+
+  videoUrl  String?  // Optional Cloudinary video URL for product demo
+  isPortfolioItem Boolean @default(false) // If true, showcases past work/portfolio instead of immediate sale
 
   viewCount Int     @default(0)
   inStock   Boolean @default(true)

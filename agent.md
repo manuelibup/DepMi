@@ -151,14 +151,16 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (Deps) to prove the core concept within 42 days.
 
 ### **Phase 1: Identity & Trust (Weeks 1–2)**
-*   **W1: Auth & Profiles:** Implement Email/Password + Google OAuth (Account model). User onboarding flow for Google OAuth users. Public User Profiles (`/u/[username]`) with trust visualization (Deps & Tiers). ✅ *Complete.*
+*   **W1: Auth & Profiles:** Implement Email/Password + Google OAuth (Account model). User onboarding flow for Google OAuth users. Public User Profiles (`/u/[username]`) with trust visualization (Deps & Tiers). Add shipping/delivery `address` to `User` profiles to reduce future checkout friction. ✅ *Complete.*
 *   **W2: Phone OTP & Vendor Invites:** WhatsApp/SMS OTP for phone number verification via `OtpToken` table (TIER_0). Build secure `StoreInvite` flow: Admin generates 48hr unique link → sent to pre-vetted vendor → vendor fills BVN → Dojah verifies ($0.06) → User elevated to TIER_2. Push schema to Neon DB (`npx prisma db push`). Build Deps system (`depCount` + `DepTransaction` audit trail). [/] *In Progress.*
 
 ### **Phase 2: Discovery & Demand (Weeks 3–4)**
 *   **W3: Stores & Products:** Store creation gated by TIER_2 (BVN + NIN both required). Pilot vendors use admin invite code bypass — Dojah integration added at ~seller #25. Free to list — no subscription on store creation. Vendor listing flow (Photos via ProductImage, Price, Inventory). Public storefronts (`depmi.com/store/[slug]`). User Profile page. Connect Discover feed to real DB data.
+    - **Portfolio Mode:** Support for showcasing previous work/inventory using the `isPortfolioItem` flag on products. This allows service providers (artists, bespoke tailors) to use DepMi as a living portfolio to build trust, even if the item isn't immediately for sale.
     - **Product Categories / Taxonomy:** Required for search filtering, Demand Engine matching, and ProductWatch. Define a fixed top-level category list at launch (e.g. Fashion, Electronics, Food, Beauty, Home, Services). Products and Demands must have a category field.
     - **Search Implementation:** Postgres full-text search (`tsvector` on Product title + description + Store name). No external search service needed at MVP. Extend to Meilisearch/Typesense post-MVP if latency becomes an issue.
     - **Search UX — empty state:** If query returns 0 results, show: (1) "Request This Product" button → pre-fills a Demand post; (2) "Notify Me When Available" toggle → creates a `ProductWatch` record.
+    - **Wish Lists / Saved Items:** Leverage the `ProductWatch` blueprint to allow buyers to simply save items they are interested in without complicating checkout flow.
     - **Store Public Profile Page (`/store/[slug]`):** Store bio, Dep score badge, product grid, ratings summary, social links, "Follow" button.
     - **Verified Business Badge Flow:** Store settings → "Apply for Verified" → enter existing CAC number OR trigger in-app CAC filing via partner API. Badge issued on confirmation. Subscription billed (₦1,500/mo · ₦8,000/6mo · ₦15,000/yr).
     - **Media Infrastructure (Cloudinary):** All product images and videos hosted on Cloudinary CDN. Direct browser-to-CDN upload via signed tokens from `GET /api/upload/sign` — server never handles file bytes. Auto-compression via `q_auto` at delivery. Video limits: **100MB max file size, 60 seconds max duration** (enforced client-side before upload). DB stores clean Cloudinary URLs; originals preserved; watermarked URLs delivered to clients.
@@ -208,12 +210,12 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum and `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement).
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), and shipping fields (`address`, `city`, `state`) to reduce checkout friction.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
-- **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category` field (enum or FK to Category), `inStock` (Boolean).
+- **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category` field (enum or FK to Category), `inStock` (Boolean), and `isPortfolioItem` (Boolean) to distinguish past work vs active sales.
 - **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
 - **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
 - **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`.
@@ -226,6 +228,8 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ## 7. Post-MVP Backlog (Do Not Build During 6-Week Sprint)
 These are evaluated ideas parked for after the first 20-vendor pilot:
 
+- **Universal Cart:** Adding multiple items from different vendors to a single checkout flow. Blocked for MVP due to the immense complexity of route managing escrow splits per item in one transaction. Stick to single-item impulse social buying for now.
+- **Forward Auctions (Bidding):** Allowing sellers to put items up for auction to the highest bidder. Great for art/antiques, but introduces edge cases (sniping, limits). Will revisit once the "Reverse Auction" Demand Engine proves market fit.
 - **QR Weekly Auction:** Highest weekly bidder gets a featured store QR code. 7-day cycle (not 24h — too short for vendor ROI). Physical QR codes point to a redirect URL that updates each week. Revisit at 1,000 MAU.
 - **Affiliate Cross-App Links:** "Can't find it on DepMi?" referral links to Konga/Amazon — but only via affiliate programs (Amazon Associates, Konga Affiliate). Never plain links. Earns DepMi a commission on exits. Evaluate at 5,000 MAU when catalog gaps are measurable.
 - **@DepMiBot (Instagram/FB tag-to-list):** AI bot that parses vendor posts and auto-creates draft listings. Deferred — requires ML pipeline and Meta API approval.

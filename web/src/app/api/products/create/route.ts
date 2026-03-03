@@ -13,6 +13,7 @@ const productSchema = z.object({
     category: z.nativeEnum(Category).default(Category.OTHER),
     inStock: z.boolean().default(true),
     images: z.array(z.string().url()).max(5).optional(), // Max 5 images per product
+    videoUrl: z.string().url().optional().nullable(),    // Optional demo video
 });
 
 export async function POST(req: Request) {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { storeId, title, description, price, category, inStock, images } = parsed.data;
+        const { storeId, title, description, price, category, inStock, images, videoUrl } = parsed.data;
 
         // Verify ownership
         const store = await prisma.store.findUnique({
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
                 price,
                 category,
                 inStock,
+                videoUrl: videoUrl || null,
                 images: images && images.length > 0 ? {
                     create: images.map((url, index) => ({
                         url,

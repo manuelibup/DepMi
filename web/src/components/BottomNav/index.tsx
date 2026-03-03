@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuthGate } from '@/context/AuthGate';
 import styles from './BottomNav.module.css';
@@ -54,7 +54,6 @@ const NAV_TABS = [
 
 export default function BottomNav() {
     const pathname = usePathname();
-    const router = useRouter();
     const { status } = useSession();
     const { openGate } = useAuthGate();
     const [stores, setStores] = useState<StoreInfo[]>([]);
@@ -74,19 +73,15 @@ export default function BottomNav() {
             openGate('post a request or list a product', pathname ?? '/');
             return;
         }
-        if (stores.length > 0) {
-            setSheetOpen(true);
-        } else {
-            // Buyer with no store — go straight to post a request
-            router.push('/demand/new');
-        }
-    }, [status, stores, router, openGate, pathname]);
+        // Always show the sheet — sellers see "Add a Product", buyers see "Create a Store"
+        setSheetOpen(true);
+    }, [status, openGate, pathname]);
 
     const closeSheet = useCallback(() => setSheetOpen(false), []);
 
     return (
         <>
-            {/* Smart ➕ bottom sheet — only shown to store owners */}
+            {/* Smart ➕ bottom sheet */}
             {sheetOpen && (
                 <div className={styles.sheetOverlay} onClick={closeSheet}>
                     <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
@@ -104,14 +99,14 @@ export default function BottomNav() {
                             </div>
                         </Link>
                         <Link
-                            href={`/store/${stores[0].slug}/products/new`}
+                            href={stores.length > 0 ? `/store/${stores[0].slug}/products/new` : '/store/create'}
                             className={styles.sheetOption}
                             onClick={closeSheet}
                         >
                             <span className={styles.sheetOptionIcon}>📦</span>
                             <div>
-                                <p className={styles.sheetOptionLabel}>Add a Product</p>
-                                <p className={styles.sheetOptionDesc}>List a new item in your store</p>
+                                <p className={styles.sheetOptionLabel}>{stores.length > 0 ? 'Add a Product' : 'Open a Store'}</p>
+                                <p className={styles.sheetOptionDesc}>{stores.length > 0 ? 'List a new item in your store' : 'Set up your store to start selling'}</p>
                             </div>
                         </Link>
                     </div>

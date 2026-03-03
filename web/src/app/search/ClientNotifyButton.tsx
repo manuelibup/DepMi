@@ -1,14 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuthGate } from '@/context/AuthGate';
+import { useSession } from 'next-auth/react';
 
 export default function ClientNotifyButton({ searchQuery }: { searchQuery: string }) {
-    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const { openGate } = useAuthGate();
+    const { status } = useSession();
+    const [fetchStatus, setFetchStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
     const handleNotifyClick = async () => {
         if (!searchQuery) return;
+        if (status === 'unauthenticated') {
+            openGate();
+            return;
+        }
         
-        setStatus('loading');
+        setFetchStatus('loading');
         try {
             const res = await fetch('/api/product-watch/create', {
                 method: 'POST',
@@ -17,27 +25,28 @@ export default function ClientNotifyButton({ searchQuery }: { searchQuery: strin
             });
 
             if (!res.ok) {
-                // If 401, they probably aren't logged in. Need AuthGate ideally, 
-                // but since it's a simple CTA, let's just log or redirect.
+                // If 401, they probably aren't logged in. Need AuthGate ideally.
+                if (res.status === 401) {
+                     openGate();
+                     setFetchStatus('idle');
+                     return;
+                }
                 throw new Error('Failed');
             }
-            setStatus('success');
+            setFetchStatus('success');
         } catch {
-            // we ignore the error for now, maybe prompt login
-            setStatus('error');
-            // Quick UX hack: if it errors, assume unauth and redirect to login
-            window.location.href = '/login?callbackUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+            setFetchStatus('error');
         }
     };
 
-    if (status === 'success') {
+    if (fetchStatus === 'success') {
         return <p style={{ color: '#00B894', fontWeight: 600, margin: 0 }}>✓ We&apos;ll notify you!</p>;
     }
 
     return (
         <button 
             onClick={handleNotifyClick}
-            disabled={status === 'loading' || !searchQuery}
+            disabled={fetchStatus === 'loading' || !searchQuery}
             style={{ 
                 background: 'transparent', 
                 color: 'var(--text-main)', 
@@ -48,10 +57,10 @@ export default function ClientNotifyButton({ searchQuery }: { searchQuery: strin
                 width: '100%', 
                 maxWidth: '280px',
                 cursor: searchQuery ? 'pointer' : 'not-allowed',
-                opacity: status === 'loading' ? 0.7 : 1
+                opacity: fetchStatus === 'loading' ? 0.7 : 1
             }}
         >
-            {status === 'loading' ? 'Saving...' : 'Notify Me When Available'}
+            {fetchStatus === 'loading' ? 'Saving...' : 'Notify Me When Available'}
         </button>
     );
 }

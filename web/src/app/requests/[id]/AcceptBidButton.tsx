@@ -27,9 +27,9 @@ export default function AcceptBidButton({ bidId, demandId }: { bidId: string, de
             setStatus('success');
             // Hard refresh or push to order page eventually
             router.refresh();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setStatus('error');
-            setErrorMsg(err.message || 'An error occurred.');
+            setErrorMsg(err instanceof Error ? err.message : 'An error occurred.');
         }
     };
 

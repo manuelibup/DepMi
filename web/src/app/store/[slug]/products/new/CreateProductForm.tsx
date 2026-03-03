@@ -23,6 +23,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         price: '',
         category: 'OTHER',
         imageUrl: '',
+        videoUrl: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +38,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             price: Number(form.price),
             category: form.category,
             images: form.imageUrl ? [form.imageUrl] : [],
+            videoUrl: form.videoUrl || null,
         };
 
         try {
@@ -148,6 +150,33 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             accept="image/*"
                             maxSizeMB={10} 
                             buttonText="Upload Photo" 
+                        />
+                    )}
+                </div>
+
+                {/* Product Video */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        Product Demo Video <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(Optional · max 60s)</span>
+                    </label>
+                    {form.videoUrl ? (
+                        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000', border: '1px solid var(--card-border)' }}>
+                            <video src={form.videoUrl} controls style={{ width: '100%', display: 'block', maxHeight: '220px' }} playsInline />
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, videoUrl: '' })}
+                                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '1rem' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ) : (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, videoUrl: res.secure_url })}
+                            accept="video/*"
+                            maxSizeMB={100}
+                            maxDurationSeconds={60}
+                            buttonText="Upload Demo Video"
                         />
                     )}
                 </div>

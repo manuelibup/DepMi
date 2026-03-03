@@ -10,6 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@prisma/client": "^6.19.2",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",

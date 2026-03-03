@@ -4,6 +4,7 @@ import styles from './page.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
 import ClientNotifyButton from './ClientNotifyButton';
+import ClientRequestButton from './ClientRequestButton';
 
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
@@ -121,12 +122,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
                         <p style={{ margin: '0 0 24px' }}>Don&apos;t give up! You can request this item directly from vendors or get notified if it drops.</p>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                            <Link 
-                                href={`/demand/new${q ? `?q=${encodeURIComponent(q)}` : ''}`} 
-                                style={{ background: 'var(--primary)', color: '#fff', padding: '14px 24px', borderRadius: 'var(--radius-full)', textDecoration: 'none', fontWeight: 600, width: '100%', maxWidth: '280px' }}
-                            >
-                                Request This Product
-                            </Link>
+                            <ClientRequestButton searchQuery={q} />
                             {/* Note: In a client component this would use fetch, but here we can link to a lightweight client wrapper if we want to be fancy. For simplicity, we just render the button that triggers the watcher */}
                             <ClientNotifyButton searchQuery={q} />
                         </div>
