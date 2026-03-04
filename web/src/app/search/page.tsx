@@ -8,6 +8,7 @@ import ClientRequestButton from './ClientRequestButton';
 
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import EmptyState from '@/components/EmptyState';
 
 const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
 
@@ -110,23 +111,14 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
                 </div>
 
                 {products.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: 16 }}>
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', margin: '0 0 8px' }}>
-                            {q ? `No products match "${q}"` : 'No products found'}
-                        </h3>
-                        <p style={{ margin: '0 0 24px' }}>Don&apos;t give up! You can request this item directly from vendors or get notified if it drops.</p>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                            <ClientRequestButton searchQuery={q} />
-                            {/* Note: In a client component this would use fetch, but here we can link to a lightweight client wrapper if we want to be fancy. For simplicity, we just render the button that triggers the watcher */}
-                            <ClientNotifyButton searchQuery={q} />
-                        </div>
-                    </div>
+                    <EmptyState
+                        title={q ? `No products match "${q}"` : 'No products found'}
+                        description="Don't give up! You can request this item directly from vendors or get notified if it drops."
+                        icon={<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>}
+                    >
+                        <ClientRequestButton searchQuery={q} />
+                        <ClientNotifyButton searchQuery={q} />
+                    </EmptyState>
                 ) : (
                     <div className={styles.productsGrid}>
                         {products.map(product => (

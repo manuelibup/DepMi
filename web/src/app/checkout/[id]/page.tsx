@@ -22,7 +22,7 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
         }
     });
 
-    if (!product || !product.inStock) {
+    if (!product || !product.inStock || product.isPortfolioItem) {
         notFound();
     }
 
@@ -72,7 +72,7 @@ export default async function CheckoutPage({ params }: { params: { id: string } 
                     total={total} 
                     deliveryFee={deliveryFee} 
                     subtotal={Number(product.price)} 
-                    defaultPhone={user?.phone || ''}
+                    defaultPhone={user?.phoneNumber || ''}
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}
                     defaultState={user?.state || ''}

@@ -13,6 +13,7 @@ import StoriesBar from '@/components/StoriesBar';
 import DemandCard from '@/components/DemandCard';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
+import EmptyState from '@/components/EmptyState';
 
 export default async function Home() {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
@@ -63,14 +64,12 @@ export default async function Home() {
 
       <div className={styles.feed}>
         {feed.length === 0 ? (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 12h.01M7 12h.01M17 12h.01M12 7h.01M12 17h.01" />
-            </svg>
-            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>No activity yet</p>
-            <p style={{ fontSize: '0.9rem' }}>Be the first to list a product or request an item!</p>
-          </div>
+          <EmptyState 
+            title="No activity yet"
+            description="Be the first to list a product or request an item!"
+            actionLabel="Post a Request"
+            actionHref="/demand/new"
+          />
         ) : (
           feed.map((item, index) => {
             if (item.type === 'demand') {

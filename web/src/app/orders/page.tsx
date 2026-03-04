@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -22,7 +22,9 @@ export default async function OrdersPage() {
     return (
         <main>
             <Header />
-            <OrdersDashboard hasStore={!!store} storeName={store?.name} />
+            <Suspense fallback={null}>
+                <OrdersDashboard hasStore={!!store} storeName={store?.name} />
+            </Suspense>
             <BottomNav />
         </main>
     );

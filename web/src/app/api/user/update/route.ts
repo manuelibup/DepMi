@@ -8,7 +8,39 @@ const updateSchema = z.object({
     displayName: z.string().min(2).max(50).optional(),
     username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores').optional(),
     avatarUrl: z.string().url().optional().nullable(),
+    phoneNumber: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/, 'Invalid phone number').optional().nullable(),
+    address: z.string().max(200).optional().nullable(),
+    city: z.string().max(100).optional().nullable(),
+    state: z.string().max(100).optional().nullable(),
 });
+
+export async function GET() {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: {
+                displayName: true,
+                username: true,
+                avatarUrl: true,
+                phoneNumber: true,
+                address: true,
+                city: true,
+                state: true,
+            }
+        });
+
+        return NextResponse.json({ user });
+
+    } catch (error: unknown) {
+        console.error('User Fetch Error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+}
 
 export async function PATCH(req: Request) {
     try {
@@ -23,7 +55,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Invalid input', errors: parsed.error.flatten().fieldErrors }, { status: 400 });
         }
 
-        const { displayName, username, avatarUrl } = parsed.data;
+        const { displayName, username, avatarUrl, phoneNumber, address, city, state } = parsed.data;
 
         // Username uniqueness check
         if (username) {
@@ -41,14 +73,17 @@ export async function PATCH(req: Request) {
                 ...(displayName !== undefined && { displayName }),
                 ...(username !== undefined && { username }),
                 ...(avatarUrl !== undefined && { avatarUrl }),
+                ...(phoneNumber !== undefined && { phoneNumber }),
+                ...(address !== undefined && { address }),
+                ...(city !== undefined && { city }),
+                ...(state !== undefined && { state }),
             },
             select: { id: true, displayName: true, username: true, avatarUrl: true }
         });
 
         return NextResponse.json({ message: 'Profile updated', user: updated });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('User Update Error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }

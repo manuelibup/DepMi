@@ -178,9 +178,9 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
       - **Home** (`/`) — Combined product/demand/store feed. MVP: all content by recency + Dep score. Phase 2: follows-only with algorithmic surfacing for new users.
       - **Requests** (`/requests`) — The Demand Engine. Buyers browse open product requests; vendors see bidding opportunities.
       - **➕ (Centre, raised)** — Smart routing:
-        - **Buyer (no store):** Routes directly to `/demand/new` — no sheet, no friction.
-        - **Store owner:** Opens bottom sheet: "📣 Post a Request" and "📦 Add a Product".
-        - **Unauthenticated:** Redirects to `/login`.
+        - **Buyer (no store):** Opens bottom sheet: "📣 Post a Request" and "📦 Open a Store" → `/store/create`.
+        - **Store owner:** Opens bottom sheet: "📣 Post a Request" and "📦 Add a Product" → `/store/[slug]/products/new`.
+        - **Unauthenticated:** Shows auth gate modal (never hard redirect to `/login`).
       - **Orders** (`/orders`) — Dedicated order tracking + active bids. High-anxiety post-purchase = deserves its own tab. Never buried in Profile.
       - **Profile** (`/profile`) — Account, store switcher, settings.
       - **🔍 Search** — Global header icon (top-right) present on **every screen**. Opens `/search` with keyboard immediately focused + shows "Trending" and "Popular Near You" before typing. Not a bottom nav tab — universal header pattern (YouTube/Instagram/Twitter model).

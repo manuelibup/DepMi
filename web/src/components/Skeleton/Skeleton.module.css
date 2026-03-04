@@ -1,0 +1,90 @@
+/* Base Pulse Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeleton {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(to right, var(--bg-elevated) 4%, var(--border) 25%, var(--bg-elevated) 36%);
+    background-size: 1000px 100%;
+    border-radius: 4px;
+}
+
+/* Base Types */
+.text {
+    height: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.title {
+    height: 18px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+.card {
+    border-radius: 16px;
+    height: 200px;
+    width: 100%;
+}
+
+/* Precomposed: ProductCardSkeleton */
+.productCard {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    height: 100%;
+}
+
+.productImage {
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 0;
+}
+
+.productInfo {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    height: 80px;
+}
+
+/* Precomposed: DemandCardSkeleton */
+.demandCard {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.demandHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.demandFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed var(--border);
+    padding-top: 16px;
+    margin-top: 8px;
+}

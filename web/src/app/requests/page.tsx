@@ -4,6 +4,7 @@ import BottomNav from '@/components/BottomNav';
 import DemandCard from '@/components/DemandCard';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import EmptyState from '@/components/EmptyState';
 import styles from './Requests.module.css';
 
 // Tells Next.js to always render dynamically so feed is fresh
@@ -62,14 +63,12 @@ export default async function RequestsPage({ searchParams }: { searchParams: { q
 
             <div className={styles.feed}>
                 {demands.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        <h2 className={styles.emptyTitle}>No requests found</h2>
-                        <p className={styles.emptyDesc}>{q ? `No active requests match "${q}".` : 'Be the first to post a request!'}</p>
-                        <Link href={`/demand/new${q ? `?q=${encodeURIComponent(q)}` : ''}`} className={styles.emptyAction}>
-                            Post a Request
-                        </Link>
-                    </div>
+                    <EmptyState
+                        title="No requests found"
+                        description={q ? `No active requests match "${q}".` : "Be the first to post a request!"}
+                        actionLabel="Post a Request"
+                        actionHref={`/demand/new${q ? `?q=${encodeURIComponent(q)}` : ''}`}
+                    />
                 ) : (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     demands.map((demand: any, i: number) => {

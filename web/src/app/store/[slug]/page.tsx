@@ -5,6 +5,7 @@ import styles from './page.module.css';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import EmptyState from '@/components/EmptyState';
 
 interface StorePageProps {
     params: Promise<{
@@ -131,12 +132,11 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 </div>
 
                 {store.products.length === 0 ? (
-                    <div className={styles.emptyProducts}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px', color: 'var(--text-muted)' }}>
-                            <rect width="18" height="18" x="3" y="3" rx="2" />
-                            <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 12h.01M7 12h.01M17 12h.01M12 7h.01M12 17h.01" />
-                        </svg>
-                        <p>No products listed yet.</p>
+                    <div style={{ marginTop: '24px' }}>
+                        <EmptyState 
+                            title="No products listed yet"
+                            description="This vendor hasn't added any products to their store."
+                        />
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
