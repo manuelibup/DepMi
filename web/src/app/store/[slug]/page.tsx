@@ -35,7 +35,6 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 select: { kycTier: true }
             },
             products: {
-                where: { OR: [{ inStock: true }, { isPortfolioItem: true }] },
                 orderBy: { createdAt: 'desc' },
                 include: { images: true }
             }
@@ -45,6 +44,13 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     if (!store) {
         notFound();
     }
+
+    const isOwner = session?.user?.id === store.ownerId;
+    // Owners see all products (including out-of-stock) so they can manage inventory
+    // Visitors only see available items
+    const visibleProducts = isOwner
+        ? store.products
+        : store.products.filter(p => p.inStock || p.isPortfolioItem);
 
     const tier = TIER_META[store.depTier as keyof typeof TIER_META] || TIER_META.SEEDLING;
 
@@ -129,21 +135,27 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     )}
                 </div>
 
-                {store.products.length === 0 ? (
+                {isOwner && store.products.length > visibleProducts.length && (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '12px', background: 'var(--card-bg)', border: '1px dashed var(--card-border)', borderRadius: '10px', padding: '8px 12px' }}>
+                        You can see all {store.products.length} products including out-of-stock. Visitors see {visibleProducts.length}.
+                    </p>
+                )}
+
+                {visibleProducts.length === 0 ? (
                     <div style={{ marginTop: '24px' }}>
                         <EmptyState
                             title="No products listed yet"
-                            description={session?.user?.id === store.ownerId
+                            description={isOwner
                                 ? "Your store is ready — add your first product to start selling."
                                 : "This vendor hasn't added any products yet. Check back soon!"}
-                            actionLabel={session?.user?.id === store.ownerId ? "Add Your First Product" : undefined}
-                            actionHref={session?.user?.id === store.ownerId ? `/store/${store.slug}/products/new` : undefined}
+                            actionLabel={isOwner ? "Add Your First Product" : undefined}
+                            actionHref={isOwner ? `/store/${store.slug}/products/new` : undefined}
                         />
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                        {store.products.map(product => (
-                            <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: `1px solid ${product.isPortfolioItem ? 'var(--accent, #FFD600)' : 'var(--card-border)'}` }}>
+                        {visibleProducts.map(product => (
+                            <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: `1px solid ${product.isPortfolioItem ? 'var(--accent, #FFD600)' : 'var(--card-border)'}`, opacity: (!product.inStock && !product.isPortfolioItem) ? 0.55 : 1 }}>
                                 <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--bg-elevated)', position: 'relative' }}>
                                     {product.images && product.images.length > 0 ? (
                                         <Image src={product.images[0].url} alt={product.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 480px) 50vw, 33vw" />
@@ -161,6 +173,11 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                                             Portfolio
                                         </span>
                                     )}
+                                    {isOwner && !product.inStock && !product.isPortfolioItem && (
+                                        <span style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: '20px', textTransform: 'uppercase' }}>
+                                            Out of Stock
+                                        </span>
+                                    )}
                                 </div>
                                 <div style={{ padding: '12px' }}>
                                     <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -171,7 +188,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                                             Enquire
                                         </p>
                                     ) : (
-                                        <p style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+                                        <p style={{ fontSize: '1rem', fontWeight: 800, color: product.inStock ? 'var(--primary)' : 'var(--text-muted)', margin: 0 }}>
                                             ₦{Number(product.price).toLocaleString()}
                                         </p>
                                     )}
