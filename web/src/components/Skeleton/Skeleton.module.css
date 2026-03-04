@@ -10,7 +10,7 @@
 
 .skeleton {
     animation: shimmer 2s infinite linear;
-    background: linear-gradient(to right, var(--bg-elevated) 4%, var(--border) 25%, var(--bg-elevated) 36%);
+    background: linear-gradient(to right, var(--bg-elevated) 4%, var(--card-border) 25%, var(--bg-elevated) 36%);
     background-size: 1000px 100%;
     border-radius: 4px;
 }
@@ -84,7 +84,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px dashed var(--border);
+    border-top: 1px dashed var(--card-border);
     padding-top: 16px;
     margin-top: 8px;
 }

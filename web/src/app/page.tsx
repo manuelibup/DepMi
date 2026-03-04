@@ -80,7 +80,7 @@ export default async function Home() {
                 user: demand.user.displayName,
                 initials: demand.user.displayName.substring(0, 2).toUpperCase(),
                 timeAgo: new Date(demand.createdAt).toLocaleDateString(),
-                text: `${demand.title || ''} ${demand.description || ''}`,
+                text: demand.text || '',
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
                 bids: demand._count.bids,
               };
@@ -102,7 +102,7 @@ export default async function Home() {
                 title: product.title,
                 price: `₦${Number(product.price).toLocaleString()}`,
                 location: 'Nationwide',
-                image: product.images && product.images.length > 0 ? product.images[0].url : '/placeholder.png',
+                image: product.images && product.images.length > 0 ? product.images[0].url : '',
                 viewers: product.viewCount,
                 id: product.id,
               };

@@ -24,6 +24,10 @@
 - [Session 27 — Mar 1, 2026 — BottomNav Implementation](#session-27--mar-1-2026--bottomnav-implementation)
 - [Session 28 — Mar 2, 2026 — Product Strategy Review & Blueprint Update](#session-28--mar-2-2026--product-strategy-review--blueprint-update)
 - [Session 33 — Mar 2, 2026 — Phase 2 Week 4 Audit & Bug Fixes](#session-33--mar-2-2026--phase-2-week-4-audit--bug-fixes)
+- [Session 37 — Mar 3, 2026 — Vercel Build Fix (Checkout Prisma Error)](#session-37--mar-3-2026--vercel-build-fix-checkout-prisma-error)
+- [Session 38 — Mar 3, 2026 — Phase 3 UI-First Checkout & Dashboard](#session-38--mar-3-2026--phase-3-ui-first-checkout--dashboard)
+- [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
+- [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  
@@ -1468,3 +1472,77 @@ The following pages access `params`/`searchParams` synchronously (will generate 
 
 ### Pending / Next Steps
 Fix the 10 confirmed bugs above in priority order, then build missing features.
+
+---
+
+## Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)
+**Agent:** Antigravity (Claude Sonnet 4.6)
+**Human:** Manuel
+
+### What was done:
+
+#### Bug Fixes (from Session 39 audit + new discoveries)
+
+1. **React hooks violation in `ai-import/page.tsx`** — All `useState`/`useRef` hooks were declared after an early return. Moved all 11 hooks above the `useEffect` and `if (status === 'loading')` early return.
+
+2. **BottomNav always shows action sheet** — Previously, authenticated users with no store were sent directly to `/demand/new` when tapping "+". Now all authenticated users see the action sheet: "Post a Request" + "Add a Product" (if store owner) or "Open a Store" (if buyer). Removed unused `useRouter` import.
+
+3. **`next/image` Cloudinary hostname error** — `res.cloudinary.com` and `lh3.googleusercontent.com` were not in the allowed remote patterns. Added both to `next.config.ts`.
+
+4. **`isPortfolioItem` checkout guard** — Portfolio products (display-only) could reach the checkout page. Added `product.isPortfolioItem` to the `notFound()` guard in `checkout/[id]/page.tsx`.
+
+5. **`useSearchParams` without Suspense in `orders/page.tsx`** — Next.js App Router requires a `<Suspense>` boundary around any component that calls `useSearchParams()`. Wrapped `<OrdersDashboard>` in `<Suspense fallback={null}>`.
+
+6. **Settings page — missing address fields + broken sign-out** — Full rebuild:
+   - Added phone, address, city, state fields (pre-fill for checkout)
+   - `GET /api/user/update` handler added to fetch address/phone from DB (not in JWT)
+   - Extended `PATCH /api/user/update` schema with new fields
+   - Sign Out was a `<Link href="/api/auth/signout">` (GET bypasses CSRF) — replaced with `signOut({ callbackUrl: '/' })` button
+   - Two card sections: "Profile" and "Contact & Delivery"
+
+7. **Settings avatar upload button invisible** — Google OAuth avatar URL was truthy, so only "Remove Photo" showed and the upload button was hidden. Fixed: always show `CloudinaryUploader` ("Change Photo" / "Upload Photo") + optional "Remove" button below.
+
+8. **EmptyState hover shadow wrong color** — `EmptyState.module.css` had `rgba(253, 203, 110, 0.3)` (yellow/gold) on hover. Fixed to `rgba(0, 200, 83, 0.3)` (primary green).
+
+9. **Store page empty state no owner CTA** — `store/[slug]/page.tsx` showed same empty state for owners and visitors. Now owners see "Add Your First Product" → `/store/[slug]/products/new`; visitors see generic "Check back soon" message.
+
+10. **Product detail dead "Buy Now" button** — `p/[id]/page.tsx` had a disabled "Buy Now — Coming Soon" button. Replaced with three conditional states:
+    - `isPortfolioItem` → "Enquire About This" → `/demand/new?q=...`
+    - `inStock` → "Buy via Escrow" → `/checkout/${product.id}`
+    - out of stock → "Out of Stock — Request It" → `/demand/new?q=...`
+    - Secondary "Make a Request Instead" button shown only for in-stock, non-portfolio items
+
+#### Verified (Already Built by Gemini — No Action Needed)
+- Skeleton loaders: `ProductCardSkeleton`, `DemandCardSkeleton` in `Skeleton/index.tsx`; `loading.tsx` files on home, store, search, requests pages
+- Empty states: all 4 key pages had proper `<EmptyState>` components
+
+#### Documentation Updates
+- `agent.md` — Updated `+` button navigation spec to match current implementation (always sheet, not direct to `/demand/new`)
+- `MEMORY.md` — Updated current state: session ~29, UI-first strategy, outstanding UI items list, `+` button deviation note
+
+### Files Changed
+- `web/src/app/store/[slug]/ai-import/page.tsx`
+- `web/src/components/BottomNav/index.tsx`
+- `web/next.config.ts`
+- `web/src/app/checkout/[id]/page.tsx`
+- `web/src/app/orders/page.tsx`
+- `web/src/app/api/user/update/route.ts`
+- `web/src/app/settings/page.tsx`
+- `web/src/components/EmptyState/EmptyState.module.css`
+- `web/src/app/store/[slug]/page.tsx`
+- `web/src/app/p/[id]/page.tsx`
+- `agent.md`
+- `memory/MEMORY.md`
+
+### Outstanding (Not Addressed This Session)
+- `--bg-base` CSS variable usage (should be `--bg-color`) in settings and product detail pages
+- `/notifications` route doesn't exist — bell icon is a dead 404 link
+- Notification dot hardcoded ON for all users
+- OrdersDashboard mock data gates hardcoded `{true}` — real empty states unreachable
+- StoriesBar entirely hardcoded with fake vendor data
+- FilterBar pills are decorative — don't filter the feed
+- `store/[slug]/page.tsx` back button hardcoded to `/`
+- `<img>` vs `next/image` inconsistency on store page
+- DemandCard `text` vs `title`/`description` mismatch on home feed
+- `/placeholder.png` referenced but missing from `/public/`
+- Async params warnings in checkout, p/[id], requests, search pages

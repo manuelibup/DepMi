@@ -97,6 +97,8 @@ enum NotificationType {
   PRODUCT_AVAILABLE
   DEP_EARNED
   SYSTEM
+  COMMENT_RECEIVED
+  MENTION
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -150,6 +152,7 @@ model User {
   storeInvite     StoreInvite?
   productWatches  ProductWatch[]
   reviewsLeft     Review[]         @relation("BuyerReviews")
+  comments        Comment[]        @relation("UserComments")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -293,8 +296,9 @@ model Demand {
   updatedAt DateTime @updatedAt
 
   // Relations
-  bids   Bid[]
-  orders Order[] @relation("DemandOrders")
+  bids     Bid[]
+  orders   Order[]   @relation("DemandOrders")
+  comments Comment[] @relation("DemandComments")
 
   @@index([isActive, category])
   @@index([userId])
@@ -353,6 +357,7 @@ model Product {
   orderItems     OrderItem[]
   bids           Bid[]          @relation("BidProduct")
   productWatches ProductWatch[]
+  comments       Comment[]      @relation("ProductComments")
 
   @@index([category, inStock])
   @@index([storeId])
@@ -525,4 +530,30 @@ model Review {
 
   @@index([buyerId])
   @@index([storeId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: COMMENTS & MENTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Comment {
+  id   String @id @default(uuid())
+  text String @db.Text
+
+  authorId String
+  author   User   @relation("UserComments", fields: [authorId], references: [id])
+
+  // A comment belongs to either a Product or a Demand
+  productId String?
+  product   Product? @relation("ProductComments", fields: [productId], references: [id], onDelete: Cascade)
+
+  demandId String?
+  demand   Demand? @relation("DemandComments", fields: [demandId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([demandId])
+  @@index([authorId])
 }

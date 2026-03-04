@@ -34,7 +34,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
     const hasImages = product.images.length > 0;
 
     return (
-        <main style={{ minHeight: '100dvh', background: 'var(--bg-base)', paddingBottom: '80px' }}>
+        <main style={{ minHeight: '100dvh', background: 'var(--bg-color)', paddingBottom: '80px' }}>
             <Header />
 
             {/* Media section */}
@@ -65,7 +65,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
 
             {/* Image strip (shown only when there's a video + multiple images, or multiple images alone) */}
             {product.images.length > 1 && (
-                <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: 'var(--bg-base)' }}>
+                <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: 'var(--bg-color)' }}>
                     {product.images.map((img, i) => (
                         <div key={img.id} style={{ flexShrink: 0, width: 64, height: 64, borderRadius: 8, overflow: 'hidden', position: 'relative', border: '2px solid var(--card-border)' }}>
                             <Image src={img.url} alt={`${product.title} photo ${i + 1}`} fill style={{ objectFit: 'cover' }} sizes="64px" />

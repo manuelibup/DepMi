@@ -142,3 +142,25 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Strict Build Environment:** Next.js statically evaluates page and API routes during the build phase (`npm run build`) on Vercel. If your files have rigid environment variable checks (e.g., `if (!process.env.API_KEY) throw new Error(...)`) at the **top level** of the file, importing this file will crash the entire Next.js build. 
 - **The Fix:** Move those error checks *inside* the function handler (e.g., inside `export async function POST`), or provide a graceful fallback string at the module level (like `process.env.API_KEY || "missing_for_build"`).
 - **Prisma Type Safety:** Vercel's TypeScript compiler is unforgiving. If you misspell a field in a `select` object (e.g., querying `{ phone: true }` instead of `{ phoneNumber: true }` based on your `schema.prisma`), it works locally but fatally crashes the Vercel build. Always double-check your schema fields and run `npx prisma generate` locally before pushing checkout/DB logic!
+
+---
+
+## 🪟 12. Killing Orphaned Node.js Processes on Windows
+
+*This tip was added after dev server port 3000 stayed locked even with no terminal open.*
+
+- **The Issue**: `npm run dev` fails with `Port 3000 is already in use` even though no terminal window is open.
+- **The Cause**: On Windows, closing a terminal window does **not** kill child processes it spawned (unlike macOS/Linux). The Node.js server keeps running as an orphaned background process and holds the port and the `.next/dev/lock` file.
+- **The Fix** (PowerShell):
+  ```powershell
+  # Find the process holding port 3000
+  netstat -ano | findstr :3000
+  # Kill it (replace 12345 with the PID from above)
+  Stop-Process -Id 12345 -Force
+  # Delete the stale lock file
+  Remove-Item .next/dev/lock
+  # Now restart the dev server normally
+  npm run dev
+  ```
+- **Alternative**: Task Manager → Details tab → find `node.exe` → End Task.
+- **Prevention**: Always stop the dev server with `Ctrl+C` **before** closing the terminal window.

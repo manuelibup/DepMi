@@ -124,7 +124,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <main style={{ minHeight: '100dvh', background: 'var(--bg-base)', paddingBottom: '100px' }}>
+        <main style={{ minHeight: '100dvh', background: 'var(--bg-color)', paddingBottom: '100px' }}>
             <Header />
 
             <div style={{ maxWidth: '480px', margin: '0 auto', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -273,7 +273,7 @@ export default function SettingsPage() {
                     </div>
 
                     {error && (
-                        <p style={{ color: 'var(--error)', fontSize: '0.875rem', background: 'rgba(255,60,60,0.1)', padding: '10px 14px', borderRadius: '10px', margin: 0, border: '1px solid rgba(255,60,60,0.2)' }}>
+                        <p style={{ color: 'var(--error)', fontSize: '0.875rem', background: 'var(--error-bg)', padding: '10px 14px', borderRadius: '10px', margin: 0, border: '1px solid var(--error-border)' }}>
                             {error}
                         </p>
                     )}
