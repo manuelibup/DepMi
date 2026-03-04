@@ -35,8 +35,8 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 select: { kycTier: true }
             },
             products: {
-                where: { inStock: true },
-                orderBy: { createdAt: 'desc' },
+                where: { OR: [{ inStock: true }, { isPortfolioItem: true }] },
+                orderBy: [{ isPortfolioItem: 'asc' }, { createdAt: 'desc' }],
                 include: { images: true }
             }
         }
@@ -143,7 +143,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                         {store.products.map(product => (
-                            <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: '1px solid var(--card-border)' }}>
+                            <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: `1px solid ${product.isPortfolioItem ? 'var(--accent, #FFD600)' : 'var(--card-border)'}` }}>
                                 <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--bg-elevated)', position: 'relative' }}>
                                     {product.images && product.images.length > 0 ? (
                                         <Image src={product.images[0].url} alt={product.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 480px) 50vw, 33vw" />
@@ -156,14 +156,25 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                                             </svg>
                                         </div>
                                     )}
+                                    {product.isPortfolioItem && (
+                                        <span style={{ position: 'absolute', top: 6, left: 6, background: 'var(--accent, #FFD600)', color: '#000', fontSize: '0.65rem', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                                            Portfolio
+                                        </span>
+                                    )}
                                 </div>
                                 <div style={{ padding: '12px' }}>
                                     <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {product.title}
                                     </h3>
-                                    <p style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
-                                        ₦{Number(product.price).toLocaleString()}
-                                    </p>
+                                    {product.isPortfolioItem ? (
+                                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent, #FFD600)', margin: 0 }}>
+                                            Enquire
+                                        </p>
+                                    ) : (
+                                        <p style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+                                            ₦{Number(product.price).toLocaleString()}
+                                        </p>
+                                    )}
                                 </div>
                             </Link>
                         ))}
