@@ -36,7 +36,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
             },
             products: {
                 where: { OR: [{ inStock: true }, { isPortfolioItem: true }] },
-                orderBy: [{ isPortfolioItem: 'asc' }, { createdAt: 'desc' }],
+                orderBy: { createdAt: 'desc' },
                 include: { images: true }
             }
         }
