@@ -147,31 +147,35 @@ export default function SettingsPage() {
 
                         {/* Avatar */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-elevated)', border: '2px solid var(--card-border)', overflow: 'hidden', position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {avatarUrl ? (
-                                    <Image src={avatarUrl} alt="Avatar" fill style={{ objectFit: 'cover' }} sizes="72px" />
-                                ) : (
-                                    <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)' }}>
-                                        {displayName.charAt(0).toUpperCase() || '?'}
-                                    </span>
-                                )}
+                            {/* Avatar circle with camera overlay */}
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                                <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-elevated)', border: '2px solid var(--card-border)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {avatarUrl ? (
+                                        <Image src={avatarUrl} alt="Avatar" fill style={{ objectFit: 'cover' }} sizes="72px" />
+                                    ) : (
+                                        <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                            {displayName.charAt(0).toUpperCase() || '?'}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                {avatarUrl ? (
+
+                            {/* Action buttons */}
+                            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <CloudinaryUploader
+                                    onUploadSuccess={(res: CloudinaryUploadResult) => setAvatarUrl(res.secure_url)}
+                                    accept="image/*"
+                                    maxSizeMB={5}
+                                    buttonText={avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                                />
+                                {avatarUrl && (
                                     <button
                                         type="button"
                                         onClick={() => setAvatarUrl('')}
-                                        style={{ padding: '10px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--error)', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                                        style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}
                                     >
-                                        Remove Photo
+                                        Remove
                                     </button>
-                                ) : (
-                                    <CloudinaryUploader
-                                        onUploadSuccess={(res: CloudinaryUploadResult) => setAvatarUrl(res.secure_url)}
-                                        accept="image/*"
-                                        maxSizeMB={5}
-                                        buttonText="Upload Photo"
-                                    />
                                 )}
                             </div>
                         </div>

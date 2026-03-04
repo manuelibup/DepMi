@@ -92,30 +92,65 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
 
                 {/* CTA buttons */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {/* Phase 3: replace with real checkout */}
-                    <button
-                        disabled
-                        style={{
-                            width: '100%', padding: '16px', borderRadius: '12px',
-                            background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
-                            color: '#000', fontWeight: 700, fontSize: '1rem', border: 'none',
-                            cursor: 'not-allowed', opacity: 0.6,
-                        }}
-                    >
-                        Buy Now — Coming Soon
-                    </button>
-                    <Link
-                        href={`/demand/new?q=${encodeURIComponent(product.title)}`}
-                        style={{
-                            display: 'block', width: '100%', padding: '14px',
-                            borderRadius: '12px', border: '1.5px solid var(--card-border)',
-                            background: 'var(--card-bg)', color: 'var(--text-main)',
-                            fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
-                            textAlign: 'center',
-                        }}
-                    >
-                        Make a Request
-                    </Link>
+                    {product.isPortfolioItem ? (
+                        // Portfolio item — not for direct sale, just enquire
+                        <Link
+                            href={`/demand/new?q=${encodeURIComponent(product.title)}`}
+                            style={{
+                                display: 'block', width: '100%', padding: '16px',
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
+                                color: '#000', fontWeight: 700, fontSize: '1rem',
+                                textDecoration: 'none', textAlign: 'center',
+                            }}
+                        >
+                            Enquire About This
+                        </Link>
+                    ) : product.inStock ? (
+                        // In stock — go to checkout
+                        <Link
+                            href={`/checkout/${product.id}`}
+                            style={{
+                                display: 'block', width: '100%', padding: '16px',
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
+                                color: '#000', fontWeight: 700, fontSize: '1rem',
+                                textDecoration: 'none', textAlign: 'center',
+                            }}
+                        >
+                            Buy via Escrow
+                        </Link>
+                    ) : (
+                        // Out of stock
+                        <Link
+                            href={`/demand/new?q=${encodeURIComponent(product.title)}`}
+                            style={{
+                                display: 'block', width: '100%', padding: '16px',
+                                borderRadius: '12px',
+                                background: 'var(--card-bg)',
+                                color: 'var(--text-muted)', fontWeight: 700, fontSize: '1rem',
+                                textDecoration: 'none', textAlign: 'center',
+                                border: '1.5px solid var(--card-border)',
+                            }}
+                        >
+                            Out of Stock — Request It
+                        </Link>
+                    )}
+
+                    {!product.isPortfolioItem && product.inStock && (
+                        <Link
+                            href={`/demand/new?q=${encodeURIComponent(product.title)}`}
+                            style={{
+                                display: 'block', width: '100%', padding: '14px',
+                                borderRadius: '12px', border: '1.5px solid var(--card-border)',
+                                background: 'var(--card-bg)', color: 'var(--text-main)',
+                                fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
+                                textAlign: 'center',
+                            }}
+                        >
+                            Make a Request Instead
+                        </Link>
+                    )}
                 </div>
 
                 {/* Store card */}

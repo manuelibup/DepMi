@@ -62,10 +62,17 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
         }
     };
 
+    const handleCardClick = () => {
+        if (data.id) {
+            router.push(`/p/${data.id}`);
+        }
+    };
+
     return (
         <article
             className={styles.card}
             style={{ animationDelay: `${index * 80 + 100}ms` }}
+            onClick={handleCardClick}
         >
             {/* Store Header */}
             <div className={styles.header}>

@@ -133,9 +133,13 @@ export default async function StorefrontPage({ params }: StorePageProps) {
 
                 {store.products.length === 0 ? (
                     <div style={{ marginTop: '24px' }}>
-                        <EmptyState 
+                        <EmptyState
                             title="No products listed yet"
-                            description="This vendor hasn't added any products to their store."
+                            description={session?.user?.id === store.ownerId
+                                ? "Your store is ready — add your first product to start selling."
+                                : "This vendor hasn't added any products yet. Check back soon!"}
+                            actionLabel={session?.user?.id === store.ownerId ? "Add Your First Product" : undefined}
+                            actionHref={session?.user?.id === store.ownerId ? `/store/${store.slug}/products/new` : undefined}
                         />
                     </div>
                 ) : (

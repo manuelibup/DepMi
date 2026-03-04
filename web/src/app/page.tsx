@@ -107,9 +107,9 @@ export default async function Home() {
                 id: product.id,
               };
               return (
-                <Link href={`/p/${product.id}`} key={`p-${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div key={`p-${product.id}`} style={{ display: 'block' }}>
                   <ProductCard data={pData} index={index} />
-                </Link>
+                </div>
               );
             }
           })
