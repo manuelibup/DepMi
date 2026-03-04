@@ -1,9 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthGate } from '@/context/AuthGate';
+import { useSession } from 'next-auth/react';
 import styles from './DemandCard.module.css';
 
 export interface DemandData {
+    id?: string;
     user: string;
     initials: string;
     timeAgo: string;
@@ -19,6 +23,31 @@ interface DemandCardProps {
 }
 
 export default function DemandCard({ data, index = 0 }: DemandCardProps) {
+    const router = useRouter();
+    const { openGate } = useAuthGate();
+    const { status } = useSession();
+
+    const handleBid = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (status === 'unauthenticated') {
+            openGate('Sign in to bid on requests');
+            return;
+        }
+        if (data.id) router.push(`/requests/${data.id}`);
+    };
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = data.id ? `${window.location.origin}/requests/${data.id}` : window.location.href;
+        if (navigator.share) {
+            navigator.share({ title: `DepMi Request: ${data.text.slice(0, 60)}`, url });
+        } else {
+            navigator.clipboard.writeText(url);
+        }
+    };
+
     return (
         <article
             className={styles.card}
@@ -63,11 +92,11 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
 
             {/* Actions */}
             <div className={styles.actions}>
-                <button className={styles.bidBtn}>
+                <button className={styles.bidBtn} onClick={handleBid}>
                     Bid as Vendor
                     {data.bids > 0 && <span className={styles.bidCount}>{data.bids} bids</span>}
                 </button>
-                <button className={styles.shareBtn} aria-label="Share">
+                <button className={styles.shareBtn} aria-label="Share" onClick={handleShare}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />

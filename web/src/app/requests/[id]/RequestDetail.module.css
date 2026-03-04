@@ -329,3 +329,319 @@
 .acceptBtn:hover {
     opacity: 0.9;
 }
+
+/* ── Comment Section ─────────────────────────────────────── */
+
+.commentSection {
+    padding: 24px 20px 32px;
+}
+
+.commentList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.commentCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.commentHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.commentAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.commentMeta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.commentAuthor {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.commentTime {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.commentText {
+    margin: 0 0 0 42px;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+/* Inline product mention chip */
+.productMention {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 200, 83, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(0, 200, 83, 0.25);
+    border-radius: 6px;
+    padding: 1px 7px 1px 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.productMention:hover {
+    background: rgba(0, 200, 83, 0.18);
+}
+
+/* Comment form */
+.commentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.commentInputWrap {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.commentUserAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.commentInputArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.commentTextarea {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    font-family: inherit;
+    resize: none;
+    transition: border-color var(--transition-fast);
+    line-height: 1.5;
+}
+
+.commentTextarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.commentTextarea::placeholder {
+    color: var(--text-muted);
+}
+
+.commentActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.linkProductBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-full);
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.linkProductBtn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.charCount {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.commentSubmitBtn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 6px 18px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.commentSubmitBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Product picker dropdown */
+.productPicker {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 42px;
+    box-shadow: var(--shadow-md);
+}
+
+.pickerSearch {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    font-family: inherit;
+}
+
+.pickerSearch:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.pickerStatus {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 4px 0;
+}
+
+.pickerResults {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pickerItem {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background var(--transition-fast);
+}
+
+.pickerItem:hover {
+    background: rgba(0, 200, 83, 0.08);
+}
+
+.pickerTitle {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.pickerMeta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Comment KYC gate */
+.commentGate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 4px;
+}
+
+.commentGateIcon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    display: flex;
+}
+
+.commentGateText {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 2px;
+}
+
+.commentGateSubtext {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.commentGateBtn {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: opacity var(--transition-fast);
+}
+
+.commentGateBtn:hover {
+    opacity: 0.88;
+}

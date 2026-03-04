@@ -6,10 +6,13 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import ProductVideoPlayer from './ProductVideoPlayer';
+import ProductImageGallery from './ProductImageGallery';
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-    const product = await prisma.product.findUnique({
-        where: { id: params.id },
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    // Accept both UUID (old links) and slug (new links)
+    const product = await prisma.product.findFirst({
+        where: { OR: [{ slug: id }, { id }] },
         include: {
             images: { orderBy: { order: 'asc' } },
             store: {
@@ -27,11 +30,10 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
 
     if (!product) notFound();
 
-    // Increment view count (fire-and-forget)
-    prisma.product.update({ where: { id: params.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
+    // Increment view count (fire-and-forget) — use product.id, not the URL param
+    prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
 
     const hasVideo = !!product.videoUrl;
-    const hasImages = product.images.length > 0;
 
     return (
         <main style={{ minHeight: '100dvh', background: 'var(--bg-color)', paddingBottom: '80px' }}>
@@ -41,37 +43,14 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             <div style={{ background: '#000', width: '100%' }}>
                 {hasVideo ? (
                     <ProductVideoPlayer src={product.videoUrl!} poster={product.images[0]?.url} />
-                ) : hasImages ? (
-                    <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative' }}>
-                        <Image
-                            src={product.images[0].url}
-                            alt={product.title}
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            sizes="100vw"
-                            priority
-                        />
-                    </div>
                 ) : (
-                    <div style={{ width: '100%', aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width="18" height="18" x="3" y="3" rx="2" />
-                            <circle cx="9" cy="9" r="2" />
-                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                        </svg>
-                    </div>
+                    <ProductImageGallery images={product.images} title={product.title} />
                 )}
             </div>
 
-            {/* Image strip (shown only when there's a video + multiple images, or multiple images alone) */}
-            {product.images.length > 1 && (
-                <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: 'var(--bg-color)' }}>
-                    {product.images.map((img, i) => (
-                        <div key={img.id} style={{ flexShrink: 0, width: 64, height: 64, borderRadius: 8, overflow: 'hidden', position: 'relative', border: '2px solid var(--card-border)' }}>
-                            <Image src={img.url} alt={`${product.title} photo ${i + 1}`} fill style={{ objectFit: 'cover' }} sizes="64px" />
-                        </div>
-                    ))}
-                </div>
+            {/* When there's a video, also show the image strip below it */}
+            {hasVideo && product.images.length > 0 && (
+                <ProductImageGallery images={product.images} title={product.title} />
             )}
 
             {/* Product info */}

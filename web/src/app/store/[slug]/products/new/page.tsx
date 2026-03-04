@@ -33,8 +33,8 @@ export default async function NewProductPage({ params }: NewProductPageProps) {
     }
 
     return (
-        <div style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', backgroundColor: 'var(--bg-color)', paddingBottom: '80px' }}>
+        <main style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100dvh', backgroundColor: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
             <CreateProductForm storeId={store.id} storeSlug={store.slug} />
-        </div>
+        </main>
     );
 }

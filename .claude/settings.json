@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]"
+    ],
+    "allow": [
+      "Bash(git add \"web/src/app/store/[slug]/page.tsx\")"
+    ]
+  }
+}

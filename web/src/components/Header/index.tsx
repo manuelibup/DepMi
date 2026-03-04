@@ -1,11 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './Header.module.css';
 
 export default function Header() {
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        fetch('/api/notifications/unread-count')
+            .then(r => r.json())
+            .then(data => setUnreadCount(data.count ?? 0))
+            .catch(() => {});
+    }, []);
+
     return (
         <header className={styles.header}>
             <div className={styles.logo}>
@@ -24,7 +33,7 @@ export default function Header() {
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
-                    <span className={styles.notifDot} />
+                    {unreadCount > 0 && <span className={styles.notifDot} />}
                 </Link>
             </div>
         </header>

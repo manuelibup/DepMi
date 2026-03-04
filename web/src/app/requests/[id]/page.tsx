@@ -7,15 +7,24 @@ import { authOptions } from '@/lib/auth';
 import BidActionGate from './BidActionGate';
 import BidForm from './BidForm';
 import AcceptBidButton from './AcceptBidButton';
+import CommentSection from './CommentSection';
 import BottomNav from '@/components/BottomNav';
 import styles from './RequestDetail.module.css';
 
-export default async function RequestDetailPage({ params }: { params: { id: string } }) {
+export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
+    // Fetch KYC tier for the current user (needed for comment gate)
+    let userKycTier: string = 'UNVERIFIED';
+    if (userId) {
+        const u = await prisma.user.findUnique({ where: { id: userId }, select: { kycTier: true } });
+        userKycTier = u?.kycTier ?? 'UNVERIFIED';
+    }
+
     const demand = await prisma.demand.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             user: { select: { displayName: true } },
             bids: {
@@ -24,6 +33,10 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                     product: { select: { title: true, images: { take: 1, select: { url: true } } } }
                 },
                 orderBy: { createdAt: 'desc' }
+            },
+            comments: {
+                include: { author: { select: { displayName: true, username: true } } },
+                orderBy: { createdAt: 'asc' }
             }
         }
     });
@@ -31,7 +44,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     if (!demand) notFound();
 
     const isPoster = userId === demand.userId;
-    
+
     // Check if the current user has a store
     let userStores: { id: string; name: string }[] = [];
     if (userId) {
@@ -41,11 +54,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         });
     }
     const hasStore = userStores.length > 0;
-    
+
     // If they have a store, fetch their products for the bid dropdown
     let storeProducts: { id: string; title: string; price: string | number }[] = [];
-    const selectedStoreId = userStores[0]?.id; // Just pick the first store for MVP
-    
+    const selectedStoreId = userStores[0]?.id;
+
     if (selectedStoreId && !isPoster) {
         const rawProducts = await prisma.product.findMany({
             where: { storeId: selectedStoreId, inStock: true },
@@ -58,7 +71,14 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         }));
     }
 
-    // Format text
+    // Serialize comments (Dates → strings for client component)
+    const serializedComments = demand.comments.map(c => ({
+        id: c.id,
+        text: c.text,
+        author: c.author,
+        createdAt: c.createdAt.toISOString(),
+    }));
+
     const timeAgo = new Date(demand.createdAt).toLocaleDateString();
 
     return (
@@ -145,6 +165,16 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
                        )}
                    </div>
                </div>
+
+               <div className={styles.divider} />
+
+               {/* Comments Section */}
+               <CommentSection
+                   apiPath={`/api/demands/${demand.id}/comments`}
+                   initialComments={serializedComments}
+                   canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
+                   isLoggedIn={!!userId}
+               />
 
             </div>
             <BottomNav />

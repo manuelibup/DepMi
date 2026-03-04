@@ -86,12 +86,6 @@
     flex-shrink: 0;
 }
 
-.avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 .avatarFallback {
     width: 100%;
     height: 100%;
@@ -118,18 +112,38 @@
     color: var(--text-muted);
 }
 
+.titleInput {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+.titleInput::placeholder {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.titleInput:focus {
+    outline: none;
+}
+
 .composer {
     width: 100%;
-    flex: 1;
     background: transparent;
     border: none;
     resize: none;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     line-height: 1.5;
     color: var(--text-main);
     font-family: inherit;
     padding: 0;
-    min-height: 120px;
+    min-height: 80px;
+    margin-bottom: 16px;
 }
 
 .composer::placeholder {
@@ -138,6 +152,47 @@
 
 .composer:focus {
     outline: none;
+}
+
+.mediaSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.mediaPreview {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+}
+
+.mediaPreview img, .mediaPreview video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.removeBtn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    z-index: 10;
 }
 
 /* Inline Inputs */
@@ -156,8 +211,8 @@
     to { transform: translateY(0); opacity: 1; }
 }
 
-.currencySelect {
-    background: transparent;
+.currencySelect, .categorySelect {
+    background: var(--bg-color);
     border: 1px solid var(--card-border);
     color: var(--text-main);
     padding: 8px;
@@ -168,12 +223,7 @@
 
 .categorySelect {
     flex: 1;
-    background: var(--bg-color); /* Updated for better blending */
-    border: 1px solid var(--card-border);
-    color: var(--text-main);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 1rem;
+    font-weight: normal;
 }
 
 .categorySelect option {
@@ -215,7 +265,7 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 4px; /* for scrollbar space if any */
+    padding-bottom: 4px; /* scrollbar space */
 }
 
 .pillsScroll::-webkit-scrollbar {

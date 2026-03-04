@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
+import { generateProductSlug } from '@/lib/slugify';
 
 const productSchema = z.object({
     storeId: z.string().min(1, 'Store ID is required'),
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
         // Verify ownership
         const store = await prisma.store.findUnique({
             where: { id: storeId },
-            select: { ownerId: true }
+            select: { ownerId: true, name: true }
         });
 
         if (!store) {
@@ -50,11 +51,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Forbidden. You do not own this store.' }, { status: 403 });
         }
 
+        // Generate a unique slug from title + store name
+        const slug = await generateProductSlug(title, store.name, (s) =>
+            prisma.product.findUnique({ where: { slug: s }, select: { id: true } })
+        );
+
         // Create the product atomically with its images using Prisma nested writes
         const product = await prisma.product.create({
             data: {
                 storeId,
                 title,
+                slug,
                 description: description || null,
                 price,
                 category,

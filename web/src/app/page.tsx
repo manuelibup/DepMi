@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
 import Link from 'next/link';
 
+import waitlistStyles from './page.module.css'; // assuming styles is named this way
 import WaitlistHome from '@/components/WaitlistHome';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
@@ -14,8 +15,9 @@ import DemandCard from '@/components/DemandCard';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
+import SuggestedProfiles from '@/components/SuggestedProfiles';
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
     return <WaitlistHome />;
   }
@@ -26,9 +28,14 @@ export default async function Home() {
     redirect('/onboarding');
   }
 
+  const sp = await searchParams;
+  const category = sp.category;
+
+
   // Fetch real products
   const products = await prisma.product.findMany({
-    where: { inStock: true },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    where: { inStock: true, ...(category ? { category: category as any } : {}) },
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
@@ -39,7 +46,8 @@ export default async function Home() {
 
   // Fetch real demands
   const demands = await prisma.demand.findMany({
-    where: { isActive: true },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    where: { isActive: true, ...(category ? { category: category as any } : {}) },
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
@@ -48,7 +56,15 @@ export default async function Home() {
     }
   });
 
-  // Interleave them mathematically (e.g. 1 demand, 1 product, 1 demand, 1 product)
+  // Fetch top active stores for stories bar & suggested profiles
+  const topStores = await prisma.store.findMany({
+    where: { isActive: true },
+    orderBy: { depCount: 'desc' },
+    take: 8,
+    select: { id: true, name: true, slug: true, logoUrl: true, depCount: true }
+  });
+
+    // Interleave them mathematically (e.g. 1 demand, 1 product, 1 demand, 1 product)
   const feed = [];
   const maxLength = Math.max(demands.length, products.length);
   for (let i = 0; i < maxLength; i++) {
@@ -60,7 +76,7 @@ export default async function Home() {
     <main className={styles.main}>
       <Header />
       <FilterBar />
-      <StoriesBar />
+      <StoriesBar stores={topStores} />
 
       <div className={styles.feed}>
         {feed.length === 0 ? (
@@ -72,11 +88,13 @@ export default async function Home() {
           />
         ) : (
           feed.map((item, index) => {
+            let cardContent = null;
+            
             if (item.type === 'demand') {
-               
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const demand = item.data as any;
               const dData = {
+                id: demand.id,
                 user: demand.user.displayName,
                 initials: demand.user.displayName.substring(0, 2).toUpperCase(),
                 timeAgo: new Date(demand.createdAt).toLocaleDateString(),
@@ -84,9 +102,8 @@ export default async function Home() {
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
                 bids: demand._count.bids,
               };
-              return <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
+              cardContent = <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
             } else {
-               
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const product = item.data as any;
               // Generate deterministic color based on store name
@@ -106,12 +123,24 @@ export default async function Home() {
                 viewers: product.viewCount,
                 id: product.id,
               };
-              return (
+              cardContent = (
                 <div key={`p-${product.id}`} style={{ display: 'block' }}>
                   <ProductCard data={pData} index={index} />
                 </div>
               );
             }
+            
+            // Inject SuggestedProfiles after the 3rd feed item (index 2)
+            if (index === 2 && topStores.length > 0) {
+                return (
+                    <React.Fragment key={`feed-item-${index}`}>
+                        {cardContent}
+                        <SuggestedProfiles stores={topStores} />
+                    </React.Fragment>
+                );
+            }
+            
+            return cardContent;
           })
         )}
       </div>

@@ -1,35 +1,52 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import styles from './FilterBar.module.css';
 
-const FILTERS = ['For You', 'Demand Engine', 'Following', 'Fashion', 'Gadgets', 'Beauty', 'Food'];
+// Label → URL category value (empty string = no filter)
+const FILTERS: { label: string; value: string }[] = [
+    { label: 'For You', value: '' },
+    { label: 'Fashion', value: 'FASHION' },
+    { label: 'Gadgets', value: 'GADGETS' },
+    { label: 'Beauty', value: 'BEAUTY' },
+    { label: 'Food', value: 'FOOD' },
+    { label: 'Furniture', value: 'FURNITURE' },
+    { label: 'Services', value: 'SERVICES' },
+    { label: 'Other', value: 'OTHER' },
+];
 
-interface FilterBarProps {
-    onFilterChange?: (filter: string) => void;
-}
-
-export default function FilterBar({ onFilterChange }: FilterBarProps) {
-    const [active, setActive] = useState('For You');
-
-    const handleClick = (filter: string) => {
-        setActive(filter);
-        onFilterChange?.(filter);
-    };
+function FilterBarInner() {
+    const searchParams = useSearchParams();
+    const activeCategory = searchParams?.get('category') ?? '';
 
     return (
         <nav className={styles.wrapper}>
             <div className={styles.scroll}>
-                {FILTERS.map((f) => (
-                    <button
-                        key={f}
-                        className={`${styles.chip} ${active === f ? styles.active : ''}`}
-                        onClick={() => handleClick(f)}
-                    >
-                        {f}
-                    </button>
-                ))}
+                {FILTERS.map((f) => {
+                    const href = f.value ? `/?category=${f.value}` : '/';
+                    const isActive = activeCategory === f.value;
+                    return (
+                        <Link
+                            key={f.value || 'all'}
+                            href={href}
+                            className={`${styles.chip} ${isActive ? styles.active : ''}`}
+                            scroll={false}
+                        >
+                            {f.label}
+                        </Link>
+                    );
+                })}
             </div>
         </nav>
+    );
+}
+
+export default function FilterBar() {
+    return (
+        <React.Suspense fallback={<nav className={styles.wrapper}><div className={styles.scroll}>Loading...</div></nav>}>
+            <FilterBarInner />
+        </React.Suspense>
     );
 }

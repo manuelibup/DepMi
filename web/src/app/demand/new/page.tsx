@@ -1,6 +1,4 @@
 import React from 'react';
-import Header from '@/components/Header';
-import BottomNav from '@/components/BottomNav';
 import DemandForm from './DemandForm';
 import { Metadata } from 'next';
 
@@ -18,10 +16,8 @@ export default function NewDemandPage({
     const defaultQuery = searchParams.q || '';
 
     return (
-        <main style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100vh', backgroundColor: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
-            <Header />
+        <main style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100dvh', backgroundColor: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
             <DemandForm defaultQuery={defaultQuery} />
-            <BottomNav />
         </main>
     );
 }

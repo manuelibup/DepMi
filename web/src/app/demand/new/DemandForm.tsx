@@ -1,31 +1,97 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { X, CreditCard, FolderOpen, MapPin } from 'lucide-react';
 import styles from './DemandForm.module.css';
 
 const CATEGORIES = [
     'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'
 ];
+const CURRENCIES = ['₦', '$', '£', '€'];
 
 export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     const router = useRouter();
+    const { data: session } = useSession();
+    
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [errorMsg, setErrorMsg] = useState('');
 
     const [formData, setFormData] = useState({
         text: defaultQuery ? defaultQuery : '',
         category: 'OTHER',
-        budget: '',
+        currency: '₦',
+        budget: '', // Raw unformatted number string for API
+        displayBudget: '', // Formatted string with commas for UI
         location: '',
     });
 
+    const [activeInput, setActiveInput] = useState<'budget' | 'category' | 'location' | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Load draft on mount
+    useEffect(() => {
+        const draft = localStorage.getItem('demand_draft');
+        if (draft && !defaultQuery) {
+            try {
+                const parsed = JSON.parse(draft);
+                setFormData(prev => ({ ...prev, ...parsed }));
+            } catch (e) {}
+        }
+    }, [defaultQuery]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [formData.text]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        if (e.target.name === 'budget') {
+            // Remove any non-numeric characters for the raw value
+            const rawValue = e.target.value.replace(/\D/g, '');
+            // Format with commas for display
+            const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
+            
+            setFormData(prev => ({ 
+                ...prev, 
+                budget: rawValue,
+                displayBudget: formattedValue
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        }
+    };
+
+    const handleClose = () => {
+        if (formData.text || formData.budget || formData.location) {
+            const save = confirm("Save as draft?");
+            if (save) {
+                localStorage.setItem('demand_draft', JSON.stringify(formData));
+            } else {
+                localStorage.removeItem('demand_draft');
+            }
+        }
+        router.back();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Basic validation before submission to ensure both text and budget are provided
+        if (!formData.text.trim()) {
+            setErrorMsg('Please enter what you are looking for.');
+            return;
+        }
+        if (!formData.budget || isNaN(parseFloat(formData.budget))) {
+            setErrorMsg('Please provide a valid budget.');
+            setActiveInput('budget');
+            return;
+        }
+
         setStatus('loading');
         setErrorMsg('');
 
@@ -36,7 +102,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                 body: JSON.stringify({
                     text: formData.text,
                     category: formData.category,
-                    budget: parseFloat(formData.budget),
+                    budget: parseFloat(formData.budget), // Currently schema expects numeric, if backend handles currency, we would send it
                     location: formData.location || undefined,
                 })
             });
@@ -48,6 +114,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
             }
 
             setStatus('success');
+            localStorage.removeItem('demand_draft');
+            
             // Redirect to Requests feed
             router.push('/requests');
             router.refresh();
@@ -58,103 +126,143 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
         }
     };
 
+    const userAvatar = session?.user?.image || null;
+    const userName = session?.user?.name || 'You';
+    const canPost = formData.text.trim().length > 0 && formData.budget !== '' && status !== 'loading';
+
     return (
         <div className={styles.container}>
-            <div className={styles.headerArea}>
-                <button type="button" onClick={() => router.back()} className={styles.backBtn} aria-label="Go back">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6"/>
-                    </svg>
+            <div className={styles.header}>
+                <button type="button" onClick={handleClose} className={styles.iconBtn} aria-label="Cancel">
+                    <X size={24} />
                 </button>
-                <h1 className={styles.title}>Post a Request</h1>
-                <div style={{ width: 24 }} /> {/* Spacer */}
+                <button 
+                    type="button" 
+                    className={styles.postBtn}
+                    disabled={!canPost}
+                    onClick={handleSubmit}
+                >
+                    Post
+                </button>
             </div>
 
-            <p className={styles.subtitle}>
-                Tell sellers exactly what you&apos;re looking for and let them come to you with offers.
-            </p>
+            {status === 'error' && (
+                <div className={styles.errorBanner}>{errorMsg}</div>
+            )}
 
-            <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.inputGroup}>
-                    <label className={styles.label} htmlFor="text">What do you need?</label>
-                    <textarea 
-                        id="text"
-                        name="text"
-                        required
-                        className={styles.textarea}
-                        placeholder="E.g., I'm looking for a fairly used iPhone 13 Pro 256GB"
-                        value={formData.text}
+            <div className={styles.body}>
+                <div className={styles.authorRow}>
+                    <div className={styles.avatar}>
+                        {userAvatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={userAvatar} alt="avatar" />
+                        ) : (
+                            <div className={styles.avatarFallback}>{userName.charAt(0).toUpperCase()}</div>
+                        )}
+                    </div>
+                    <div className={styles.authorInfo}>
+                        <span className={styles.authorName}>{userName}</span>
+                        <span className={styles.postVisibility}>Everyone can view and bid</span>
+                    </div>
+                </div>
+
+                <textarea 
+                    ref={textareaRef}
+                    name="text"
+                    className={styles.composer}
+                    placeholder="What are you looking for? (e.g. iPhone 13 Pro Max 256GB)"
+                    value={formData.text}
+                    onChange={handleChange}
+                    autoFocus
+                />
+            </div>
+
+            {/* Inline expandable inputs based on active pill */}
+            {activeInput === 'budget' && (
+                <div className={styles.inlineInputRow}>
+                    <select 
+                        name="currency" 
+                        value={formData.currency} 
+                        onChange={handleChange} 
+                        className={styles.currencySelect}
+                    >
+                        {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <input 
+                        type="text" 
+                        name="budget"
+                        inputMode="numeric"
+                        placeholder="Budget amount"
+                        value={formData.displayBudget}
                         onChange={handleChange}
-                        rows={4}
+                        className={styles.inlineInput}
+                        autoFocus
                     />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
                 </div>
+            )}
 
-                <div className={styles.inputGroup}>
-                    <label className={styles.label} htmlFor="category">Category</label>
-                    <div className={styles.selectWrapper}>
-                        <select 
-                            id="category"
-                            name="category"
-                            className={styles.select}
-                            value={formData.category}
-                            onChange={handleChange}
-                        >
-                            {CATEGORIES.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                        </select>
-                        <div className={styles.selectArrow}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
-                        </div>
-                    </div>
+            {activeInput === 'category' && (
+                <div className={styles.inlineInputRow}>
+                    <select 
+                        name="category" 
+                        value={formData.category} 
+                        onChange={handleChange} 
+                        className={styles.categorySelect}
+                        autoFocus
+                    >
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
                 </div>
+            )}
 
-                <div className={styles.inputGroup}>
-                    <label className={styles.label} htmlFor="budget">Your Budget (₦)</label>
-                    <div className={styles.currencyWrapper}>
-                        <span className={styles.currencySymbol}>₦</span>
-                        <input 
-                            type="number" 
-                            id="budget"
-                            name="budget"
-                            required
-                            min="100"
-                            className={`${styles.input} ${styles.inputWithIcon}`}
-                            placeholder="50000"
-                            value={formData.budget}
-                            onChange={handleChange}
-                        />
-                    </div>
+            {activeInput === 'location' && (
+                <div className={styles.inlineInputRow}>
+                    <input 
+                        type="text" 
+                        name="location"
+                        placeholder="E.g., Lagos / Nationwide"
+                        value={formData.location}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        autoFocus
+                    />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
                 </div>
+            )}
 
-                <div className={styles.inputGroup}>
-                    <label className={styles.label} htmlFor="location">Location (Optional)</label>
-                    <div className={styles.locationWrapper}>
-                        <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <input 
-                            type="text" 
-                            id="location"
-                            name="location"
-                            className={`${styles.input} ${styles.inputWithIcon}`}
-                            placeholder="E.g., Lagos / Nationwide"
-                            value={formData.location}
-                            onChange={handleChange}
-                        />
-                    </div>
+            {/* Bottom action bar */}
+            <div className={styles.actionBar}>
+                <div className={styles.pillsScroll}>
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${formData.budget ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'budget' ? null : 'budget')}
+                    >
+                        <CreditCard size={16} className={styles.pillIcon} />
+                        {formData.budget ? `${formData.currency}${formData.displayBudget}` : 'Budget'}
+                    </button>
+                    
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${formData.category !== 'OTHER' ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'category' ? null : 'category')}
+                    >
+                        <FolderOpen size={16} className={styles.pillIcon} />
+                        {formData.category === 'OTHER' ? 'Category' : formData.category}
+                    </button>
+
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${formData.location ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'location' ? null : 'location')}
+                    >
+                        <MapPin size={16} className={styles.pillIcon} />
+                        {formData.location ? formData.location : 'Location'}
+                    </button>
                 </div>
-
-                {status === 'error' && (
-                    <div className={styles.errorBanner}>{errorMsg}</div>
-                )}
-
-                <button 
-                    type="submit" 
-                    className={styles.submitBtn}
-                    disabled={status === 'loading'}
-                >
-                    {status === 'loading' ? 'Posting...' : 'Post Request'}
-                </button>
-            </form>
+            </div>
         </div>
     );
 }

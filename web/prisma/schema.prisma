@@ -339,6 +339,7 @@ model Product {
   store   Store  @relation("StoreProducts", fields: [storeId], references: [id])
 
   title       String
+  slug        String?  @unique // URL-safe identifier e.g. "dell-xps-15-techstore"
   description String?
   price       Decimal  @db.Decimal(10, 2)
   category    Category @default(OTHER)

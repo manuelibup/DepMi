@@ -6,12 +6,97 @@ import Image from 'next/image';
 import EmptyState from '@/components/EmptyState';
 import styles from './page.module.css';
 
+interface OrderItem {
+    id: string;
+    status: string;
+    escrowStatus: string;
+    total: number;
+    createdAt: string;
+    product: { title: string; images: { url: string }[] };
+    store?: { name: string };
+    buyer?: { displayName: string; username: string };
+}
+
 interface Props {
     hasStore: boolean;
     storeName?: string;
+    purchases: OrderItem[];
+    sales: OrderItem[];
 }
 
-export default function OrdersDashboard({ hasStore, storeName }: Props) {
+function statusLabel(status: string): string {
+    const map: Record<string, string> = {
+        PENDING: 'Pending',
+        CONFIRMED: 'Confirmed',
+        SHIPPED: 'Shipped',
+        DELIVERED: 'Delivered',
+        COMPLETED: 'Completed',
+        CANCELLED: 'Cancelled',
+        DISPUTED: 'Disputed',
+        RESOLVED_BUYER: 'Resolved',
+        RESOLVED_VENDOR: 'Resolved',
+        REFUNDED: 'Refunded',
+    };
+    return map[status] ?? status;
+}
+
+function statusClass(status: string): string {
+    if (['PENDING', 'CONFIRMED'].includes(status)) return styles.status_ESCROW_HELD;
+    if (status === 'SHIPPED') return styles.status_SHIPPED;
+    if (['DELIVERED', 'COMPLETED'].includes(status)) return styles.status_COMPLETED;
+    return styles.status_ESCROW_HELD;
+}
+
+function OrderCard({ order, role }: { order: OrderItem; role: 'buyer' | 'seller' }) {
+    const image = order.product.images[0]?.url;
+    const shortId = order.id.slice(-6).toUpperCase();
+
+    return (
+        <div className={styles.orderCard}>
+            <div className={styles.orderHeader}>
+                <p className={styles.orderId}>ORDER #{shortId}</p>
+                <span className={`${styles.statusBadge} ${statusClass(order.status)}`}>
+                    {statusLabel(order.status)}
+                </span>
+            </div>
+            <div className={styles.orderItem}>
+                <div className={styles.itemImage}>
+                    {image ? (
+                        <Image src={image} alt={order.product.title} width={64} height={64} style={{ objectFit: 'cover', borderRadius: '12px' }} />
+                    ) : (
+                        <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>📦</span>
+                    )}
+                </div>
+                <div className={styles.itemInfo}>
+                    <h4 className={styles.itemTitle}>{order.product.title}</h4>
+                    <p className={styles.itemMeta}>
+                        {role === 'buyer'
+                            ? `Sold by: ${order.store?.name ?? '—'}`
+                            : `Buyer: @${order.buyer?.username ?? order.buyer?.displayName ?? '—'}`}
+                    </p>
+                    <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
+                </div>
+            </div>
+
+            {role === 'buyer' && order.status === 'SHIPPED' && (
+                <div className={styles.orderAction}>
+                    <button className={`${styles.actionBtn} ${styles.primary}`}>
+                        Mark as Received
+                    </button>
+                </div>
+            )}
+            {role === 'seller' && order.status === 'CONFIRMED' && (
+                <div className={styles.orderAction}>
+                    <button className={`${styles.actionBtn} ${styles.primary}`}>
+                        Add Tracking &amp; Ship
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function OrdersDashboard({ hasStore, storeName, purchases, sales }: Props) {
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'purchases' | 'sales'>('purchases');
     const [showCelebration, setShowCelebration] = useState(false);
@@ -19,26 +104,25 @@ export default function OrdersDashboard({ hasStore, storeName }: Props) {
     useEffect(() => {
         if (searchParams?.get('success') === 'true') {
             setTimeout(() => setShowCelebration(true), 0);
-            setTimeout(() => setShowCelebration(false), 8000); // Hide after 8s
+            setTimeout(() => setShowCelebration(false), 8000);
         }
     }, [searchParams]);
 
     return (
         <div className={styles.main}>
-            {/* Tabs */}
             <div className={styles.tabs}>
-                <button 
+                <button
                     className={`${styles.tab} ${activeTab === 'purchases' ? styles.active : ''}`}
                     onClick={() => setActiveTab('purchases')}
                 >
                     My Purchases
                 </button>
                 {hasStore && (
-                    <button 
+                    <button
                         className={`${styles.tab} ${activeTab === 'sales' ? styles.active : ''}`}
                         onClick={() => setActiveTab('sales')}
                     >
-                        Store Sales ({storeName})
+                        Store Sales {storeName ? `(${storeName})` : ''}
                     </button>
                 )}
             </div>
@@ -56,55 +140,10 @@ export default function OrdersDashboard({ hasStore, storeName }: Props) {
 
                 {activeTab === 'purchases' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {/* Mock Orders exist toggle - realistically this checks order.length > 0 */}
-                        {true ? (
-                            <>
-                                {/* Mock Active Order */}
-                                <div className={styles.orderCard}>
-                                    <div className={styles.orderHeader}>
-                                        <p className={styles.orderId}>ORDER #DPM-892HA4</p>
-                                        <span className={`${styles.statusBadge} ${styles.status_ESCROW_HELD}`}>Escrow Held</span>
-                                    </div>
-                                    <div className={styles.orderItem}>
-                                        <div className={styles.itemImage}>
-                                            <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>👟</span>
-                                        </div>
-                                        <div className={styles.itemInfo}>
-                                            <h4 className={styles.itemTitle}>Nike Air Jordan 1 Retro H...</h4>
-                                            <p className={styles.itemMeta}>Sold by: HypeLagos</p>
-                                            <p className={styles.itemPrice}>₦125,000</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>Tracking: Awaiting Seller Shipment</p>
-                                    <div className={styles.orderAction}>
-                                        <button className={styles.actionBtn} disabled>Mark as Received</button>
-                                    </div>
-                                </div>
-
-                                {/* Mock Shipped Order */}
-                                <div className={styles.orderCard}>
-                                    <div className={styles.orderHeader}>
-                                        <p className={styles.orderId}>ORDER #DPM-722BB1</p>
-                                        <span className={`${styles.statusBadge} ${styles.status_SHIPPED}`}>Shipped</span>
-                                    </div>
-                                    <div className={styles.orderItem}>
-                                        <div className={styles.itemImage}>
-                                            <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>💻</span>
-                                        </div>
-                                        <div className={styles.itemInfo}>
-                                            <h4 className={styles.itemTitle}>MacBook Pro M2 (Used)</h4>
-                                            <p className={styles.itemMeta}>Sold by: TechHub Ikeja</p>
-                                            <p className={styles.itemPrice}>₦850,000</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>Tracking GIGL: GB90283921</p>
-                                    <div className={styles.orderAction}>
-                                        <button className={`${styles.actionBtn} ${styles.primary}`}>Mark as Received</button>
-                                    </div>
-                                </div>
-                            </>
+                        {purchases.length > 0 ? (
+                            purchases.map(o => <OrderCard key={o.id} order={o} role="buyer" />)
                         ) : (
-                            <EmptyState 
+                            <EmptyState
                                 title="No purchases yet"
                                 description="When you buy products via Escrow, they will securely track here."
                                 actionLabel="Browse Products"
@@ -114,32 +153,10 @@ export default function OrdersDashboard({ hasStore, storeName }: Props) {
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {/* Mock Seller Inbound Order */}
-                        {true ? (
-                            <>
-                                <div className={styles.orderCard}>
-                                    <div className={styles.orderHeader}>
-                                        <p className={styles.orderId}>SALE #DPM-449XQ9</p>
-                                        <span className={`${styles.statusBadge} ${styles.status_ESCROW_HELD}`}>To Ship</span>
-                                    </div>
-                                    <div className={styles.orderItem}>
-                                        <div className={styles.itemImage}>
-                                            <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>👗</span>
-                                        </div>
-                                        <div className={styles.itemInfo}>
-                                            <h4 className={styles.itemTitle}>Vintage Silk Dress</h4>
-                                            <p className={styles.itemMeta}>Buyer: @chic_jane</p>
-                                            <p className={styles.itemPrice}>₦45,000</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>Funds are secured in Escrow. Please ship the item to receive payout.</p>
-                                    <div className={styles.orderAction}>
-                                        <button className={`${styles.actionBtn} ${styles.primary}`}>Add Tracking & Ship</button>
-                                    </div>
-                                </div>
-                            </>
+                        {sales.length > 0 ? (
+                            sales.map(o => <OrderCard key={o.id} order={o} role="seller" />)
                         ) : (
-                            <EmptyState 
+                            <EmptyState
                                 title="No sales yet"
                                 description="Your inbound orders will appear here once buyers place an Escrow purchase."
                             />

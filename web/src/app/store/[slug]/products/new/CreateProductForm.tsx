@@ -1,35 +1,99 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
-import Image from 'next/image';
+import { X, Tag, FolderOpen } from 'lucide-react';
+import styles from './CreateProductForm.module.css';
 
-// Simple mapping for categories
 const CATEGORIES = [
     'FASHION', 'GADGETS', 'BEAUTY', 'FOOD',
     'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'
 ];
+const CURRENCIES = ['₦', '$', '£', '€'];
 
 export default function CreateProductForm({ storeId, storeSlug }: { storeId: string; storeSlug: string }) {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [errorMsg, setErrorMsg] = useState('');
 
     const [form, setForm] = useState({
         title: '',
         description: '',
-        price: '',
+        currency: '₦',
+        price: '', // Raw unformatted number string for API
+        displayPrice: '', // Formatted string with commas for UI
         category: 'OTHER',
         imageUrl: '',
         videoUrl: '',
     });
 
+    const [activeInput, setActiveInput] = useState<'price' | 'category' | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Load draft
+    useEffect(() => {
+        const draft = localStorage.getItem(`product_draft_${storeId}`);
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                setForm(prev => ({ ...prev, ...parsed }));
+            } catch (e) {}
+        }
+    }, [storeId]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [form.description]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        if (e.target.name === 'price') {
+            // Remove any non-numeric characters for the raw value
+            const rawValue = e.target.value.replace(/\D/g, '');
+            // Format with commas for display
+            const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
+            
+            setForm(prev => ({ 
+                ...prev, 
+                price: rawValue,
+                displayPrice: formattedValue
+            }));
+        } else {
+            setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        }
+    };
+
+    const handleClose = () => {
+        if (form.title || form.description || form.price || form.imageUrl || form.videoUrl) {
+            const save = confirm("Save as draft?");
+            if (save) {
+                localStorage.setItem(`product_draft_${storeId}`, JSON.stringify(form));
+            } else {
+                localStorage.removeItem(`product_draft_${storeId}`);
+            }
+        }
+        router.back();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
+        
+        if (!form.title.trim()) {
+            setErrorMsg('Pleae provide a title for your product.');
+            return;
+        }
+        if (!form.price || isNaN(parseFloat(form.price))) {
+            setErrorMsg('Please provide a valid price.');
+            setActiveInput('price');
+            return;
+        }
+
+        setStatus('loading');
+        setErrorMsg('');
 
         const payload = {
             storeId,
@@ -53,167 +117,184 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             if (!res.ok) {
                 if (data.errors) {
                     const firstError = Object.values(data.errors).flat()[0];
-                    setError(firstError as string || 'Invalid input.');
+                    throw new Error(firstError as string || 'Invalid input.');
                 } else {
-                    setError(data.message || 'Something went wrong.');
+                    throw new Error(data.message || 'Something went wrong.');
                 }
-            } else {
-                // Success! Redirect back to the store
-                router.push(`/store/${storeSlug}`);
-                router.refresh();
             }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+            setStatus('success');
+            localStorage.removeItem(`product_draft_${storeId}`);
+            router.push(`/store/${storeSlug}`);
+            router.refresh();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            setError(err.message || 'Failed to create product.');
-        } finally {
-            setLoading(false);
+            setStatus('error');
+            setErrorMsg(err.message || 'Failed to create product.');
         }
     };
 
-    return (
-        <div style={{ padding: '24px 20px', maxWidth: '400px', margin: '0 auto' }}>
-            <header style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-                <Link href={`/store/${storeSlug}`} style={{ marginRight: '16px', color: 'var(--text-main)', display: 'flex' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6" />
-                    </svg>
-                </Link>
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Add New Product</h1>
-            </header>
+    const canPost = form.title.trim().length > 0 && form.price !== '' && status !== 'loading';
 
-            {error && (
-                <div style={{ backgroundColor: 'rgba(255, 68, 68, 0.1)', color: '#FF4444', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.875rem' }}>
-                    {error}
-                </div>
+    return (
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <button type="button" onClick={handleClose} className={styles.iconBtn} aria-label="Cancel">
+                    <X size={24} />
+                </button>
+                <button 
+                    type="button" 
+                    className={styles.postBtn}
+                    disabled={!canPost}
+                    onClick={handleSubmit}
+                >
+                    List Item
+                </button>
+            </div>
+
+            {status === 'error' && (
+                <div className={styles.errorBanner}>{errorMsg}</div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Product Title</label>
-                    <input
-                        type="text"
-                        required
-                        maxLength={100}
-                        placeholder="e.g. Vintage Denim Jacket"
-                        value={form.title}
-                        onChange={(e) => setForm({ ...form, title: e.target.value })}
-                        style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none' }}
-                        disabled={loading}
-                    />
-                </div>
-
-                <div style={{ display: 'flex', gap: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Price (₦)</label>
-                        <input
-                            type="number"
-                            required
-                            min="0"
-                            placeholder="0.00"
-                            value={form.price}
-                            onChange={(e) => setForm({ ...form, price: e.target.value })}
-                            style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none' }}
-                            disabled={loading}
-                        />
+            <div className={styles.body}>
+                <div className={styles.authorRow}>
+                    <div className={styles.avatar}>
+                        <div className={styles.avatarFallback}>{storeSlug.charAt(0).toUpperCase()}</div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Category</label>
-                        <select
-                            value={form.category}
-                            onChange={(e) => setForm({ ...form, category: e.target.value })}
-                            style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none', appearance: 'none' }}
-                            disabled={loading}
-                        >
-                            {CATEGORIES.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
+                    <div className={styles.authorInfo}>
+                        <span className={styles.authorName}>{storeSlug}</span>
+                        <span className={styles.postVisibility}>Added to your store catalog</span>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Product Image (Optional)</label>
-                    {form.imageUrl ? (
-                        <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--card-border)' }}>
-                            <Image src={form.imageUrl} alt="Product preview" fill style={{ objectFit: 'cover' }} />
-                            <button
-                                type="button"
-                                onClick={() => setForm({ ...form, imageUrl: '' })}
-                                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    ) : (
+                <input 
+                    type="text"
+                    name="title"
+                    className={styles.titleInput}
+                    placeholder="What are you selling?"
+                    value={form.title}
+                    onChange={handleChange}
+                    autoFocus
+                />
+
+                <textarea 
+                    ref={textareaRef}
+                    name="description"
+                    className={styles.composer}
+                    placeholder="Add a description... (optional)"
+                    value={form.description}
+                    onChange={handleChange}
+                />
+
+                <div className={styles.mediaSection}>
+                    {!form.imageUrl && (
                         <CloudinaryUploader 
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, imageUrl: res.secure_url })} 
                             accept="image/*"
                             maxSizeMB={10} 
-                            buttonText="Upload Photo" 
+                            buttonText="Add Photo" 
                         />
                     )}
-                </div>
-
-                {/* Product Video */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        Product Demo Video <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(Optional · max 60s)</span>
-                    </label>
-                    {form.videoUrl ? (
-                        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: '#000', border: '1px solid var(--card-border)' }}>
-                            <video src={form.videoUrl} controls style={{ width: '100%', display: 'block', maxHeight: '220px' }} playsInline />
+                    {form.imageUrl && (
+                        <div className={styles.mediaPreview}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={form.imageUrl} alt="Preview" />
                             <button
                                 type="button"
-                                onClick={() => setForm({ ...form, videoUrl: '' })}
-                                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '1rem' }}
+                                className={styles.removeBtn}
+                                onClick={() => setForm({ ...form, imageUrl: '' })}
                             >
                                 ✕
                             </button>
                         </div>
-                    ) : (
+                    )}
+
+                    {!form.videoUrl && (
                         <CloudinaryUploader
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, videoUrl: res.secure_url })}
                             accept="video/*"
                             maxSizeMB={100}
                             maxDurationSeconds={60}
-                            buttonText="Upload Demo Video"
+                            buttonText="Add Video (Optional)"
                         />
                     )}
+                    {form.videoUrl && (
+                        <div className={styles.mediaPreview}>
+                            <video src={form.videoUrl} controls playsInline />
+                            <button
+                                type="button"
+                                className={styles.removeBtn}
+                                onClick={() => setForm({ ...form, videoUrl: '' })}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
                 </div>
+            </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Description (Optional)</label>
-                    <textarea
-                        rows={4}
-                        maxLength={1000}
-                        placeholder="Tell buyers about this item..."
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                        style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none', resize: 'vertical' }}
-                        disabled={loading}
+            {/* Inline expandable inputs based on active pill */}
+            {activeInput === 'price' && (
+                <div className={styles.inlineInputRow}>
+                    <select 
+                        name="currency" 
+                        value={form.currency} 
+                        onChange={handleChange} 
+                        className={styles.currencySelect}
+                    >
+                        {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <input 
+                        type="text" 
+                        name="price"
+                        inputMode="numeric"
+                        placeholder="Price amount"
+                        value={form.displayPrice}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        autoFocus
                     />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
                 </div>
+            )}
 
-                <button
-                    type="submit"
-                    disabled={loading || !form.title || !form.price}
-                    style={{
-                        marginTop: '12px',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        background: (loading || !form.title || !form.price) ? 'var(--card-border)' : 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
-                        color: (loading || !form.title || !form.price) ? 'var(--text-muted)' : '#fff',
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        border: 'none',
-                        cursor: (loading || !form.title || !form.price) ? 'not-allowed' : 'pointer',
-                        boxShadow: (loading || !form.title || !form.price) ? 'none' : '0 4px 12px var(--primary-glow)',
-                        transition: 'all var(--transition-fast)'
-                    }}
-                >
-                    {loading ? 'Listing Product...' : 'List Product'}
-                </button>
-            </form>
+            {activeInput === 'category' && (
+                <div className={styles.inlineInputRow}>
+                    <select 
+                        name="category" 
+                        value={form.category} 
+                        onChange={handleChange} 
+                        className={styles.categorySelect}
+                        autoFocus
+                    >
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                </div>
+            )}
+
+            {/* Bottom action bar */}
+            <div className={styles.actionBar}>
+                <div className={styles.pillsScroll}>
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${form.price ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'price' ? null : 'price')}
+                    >
+                        <Tag size={16} className={styles.pillIcon} />
+                        {form.price ? `${form.currency}${form.displayPrice}` : 'Price'}
+                    </button>
+                    
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${form.category !== 'OTHER' ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'category' ? null : 'category')}
+                    >
+                        <FolderOpen size={16} className={styles.pillIcon} />
+                        {form.category === 'OTHER' ? 'Category' : form.category}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

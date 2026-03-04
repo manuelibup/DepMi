@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
 import { Category } from "@prisma/client";
+import { generateProductSlug } from "@/lib/slugify";
 
 // Zod schema for individual products
 const ProductRowSchema = z.object({
@@ -93,10 +94,15 @@ export async function POST(req: Request) {
         // Atomic Database Insert via Transaction
         await prisma.$transaction(async (tx) => {
             for (const item of sanitizedData) {
+                const slug = await generateProductSlug(item.title!, store.name, (s) =>
+                    tx.product.findUnique({ where: { slug: s }, select: { id: true } })
+                );
+
                 const product = await tx.product.create({
                     data: {
                         storeId: store.id,
                         title: item.title,
+                        slug,
                         description: item.description,
                         price: item.price,
                         category: item.category,

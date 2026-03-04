@@ -10,8 +10,9 @@ import styles from './Requests.module.css';
 // Tells Next.js to always render dynamically so feed is fresh
 export const dynamic = 'force-dynamic';
 
-export default async function RequestsPage({ searchParams }: { searchParams: { q?: string } }) {
-    const q = searchParams.q || '';
+export default async function RequestsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+    const sp = await searchParams;
+    const q = sp.q || '';
 
     // Advanced search: simple insensitive match on text or location
     const demands = await prisma.demand.findMany({

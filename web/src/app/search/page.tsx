@@ -12,9 +12,10 @@ import EmptyState from '@/components/EmptyState';
 
 const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
 
-export default async function SearchPage({ searchParams }: { searchParams: { q?: string, category?: string } }) {
-    const q = searchParams.q || '';
-    const cat = searchParams.category;
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string, category?: string }> }) {
+    const sp = await searchParams;
+    const q = sp.q || '';
+    const cat = sp.category;
 
     // Top 5 stores by Dep Count
     const topStores = await prisma.store.findMany({

@@ -24,20 +24,20 @@ export default async function OrdersPage() {
         where: { buyerId: session.user.id },
         orderBy: { createdAt: 'desc' },
         include: {
-            product: {
-                select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } }
+            items: {
+                include: { product: { select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
-            store: { select: { name: true } }
+            seller: { select: { name: true } }
         }
     });
 
     // Fetch real seller orders (orders for this store)
     const sales = store ? await prisma.order.findMany({
-        where: { storeId: store.id },
+        where: { sellerId: store.id },
         orderBy: { createdAt: 'desc' },
         include: {
-            product: {
-                select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } }
+            items: {
+                include: { product: { select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             buyer: { select: { displayName: true, username: true } }
         }
@@ -47,7 +47,9 @@ export default async function OrdersPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serialise = (arr: any[]) => arr.map(o => ({
         ...o,
-        total: Number(o.total),
+        total: Number(o.totalAmount),
+        product: o.items?.[0]?.product || { title: 'Unknown', images: [] },
+        store: o.seller,
         createdAt: o.createdAt.toISOString(),
         updatedAt: o.updatedAt.toISOString(),
     }));

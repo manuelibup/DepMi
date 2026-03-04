@@ -8,14 +8,15 @@ import Link from 'next/link';
 import ClientCheckoutForm from './ClientCheckoutForm';
 import styles from './page.module.css';
 
-export default async function CheckoutPage({ params }: { params: { id: string } }) {
+export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        redirect('/login?callbackUrl=/checkout/' + params.id);
+        redirect('/login?callbackUrl=/checkout/' + id);
     }
 
     const product = await prisma.product.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             images: true,
             store: { select: { name: true } }

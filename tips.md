@@ -164,3 +164,24 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   ```
 - **Alternative**: Task Manager → Details tab → find `node.exe` → End Task.
 - **Prevention**: Always stop the dev server with `Ctrl+C` **before** closing the terminal window.
+
+---
+
+## 🎨 13. Mobile Safari/Chrome Dropdown Visibility In Dark Mode
+
+*This tip was added after the `<select>` category dropdown options appeared invisible (white text on white background) on mobile devices despite the app being in dark mode.*
+
+- **The Issue**: Styling a `<select>` tag with `background: transparent` causes the dropdown options menu (`<option>`) to use the device's default system theme (usually light mode), clashing with your app's explicit dark theme text colors. 
+- **The Fix**: Explicitly bind the background of both the `<select>` and the `<option>` elements to your strict dark-mode CSS variables (e.g., `var(--bg-color)`). Never rely on `transparent` inside a form select unless you also explicitly reset the `<option>` background!
+
+---
+
+## 🔢 14. Decoupling Formatted Strings from Raw API Numbers
+
+*This tip was added after throwing a 500 Internal Server error because the Prisma `Decimal` schema received a comma-formatted string (e.g., "10,000,000") instead of a raw integer constraint.*
+
+- **The Issue**: Users expect to see numbers with commas as they type high-ticket values. However, if you attach that formatted comma-string directly to your form state, Prisma validation (zod `coerce.number()` or `db.Decimal`) will return `NaN` and crash the server on submit.
+- **The Fix**: Always decouple the UI state from the API state for currency inputs.
+  - Keep a raw numeric string (e.g., `"1000000"`) for the actual API payload `budget` or `price`.
+  - Maintain a parallel `displayBudget` format (e.g. `1,000,000`) solely for the `value={}` prop in the `<input type="text" inputMode="numeric">`.
+  - Strip the commas `value.replace(/\D/g, '')` in the `onChange` handler before saving to the raw state!
