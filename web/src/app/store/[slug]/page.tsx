@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import styles from './page.module.css';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getServerSession } from 'next-auth';
+import StoreBackButton from './StoreBackButton';
 import { authOptions } from '@/lib/auth';
 import EmptyState from '@/components/EmptyState';
 
@@ -54,19 +56,15 @@ export default async function StorefrontPage({ params }: StorePageProps) {
         <main className={styles.container}>
             <header className={styles.cover}>
                 {store.bannerUrl && (
-                    <img src={store.bannerUrl} alt={`${store.name} banner`} className={styles.bannerImage} />
+                    <Image src={store.bannerUrl} alt={store.name} fill style={{ objectFit: "cover" }} sizes="100vw" className={styles.bannerImage} />
                 )}
-                <Link href="/" className={styles.backLink} style={{ position: 'absolute', top: 16, left: 16, color: '#fff', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '50%', display: 'flex' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6" />
-                    </svg>
-                </Link>
+                <StoreBackButton />
             </header>
 
             <section className={styles.profileContent}>
                 <div className={styles.logo}>
                     {store.logoUrl ? (
-                        <img src={store.logoUrl} alt={store.name} className={styles.logoImage} />
+                        <Image src={store.logoUrl} alt={store.name} fill style={{ objectFit: 'cover' }} sizes="80px" />
                     ) : (
                         store.name.charAt(0).toUpperCase()
                     )}
@@ -148,7 +146,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                             <Link href={`/p/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', overflow: 'hidden', textDecoration: 'none', border: '1px solid var(--card-border)' }}>
                                 <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--bg-elevated)', position: 'relative' }}>
                                     {product.images && product.images.length > 0 ? (
-                                        <img src={product.images[0].url} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <Image src={product.images[0].url} alt={product.title} fill style={{ objectFit: 'cover' }} sizes="(max-width: 480px) 50vw, 33vw" />
                                     ) : (
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: 'var(--text-muted)' }}>
                                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
