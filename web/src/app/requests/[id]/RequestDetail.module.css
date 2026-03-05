@@ -510,6 +510,21 @@
     background: rgba(0, 200, 83, 0.18);
 }
 
+/* Inline user mention */
+.userMention {
+    display: inline-flex;
+    align-items: center;
+    color: #0984E3;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.userMention:hover {
+    color: #4834D4;
+    text-decoration: underline;
+}
+
 /* Comment form */
 .commentForm {
     display: flex;
@@ -686,6 +701,51 @@
 }
 
 .pickerMeta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* User picker specific styles */
+.userPickerItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background var(--transition-fast);
+}
+
+.userPickerItem:hover {
+    background: rgba(9, 132, 227, 0.08); /* Blue highlight for users */
+}
+
+.userPickerAvatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.userPickerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.userPickerName {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.userPickerHandle {
     font-size: 0.75rem;
     color: var(--text-muted);
 }

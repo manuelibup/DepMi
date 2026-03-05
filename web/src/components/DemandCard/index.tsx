@@ -178,13 +178,8 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                 >
                     <div className={styles.shareSheet} onClick={e => e.stopPropagation()}>
                         <div className={styles.sheetHandle} />
-                        <p className={styles.sheetTitle}>Share request</p>
-
-                        {/* Draft message preview */}
-                        <div className={styles.draftBox}>
-                            <p className={styles.draftText}>{draftMessage}</p>
-                            <p className={styles.draftUrl}>{postUrl}</p>
-                        </div>
+                        <p className={styles.sheetTitle}>Share this request?</p>
+                        <p className={styles.sheetSubtitle}>Let your network know someone is looking for this.</p>
 
                         {/* Platform buttons */}
                         <div className={styles.sheetOptions}>

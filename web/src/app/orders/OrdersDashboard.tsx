@@ -155,8 +155,29 @@ function OrderCard({ order, role, onStatusChange }: {
                 {/* Seller action — ship */}
                 {role === 'seller' && localStatus === 'CONFIRMED' && (
                     <div className={styles.orderAction}>
-                        <button className={`${styles.actionBtn} ${styles.primary}`}>
-                            Add Tracking &amp; Ship
+                        <button
+                            className={`${styles.actionBtn} ${styles.primary}`}
+                            onClick={async () => {
+                                if (!confirm('Confirm that you have shipped this order?')) return;
+                                setLoading(true);
+                                try {
+                                    const res = await fetch(`/api/orders/${order.id}/ship`, { method: 'POST' });
+                                    const data = await res.json();
+                                    if (res.ok) {
+                                        setLocalStatus('SHIPPED');
+                                        onStatusChange(order.id, 'SHIPPED');
+                                    } else {
+                                        alert(data.message ?? 'Failed to mark as shipped.');
+                                    }
+                                } catch {
+                                    alert('Network error. Please try again.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            disabled={loading}
+                        >
+                            {loading ? 'Processing…' : 'Mark as Shipped'}
                         </button>
                     </div>
                 )}

@@ -70,6 +70,31 @@ export async function POST(
         }).catch(() => {}); // fire-and-forget
     }
 
+    // Extract @mentions and notify users
+    const mentions = Array.from(new Set(text.match(/@([a-zA-Z0-9_]+)/g)?.map(m => m.substring(1)) || []));
+    if (mentions.length > 0) {
+        const mentionedUsers = await prisma.user.findMany({
+            where: { username: { in: mentions } },
+            select: { id: true }
+        });
+
+        const notifyData = mentionedUsers
+            .filter(u => u.id !== session.user.id && u.id !== storeOwnerId) // Store owner already notified above
+            .map(u => ({
+                userId: u.id,
+                type: NotificationType.MENTION,
+                title: `${comment.author.displayName} mentioned you`,
+                body: `${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
+                link: `/p/${productId}`,
+            }));
+
+        if (notifyData.length > 0) {
+            await prisma.notification.createMany({
+                data: notifyData
+            }).catch(() => {});
+        }
+    }
+
     return NextResponse.json({
         id: comment.id,
         text: comment.text,

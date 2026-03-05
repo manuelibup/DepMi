@@ -21,25 +21,39 @@ interface ProductResult {
 }
 
 // Renders comment text and turns [Title](/p/id) into styled product link chips
+// AND turns @username into stylized mention link
 function CommentText({ text }: { text: string }) {
-    const linkRegex = /\[([^\]]+)\]\(\/p\/([^)]+)\)/g;
+    const combinedRegex = /(\[([^\]]+)\]\(\/p\/([^)]+)\))|(@[a-zA-Z0-9_]+)/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
-    while ((match = linkRegex.exec(text)) !== null) {
+    while ((match = combinedRegex.exec(text)) !== null) {
         if (match.index > lastIndex) {
             parts.push(text.slice(lastIndex, match.index));
         }
-        parts.push(
-            <Link key={match.index} href={`/p/${match[2]}`} className={styles.productMention}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="m3 9 18-6" />
-                </svg>
-                {match[1]}
-            </Link>
-        );
+
+        if (match[1]) {
+            // Product match
+            parts.push(
+                <Link key={match.index} href={`/p/${match[3]}`} className={styles.productMention}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="m3 9 18-6" />
+                    </svg>
+                    {match[2]}
+                </Link>
+            );
+        } else if (match[4]) {
+            // User match
+            const username = match[4].substring(1);
+            parts.push(
+                <Link key={match.index} href={`/u/${username}`} className={styles.userMention}>
+                    {match[4]}
+                </Link>
+            );
+        }
+        
         lastIndex = match.index + match[0].length;
     }
     if (lastIndex < text.length) parts.push(text.slice(lastIndex));
@@ -82,6 +96,14 @@ export default function CommentSection({
     const [searchResults, setSearchResults] = useState<ProductResult[]>([]);
     const [searching, setSearching] = useState(false);
     const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // User mention state
+    const [userPickerOpen, setUserPickerOpen] = useState(false);
+    const [userSearchQ, setUserSearchQ] = useState('');
+    const [userResults, setUserResults] = useState<any[]>([]);
+    const [searchingUsers, setSearchingUsers] = useState(false);
+    const userSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const searchProducts = useCallback((q: string) => {
@@ -113,6 +135,58 @@ export default function CommentSection({
         setPickerOpen(false);
         setSearchQ('');
         setSearchResults([]);
+    };
+
+    const checkMentionTrigger = (val: string, cursorPosition: number) => {
+        const textBeforeCursor = val.slice(0, cursorPosition);
+        const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+        
+        if (match) {
+            const q = match[1];
+            setUserPickerOpen(true);
+            setUserSearchQ(q);
+            if (q.length >= 2) {
+                if (userSearchTimeout.current) clearTimeout(userSearchTimeout.current);
+                setSearchingUsers(true);
+                userSearchTimeout.current = setTimeout(async () => {
+                    const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    setUserResults(data);
+                    setSearchingUsers(false);
+                }, 300);
+            } else {
+                setUserResults([]);
+            }
+        } else {
+            setUserPickerOpen(false);
+        }
+    };
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setText(val);
+        checkMentionTrigger(val, e.target.selectionStart || val.length);
+    };
+
+    const insertUserMention = (username: string) => {
+        const ta = textareaRef.current;
+        if (ta) {
+            const cursorPosition = ta.selectionStart || text.length;
+            const textBeforeCursor = text.slice(0, cursorPosition);
+            const textAfterCursor = text.slice(cursorPosition);
+            
+            const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+            if (match) {
+                const newTextBefore = textBeforeCursor.slice(0, match.index) + `@${username} `;
+                setText(newTextBefore + textAfterCursor);
+                setTimeout(() => {
+                    ta.focus();
+                    ta.setSelectionRange(newTextBefore.length, newTextBefore.length);
+                }, 0);
+            }
+        }
+        setUserPickerOpen(false);
+        setUserResults([]);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -202,7 +276,7 @@ export default function CommentSection({
                         <textarea
                             ref={textareaRef}
                             value={text}
-                            onChange={e => setText(e.target.value)}
+                            onChange={handleTextChange}
                             onFocus={() => { if (status === 'unauthenticated') openGate(); }}
                             placeholder="Add a comment..."
                             rows={2}
@@ -262,6 +336,38 @@ export default function CommentSection({
                                 >
                                     <span className={styles.pickerTitle}>{p.title}</span>
                                     <span className={styles.pickerMeta}>{p.storeName} · ₦{p.price.toLocaleString()}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* User mention picker */}
+                {userPickerOpen && userSearchQ.length >= 2 && (
+                    <div className={styles.productPicker}>
+                        {searchingUsers && <p className={styles.pickerStatus}>Searching users…</p>}
+                        {!searchingUsers && userResults.length === 0 && (
+                            <p className={styles.pickerStatus}>No matches found</p>
+                        )}
+                        <div className={styles.pickerResults}>
+                            {userResults.map(u => (
+                                <button
+                                    key={u.id}
+                                    type="button"
+                                    className={styles.userPickerItem}
+                                    onClick={() => insertUserMention(u.username)}
+                                >
+                                    {u.avatarUrl ? (
+                                        <img src={u.avatarUrl} alt="" className={styles.userPickerAvatar} />
+                                    ) : (
+                                        <div className={styles.userPickerAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '10px', fontWeight: 'bold' }}>
+                                            {u.displayName.substring(0, 2).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className={styles.userPickerInfo}>
+                                        <span className={styles.userPickerName}>{u.displayName}</span>
+                                        <span className={styles.userPickerHandle}>@{u.username} {u.type === 'store' ? '(Store)' : ''}</span>
+                                    </div>
                                 </button>
                             ))}
                         </div>
