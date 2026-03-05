@@ -7,14 +7,14 @@ import { Category } from '@prisma/client';
 import { generateProductSlug } from '@/lib/slugify';
 
 const productSchema = z.object({
-    storeId: z.string().min(1, 'Store ID is required'),
-    title: z.string().min(3, 'Title must be at least 3 characters').max(100),
-    description: z.string().max(1000).optional().nullable(),
-    price: z.coerce.number().min(0, 'Price must be zero or positive'),
-    category: z.nativeEnum(Category).default(Category.OTHER),
-    inStock: z.boolean().default(true),
-    images: z.array(z.string().url()).max(5).optional(), // Max 5 images per product
-    videoUrl: z.string().url().optional().nullable(),    // Optional demo video
+    storeId: z.string().min(1, "Store ID is required"),
+    title: z.string().min(3, "Title must be at least 3 characters").max(100),
+    description: z.string().optional(),
+    price: z.number().min(1, "Price must be at least 1"),
+    currency: z.string().default("₦"),
+    category: z.nativeEnum(Category),
+    images: z.array(z.string().url()).max(5, "Maximum 5 images allowed"),
+    videoUrl: z.string().url().nullable().optional(),
 });
 
 export async function POST(req: Request) {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { storeId, title, description, price, category, inStock, images, videoUrl } = parsed.data;
+        const { storeId, title, description, price, currency, category, images, videoUrl } = parsed.data;
 
         // Verify ownership
         const store = await prisma.store.findUnique({
@@ -62,10 +62,11 @@ export async function POST(req: Request) {
                 storeId,
                 title,
                 slug,
-                description: description || null,
+                description,
                 price,
+                currency,
                 category,
-                inStock,
+                // inStock was removed from schema, so it's not passed here
                 videoUrl: videoUrl || null,
                 images: images && images.length > 0 ? {
                     create: images.map((url, index) => ({
@@ -79,7 +80,30 @@ export async function POST(req: Request) {
             }
         });
 
-        return NextResponse.json({ message: 'Product successfully listed.', product }, { status: 201 });
+        // Fetch active followers who want notifications
+        const followers = await prisma.storeFollow.findMany({
+            where: {
+                storeId,
+                notify: true
+            },
+            select: { userId: true }
+        });
+
+        // Broadcast notifications generically
+        if (followers.length > 0) {
+            await prisma.notification.createMany({
+                data: followers.map(f => ({
+                    userId: f.userId,
+                    type: 'NEW_PRODUCT_FROM_STORE',
+                    title: `New drop from ${store.name}`,
+                    body: `${title} is now available for ${currency}${price.toLocaleString()}`,
+                    link: `/p/${slug}`,
+                    isRead: false
+                }))
+            });
+        }
+
+        return NextResponse.json({ message: 'Product successfully created', product }, { status: 201 });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

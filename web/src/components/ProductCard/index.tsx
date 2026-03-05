@@ -19,6 +19,8 @@ export interface ProductData {
     image: string;
     viewers?: number;
     id?: string;
+    isLiked?: boolean;
+    isSaved?: boolean;
 }
 
 interface ProductCardProps {
@@ -42,34 +44,44 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     const { status } = useSession();
     const router = useRouter();
 
-    const likeKey = `liked_${data.id}`;
-    const saveKey = `saved_${data.id}`;
-    const [liked, setLiked] = useState(false);
-    const [saved, setSaved] = useState(false);
+    const [liked, setLiked] = useState<boolean>(data.isLiked || false);
+    const [saved, setSaved] = useState<boolean>(data.isSaved || false);
 
     useEffect(() => {
-        if (data.id) {
-            setLiked(localStorage.getItem(likeKey) === '1');
-            setSaved(localStorage.getItem(saveKey) === '1');
-        }
-    }, [data.id, likeKey, saveKey]);
+        setLiked(data.isLiked || false);
+        setSaved(data.isSaved || false);
+    }, [data.isLiked, data.isSaved]);
 
-    const handleLike = (e: React.MouseEvent) => {
+    const handleLike = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (status === 'unauthenticated') { openGate(); return; }
         const next = !liked;
         setLiked(next);
-        if (data.id) localStorage.setItem(likeKey, next ? '1' : '0');
+        if (data.id) {
+            try {
+                const res = await fetch(`/api/products/${data.id}/like`, { method: 'POST' });
+                if (!res.ok) throw new Error();
+            } catch (err) {
+                setLiked(!next);
+            }
+        }
     };
 
-    const handleSave = (e: React.MouseEvent) => {
+    const handleSave = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (status === 'unauthenticated') { openGate(); return; }
         const next = !saved;
         setSaved(next);
-        if (data.id) localStorage.setItem(saveKey, next ? '1' : '0');
+        if (data.id) {
+            try {
+                const res = await fetch(`/api/products/${data.id}/save`, { method: 'POST' });
+                if (!res.ok) throw new Error();
+            } catch (err) {
+                setSaved(!next);
+            }
+        }
     };
 
     const handleShare = (e: React.MouseEvent) => {

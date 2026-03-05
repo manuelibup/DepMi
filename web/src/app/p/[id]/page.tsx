@@ -7,9 +7,23 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import ProductVideoPlayer from './ProductVideoPlayer';
 import ProductImageGallery from './ProductImageGallery';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import CommentSection from '@/app/requests/[id]/CommentSection';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    // Fetch KYC tier for comment gate
+    let userKycTier: string = 'UNVERIFIED';
+    if (userId) {
+        const u = await prisma.user.findUnique({ where: { id: userId }, select: { kycTier: true } });
+        userKycTier = u?.kycTier ?? 'UNVERIFIED';
+    }
+
     // Accept both UUID (old links) and slug (new links)
     const product = await prisma.product.findFirst({
         where: { OR: [{ slug: id }, { id }] },
@@ -24,6 +38,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     depCount: true,
                     depTier: true,
                 }
+            },
+            comments: {
+                include: { author: { select: { displayName: true, username: true } } },
+                orderBy: { createdAt: 'asc' }
             }
         }
     });
@@ -32,6 +50,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     // Increment view count (fire-and-forget) — use product.id, not the URL param
     prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
+
+    const serializedComments = product.comments.map(c => ({
+        id: c.id,
+        text: c.text,
+        author: c.author,
+        createdAt: c.createdAt.toISOString(),
+    }));
 
     const hasVideo = !!product.videoUrl;
 
@@ -182,6 +207,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 </div>
 
             </div>
+
+            {/* Divider */}
+            <div style={{ height: 8, background: 'var(--bg-hover)', width: '100%' }} />
+
+            {/* Comments */}
+            <CommentSection
+                apiPath={`/api/products/${product.id}/comments`}
+                initialComments={serializedComments}
+                canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
+                isLoggedIn={!!userId}
+            />
 
             <BottomNav />
         </main>

@@ -40,7 +40,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     take: 20,
     include: {
       store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true } },
-      images: true
+      images: true,
+      ...(session?.user?.id ? {
+        likes: { where: { userId: session.user.id }, select: { id: true } },
+        saves: { where: { userId: session.user.id }, select: { id: true } }
+      } : {})
     }
   });
 
@@ -51,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
-      user: { select: { displayName: true, username: true } },
+      user: { select: { displayName: true, username: true, avatarUrl: true } },
       _count: { select: { bids: true } }
     }
   });
@@ -95,8 +99,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
               const demand = item.data as any;
               const dData = {
                 id: demand.id,
+                username: demand.user.username ?? undefined,
                 user: demand.user.displayName,
                 initials: demand.user.displayName.substring(0, 2).toUpperCase(),
+                avatarUrl: demand.user.avatarUrl ?? null,
                 timeAgo: new Date(demand.createdAt).toLocaleDateString(),
                 text: demand.text || '',
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
@@ -122,6 +128,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 image: product.images && product.images.length > 0 ? product.images[0].url : '',
                 viewers: product.viewCount,
                 id: product.id,
+                ...(session?.user?.id ? {
+                  isLiked: product.likes && product.likes.length > 0,
+                  isSaved: product.saves && product.saves.length > 0
+                } : {})
               };
               cardContent = (
                 <div key={`p-${product.id}`} style={{ display: 'block' }}>

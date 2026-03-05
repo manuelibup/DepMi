@@ -140,6 +140,7 @@ export const authOptions: NextAuthOptions = {
             if (token && session.user) {
                 session.user.id = token.id as string;
                 session.user.username = token.username as string | undefined;
+                session.user.image = (token.picture as string | null) ?? null;
             }
             return session;
         },
@@ -148,20 +149,18 @@ export const authOptions: NextAuthOptions = {
             // Credentials sign-in: user.id is the DB id returned by authorize()
             if (user) {
                 token.id = user.id;
-                // For credentials, username might already be in the user object
-                // but let's ensure it's fetched or passed.
-                // Actually, authorize() returns what we define.
             }
 
-            // Always fetch the latest from DB to be sure (username, id, etc.)
+            // Always fetch the latest from DB (username, id, avatarUrl)
             if (token.email) {
                 const dbUser = await prisma.user.findUnique({
                     where: { email: token.email },
-                    select: { id: true, username: true },
+                    select: { id: true, username: true, avatarUrl: true },
                 });
                 if (dbUser) {
                     token.id = dbUser.id;
                     token.username = dbUser.username;
+                    token.picture = dbUser.avatarUrl ?? null;
                 }
             }
             return token;

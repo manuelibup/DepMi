@@ -64,9 +64,35 @@ export async function POST(req: Request) {
             })
         ]);
 
-        // Note: Future Phase 3 work will instantiate an Order here natively
+        // Create an Order so the buyer can proceed to checkout
+        // Buyer goes to /checkout/[productId]?bidId=xxx or we link directly to the order
+        let order = null;
+        if (bid.productId) {
+            const product = await prisma.product.findUnique({
+                where: { id: bid.productId },
+                select: { price: true, storeId: true }
+            });
+            if (product) {
+                order = await prisma.order.create({
+                    data: {
+                        buyerId: session.user.id,
+                        sellerId: bid.storeId,
+                        totalAmount: bid.amount, // Bid amount is the agreed price
+                        status: 'PENDING',
+                        escrowStatus: 'HELD',
+                        paymentRail: 'NAIRA',
+                        demandId,
+                        bidId,
+                    }
+                });
+            }
+        }
 
-        return NextResponse.json({ message: 'Bid successfully accepted', demand: updatedDemand }, { status: 200 });
+        return NextResponse.json({
+            message: 'Bid successfully accepted',
+            demand: updatedDemand,
+            orderId: order?.id ?? null,
+        }, { status: 200 });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

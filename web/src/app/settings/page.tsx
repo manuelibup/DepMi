@@ -16,6 +16,8 @@ export default function SettingsPage() {
     const [displayName, setDisplayName] = useState('');
     const [username, setUsername] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
+    const [coverUrl, setCoverUrl] = useState('');
+    const [bio, setBio] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
     const [city, setCity] = useState('');
@@ -45,6 +47,8 @@ export default function SettingsPage() {
             .then(r => r.json())
             .then(data => {
                 if (data.user) {
+                    setCoverUrl(data.user.coverUrl ?? '');
+                    setBio(data.user.bio ?? '');
                     setPhoneNumber(data.user.phoneNumber ?? '');
                     setAddress(data.user.address ?? '');
                     setCity(data.user.city ?? '');
@@ -72,6 +76,8 @@ export default function SettingsPage() {
                     displayName: displayName.trim() || undefined,
                     username: username.trim() || undefined,
                     avatarUrl: avatarUrl || null,
+                    coverUrl: coverUrl || null,
+                    bio: bio.trim() || null,
                     phoneNumber: phoneNumber.trim() || null,
                     address: address.trim() || null,
                     city: city.trim() || null,
@@ -145,9 +151,35 @@ export default function SettingsPage() {
                     <div style={sectionStyle}>
                         <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Profile</p>
 
+                        {/* Cover Photo */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={labelStyle}>Cover Photo</label>
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: '3/1', borderRadius: '12px', overflow: 'hidden', background: 'var(--bg-elevated)', border: '1px solid var(--card-border)' }}>
+                                {coverUrl ? (
+                                    <Image src={coverUrl} alt="Cover" fill style={{ objectFit: 'cover' }} sizes="440px" />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'rgba(0,0,0,0.5)', fontWeight: 600 }}>No cover photo</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <CloudinaryUploader
+                                    onUploadSuccess={(res: CloudinaryUploadResult) => setCoverUrl(res.secure_url)}
+                                    accept="image/*"
+                                    maxSizeMB={10}
+                                    buttonText="Upload Cover"
+                                />
+                                {coverUrl && (
+                                    <button type="button" onClick={() => setCoverUrl('')} style={{ padding: '8px 14px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Avatar */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            {/* Avatar circle with camera overlay */}
                             <div style={{ position: 'relative', flexShrink: 0 }}>
                                 <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-elevated)', border: '2px solid var(--card-border)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {avatarUrl ? (
@@ -159,8 +191,6 @@ export default function SettingsPage() {
                                     )}
                                 </div>
                             </div>
-
-                            {/* Action buttons */}
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <CloudinaryUploader
                                     onUploadSuccess={(res: CloudinaryUploadResult) => setAvatarUrl(res.secure_url)}
@@ -169,11 +199,7 @@ export default function SettingsPage() {
                                     buttonText={avatarUrl ? 'Change Photo' : 'Upload Photo'}
                                 />
                                 {avatarUrl && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setAvatarUrl('')}
-                                        style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}
-                                    >
+                                    <button type="button" onClick={() => setAvatarUrl('')} style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>
                                         Remove
                                     </button>
                                 )}
@@ -210,6 +236,20 @@ export default function SettingsPage() {
                             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
                                 depmi.com/u/{username || 'yourhandle'}
                             </p>
+                        </div>
+
+                        {/* Bio */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <label style={labelStyle}>Bio</label>
+                            <textarea
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                maxLength={160}
+                                rows={2}
+                                placeholder="Tell people a bit about yourself..."
+                                style={{ ...inputStyle, resize: 'none', lineHeight: '1.5', fontFamily: 'inherit' }}
+                            />
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0, textAlign: 'right' }}>{bio.length}/160</p>
                         </div>
                     </div>
 

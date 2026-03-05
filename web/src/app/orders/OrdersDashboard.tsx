@@ -27,7 +27,7 @@ interface Props {
 function statusLabel(status: string): string {
     const map: Record<string, string> = {
         PENDING: 'Pending',
-        CONFIRMED: 'Confirmed',
+        CONFIRMED: 'Paid — Awaiting Shipment',
         SHIPPED: 'Shipped',
         DELIVERED: 'Delivered',
         COMPLETED: 'Completed',
@@ -41,58 +41,162 @@ function statusLabel(status: string): string {
 }
 
 function statusClass(status: string): string {
-    if (['PENDING', 'CONFIRMED'].includes(status)) return styles.status_ESCROW_HELD;
+    if (status === 'PENDING') return styles.status_ESCROW_HELD;
+    if (status === 'CONFIRMED') return styles.status_SHIPPED;
     if (status === 'SHIPPED') return styles.status_SHIPPED;
     if (['DELIVERED', 'COMPLETED'].includes(status)) return styles.status_COMPLETED;
+    if (status === 'DISPUTED') return styles.status_DISPUTED;
     return styles.status_ESCROW_HELD;
 }
 
-function OrderCard({ order, role }: { order: OrderItem; role: 'buyer' | 'seller' }) {
+function OrderCard({ order, role, onStatusChange }: {
+    order: OrderItem;
+    role: 'buyer' | 'seller';
+    onStatusChange: (orderId: string, newStatus: string) => void;
+}) {
     const image = order.product.images[0]?.url;
     const shortId = order.id.slice(-6).toUpperCase();
+    const [loading, setLoading] = useState(false);
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+    const [disputeReason, setDisputeReason] = useState('');
+    const [localStatus, setLocalStatus] = useState(order.status);
+
+    const handleConfirmDelivery = async () => {
+        if (!confirm('Confirm that you received this order? This will release payment to the seller.')) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/orders/${order.id}/confirm`, { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setLocalStatus('COMPLETED');
+                onStatusChange(order.id, 'COMPLETED');
+            } else {
+                alert(data.error ?? 'Failed to confirm delivery. Please try again.');
+            }
+        } catch {
+            alert('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDispute = async () => {
+        if (!disputeReason.trim()) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/orders/${order.id}/dispute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: disputeReason }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setLocalStatus('DISPUTED');
+                onStatusChange(order.id, 'DISPUTED');
+                setShowDisputeModal(false);
+            } else {
+                alert(data.error ?? 'Failed to open dispute.');
+            }
+        } catch {
+            alert('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className={styles.orderCard}>
-            <div className={styles.orderHeader}>
-                <p className={styles.orderId}>ORDER #{shortId}</p>
-                <span className={`${styles.statusBadge} ${statusClass(order.status)}`}>
-                    {statusLabel(order.status)}
-                </span>
-            </div>
-            <div className={styles.orderItem}>
-                <div className={styles.itemImage}>
-                    {image ? (
-                        <Image src={image} alt={order.product.title} width={64} height={64} style={{ objectFit: 'cover', borderRadius: '12px' }} />
-                    ) : (
-                        <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>📦</span>
-                    )}
+        <>
+            <div className={styles.orderCard}>
+                <div className={styles.orderHeader}>
+                    <p className={styles.orderId}>ORDER #{shortId}</p>
+                    <span className={`${styles.statusBadge} ${statusClass(localStatus)}`}>
+                        {statusLabel(localStatus)}
+                    </span>
                 </div>
-                <div className={styles.itemInfo}>
-                    <h4 className={styles.itemTitle}>{order.product.title}</h4>
-                    <p className={styles.itemMeta}>
-                        {role === 'buyer'
-                            ? `Sold by: ${order.store?.name ?? '—'}`
-                            : `Buyer: @${order.buyer?.username ?? order.buyer?.displayName ?? '—'}`}
-                    </p>
-                    <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
+                <div className={styles.orderItem}>
+                    <div className={styles.itemImage}>
+                        {image ? (
+                            <Image src={image} alt={order.product.title} width={64} height={64} style={{ objectFit: 'cover', borderRadius: '12px' }} />
+                        ) : (
+                            <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>📦</span>
+                        )}
+                    </div>
+                    <div className={styles.itemInfo}>
+                        <h4 className={styles.itemTitle}>{order.product.title}</h4>
+                        <p className={styles.itemMeta}>
+                            {role === 'buyer'
+                                ? `Sold by: ${order.store?.name ?? '—'}`
+                                : `Buyer: @${order.buyer?.username ?? order.buyer?.displayName ?? '—'}`}
+                        </p>
+                        <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
+                    </div>
                 </div>
+
+                {/* Buyer actions */}
+                {role === 'buyer' && localStatus === 'SHIPPED' && (
+                    <div className={styles.orderAction}>
+                        <button
+                            className={`${styles.actionBtn} ${styles.primary}`}
+                            onClick={handleConfirmDelivery}
+                            disabled={loading}
+                        >
+                            {loading ? 'Processing…' : 'Mark as Received'}
+                        </button>
+                        <button
+                            className={`${styles.actionBtn} ${styles.danger}`}
+                            onClick={() => setShowDisputeModal(true)}
+                            disabled={loading}
+                        >
+                            Open Dispute
+                        </button>
+                    </div>
+                )}
+
+                {/* Seller action — ship */}
+                {role === 'seller' && localStatus === 'CONFIRMED' && (
+                    <div className={styles.orderAction}>
+                        <button className={`${styles.actionBtn} ${styles.primary}`}>
+                            Add Tracking &amp; Ship
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {role === 'buyer' && order.status === 'SHIPPED' && (
-                <div className={styles.orderAction}>
-                    <button className={`${styles.actionBtn} ${styles.primary}`}>
-                        Mark as Received
-                    </button>
+            {/* Dispute modal */}
+            {showDisputeModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowDisputeModal(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>Open a Dispute</h3>
+                        <p className={styles.modalDesc}>
+                            Funds will be frozen until our team reviews. Describe the issue clearly.
+                        </p>
+                        <textarea
+                            className={styles.disputeInput}
+                            placeholder="e.g. Item not delivered, wrong item received, item is damaged…"
+                            value={disputeReason}
+                            onChange={(e) => setDisputeReason(e.target.value)}
+                            rows={4}
+                        />
+                        <div className={styles.modalActions}>
+                            <button
+                                className={`${styles.actionBtn} ${styles.ghost}`}
+                                onClick={() => setShowDisputeModal(false)}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={`${styles.actionBtn} ${styles.danger}`}
+                                onClick={handleDispute}
+                                disabled={loading || !disputeReason.trim()}
+                            >
+                                {loading ? 'Submitting…' : 'Submit Dispute'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
-            {role === 'seller' && order.status === 'CONFIRMED' && (
-                <div className={styles.orderAction}>
-                    <button className={`${styles.actionBtn} ${styles.primary}`}>
-                        Add Tracking &amp; Ship
-                    </button>
-                </div>
-            )}
-        </div>
+        </>
     );
 }
 
@@ -100,6 +204,8 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'purchases' | 'sales'>('purchases');
     const [showCelebration, setShowCelebration] = useState(false);
+    const [localPurchases, setLocalPurchases] = useState(purchases);
+    const [localSales, setLocalSales] = useState(sales);
 
     useEffect(() => {
         if (searchParams?.get('success') === 'true') {
@@ -107,6 +213,11 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
             setTimeout(() => setShowCelebration(false), 8000);
         }
     }, [searchParams]);
+
+    const handleStatusChange = (orderId: string, newStatus: string) => {
+        setLocalPurchases(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        setLocalSales(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    };
 
     return (
         <div className={styles.main}>
@@ -140,8 +251,10 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
 
                 {activeTab === 'purchases' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {purchases.length > 0 ? (
-                            purchases.map(o => <OrderCard key={o.id} order={o} role="buyer" />)
+                        {localPurchases.length > 0 ? (
+                            localPurchases.map(o => (
+                                <OrderCard key={o.id} order={o} role="buyer" onStatusChange={handleStatusChange} />
+                            ))
                         ) : (
                             <EmptyState
                                 title="No purchases yet"
@@ -153,8 +266,10 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {sales.length > 0 ? (
-                            sales.map(o => <OrderCard key={o.id} order={o} role="seller" />)
+                        {localSales.length > 0 ? (
+                            localSales.map(o => (
+                                <OrderCard key={o.id} order={o} role="seller" onStatusChange={handleStatusChange} />
+                            ))
                         ) : (
                             <EmptyState
                                 title="No sales yet"

@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import DemandCard from '@/components/DemandCard';
 import { prisma } from '@/lib/prisma';
-import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import styles from './Requests.module.css';
 
@@ -29,6 +28,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
             user: {
                 select: {
                     displayName: true,
+                    username: true,
+                    avatarUrl: true,
                 }
             },
             _count: {
@@ -74,17 +75,18 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     demands.map((demand: any, i: number) => {
                         const dData = {
+                            id: demand.id,
+                            username: demand.user.username ?? undefined,
                             user: demand.user.displayName,
                             initials: demand.user.displayName.substring(0, 2).toUpperCase(),
+                            avatarUrl: demand.user.avatarUrl ?? null,
                             timeAgo: new Date(demand.createdAt).toLocaleDateString(),
                             text: demand.text,
-                            budget: `₦${Number(demand.budget).toLocaleString()}`,
+                            budget: `${demand.currency}${Number(demand.budget).toLocaleString()}`,
                             bids: demand._count.bids,
                         };
                         return (
-                            <Link href={`/requests/${demand.id}`} key={demand.id} className={styles.cardLink}>
-                                <DemandCard data={dData} index={i} />
-                            </Link>
+                            <DemandCard key={demand.id} data={dData} index={i} />
                         );
                     })
                 )}

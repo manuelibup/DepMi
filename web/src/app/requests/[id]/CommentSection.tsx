@@ -61,11 +61,13 @@ export default function CommentSection({
     initialComments,
     canComment,
     isLoggedIn,
+    showTitle = true,
 }: {
     apiPath: string; // e.g. /api/demands/[id]/comments or /api/products/[id]/comments
     initialComments: CommentItem[];
     canComment: boolean;
     isLoggedIn: boolean;
+    showTitle?: boolean;
 }) {
     const { data: session, status } = useSession();
     const { openGate } = useAuthGate();
@@ -140,7 +142,7 @@ export default function CommentSection({
 
     return (
         <div className={styles.commentSection}>
-            <h2 className={styles.bidsTitle}>Comments ({comments.length})</h2>
+            {showTitle && <h2 className={styles.bidsTitle}>Comments ({comments.length})</h2>}
 
             {/* Comment list */}
             <div className={styles.commentList}>

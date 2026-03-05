@@ -239,3 +239,184 @@
     box-shadow: none;
     transform: none;
 }
+
+/* Bank Transfer / Payment Pending States */
+.timerBanner {
+    background: rgba(253, 203, 110, 0.12);
+    border: 1px solid rgba(253, 203, 110, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.transferInstructions {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+    line-height: 1.5;
+}
+
+.bankCard {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.bankRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.bankRowHighlight {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 200, 83, 0.04);
+}
+
+.bankRowHighlight:last-child,
+.bankRow:last-child {
+    border-bottom: none;
+}
+
+.bankLabel {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+}
+
+.bankValue {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.accountNumber {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: 2px;
+    display: block;
+    font-family: monospace;
+}
+
+.transferAmount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+}
+
+.copyBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.copyBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.breakdownList {
+    border-top: 1px dashed var(--border);
+    padding-top: 16px;
+    margin-top: 4px;
+}
+
+.pollingIndicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.pollingDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Confirmed state */
+.confirmedState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    gap: 16px;
+}
+
+.confirmedIcon {
+    background: rgba(0, 200, 83, 0.1);
+    border-radius: 50%;
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirmedState h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.confirmedState p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    max-width: 280px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.errorMessage {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 12px 16px;
+    background: rgba(231, 76, 60, 0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    margin: 0;
+}

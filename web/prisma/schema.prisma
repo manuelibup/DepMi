@@ -73,6 +73,11 @@ enum EscrowStatus {
   RELEASED
 }
 
+enum PaymentRail {
+  NAIRA  // Monnify virtual account → bank transfer
+  CRYPTO // WalletConnect → USDC on Base
+}
+
 enum Category {
   FASHION
   GADGETS
@@ -99,6 +104,7 @@ enum NotificationType {
   SYSTEM
   COMMENT_RECEIVED
   MENTION
+  NEW_PRODUCT_FROM_STORE
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -116,6 +122,8 @@ model User {
   phoneNumber   String?   @unique
   phoneVerified Boolean   @default(false)
   avatarUrl     String?
+  coverUrl      String?   // Profile banner / cover photo
+  bio           String?   // Short tagline, max 160 chars
 
   // Delivery / Shipping
   address String?
@@ -153,6 +161,9 @@ model User {
   productWatches  ProductWatch[]
   reviewsLeft     Review[]         @relation("BuyerReviews")
   comments        Comment[]        @relation("UserComments")
+  productLikes    ProductLike[]
+  savedProducts   SavedProduct[]
+  storeFollows    StoreFollow[]    @relation("UserStoreFollows")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -225,8 +236,17 @@ model Store {
   rating      Float @default(0)
   reviewCount Int   @default(0)
 
-  // Paystack split payment subaccount (for auto-settlement)
+  // Paystack split payment subaccount (deprecated — kept for migration safety)
   paystackSubcode String?
+
+  // Monnify payout details — set when seller completes KYC TIER_2
+  bankCode        String? // e.g. "058" GTBank, "044" Access, "033" UBA
+  bankAccountNo   String?
+  bankAccountName String?
+
+  // Crypto payout (optional — seller can receive USDC instead of NGN)
+  cryptoWalletAddr    String?
+  preferredPayoutRail PaymentRail @default(NAIRA)
 
   isActive Boolean @default(true)
 
@@ -245,6 +265,7 @@ model Store {
   ordersAsSeller  Order[]          @relation("SellerOrders")
   depTransactions DepTransaction[] @relation("StoreDepTransactions")
   reviews         Review[]         @relation("StoreReviews")
+  followers       StoreFollow[]    @relation("StoreFollowers")
 
   @@index([ownerId])
   @@index([slug])
@@ -286,6 +307,7 @@ model Demand {
 
   text     String
   budget   Decimal  @db.Decimal(10, 2)
+  currency String   @default("₦")
   category Category @default(OTHER)
   location String?
 
@@ -342,13 +364,15 @@ model Product {
   slug        String?  @unique // URL-safe identifier e.g. "dell-xps-15-techstore"
   description String?
   price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("₦")
   category    Category @default(OTHER)
 
   videoUrl        String? // Optional Cloudinary video URL for product demo
   isPortfolioItem Boolean @default(false) // If true, showcases past work/portfolio instead of immediate sale
 
-  viewCount Int     @default(0)
-  inStock   Boolean @default(true)
+  isFeatured Boolean @default(false) // Pinned to owner's profile showcase
+  viewCount  Int     @default(0)
+  inStock    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -359,6 +383,8 @@ model Product {
   bids           Bid[]          @relation("BidProduct")
   productWatches ProductWatch[]
   comments       Comment[]      @relation("ProductComments")
+  likes          ProductLike[]
+  saves          SavedProduct[]
 
   @@index([category, inStock])
   @@index([storeId])
@@ -396,9 +422,24 @@ model Order {
   bidId    String? @unique
   bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
 
-  // Escrow / Paystack
+  // Payment rail
+  paymentRail  PaymentRail  @default(NAIRA)
+
+  // Escrow — paystackRef reused for Monnify transaction reference
   paystackRef  String?      @unique
   escrowStatus EscrowStatus @default(HELD)
+
+  // Monnify virtual account (generated per-checkout, tied to this order)
+  virtualAcctNo     String?    // e.g. "1234567890" (Wema Bank)
+  virtualAcctBank   String?    // e.g. "Wema Bank"
+  virtualAcctExpiry DateTime?  // Expires after checkout window (e.g. 30 min)
+
+  // Fee tracking
+  platformFeeNgn Decimal? @db.Decimal(10, 2) // 5% fee deducted on release
+
+  // Crypto rail fields
+  cryptoTxHash     String?
+  cryptoAmountUsdc Decimal? @db.Decimal(18, 6)
 
   // Delivery
   deliveryAddress String?
@@ -494,6 +535,36 @@ model Waitlist {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// NEW: PRODUCT LIKES & SAVES (WISHLIST)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model SavedProduct {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // NEW: PRODUCT WATCH & REVIEWS (PHASE 2/3)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -557,4 +628,25 @@ model Comment {
   @@index([productId])
   @@index([demandId])
   @@index([authorId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: STORE FOLLOWERS & NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model StoreFollow {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserStoreFollows", fields: [userId], references: [id], onDelete: Cascade)
+  storeId   String
+  store     Store    @relation("StoreFollowers", fields: [storeId], references: [id], onDelete: Cascade)
+  
+  notify    Boolean  @default(true) // Toggle for "Bell" icon to silence new product alerts
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, storeId])
+  @@index([storeId, notify])
+  @@index([userId])
 }

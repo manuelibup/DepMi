@@ -17,6 +17,18 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     const q = sp.q || '';
     const cat = sp.category;
 
+    // People search — only when query is present
+    const people = q.length >= 2 ? await prisma.user.findMany({
+        where: {
+            OR: [
+                { username: { contains: q, mode: 'insensitive' } },
+                { displayName: { contains: q, mode: 'insensitive' } },
+            ]
+        },
+        select: { username: true, displayName: true, depCount: true, depTier: true, avatarUrl: true },
+        take: 5,
+    }) : [];
+
     // Top 5 stores by Dep Count
     const topStores = await prisma.store.findMany({
         where: { isActive: true },
@@ -75,6 +87,36 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                     })}
                 </div>
             </section>
+
+            {/* People Results — shown only when query matches users */}
+            {people.length > 0 && (
+                <section className={styles.section} style={{ paddingTop: 0 }}>
+                    <div className={styles.sectionTitle}><span>People</span></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {people.map(person => (
+                            <Link
+                                key={person.username}
+                                href={`/u/${person.username}`}
+                                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--card-bg)', borderBottom: '1px solid var(--card-border)', textDecoration: 'none' }}
+                            >
+                                <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                                    {person.avatarUrl
+                                        ? <img src={person.avatarUrl} alt={person.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        : <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--primary)' }}>{person.displayName.charAt(0).toUpperCase()}</span>
+                                    }
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{person.displayName}</p>
+                                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{person.username} · {person.depCount} Deps</p>
+                                </div>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+                                    <path d="m9 18 6-6-6-6"/>
+                                </svg>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* Featured Stores Carousel */}
             {topStores.length > 0 && (

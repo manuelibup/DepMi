@@ -102,7 +102,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                 body: JSON.stringify({
                     text: formData.text,
                     category: formData.category,
-                    budget: parseFloat(formData.budget), // Currently schema expects numeric, if backend handles currency, we would send it
+                    budget: parseFloat(formData.budget),
+                    currency: formData.currency,
                     location: formData.location || undefined,
                 })
             });

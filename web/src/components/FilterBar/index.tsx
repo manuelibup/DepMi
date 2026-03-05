@@ -31,10 +31,13 @@ function FilterBarInner() {
                         <Link
                             key={f.value || 'all'}
                             href={href}
-                            className={`${styles.chip} ${isActive ? styles.active : ''}`}
+                            className={`${styles.tab} ${isActive ? styles.active : ''}`}
                             scroll={false}
                         >
-                            {f.label}
+                            <div className={styles.tabContent}>
+                                {f.label}
+                                {isActive && <div className={styles.activeIndicator} />}
+                            </div>
                         </Link>
                     );
                 })}

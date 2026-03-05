@@ -100,6 +100,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             title: form.title,
             description: form.description,
             price: Number(form.price),
+            currency: form.currency,
             category: form.category,
             images: form.imageUrl ? [form.imageUrl] : [],
             videoUrl: form.videoUrl || null,

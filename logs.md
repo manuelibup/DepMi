@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 43 — Mar 4, 2026 — Social Interactions, Comments Engine & Product Slugs](#session-43--mar-4-2026--social-interactions-comments-engine--product-slugs)
 - [Session 1 — Feb 26, 2026 (Pre-dawn)](#session-1--feb-26-2026-pre-dawn)
 - [Session 2 — Feb 26, 2026 (07:00 WAT)](#session-2--feb-26-2026-0700-wat)
 - [Session 3 — Feb 26, 2026 (08:00–09:00 WAT)](#session-3--feb-26-2026-08000900-wat)
@@ -1621,7 +1622,7 @@ Complete resolution of all bugs identified in the Session 39 audit. All outstand
 
 ---
 
-## Session 42 � Mar 4, 2026 � Async Params & Final Audit Wrap-up
+## Session 42 � Mar 4, 2026 � Async Params & Final Audit Wrap-up
 **Agent:** Antigravity
 **Human:** Manuel
 
@@ -1638,7 +1639,7 @@ Verified with npm run build returning Exit Code 0.
 
 ---
 
-## Session 42 Continued � Mar 4, 2026 � Redesigning Composers & Suggested Profiles
+## Session 42 Continued � Mar 4, 2026 � Redesigning Composers & Suggested Profiles
 **Agent:** Antigravity
 **Human:** Manuel
 
@@ -1655,7 +1656,7 @@ pm run build\ successfully.
 
 ---
 
-## Session 42 Fixes � Mar 4, 2026 � Polishing Post Composers
+## Session 42 Fixes � Mar 4, 2026 � Polishing Post Composers
 **Agent:** Antigravity
 **Human:** Manuel
 
@@ -1668,6 +1669,65 @@ pm run build\ successfully.
 Verified with \
 pm run build\ and resolved a Duplicate CSS Height React error.
 
+
+---
+
+## Session 43 — Mar 4, 2026 — Social Interactions, Comments Engine & Product Slugs
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What was done:
+
+#### Image Gallery (Product Detail)
+- Created `web/src/app/p/[id]/ProductImageGallery.tsx` — client component with `useState` for selected image index. Renders main image + clickable thumbnail strip (active thumbnail: green border, full opacity; inactive: 65% opacity). Handles empty state with SVG placeholder.
+- Updated `p/[id]/page.tsx` to use `ProductImageGallery`. When a video exists, shows video player first then the image strip below. When no video, gallery handles empty state internally.
+
+#### DemandCard Social Wiring
+- Added `id?: string` to `DemandData` interface in `DemandCard/index.tsx`.
+- Added `handleBid` (auth-gates via `useAuthGate`, then `router.push('/requests/${id}')`) and `handleShare` (Web Share API with clipboard fallback).
+- Updated `app/page.tsx` to pass `id: demand.id` to the DemandCard data object.
+
+#### ProductCard Social Wiring
+- Added `liked`/`saved` state initialized from `localStorage` on mount (`liked_${id}`, `saved_${id}` keys).
+- Four handlers: `handleLike` (toggle + persist localStorage), `handleSave` (toggle + persist localStorage), `handleShare` (Web Share API / clipboard), `handleComment` (navigate to `/p/${id}`).
+- Fixed empty `data.image` — renders SVG placeholder when no image instead of crashing `next/image`.
+- Filled heart (red) when liked, filled bookmark (green) when saved.
+
+#### Comments System — Demand Pages
+- Created `POST /api/demands/[id]/comments/route.ts`:  KYC gate (rejects `UNVERIFIED` with 403), validates text (1–500 chars), creates `Comment`, fires `COMMENT_RECEIVED` notification to demand poster (fire-and-forget).
+- Created `GET /api/products/search/route.ts`: `?q=` param, min 2 chars, searches `title` + `store.name` case-insensitively, returns up to 10 results.
+- Created `CommentSection.tsx` (client component) in `requests/[id]/`:
+  - `CommentText` sub-component parses `[Title](/p/id)` syntax into green product chip links.
+  - `timeAgo()` helper for relative timestamps.
+  - Three-tier gate: unauthenticated → "Sign In"; logged in + UNVERIFIED → lock icon + "Get Verified" → `/settings`; verified → full form.
+  - Comment form: avatar, textarea, "Link Product" picker (debounced 300ms search → inserts `[Title](/p/id)` at cursor), char counter, Post button.
+  - Optimistic append on submit.
+- Updated `requests/[id]/page.tsx`: fixed async params, added KYC tier fetch, added `comments` to Prisma include (with author), serializes dates to ISO strings, renders `CommentSection`.
+- Added ~200 lines of comment CSS to `RequestDetail.module.css`.
+
+#### Comments System — Product Pages
+- Refactored `CommentSection` prop from `demandId: string` → `apiPath: string` (generic, works for any entity type).
+- Created `POST /api/products/[id]/comments/route.ts`: same KYC gate + notification logic, notifies store owner on comment.
+- Updated `p/[id]/page.tsx`: fetches session, KYC tier, and product comments; renders `CommentSection` with `apiPath=/api/products/${product.id}/comments`.
+
+#### Product URL Slugs
+- Added `slug String? @unique` to `Product` model in `schema.prisma`.
+- Created `web/src/lib/slugify.ts`: `slugify()` (lowercase, strip specials, hyphenate) + `generateProductSlug(title, storeName, lookup)` (collision-handled with `-2`, `-3` suffix, same pattern as Substack/Ghost/WordPress).
+- Updated `api/products/create/route.ts`: generates slug on every new product, passes lookup function.
+- Updated `api/catalog/import/route.ts`: generates slugs inside the transaction loop via `tx.product.findUnique`.
+- Updated `p/[id]/page.tsx`: `findFirst({ OR: [{ slug: id }, { id }] })` — accepts both UUID (backward compat) and slug (new links).
+- Ran `prisma db push --accept-data-loss` (safe: existing products get `null` slug, nulls don't conflict on unique constraint).
+
+#### Gemini Audit Response
+- Responded to Gemini's Mar 4 audit. Corrected two factual errors (BidForm with product attachment was already built; CommentSection for demand pages was already built). Agreed with valid gaps: localStorage likes, product page comments (now fixed), Paystack Phase 3.
+
+### Key Decisions:
+- **`apiPath` pattern** for CommentSection avoids code duplication between demand and product comment forms.
+- **Slug is nullable** (`String?`) so existing products keep working via UUID; new products get slugs automatically — zero migration effort.
+- **No AI for slugs** — pure string manipulation, no credits, no external API.
+
+### Outcome:
+All changes written. `prisma db push` confirmed DB in sync. Prisma client requires dev server restart (DLL file locked on Windows while dev server runs).
 
 ---
 
@@ -1684,4 +1744,27 @@ pm run build\ and resolved a Duplicate CSS Height React error.
 ### Outcome:
 Verified all changes. \
 pm run build\ outputs 0 errors and 0 warnings.
+
+
+---
+
+## Session 44 — Mar 4, 2026 — Social Interactions: Database-Persisted Likes and Saves
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Database Schema Update:** Created `ProductLike` and `SavedProduct` models in `schema.prisma`. Both models enforce unique user-to-product relationships tracking when buyers engage with items.
+- **Prisma Relations:** Connected `user.productLikes`, `user.savedProducts`, `product.likes`, and `product.saves`.
+- **API Endpoints:** Built two real POST endpoints (`/api/products/[id]/like/route.ts` and `/api/products/[id]/save/route.ts`) that toggle records in the database via the Prisma client.
+- **ProductCard Component:** Migrated the `ProductCard` from `localStorage`-based likes/saves to optimistic UI updates hitting the new database endpoints.
+- **Feed Integration (`page.tsx`):** Implemented server-side data fetching for the active session user to inject `isLiked` and `isSaved` booleans directly into the feed, avoiding expensive client-side layout shifts.
+- **CommentSection Verification:** Read through Claude's recent implementation and confirmed the `<CommentSection>` UI is live on both Demand and Product endpoints via the `apiPath` prop.
+
+### Outcome:
+`npx prisma db push` successfully brought the Neon database up to parity with the new social models. Likes and Saves are now fully DB-persisted items.
+
+
+### UI Refinements & Prisma Client Fix:
+- **Filter Bar Redesign:** Dropped the pill-shaped backgrounds for the Category filters (`page.tsx`) in favor of a flat, tab-style design reminiscent of X (Twitter), complete with an animated primary-colored bottom active indicator.
+- **Prisma DLL Lock Diagnosis:** Successfully diagnosed and unblocked the Prisma Client out-of-sync crash on Windows (`Can't reach database server...` followed by `EPERM: operation not permitted` on the `query_engine-windows.dll.node`). Escaped the locked TurboPack instance process using PowerShell, regenerated the Prisma client, and pushed the un-sync'd `schema.prisma` updates (`StoreFollow` and `coverUrl` manually added by the human). 
 

@@ -8,7 +8,8 @@ import { Category } from '@prisma/client';
 const demandSchema = z.object({
     text: z.string().min(10, "Request must be at least 10 characters").max(500, "Request is too long"),
     category: z.nativeEnum(Category),
-    budget: z.number().min(100, "Budget must be at least ₦100"),
+    budget: z.number().min(100, "Budget must be at least 100"),
+    currency: z.string().default("₦"),
     location: z.string().optional(),
 });
 
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { text, category, budget, location } = parsed.data;
+        const { text, category, budget, currency, location } = parsed.data;
 
         // NOTE: We do not limit buyers from creating demands based on KYC alone, 
         // UNVERIFIED users can browse and create demands (from agent.md).
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
                 text,
                 category,
                 budget,
+                currency,
                 location,
                 isActive: true,
             }

@@ -1,14 +1,10 @@
 import React from 'react';
-import Header from '@/components/Header';
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import BidActionGate from './BidActionGate';
-import BidForm from './BidForm';
-import AcceptBidButton from './AcceptBidButton';
-import CommentSection from './CommentSection';
-import BottomNav from '@/components/BottomNav';
+import BidsCommentsTab from './BidsCommentsTab';
 import styles from './RequestDetail.module.css';
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +22,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     const demand = await prisma.demand.findUnique({
         where: { id },
         include: {
-            user: { select: { displayName: true } },
+            user: { select: { displayName: true, username: true } },
             bids: {
                 include: {
                     store: { select: { name: true, depCount: true, depTier: true } },
@@ -56,7 +52,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     const hasStore = userStores.length > 0;
 
     // If they have a store, fetch their products for the bid dropdown
-    let storeProducts: { id: string; title: string; price: string | number }[] = [];
+    let storeProducts: { id: string; title: string; price: number }[] = [];
     const selectedStoreId = userStores[0]?.id;
 
     if (selectedStoreId && !isPoster) {
@@ -71,6 +67,16 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         }));
     }
 
+    // Serialize bids for client component
+    const serializedBids = demand.bids.map(bid => ({
+        id: bid.id,
+        amount: Number(bid.amount),
+        proposal: bid.proposal,
+        isAccepted: bid.isAccepted,
+        store: { name: bid.store.name },
+        product: bid.product ? { title: bid.product.title } : null,
+    }));
+
     // Serialize comments (Dates → strings for client component)
     const serializedComments = demand.comments.map(c => ({
         id: c.id,
@@ -83,19 +89,31 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
     return (
         <main className={styles.container}>
-            <Header />
-            
+            {/* Minimal back-button header — no global nav so bid/comment buttons aren't obscured */}
+            <div className={styles.backHeader}>
+                <Link href="/requests" className={styles.backBtn} aria-label="Back">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </Link>
+                <span className={styles.backTitle}>Request</span>
+            </div>
+
             <div className={styles.content}>
-                
+
                 {/* Demand Overview */}
                 <div className={styles.demandHeader}>
-                    <div className={styles.posterInfo}>
+                    <Link
+                        href={demand.user.username ? `/u/${demand.user.username}` : '#'}
+                        className={styles.posterInfo}
+                        style={{ textDecoration: 'none' }}
+                    >
                         <div className={styles.avatar}>{demand.user.displayName.substring(0, 2).toUpperCase()}</div>
                         <div>
                             <p className={styles.posterName}>{demand.user.displayName}</p>
                             <p className={styles.meta}>Looking for &bull; {timeAgo}</p>
                         </div>
-                    </div>
+                    </Link>
                     <span className={styles.badge}>Demand</span>
                 </div>
 
@@ -113,71 +131,21 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     )}
                 </div>
 
-                <div className={styles.divider} />
-
-                {/* Bids Section */}
-                <div className={styles.bidsSection}>
-                   <h2 className={styles.bidsTitle}>Active Bids ({demand.bids.length})</h2>
-                   
-                   {/* 4 Quadrant User State Logic */}
-                   {!isPoster && !hasStore && (
-                       <div className={styles.buyerGate}>
-                           <BidActionGate isLoggedIn={!!userId} />
-                       </div>
-                   )}
-
-                   {!isPoster && hasStore && (
-                       <div className={styles.vendorFormArea}>
-                           <BidForm demandId={demand.id} storeId={selectedStoreId!} products={storeProducts} />
-                       </div>
-                   )}
-
-                   {/* Bid List (Read Only for now, Actions added later) */}
-                   <div className={styles.bidList}>
-                       {demand.bids.length === 0 ? (
-                           <div className={styles.emptyBids}>
-                               <p>No bids yet. Be the first to offer a price!</p>
-                           </div>
-                       ) : (
-                           demand.bids.map(bid => (
-                               <div key={bid.id} className={styles.bidCard}>
-                                   <div className={styles.bidHeader}>
-                                       <strong>{bid.store.name}</strong>
-                                       <span className={styles.bidPrice}>₦{Number(bid.amount).toLocaleString()}</span>
-                                   </div>
-                                   {bid.proposal && <p className={styles.bidProposal}>{bid.proposal}</p>}
-                                   {bid.product && (
-                                       <div className={styles.attachedProduct}>
-                                           <div className={styles.productIcon}>
-                                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 9 18-6"/><path d="M9 21v-6"/></svg>
-                                           </div>
-                                           <span>Attached: {bid.product.title}</span>
-                                       </div>
-                                   )}
-                                   {isPoster && demand.isActive && (
-                                       <AcceptBidButton bidId={bid.id} demandId={demand.id} />
-                                   )}
-                                   {isPoster && !demand.isActive && bid.isAccepted && (
-                                       <p className={styles.successState} style={{ padding: '8px', marginTop: 4, textAlign: 'center' }}>✓ Accepted Bid</p>
-                                   )}
-                               </div>
-                           ))
-                       )}
-                   </div>
-               </div>
-
-               <div className={styles.divider} />
-
-               {/* Comments Section */}
-               <CommentSection
-                   apiPath={`/api/demands/${demand.id}/comments`}
-                   initialComments={serializedComments}
-                   canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
-                   isLoggedIn={!!userId}
-               />
+                <BidsCommentsTab
+                    bids={serializedBids}
+                    comments={serializedComments}
+                    isPoster={isPoster}
+                    demandId={demand.id}
+                    isActive={demand.isActive}
+                    hasStore={hasStore}
+                    storeId={selectedStoreId}
+                    storeProducts={storeProducts}
+                    canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
+                    isLoggedIn={!!userId}
+                    apiPath={`/api/demands/${demand.id}/comments`}
+                />
 
             </div>
-            <BottomNav />
         </main>
     );
 }

@@ -8,6 +8,38 @@
     margin: 0 auto;
 }
 
+.backHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.06));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-color);
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    padding: 4px;
+    border-radius: 8px;
+    transition: background var(--transition-fast);
+}
+
+.backBtn:hover {
+    background: var(--bg-hover);
+}
+
+.backTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
 .content {
     flex: 1;
     display: flex;
@@ -110,6 +142,71 @@
     width: 100%;
 }
 
+/* ── Tab Navigation ─────────────────────────────────────── */
+
+.tabSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabBar {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 20px;
+    background: var(--bg-color);
+    position: sticky;
+    top: 45px;
+    z-index: 5;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 0;
+    margin-right: 28px;
+    margin-bottom: -1px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tabActive {
+    color: var(--text-main);
+    border-bottom-color: var(--primary);
+}
+
+.tabBadge {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.tabBadgeActive {
+    background: rgba(0, 200, 83, 0.12);
+    color: var(--primary);
+}
+
+.tabBidsContent {
+    padding: 20px 20px 100px;
+}
+
+.tabDiscussionContent {
+    padding-bottom: 80px;
+}
+
+/* kept for potential external use */
 .bidsSection {
     padding: 24px 20px 100px;
 }

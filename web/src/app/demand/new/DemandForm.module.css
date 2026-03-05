@@ -157,23 +157,40 @@
 }
 
 .currencySelect {
-    background: transparent;
-    border: 1px solid var(--card-border);
+    background: var(--bg-elevated);
+    border: 1px solid rgba(0, 200, 83, 0.4);
     color: var(--text-main);
-    padding: 8px;
-    border-radius: 8px;
+    padding: 8px 12px;
+    border-radius: 20px;
     font-size: 1rem;
     font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(0, 200, 83, 0.05);
+    outline: none;
+    appearance: none; /* remove default arrow to look cleaner */
+}
+
+.currencySelect:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.15);
 }
 
 .categorySelect {
     flex: 1;
-    background: var(--bg-color); /* Updated for better blending */
-    border: 1px solid var(--card-border);
+    background: var(--bg-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-main);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.categorySelect:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.15);
 }
 
 .categorySelect option {

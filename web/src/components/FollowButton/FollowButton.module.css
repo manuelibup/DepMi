@@ -1,0 +1,79 @@
+.followContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.followBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.followBtn:hover {
+    filter: brightness(1.1);
+}
+
+.followBtn.following {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+}
+
+.followBtn.following:hover {
+    background: var(--bg-elevated);
+}
+
+.followersCount {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.bellBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bellBtn:hover {
+    background: var(--bg-elevated);
+    color: var(--text-main);
+}
+
+.bellActive {
+    color: var(--primary);
+    border-color: rgba(0, 200, 83, 0.4);
+    background: rgba(0, 200, 83, 0.05);
+}
+
+.skeleton {
+    width: 100px;
+    height: 36px;
+    background: var(--card-border);
+    border-radius: 20px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+}

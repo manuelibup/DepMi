@@ -117,61 +117,187 @@
     border-radius: var(--radius-full);
 }
 
-/* Actions */
+/* Actions — 3 equal-width stat buttons */
 .actions {
     display: flex;
-    gap: 10px;
+    gap: 0;
+    border-top: 1px solid var(--card-border);
+    margin: 4px -18px -18px;
 }
 
-.bidBtn {
+.actionBtn {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
-    color: white;
-    padding: 13px 16px;
-    border-radius: var(--radius-md);
-    font-weight: 700;
-    font-size: 14px;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    box-shadow: var(--shadow-glow);
-}
-
-.bidBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px var(--primary-glow);
-}
-
-.bidBtn:active {
-    transform: scale(0.97);
-}
-
-.bidCount {
-    font-size: 11px;
+    gap: 6px;
+    padding: 11px 8px;
+    font-size: 13px;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.25);
-    padding: 2px 8px;
-    border-radius: var(--radius-full);
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--card-border);
+    transition: background var(--transition-fast), color var(--transition-fast);
+    cursor: pointer;
 }
 
-.shareBtn {
-    width: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-color);
-    color: var(--text-secondary);
-    border-radius: var(--radius-md);
-    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+.actionBtn:last-child {
+    border-right: none;
 }
 
-.shareBtn:hover {
+.actionBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.actionBtn:active {
     background: var(--bg-elevated);
+}
+
+/* Bid button — green tint on hover */
+.actionBtnBid:hover {
+    color: var(--primary);
+    background: rgba(0, 200, 83, 0.07);
+}
+
+/* Share copied state */
+.actionBtnCopied {
     color: var(--primary);
 }
 
-.shareBtn:active {
-    transform: scale(0.92);
+.actionCount {
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--bg-elevated);
+    padding: 1px 6px;
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+}
+
+/* ── Share sheet ──────────────────────────────────────── */
+
+.shareOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 150ms ease-out both;
+}
+
+.shareSheet {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px 32px;
+    animation: slideUp 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sheetHandle {
+    width: 36px;
+    height: 4px;
+    background: var(--card-border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.sheetTitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 14px;
+}
+
+.draftBox {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.draftText {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    line-height: 1.5;
+    margin: 0 0 4px;
+}
+
+.draftUrl {
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin: 0;
+    word-break: break-all;
+}
+
+.sheetOptions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.sheetOption {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: opacity var(--transition-fast);
+}
+
+.sheetOption:hover {
+    opacity: 0.8;
+}
+
+.sheetOptionCopied {
+    color: var(--primary);
+}
+
+.sheetIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--card-border);
+}
+
+.sheetCancel {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    border: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.sheetCancel:hover {
+    background: var(--bg-hover);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }

@@ -142,6 +142,7 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
   - Vendors without CAC are guided through the in-app filing flow. Badge issued on CAC confirmation (2–5 business days).
 - **Phase 2 — Fixed Influencer Deals:** Stores and affiliates negotiate flat-rate promotion deals in-app. DepMi takes **10%** of the agreed deal value for facilitating the agreement.
 - **Phase 2 — Pro Subscription (Deferred):** Monthly/quarterly/bi-annual/annual plans introduced only after vendors are already profitable on the platform and organically requesting advanced tools (unlimited products, priority bidding, same-day payouts, detailed analytics, **scheduled AI catalog re-sync**). Forcing subscriptions before value is proven risks vendor churn and competitor advantage. The AI catalog import is free for initial onboarding (up to 500 products) — the recurring sync is the Pro hook, not the first import.
+- **Phase 3 — Crypto-Fiat Payment Rails:** A core long-term vision to facilitate borderless African commerce. Integration of web3 payment processors to support seamless crypto-to-fiat, fiat-to-fiat, and fiat-to-crypto checkout flows, bypassing traditional FX friction and allowing buyers to use crypto while vendors settle natively.
 - **Wallet Strategy:** No internal holding of funds in Phase 1 (Avoids ₦4B CBN requirement). Funds auto-settle to vendor bank accounts (T+1).
 - **Withdrawal Fee:** 0.5% (Introduced in Phase 2 with Partner Wallets).
 
@@ -215,13 +216,16 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
-- **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category` field (enum or FK to Category), `inStock` (Boolean), and `isPortfolioItem` (Boolean) to distinguish past work vs active sales.
+- **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category`, `inStock`, `isPortfolioItem`, `videoUrl`, `viewCount`, and `slug` (String? @unique — URL-safe identifier e.g. `dell-xps-15-techstore`, auto-generated from title + store name on create, nullable for backward compat with existing UUID routes).
+- **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.
+- **SavedProduct** — `{ id, userId, productId, createdAt }`. The "Wish List" feature for buyers.
 - **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
 - **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
+- **Comment** — `{ id, text, authorId, productId?, demandId?, createdAt, updatedAt }`. Belongs to either a Product OR a Demand (nullable FK). KYC-gated (UNVERIFIED users cannot comment). Text limit 500 chars. Supports inline product mentions via `[Title](/p/id)` syntax rendered as green chip links.
 - **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`.
 - **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
 - **DepTransaction** — Audit trail for trust scores (buyer + seller tracked separately).
-- **Notification** — 10 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE`.
+- **Notification** — 12 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE | COMMENT_RECEIVED | MENTION`.
 
 ---
 

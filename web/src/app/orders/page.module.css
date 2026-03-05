@@ -168,6 +168,8 @@
     margin-top: 8px;
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .actionBtn {
@@ -195,6 +197,99 @@
 
 .actionBtn.primary:hover {
     background: #e6b800;
+}
+
+/* Status badge additions */
+.status_DISPUTED {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.25);
+}
+
+/* Button variants */
+.actionBtn.danger {
+    background: transparent;
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.actionBtn.danger:hover {
+    background: rgba(231, 76, 60, 0.08);
+    transform: none;
+}
+
+.actionBtn.ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--card-border);
+}
+
+.actionBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Dispute modal */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    border-radius: 20px 20px 16px 16px;
+    padding: 28px 24px 24px;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modalTitle {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.modalDesc {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.disputeInput {
+    background: var(--bg-main);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    resize: none;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+}
+
+.disputeInput:focus {
+    outline: none;
+    border-color: #e74c3c;
+}
+
+.modalActions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
 }
 
 .celebration {
