@@ -185,3 +185,14 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   - Keep a raw numeric string (e.g., `"1000000"`) for the actual API payload `budget` or `price`.
   - Maintain a parallel `displayBudget` format (e.g. `1,000,000`) solely for the `value={}` prop in the `<input type="text" inputMode="numeric">`.
   - Strip the commas `value.replace(/\D/g, '')` in the `onChange` handler before saving to the raw state!
+
+
+---
+
+## 🛑 15. The Hidden Perils of "Any" & Prisma Includes on Vercel
+
+*This tip was added after a series of Vercel build failures caused by strict TypeScript enforcement that passed locally.*
+
+- **The Issue**: Vercel's build process runs a highly restrictive `tsc` check. If you attempt to use `Array.from(new Set(match.map(...)))` without an explicit generic type like `<string>`, TypeScript assumes it returns an `unknown[]` and will crash the deployment. Ensure you use `new Set<string>(...)`.
+- **Prisma Relations**: Always double-check your Prisma `schema.prisma` definition when chaining nested `.findUnique({ include: {...} })` queries. If the relation name is `seller` but your query asks for `store`, Vercel will halt the build with an `Object literal may only specify known properties` error.
+- **Turbopack Caches (`.next/` folder)**: If a build throws bizarre type errors (e.g., `Module '"./routes.js"' has no exported member 'AppRouteHandlerRoutes'`), the Next.js cache has desynced itself from your actual source files. Run `rm -rf .next` (or `Remove-Item .next` on Windows) to destroy the corrupted cache before compiling.

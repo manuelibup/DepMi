@@ -71,7 +71,7 @@ export async function POST(
     }
 
     // Extract @mentions and notify users
-    const mentions = Array.from(new Set(text.match(/@([a-zA-Z0-9_]+)/g)?.map(m => m.substring(1)) || []));
+    const mentions = Array.from(new Set<string>(text.match(/@([a-zA-Z0-9_]+)/g)?.map((m: string) => m.substring(1)) || []));
     if (mentions.length > 0) {
         const mentionedUsers = await prisma.user.findMany({
             where: { username: { in: mentions } },

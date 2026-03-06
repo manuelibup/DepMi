@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
 import { generateProductSlug } from '@/lib/slugify';
+import { notifySearchWatchers } from '@/lib/notify-watchers';
 
 const productSchema = z.object({
     storeId: z.string().min(1, "Store ID is required"),
@@ -101,6 +102,18 @@ export async function POST(req: Request) {
                     isRead: false
                 }))
             });
+        }
+
+        // Notify users whose search-query watches match this product title (fire-and-forget)
+        if (slug) {
+            notifySearchWatchers({
+                productId: product.id,
+                productTitle: title,
+                productSlug: slug,
+                storeName: store.name,
+                price,
+                currency,
+            }).catch((err) => console.error('notifySearchWatchers error:', err));
         }
 
         return NextResponse.json({ message: 'Product successfully created', product }, { status: 201 });

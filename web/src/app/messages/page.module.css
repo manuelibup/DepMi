@@ -1,0 +1,138 @@
+.container {
+    padding: 0;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.06));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.newChatBtn {
+    background: var(--bg-hover);
+    border: none;
+    border-radius: var(--radius-full);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.newChatBtn:hover {
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-sm);
+}
+
+.content {
+    flex: 1;
+    padding: 10px 0 100px;
+    display: flex;
+    flex-direction: column;
+}
+
+.convList {
+    display: flex;
+    flex-direction: column;
+}
+
+.convCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    text-decoration: none;
+    background: var(--bg-color);
+    transition: background var(--transition-fast);
+}
+
+.convCard:hover, .convCard:active {
+    background: var(--bg-hover);
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.topRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.preview {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+    margin-left: 8px;
+}

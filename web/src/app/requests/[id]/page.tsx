@@ -1,9 +1,11 @@
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import BackButton from '@/components/BackButton';
 import BidsCommentsTab from './BidsCommentsTab';
 import styles from './RequestDetail.module.css';
 
@@ -91,11 +93,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         <main className={styles.container}>
             {/* Minimal back-button header — no global nav so bid/comment buttons aren't obscured */}
             <div className={styles.backHeader}>
-                <Link href="/requests" className={styles.backBtn} aria-label="Back">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6" />
-                    </svg>
-                </Link>
+                <BackButton className={styles.backBtn} />
                 <span className={styles.backTitle}>Request</span>
             </div>
 

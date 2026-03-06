@@ -17,13 +17,13 @@ export async function POST(
         const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
-                store: { select: { ownerId: true, name: true } },
+                seller: { select: { ownerId: true, name: true } },
                 buyer: { select: { id: true } },
             },
         });
 
         if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
-        if (order.store.ownerId !== session.user.id) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+        if (order.seller.ownerId !== session.user.id) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
         if (order.status !== 'CONFIRMED') return NextResponse.json({ message: 'Order must be in CONFIRMED state to mark as shipped' }, { status: 400 });
 
         await prisma.$transaction([
@@ -36,7 +36,7 @@ export async function POST(
                     userId: order.buyerId,
                     type: NotificationType.ORDER_SHIPPED,
                     title: 'Your Order Has Been Shipped!',
-                    body: `${order.store.name} has shipped your order. You can now confirm delivery once it arrives.`,
+                    body: `${order.seller.name} has shipped your order. You can now confirm delivery once it arrives.`,
                     link: `/orders`,
                 },
             }),

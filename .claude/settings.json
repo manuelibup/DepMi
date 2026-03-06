@@ -6,7 +6,12 @@
       "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Select-Object Id, CPU, WorkingSet, MainWindowTitle | Format-Table -AutoSize\")",
       "Bash(powershell -Command \"Stop-Process -Id 225380,229096,231180 -Force; Write-Output ''Killed all node processes''\")",
       "Bash(xargs grep -l \"OrderStatus\\\\|EscrowStatus\\\\|totalAmount\")",
-      "Bash(xargs grep -l \"Phase 3\\\\|Paystack\\\\|payment\\\\|escrow\")"
+      "Bash(xargs grep -l \"Phase 3\\\\|Paystack\\\\|payment\\\\|escrow\")",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\" /FO CSV)",
+      "Bash(tasklist.exe //FI \"IMAGENAME eq node.exe\" //FO CSV)",
+      "Bash(taskkill.exe //PID 231200 //F)",
+      "Bash(taskkill.exe //PID 318708 //F)",
+      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/.env.local\":*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

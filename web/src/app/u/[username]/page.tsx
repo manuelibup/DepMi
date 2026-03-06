@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import styles from './page.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
+import BackButton from '@/components/BackButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import ProfileProductsGrid from './ProfileProductsGrid';
@@ -92,11 +93,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 {/* Scrim for button legibility */}
                 <div className={styles.coverScrim} />
 
-                <Link href="/" className={styles.iconBtn} aria-label="Back">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6" />
-                    </svg>
-                </Link>
+                <BackButton className={styles.iconBtn} />
 
                 {isOwnProfile && (
                     <Link href="/settings" className={`${styles.iconBtn} ${styles.iconBtnRight}`} aria-label="Settings">

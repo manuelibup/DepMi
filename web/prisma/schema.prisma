@@ -78,6 +78,13 @@ enum PaymentRail {
   CRYPTO // WalletConnect → USDC on Base
 }
 
+enum StoreVerificationStatus {
+  UNVERIFIED // No docs submitted
+  PENDING    // Docs submitted, awaiting admin review
+  VERIFIED   // Admin approved — gets verified badge on storefront
+  REJECTED   // Admin rejected — can resubmit
+}
+
 enum Category {
   FASHION
   GADGETS
@@ -164,6 +171,9 @@ model User {
   productLikes    ProductLike[]
   savedProducts   SavedProduct[]
   storeFollows    StoreFollow[]    @relation("UserStoreFollows")
+  
+  conversations   Conversation[]   @relation("ConversationParticipants")
+  messagesSent    Message[]
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -249,6 +259,12 @@ model Store {
   preferredPayoutRail PaymentRail @default(NAIRA)
 
   isActive Boolean @default(true)
+
+  // Business verification (CAC / RC number)
+  verificationStatus StoreVerificationStatus @default(UNVERIFIED)
+  cacDocUrl          String? // Cloudinary URL of uploaded CAC certificate
+  rcNumber           String? // Corporate Affairs Commission RC number
+  tin                String? // Tax Identification Number (optional)
 
   // Subscription Details
   tier               StoreTier @default(TRIAL)
@@ -649,4 +665,38 @@ model StoreFollow {
   @@unique([userId, storeId])
   @@index([storeId, notify])
   @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NEW: DIRECT MESSAGING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Conversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants User[] @relation("ConversationParticipants")
+  messages     Message[]
+
+  // Cache for inbox list sorting and preview
+  lastMessageAt      DateTime @default(now())
+  lastMessagePreview String?
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  text           String       @db.Text
+  read           Boolean      @default(false)
+
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId, read])
 }

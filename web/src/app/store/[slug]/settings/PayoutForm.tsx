@@ -2,6 +2,47 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Full list of Nigerian banks — used as fallback when Monnify API is unavailable
+const NIGERIAN_BANKS = [
+    // ── Commercial Banks ──────────────────────────
+    { name: 'Access Bank',              code: '044' },
+    { name: 'Citibank Nigeria',         code: '023' },
+    { name: 'Ecobank Nigeria',          code: '050' },
+    { name: 'Fidelity Bank',            code: '070' },
+    { name: 'First Bank of Nigeria',    code: '011' },
+    { name: 'FCMB',                     code: '214' },
+    { name: 'Globus Bank',              code: '00103' },
+    { name: 'GTBank',                   code: '058' },
+    { name: 'Heritage Bank',            code: '030' },
+    { name: 'Jaiz Bank',                code: '301' },
+    { name: 'Keystone Bank',            code: '082' },
+    { name: 'Lotus Bank',               code: '303' },
+    { name: 'Polaris Bank',             code: '076' },
+    { name: 'Providus Bank',            code: '101' },
+    { name: 'Stanbic IBTC Bank',        code: '221' },
+    { name: 'Standard Chartered',       code: '068' },
+    { name: 'Sterling Bank',            code: '232' },
+    { name: 'SunTrust Bank',            code: '100' },
+    { name: 'Titan Trust Bank',         code: '102' },
+    { name: 'Union Bank',               code: '032' },
+    { name: 'UBA',                      code: '033' },
+    { name: 'Unity Bank',               code: '215' },
+    { name: 'Wema Bank',                code: '035' },
+    { name: 'Zenith Bank',              code: '057' },
+    // ── Neobanks & MMOs ───────────────────────────
+    { name: 'Carbon (One Finance)',     code: '565' },
+    { name: 'Eyowo',                    code: '50126' },
+    { name: 'FairMoney MFB',            code: '51318' },
+    { name: 'Kuda Bank',                code: '50211' },
+    { name: 'Moniepoint MFB',           code: '50515' },
+    { name: 'OPay',                     code: '304' },
+    { name: 'PalmPay',                  code: '999991' },
+    { name: 'Raven Bank',               code: '50746' },
+    { name: 'Rubies MFB',               code: '125' },
+    { name: 'Sparkle MFB',              code: '51310' },
+    { name: 'VFD Microfinance Bank',    code: '566' },
+];
+
 interface BankInfo {
     name: string;
     code: string;
@@ -50,14 +91,18 @@ export default function PayoutForm({ slug, initial }: Props) {
     const [saved, setSaved] = useState(false);
     const [saveError, setSaveError] = useState('');
 
-    // Load bank list on mount
+    // Load bank list on mount — fall back to static list if Monnify is unavailable
     useEffect(() => {
         fetch(`/api/store/${slug}/payout`)
             .then(r => r.json())
             .then(data => {
-                if (data.banks) setBanks(data.banks);
+                if (data.banks && data.banks.length > 0) {
+                    setBanks(data.banks);
+                } else {
+                    setBanks(NIGERIAN_BANKS);
+                }
             })
-            .catch(() => {});
+            .catch(() => setBanks(NIGERIAN_BANKS));
     }, [slug]);
 
     const resolveAccount = useCallback(async () => {

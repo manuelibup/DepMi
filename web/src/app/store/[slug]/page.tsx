@@ -159,51 +159,68 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     />
                 ) : (
                     <div className={styles.productsGrid}>
-                        {visibleProducts.map(product => (
-                            <Link
-                                key={product.id}
-                                href={`/p/${product.slug ?? product.id}`}
-                                className={`${styles.productCell} ${(!product.inStock && !product.isPortfolioItem) ? styles.productCellDim : ''}`}
-                            >
-                                <div className={styles.productImg}>
-                                    {product.images?.[0] ? (
-                                        <Image
-                                            src={product.images[0].url}
-                                            alt={product.title}
-                                            fill
-                                            style={{ objectFit: 'cover' }}
-                                            sizes="(max-width: 480px) 50vw, 240px"
-                                        />
-                                    ) : (
-                                        <div className={styles.productImgPlaceholder}>
-                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-                                        </div>
-                                    )}
+                        {visibleProducts.map(product => {
+                            const cellClass = `${styles.productCell} ${(!product.inStock && !product.isPortfolioItem) ? styles.productCellDim : ''}`;
+                            const cellContent = (
+                                <>
+                                    <div className={styles.productImg}>
+                                        {product.images?.[0] ? (
+                                            <Image
+                                                src={product.images[0].url}
+                                                alt={product.title}
+                                                fill
+                                                style={{ objectFit: 'cover' }}
+                                                sizes="(max-width: 480px) 50vw, 240px"
+                                            />
+                                        ) : (
+                                            <div className={styles.productImgPlaceholder}>
+                                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                                            </div>
+                                        )}
 
-                                    {/* Badges */}
-                                    {product.isFeatured && (
-                                        <span className={styles.featuredBadge}>★</span>
-                                    )}
-                                    {product.isPortfolioItem && (
-                                        <span className={styles.portfolioBadge}>Portfolio</span>
-                                    )}
-                                    {isOwner && !product.inStock && !product.isPortfolioItem && (
-                                        <span className={styles.outOfStockBadge}>Out of stock</span>
-                                    )}
-                                </div>
+                                        {/* Badges */}
+                                        {product.isFeatured && (
+                                            <span className={styles.featuredBadge}>★</span>
+                                        )}
+                                        {product.isPortfolioItem && (
+                                            <span className={styles.portfolioBadge}>Portfolio</span>
+                                        )}
+                                        {isOwner && !product.inStock && !product.isPortfolioItem && (
+                                            <span className={styles.outOfStockBadge}>Out of stock</span>
+                                        )}
+                                    </div>
 
-                                <div className={styles.productInfo}>
-                                    <p className={styles.productTitle}>{product.title}</p>
-                                    {product.isPortfolioItem ? (
-                                        <p className={styles.productEnquire}>Enquire</p>
-                                    ) : (
-                                        <p className={`${styles.productPrice} ${!product.inStock ? styles.productPriceDim : ''}`}>
-                                            {product.currency}{Number(product.price).toLocaleString()}
-                                        </p>
-                                    )}
+                                    <div className={styles.productInfo}>
+                                        <p className={styles.productTitle}>{product.title}</p>
+                                        {product.isPortfolioItem ? (
+                                            <p className={styles.productEnquire}>Enquire</p>
+                                        ) : (
+                                            <p className={`${styles.productPrice} ${!product.inStock ? styles.productPriceDim : ''}`}>
+                                                {product.currency}{Number(product.price).toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
+                                </>
+                            );
+
+                            return isOwner ? (
+                                <div key={product.id} className={cellClass}>
+                                    <Link href={`/p/${product.slug ?? product.id}`} style={{ display: 'contents' }}>
+                                        {cellContent}
+                                    </Link>
+                                    <Link
+                                        href={`/store/${store.slug}/products/${product.id}/edit`}
+                                        className={styles.productEditBtn}
+                                    >
+                                        ✏ Edit
+                                    </Link>
                                 </div>
-                            </Link>
-                        ))}
+                            ) : (
+                                <Link key={product.id} href={`/p/${product.slug ?? product.id}`} className={cellClass}>
+                                    {cellContent}
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
             </section>

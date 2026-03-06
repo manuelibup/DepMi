@@ -231,12 +231,45 @@ let _bankListCache: BankInfo[] | null = null
 
 export async function getBankList(): Promise<BankInfo[]> {
   if (_bankListCache) return _bankListCache
-  const body = await monnifyFetch('/api/v1/sdk/transactions/banks')
-  _bankListCache = (body as Array<{ name: string; code: string }>).map((b) => ({
-    name: b.name,
-    code: b.code,
-  }))
-  return _bankListCache!
+
+  try {
+    const body = await monnifyFetch('/api/v1/banks')
+    _bankListCache = (body as Array<{ name: string; code: string }>).map((b) => ({
+      name: b.name,
+      code: b.code,
+    }))
+    return _bankListCache!
+  } catch (error) {
+    console.warn('Monnify bank fetch failed, falling back to static list:', error)
+    
+    // Fallback list of major Nigerian banks so the UI never breaks during sandbox testing
+    _bankListCache = [
+      { name: 'Access Bank', code: '044' },
+      { name: 'Citibank', code: '023' },
+      { name: 'Ecobank', code: '050' },
+      { name: 'Fidelity Bank', code: '070' },
+      { name: 'First Bank of Nigeria', code: '011' },
+      { name: 'First City Monument Bank', code: '214' },
+      { name: 'Guaranty Trust Bank (GTB)', code: '058' },
+      { name: 'Heritage Bank', code: '030' },
+      { name: 'Keystone Bank', code: '082' },
+      { name: 'Kuda Bank', code: '50211' },
+      { name: 'Moniepoint Microfinance Bank', code: '50515' },
+      { name: 'OPay', code: '100004' },
+      { name: 'Palmpay', code: '100033' },
+      { name: 'Polaris Bank', code: '076' },
+      { name: 'Providus Bank', code: '101' },
+      { name: 'Stanbic IBTC Bank', code: '221' },
+      { name: 'Standard Chartered Bank', code: '068' },
+      { name: 'Sterling Bank', code: '232' },
+      { name: 'Union Bank of Nigeria', code: '032' },
+      { name: 'United Bank for Africa (UBA)', code: '033' },
+      { name: 'Unity Bank', code: '215' },
+      { name: 'Wema Bank', code: '035' },
+      { name: 'Zenith Bank', code: '057' }
+    ]
+    return _bankListCache!
+  }
 }
 
 /**
@@ -247,8 +280,16 @@ export async function resolveAccountName(
   accountNumber: string,
   bankCode: string,
 ): Promise<string> {
-  const body = await monnifyFetch(
-    `/api/v1/disbursements/account/validate?accountNumber=${accountNumber}&bankCode=${bankCode}`,
-  )
-  return body.accountName as string
+  try {
+    const body = await monnifyFetch(
+      `/api/v1/disbursements/account/validate?accountNumber=${accountNumber}&bankCode=${bankCode}`,
+    )
+    return body.accountName as string
+  } catch (error) {
+    if (API_KEY.startsWith('MK_TEST_')) {
+      console.warn('Monnify account validate failed in Sandbox, mocking name.', error)
+      return 'TEST VENDOR ACCOUNT'
+    }
+    throw error
+  }
 }

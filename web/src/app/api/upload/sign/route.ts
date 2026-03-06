@@ -3,6 +3,37 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { v2 as cloudinary } from 'cloudinary';
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_WINDOW = 20;
+
+// In-memory store: userId -> { count, resetAt }
+// Note: This works per-instance on Vercel. For global distribution, Redis is required,
+// but this sufficiently prevents basic runaway script abuse from a single session.
+const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now();
+  const userRateLimit = rateLimitCache.get(userId);
+
+  if (!userRateLimit) {
+    rateLimitCache.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (now > userRateLimit.resetAt) {
+    rateLimitCache.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (userRateLimit.count >= MAX_REQUESTS_PER_WINDOW) {
+    return true;
+  }
+
+  userRateLimit.count += 1;
+  return false;
+}
+
 // Note: Ensure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET are in .env.local
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
@@ -16,6 +47,10 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (isRateLimited(session.user.id)) {
+      return NextResponse.json({ message: 'Too many requests. Please try again later.' }, { status: 429 });
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000);
