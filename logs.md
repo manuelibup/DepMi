@@ -1878,3 +1878,28 @@ Comprehensive code review performed across all API routes, auth, schema, compone
 
 ### Outcome
 6 critical production security bugs eliminated. Registration, phone verification, and auth are now race-condition-safe and fail loudly on missing config instead of silently. Schema is tightened with unique constraints on KYC credential references.
+
+---
+
+## Session 48 — Mar 7, 2026 — Multi-media DMs & Advanced Social Loops
+**Agent:** Antigravity (Claude 3.7 Sonnet)
+**Human:** Manuel
+
+### What was done:
+- **Multi-media Messaging Engine:** Revamped the DM system to support more than just text.
+    - **Schema Update:** Added `MessageType` enum (TEXT, IMAGE, AUDIO, STICKER) and `mediaUrl` field to the `Message` model.
+    - **Cloudinary Integration:** Enabled direct-to-Cloudinary uploads for images and voice notes within the chat view.
+    - **Audio Support:** Integrated a native `VoiceRecorder` component for sending audio messages.
+    - **Sticker Support:** Initial scaffolding for stickers/emojis with interactive tray.
+- **Linked Product Ecosystem:**
+    - **Referral Notifications:** Comments now parse `[product:id]` syntax. When a user links a product, the store owner is automatically notified via a `MENTION` alert.
+    - **Author Context:** Comments now include `avatarUrl` in the author payload for better personality in the feed.
+- **Premium Sharing Experience:**
+    - **Share Sheet:** Ported the custom multi-platform share sheet (WhatsApp, X, Facebook, Copy Link) to the `ProductCard`.
+    - **UX Polish:** Added Escape-key listeners and click-away dismissal for the share overlay.
+- **Social Notification Loops:**
+    - **Likes & Saves:** Implemented backend triggers to notify store owners whenever their product is Liked or Saved to a Wishlist.
+- **Bug Fixes:** Resolved the "User ID is required" error in the product detail enclave by ensuring `ownerId` is always selected in the Prisma product query.
+
+### Outcome:
+Direct Messaging is now a rich, multi-media experience. The "mention" loop is closed, allowing vendors to be notified when their products are discussed/linked, significantly increasing the "sticky" nature of the platform.

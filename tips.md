@@ -249,3 +249,24 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   ```
 - **Build safety:** Unlike top-level `throw` (which can crash the Vercel build per Tip 11), IIFEs inside `authOptions` are only evaluated at request time in Next.js App Router's Node.js runtime, not during static analysis. Safe for Vercel builds **as long as the env var IS set in Vercel's project settings** (which it must be for OAuth to work anyway).
 - **For non-auth files** (regular API routes): put env var checks inside the handler function body, not at the module level.
+
+---
+
+## 🎙️ 17. Multi-media DMs: Handling Blobs & Cloudinary Signatures
+
+*This tip was added after implementing multi-media support (Audio/Images) in the chat engine.*
+
+- **The Issue**: Sending local audio blobs or image files requires a multi-step handshake.
+- **The Fix**: 
+    1. Capture the media (e.g., `VoiceRecorder` blob or `CloudinaryUploader` file).
+    2. Fetch a temporary signature from `/api/upload/sign`.
+    3. Upload directly to Cloudinary from the client to keep Vercel functions lean.
+    4. Pass the resulting `secure_url` to your `POST /api/messages` handler.
+- **Pro Tip**: Use an `optimisticSend` pattern where the UI clears immediately, but keep a `sending` state to prevent double-posts of large media files.
+
+## 🔗 18. Regex Parsing for Store Owner Notifications
+
+*This tip was added after building the product-linking notification system.*
+
+- **The Pattern**: When parsing text for mentions like `[product:id]`, use `Array.from(new Set<string>(text.match(/regex/g)?.map(...)))` to ensure you only notify a store owner *once* per comment, even if their product is linked multiple times.
+- **The Query**: Use `prisma.product.findMany({ where: { id: { in: ids } }, select: { store: { select: { ownerId: true } } } })` for a high-performance, single-query lookup of all notification targets.

@@ -51,11 +51,16 @@ const tipsContent = `
 `;
 
 // Updating agent.md (Data Architecture & Roadmap)
-let agentPath = 'c:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\agent.md';
+const agentPath = 'c:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\agent.md';
 let agentData = fs.readFileSync(agentPath, 'utf8');
 
-// Update Message model description
-agentData = agentData.replace(/- **Message** — .*/, '- **Message** — `{ id, conversationId, senderId, text?, type, mediaUrl?, read, createdAt }`. Supports multi-media: TEXT, IMAGE, AUDIO, STICKER.');
+// Update Message model description - using simple string index for safer replacement
+const messageLineStart = agentData.indexOf('- **Message** —');
+if (messageLineStart !== -1) {
+    const nextLineEnd = agentData.indexOf('\\n', messageLineStart);
+    const newLine = '- **Message** — `{ id, conversationId, senderId, text?, type, mediaUrl?, read, createdAt }`. Supports multi-media: TEXT, IMAGE, AUDIO, STICKER.';
+    agentData = agentData.substring(0, messageLineStart) + newLine + agentData.substring(nextLineEnd);
+}
 
 // Mark Phase 4 as complete
 agentData = agentData.replace(/### \*\*Phase 4: Social Connectivity \(Week 7\)\*\*/, '### **Phase 4: Social Connectivity (Week 7)** ✅ *Complete.*');
@@ -63,14 +68,16 @@ agentData = agentData.replace(/### \*\*Phase 4: Social Connectivity \(Week 7\)\*
 fs.writeFileSync(agentPath, agentData);
 
 // Updating task.md
-let taskPath = 'c:\\\\Users\\\\web5Manuel\\\\.gemini\\\\antigravity\\\\brain\\\\1b463276-a4c9-4867-9af5-bce3018d52ee\\\\task.md';
+const taskPath = 'c:\\\\Users\\\\web5Manuel\\\\.gemini\\\\antigravity\\\\brain\\\\1b463276-a4c9-4867-9af5-bce3018d52ee\\\\task.md';
 let taskData = fs.readFileSync(taskPath, 'utf8');
 
 // Mark current tasks as complete
 taskData = taskData.replace('- [x] Build the frontend `<CommentSection />` UI logic to utilize the new `Comment` schema.', '- [x] Build the frontend `<CommentSection />` UI logic (Mentions, Product Links, Notifications).');
-taskData += '\\n- [x] Implement Multi-media Direct Messaging (Images, Audio, Stickers).';
-taskData += '\\n- [x] Integrate custom ShareSheet for ProductCards.';
-taskData += '\\n- [/] Phase 5: Financial Settlements & Escalated Trust (Next Priority).';
+if (!taskData.includes('Implement Multi-media Direct Messaging')) {
+    taskData += '\\n- [x] Implement Multi-media Direct Messaging (Images, Audio, Stickers).';
+    taskData += '\\n- [x] Integrate custom ShareSheet for ProductCards.';
+    taskData += '\\n- [/] Phase 5: Financial Settlements & Escalated Trust (Next Priority).';
+}
 
 fs.writeFileSync(taskPath, taskData);
 
