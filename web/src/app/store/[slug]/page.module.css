@@ -29,9 +29,46 @@
 .coverScrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, transparent 60%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 60%);
     pointer-events: none;
     z-index: 1;
+}
+
+.topActions {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.rightActions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.iconBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    border: none;
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+    background: rgba(0, 0, 0, 0.65);
+    transform: scale(1.05);
 }
 
 /* ── Identity ─────────────────────────────────────────── */
@@ -45,10 +82,9 @@
 /* Logo row: logo pulled up over cover, owner actions aligned to bottom */
 .logoRow {
     display: flex;
-    justify-content: space-between;
     align-items: flex-end;
     margin-top: -44px;
-    margin-bottom: 14px;
+    margin-bottom: 20px;
 }
 
 .logo {
@@ -72,44 +108,6 @@
     color: var(--primary);
 }
 
-/* Owner action chips */
-.ownerActions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-}
-
-.actionChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 7px 14px;
-    border-radius: 999px;
-    border: 1.5px solid var(--card-border);
-    background: var(--card-bg);
-    color: var(--text-main);
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
-    white-space: nowrap;
-}
-
-.actionChip:hover {
-    background: var(--bg-hover);
-}
-
-.actionChipPrimary {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: rgba(0, 200, 83, 0.06);
-}
-
-.actionChipPrimary:hover {
-    background: rgba(0, 200, 83, 0.12);
-}
 
 /* Store name + verification badges */
 .storeName {
@@ -204,14 +202,14 @@
 
 .productsSection {
     border-top: 1px solid var(--card-border);
-    padding-top: 4px;
+    padding: 24px 20px;
 }
 
 /* 2-col grid (store has more detail per item than profile's 3-col) */
 .productsGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 2px;
+    gap: 12px;
 }
 
 .productCell {
@@ -221,6 +219,8 @@
     flex-direction: column;
     background: var(--bg-elevated);
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
 }
 
 .productCellDim {
@@ -340,4 +340,26 @@
     color: var(--text-muted);
     font-style: italic;
     margin: 0;
+}
+
+/* ── Mobile Responsiveness ────────────────────────────── */
+
+@media (max-width: 480px) {
+    .logoRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-top: -40px;
+    }
+
+    .ownerActions {
+        justify-content: flex-start;
+        width: 100%;
+        padding-bottom: 0;
+    }
+
+    .actionChip {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
 }

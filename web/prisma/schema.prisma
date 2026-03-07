@@ -684,6 +684,13 @@ model Conversation {
   lastMessagePreview String?
 }
 
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  STICKER
+}
+
 model Message {
   id             String       @id @default(uuid())
   conversationId String
@@ -692,7 +699,10 @@ model Message {
   senderId       String
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
-  text           String       @db.Text
+  text           String?      @db.Text
+  type           MessageType  @default(TEXT)
+  mediaUrl       String?      // Cloudinary URL for image/audio/sticker
+  
   read           Boolean      @default(false)
 
   createdAt      DateTime     @default(now())

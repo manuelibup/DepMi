@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import ProfileProductsGrid from './ProfileProductsGrid';
+import ProfileMessageButton from './ProfileMessageButton';
 
 interface ProfilePageProps {
     params: Promise<{ username: string }>;
@@ -93,16 +94,22 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 {/* Scrim for button legibility */}
                 <div className={styles.coverScrim} />
 
-                <BackButton className={styles.iconBtn} />
-
-                {isOwnProfile && (
-                    <Link href="/settings" className={`${styles.iconBtn} ${styles.iconBtnRight}`} aria-label="Settings">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                        </svg>
-                    </Link>
-                )}
+                <div className={styles.topActions}>
+                    <BackButton className={styles.iconBtn} />
+                    <div className={styles.rightActions}>
+                        <button className={styles.iconBtn} aria-label="Search">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </button>
+                        {isOwnProfile && (
+                            <Link href="/settings" className={styles.iconBtn} aria-label="Settings">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                            </Link>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* ── Identity ──────────────────────────────── */}
@@ -122,7 +129,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
                     {isOwnProfile ? (
                         <Link href="/settings" className={styles.editBtn}>Edit profile</Link>
-                    ) : null}
+                    ) : (
+                        <ProfileMessageButton targetUserId={user.id} />
+                    )}
                 </div>
 
                 {/* Name + handle */}
@@ -137,6 +146,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <span className={styles.tierChip}>{tierLabel}</span>
                     <span className={styles.metaSep}>·</span>
                     <span className={styles.metaText}>{joinDate}</span>
+                    <span className={styles.metaSep}>·</span>
+                    <span className={styles.metaText}>{user.depCount} deps</span>
                     {userStore && (
                         <>
                             <span className={styles.metaSep}>·</span>

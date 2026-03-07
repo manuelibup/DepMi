@@ -60,10 +60,12 @@ export async function POST(
 
     const { id } = await params;
     const body = await req.json();
-    const text = (body.text ?? '').trim();
+    const text = body.text?.trim() || null;
+    const type = body.type || 'TEXT';
+    const mediaUrl = body.mediaUrl || null;
 
-    if (!text) {
-        return NextResponse.json({ message: 'Message text required' }, { status: 400 });
+    if (!text && !mediaUrl) {
+        return NextResponse.json({ message: 'Message content required' }, { status: 400 });
     }
 
     // Security check
@@ -80,16 +82,24 @@ export async function POST(
         data: {
             conversationId: id,
             senderId: session.user.id,
-            text
+            text,
+            type,
+            mediaUrl
         }
     });
+
+    // Determine preview text
+    let preview = text || '';
+    if (type === 'IMAGE') preview = '📷 Photo';
+    if (type === 'AUDIO') preview = '🎤 Voice message';
+    if (type === 'STICKER') preview = '✨ Sticker';
 
     // Update conversation sorting and preview
     await prisma.conversation.update({
         where: { id },
         data: {
             lastMessageAt: message.createdAt,
-            lastMessagePreview: text.length > 50 ? text.substring(0, 50) + '...' : text
+            lastMessagePreview: preview.length > 50 ? preview.substring(0, 50) + '...' : preview
         }
     });
 

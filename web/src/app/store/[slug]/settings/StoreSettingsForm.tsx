@@ -37,7 +37,7 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
         setMsg({ text: '', type: '' });
 
         try {
-            const res = await fetch(`/api/store/${store.id}`, {
+            const res = await fetch(`/api/store/${store.slug}/settings`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

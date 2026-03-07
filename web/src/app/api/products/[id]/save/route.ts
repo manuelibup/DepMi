@@ -22,6 +22,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ saved: false });
     } else {
       await prisma.savedProduct.create({ data: { userId, productId: id } });
+      
+      const product = await prisma.product.findUnique({
+          where: { id },
+          select: { title: true, store: { select: { ownerId: true } } }
+      });
+      
+      if (product && product.store.ownerId !== userId) {
+          await prisma.notification.create({
+              data: {
+                  userId: product.store.ownerId,
+                  type: 'SYSTEM',
+                  title: 'Product Saved',
+                  body: `Someone saved your product '${product.title}' to their wishlist.`,
+                  link: `/p/${id}`
+              }
+          }).catch(() => {});
+      }
+      
       return NextResponse.json({ saved: true });
     }
   } catch (error) {

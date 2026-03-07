@@ -52,7 +52,7 @@ export async function POST(
             productId,
         },
         include: {
-            author: { select: { displayName: true, username: true } }
+            author: { select: { displayName: true, username: true, avatarUrl: true } }
         }
     });
 
@@ -91,6 +91,34 @@ export async function POST(
         if (notifyData.length > 0) {
             await prisma.notification.createMany({
                 data: notifyData
+            }).catch(() => {});
+        }
+    }
+
+    // Extract product links [product:<id>] and notify those store owners
+    const productLinks = Array.from(new Set<string>(text.match(/\[product:([a-zA-Z0-9_\-]+)\]/g)?.map((m: string) => m.substring(9, m.length - 1)) || []));
+    if (productLinks.length > 0) {
+        const linkedProducts = await prisma.product.findMany({
+            where: { id: { in: productLinks } },
+            select: { title: true, store: { select: { ownerId: true } } }
+        });
+
+        const notifyData = linkedProducts
+            .filter(p => p.store.ownerId !== session.user.id && p.store.ownerId !== storeOwnerId) // Don't notify the commenter or the owner of the current product if they are the same
+            .map(p => ({
+                userId: p.store.ownerId,
+                type: NotificationType.MENTION,
+                title: `${comment.author.displayName} linked your product`,
+                body: `Your product '${p.title}' was mentioned in a comment.`,
+                link: `/p/${productId}`,
+            }));
+            
+        // Filter out duplicate owners if multiple products from the same owner were linked
+        const uniqueNotifyData = notifyData.filter((v, i, a) => a.findIndex(t => (t.userId === v.userId)) === i);
+
+        if (uniqueNotifyData.length > 0) {
+            await prisma.notification.createMany({
+                data: uniqueNotifyData
             }).catch(() => {});
         }
     }

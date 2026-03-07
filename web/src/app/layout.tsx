@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "The social commerce platform for African entrepreneurs. Discover products, request what you need, and transact with trust.",
   icons: {
-    icon: '/depmi_dm_logo.png',
+    icon: '/depmi-logo.png',
   },
   alternates: {
     canonical: '/',

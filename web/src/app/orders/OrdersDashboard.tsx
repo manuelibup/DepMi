@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import styles from './page.module.css';
 
@@ -12,7 +13,7 @@ interface OrderItem {
     escrowStatus: string;
     total: number;
     createdAt: string;
-    product: { title: string; images: { url: string }[] };
+    product: { id: string; title: string; images: { url: string }[] };
     store?: { name: string };
     buyer?: { displayName: string; username: string };
 }
@@ -113,7 +114,7 @@ function OrderCard({ order, role, onStatusChange }: {
                         {statusLabel(localStatus)}
                     </span>
                 </div>
-                <div className={styles.orderItem}>
+                <Link href={order.product.id ? `/p/${order.product.id}` : '#'} className={styles.orderItem} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className={styles.itemImage}>
                         {image ? (
                             <Image src={image} alt={order.product.title} width={64} height={64} style={{ objectFit: 'cover', borderRadius: '12px' }} />
@@ -130,7 +131,7 @@ function OrderCard({ order, role, onStatusChange }: {
                         </p>
                         <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
                     </div>
-                </div>
+                </Link>
 
                 {/* Buyer actions */}
                 {role === 'buyer' && localStatus === 'SHIPPED' && (

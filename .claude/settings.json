@@ -11,12 +11,18 @@
       "Bash(tasklist.exe //FI \"IMAGENAME eq node.exe\" //FO CSV)",
       "Bash(taskkill.exe //PID 231200 //F)",
       "Bash(taskkill.exe //PID 318708 //F)",
-      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/.env.local\":*)"
+      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/.env.local\":*)",
+      "Bash(taskkill.exe //PID 387348 //F)",
+      "Bash(npm install @sentry/nextjs)",
+      "Bash(git -C \"c:/Users/web5Manuel/OneDrive/Documents/DepMi\" status)",
+      "Bash(git -C \"c:/Users/web5Manuel/OneDrive/Documents/DepMi\" log --oneline -5)",
+      "Bash(git add agent.md logs.md tips.md web/.env.example web/prisma/schema.prisma web/src/lib/auth.ts web/src/app/api/auth/register/route.ts web/src/app/api/auth/send-phone-otp/route.ts web/src/app/api/auth/verify-phone-otp/route.ts web/src/app/api/invite/accept/route.ts web/next.config.ts web/package.json web/package-lock.json web/src/app/api/banks/resolve/route.ts web/src/app/api/checkout/initialize/route.ts web/src/app/api/demands/[id]/comments/route.ts web/src/app/api/messages/[id]/route.ts web/src/app/api/products/[id]/comments/route.ts web/src/app/api/products/[id]/like/route.ts web/src/app/api/products/[id]/save/route.ts web/src/app/checkout/[id]/ClientCheckoutForm.tsx web/src/app/checkout/[id]/page.module.css web/src/app/layout.tsx web/src/app/messages/[id]/ChatClient.tsx web/src/app/messages/[id]/page.module.css web/src/app/messages/[id]/page.tsx web/src/app/messages/page.module.css web/src/app/messages/page.tsx web/src/app/orders/OrdersDashboard.tsx web/src/app/orders/page.tsx \"web/src/app/p/[id]/page.tsx\" web/src/app/requests/[id]/CommentSection.tsx web/src/app/requests/[id]/page.tsx \"web/src/app/store/[slug]/page.module.css\" \"web/src/app/store/[slug]/page.tsx\" \"web/src/app/store/[slug]/settings/StoreSettingsForm.tsx\" \"web/src/app/u/[username]/page.tsx\" web/src/components/EmptyState/EmptyState.module.css web/src/components/Header/Header.module.css web/src/components/Header/index.tsx web/src/components/ProductCard/ProductCard.module.css web/src/components/ProductCard/index.tsx web/src/lib/monnify.ts web/src/lib/prisma.ts web/public/depmi-logo.png web/public/depmi-logo.svg web/public/depmi_dm_logo.png web/public/depmi_logo.png \"web/src/app/favicon.ico\" web/src/app/icon.png web/src/components/BottomNav/BottomNav.module.css web/src/components/BottomNav/index.tsx \"web/src/app/api/messages/unread-count/\" \"web/src/app/api/store/[slug]/route.ts\" \"web/src/app/p/[id]/EnquireButton.tsx\" \"web/src/app/u/[username]/ProfileMessageButton.tsx\" \"web/src/components/BackButton/\" web/src/components/VoiceRecorder.tsx web/src/instrumentation.ts web/src/lib/encryption.ts web/sentry.client.config.ts web/sentry.edge.config.ts web/sentry.server.config.ts .claude/settings.json)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\products\\[id]",
-      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\orders\\[id]"
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\orders\\[id]",
+      "C:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi"
     ]
   }
 }

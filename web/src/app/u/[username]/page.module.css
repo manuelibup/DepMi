@@ -30,33 +30,46 @@
 .coverScrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, transparent 60%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 60%);
     pointer-events: none;
     z-index: 1;
 }
 
-.iconBtn {
+.topActions {
     position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 2;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(6px);
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
+
+.rightActions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.iconBtn {
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
     color: #fff;
     border: none;
+    backdrop-filter: blur(8px);
     cursor: pointer;
-    transition: background var(--transition-fast);
-    text-decoration: none;
+    transition: all var(--transition-fast);
 }
 
 .iconBtn:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.65);
+    transform: scale(1.05);
 }
 
 .iconBtnRight {

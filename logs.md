@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 48 — Mar 7, 2026 — Business Strategy, Security Audit & Critical Fixes](#session-48--mar-7-2026--business-strategy-security-audit--critical-fixes)
 - [Session 43 — Mar 4, 2026 — Social Interactions, Comments Engine & Product Slugs](#session-43--mar-4-2026--social-interactions-comments-engine--product-slugs)
 - [Session 1 — Feb 26, 2026 (Pre-dawn)](#session-1--feb-26-2026-pre-dawn)
 - [Session 2 — Feb 26, 2026 (07:00 WAT)](#session-2--feb-26-2026-0700-wat)
@@ -1799,3 +1800,81 @@ Phase 4 features are now fully implemented from the database layer to the fronte
 
 ### Outcome:
 All Vercel deployment blockers have been resolved. `npm run build` exits smoothly and `npx tsc --noEmit` returns zero errors.
+
+---
+
+## Session 47 — Mar 6, 2026 — UI Polish & Feature Fixes
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What was done:
+- **Share Sheet Custom Component:** Ported the `ShareSheet` component from `DemandCard` to `ProductCard`. Replaced the native `navigator.share` implementation with a unified multi-platform share sheet (WhatsApp, X, Facebook, Copy Link) complete with an alert/toast fallback for clipboard interactions.
+- **Product Card Styling:** Updated `.layer`, `.shareOverlay`, and `.shareSheet` CSS inside `ProductCard.module.css` to match standard DepMi aesthetics. 
+- **Header & Branding Enhancements:** Increased the size of the DepMi Logo image (from 32px to 44px width/height) and the `DepMi` text font-weight and size in the `Header` component for a more premium, confident brand presence. Attached a `<Link href="/">` wrap around the logo.
+- **Header Actions UI:** Added a Messages icon link (`/messages`) and Notification icon link to the Header.
+- **Checkout Page UI Fixes:** Eliminated unwanted horizontal scrolling on mobile/desktop viewports by enforcing `width: 100%`, `overflow-x: hidden`, and `box-sizing: border-box` on the `.main` and `.footer` wrappers of `/checkout/[id]`. Truncated "Proceed to Bank Transfer" text to "Pay via Transfer" for smaller screens.
+- **Checkout Client Form:** Human user added a `saveDetails` checkbox function to conditionally save delivery parameters (`phone`, `addressLine`, `city`, `stateVal`) into the Database when checking out.
+- **Store Details UI Alignment:** Refined `/store/[slug]/page.module.css`. Prevented product cells from touching the screen's literal edges by introducing container padding, increased `.productsGrid` gap, and added a soft `border-radius` and `border` to `.productCell`.
+- **Desktop UI Constraints:** Wrapped the Product Detail Page (`/p/[id]/page.tsx`) in a `<div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>` to prevent the product image and page content from uselessly stretching edge-to-edge on large desktop monitors.
+- **Order Dashboard Decimal Crash Resolving:** Fixed a Next.js 500 error on `/orders` where complex objects like `Prisma.Decimal` were being passed from Server to Client component. Rewrote the `serialise()` helper to strip away Prisma prototypes and mapped explicitly clean objects consisting of strings and numbers.
+- **Interactive Order Cards:** Wrapped the `OrderCard` inside `/orders` with a `next/link` that dynamically directs back to `/p/[id]` so buyers can easily re-check the original product details.
+
+### Outcome:
+The core buyer interface is heavily polished. The web-app effectively mimics native mobile-app constraints on desktop sizes and doesn't break out of its container boundaries. The platform is ready for further testing.
+
+---
+
+## Session 48 — Mar 7, 2026 — Business Strategy, Security Audit & Critical Fixes
+**Agent:** Antigravity (Claude Sonnet 4.6)
+**Human:** Manuel
+
+### Part A — Business Strategy Q&A
+A full founder strategy session covering company formation, co-founders, investment, and equity. All outputs saved to `files/startup-reference.md` for permanent reference.
+
+- **Company Registration Timing:** Domain first (now), CAC before onboarding any co-founder or investor. No need to register before building.
+- **Co-founders:** 2–3 is investor-preferred. Use 4-year vesting with 1-year cliff for all co-founders. Co-founder conflicts are a top-3 startup killer — pick for skill gaps, not optics.
+- **CAC Type:** Private Limited Company (Ltd) — not Business Name. Ltd supports shareholder structure, limited liability, and investor-friendly cap table.
+- **Company Structure:** Register **DepMi Ltd** directly now. Defer MiTE Holdings structure until Year 2–3 (second product or first funding round). The holding company is valid long-term but adds unnecessary complexity now.
+- **Startup Costs (Nigeria):** ₦300,000–₦400,000 covers 3-month runway: domain (~₦20K), CAC Ltd (~₦150K), and monthly subscriptions (Vercel, Google Workspace, etc. ~₦150K).
+- **Friends/Family Funding:** Use a **simple loan agreement** (principal + 20% flat fee, repayable on first investment or 24 months). Do not give equity for amounts under ₦500K — it creates cap table mess that repels real investors.
+- **Loan Agreement Template:** Plain-English, Nigeria-governed template created in `files/startup-reference.md`.
+- **Pre-Seed Investment Ask:** $100K–$150K for 10–15% equity. SAFE note preferred to avoid fixing valuation before traction. Raise after getting 10–50 beta users.
+- **Equity Split (3 co-founders):** Lead 45–55%, Co-founder 2: 20–25%, Co-founder 3: 15–20%, ESOP 10–15%. Retain >50% after first round.
+- **Ltd vs LLC vs Inc:** Nigerian Ltd = US LLC (both limit personal liability). US Inc (C-Corp) = Plc structure, preferred by US VCs for IPO path. For DepMi now: Nigerian Ltd is correct.
+- **Wyoming LLC:** Legitimate for African founders — no state income tax, US banking via Mercury/Relay, EIN via IRS Form SS-4. Best used as a holding company above Nigerian Ltd when raising from US investors. Requires CAMA 2020 compliance (register as foreign company or have Nigerian subsidiary).
+- **Trademark vs Patent vs CAC:** CAC = company exists legally. Trademark = brand identity protection (name/logo). Patent = novel technical invention. Cannot patent "social ecommerce feed" — business method, not patentable in Nigeria; prior art globally (Instagram, TikTok Shop). Trademark the brand post-funding.
+
+### Part B — Full Codebase Security Audit
+Comprehensive code review performed across all API routes, auth, schema, components, and dependencies.
+
+**Audit findings (summarised):**
+- 6 critical, 6 high, multiple medium/minor issues
+- Architecture rated solid — good Prisma patterns, correct bcrypt, JWT strategy, no adapter
+- Key concerns: silent env var failures, logic bugs, race conditions, mock KYC in prod path
+
+### Part C — Critical Security Fixes Applied
+
+| Fix | File | Detail |
+|---|---|---|
+| Termii logic bug | `verify-phone-otp/route.ts:67` | Operator precedence: `!A \|\| B !== C && B !== D` evaluated wrong. Rewritten with explicit `isVerified` bool |
+| Google OAuth silent failure | `auth.ts:33-34` | `\|\| ""` replaced with IIFE that throws if env var missing |
+| TERMII_API_KEY not validated | `send-phone-otp/route.ts` | Returns 503 immediately if key not set, instead of sending `api_key: undefined` to Termii |
+| Mock KYC in production | `invite/accept/route.ts` | Blocked with `NODE_ENV === 'production' && !DOJAH_API_KEY` guard |
+| TOCTOU race on registration | `register/route.ts` | Removed pre-check queries; now relies on DB `@unique` constraints + catches `P2002` with field-specific messages |
+| Phone verification race condition | `verify-phone-otp/route.ts` | `tx: any` removed; outer `catch` now handles `P2002` for concurrent phone claim |
+| `catch (error: any)` | `register/route.ts` | Replaced with `error: unknown` + proper type narrowing via `instanceof z.ZodError` and `instanceof Prisma.PrismaClientKnownRequestError` |
+| Missing `@unique` on KYC fields | `schema.prisma` | Added `@unique` to `ninRef`, `bvnRef`, `cacNumber` — prevents duplicate credential references |
+
+### Part D — Environment & Infrastructure
+- **`.env.example` created** at `web/.env.example` — documents all 12 required env vars with comments and links to each service provider.
+
+### Action Required
+- `npx prisma db push` — apply `@unique` constraints on `ninRef`, `bvnRef`, `cacNumber` to Neon DB.
+
+### Validations Run
+- TypeScript: no new `any` types introduced; all catch blocks use `error: unknown`
+- No new files created beyond `.env.example` and `files/startup-reference.md`
+- All edits are surgical (no refactors beyond scope of each fix)
+
+### Outcome
+6 critical production security bugs eliminated. Registration, phone verification, and auth are now race-condition-safe and fail loudly on missing config instead of silently. Schema is tightened with unique constraints on KYC credential references.

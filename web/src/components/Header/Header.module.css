@@ -12,23 +12,31 @@
     border-bottom: 1px solid var(--card-border);
 }
 
-.logo {
+.logoWrap {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Slightly tighter gap for a unified look */
+    text-decoration: none; /* Strip underline from the Link */
+    transition: opacity 0.2s ease;
 }
 
-.logoMark svg {
-    width: 32px;
-    height: 32px;
+.logoWrap:hover {
+    opacity: 0.8;
+}
+
+.logoMark {
     display: block;
+    /* Optional: apply a subtle drop shadow to the image if it fits the brand */
+    filter: drop-shadow(0px 2px 4px rgba(0, 230, 118, 0.2));
 }
 
 .logoText {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--text-main);
+    font-size: 26px;
+    font-family: inherit;
+    font-weight: 500; /* Thinner weight so the bold logo pops */
+    letter-spacing: -0.8px; /* Tighter kerning makes it look more tailored/premium */
+    margin: 0;
+    line-height: 1;
     background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

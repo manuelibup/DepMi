@@ -80,7 +80,13 @@
     padding: 20px 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; /* Tighter gap for bubbles */
+    background-color: #0b141a;
+    background-image: 
+        radial-gradient(rgba(255,255,255,0.03) 1px, transparent 0),
+        radial-gradient(rgba(255,255,255,0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+    background-position: 0 0, 12px 12px;
 }
 
 .messageRow {
@@ -97,13 +103,14 @@
 }
 
 .bubble {
-    max-width: 80%;
-    padding: 10px 14px;
-    border-radius: 18px;
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-size: 0.95rem;
     line-height: 1.4;
     word-break: break-word;
     position: relative;
+    box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
 }
 
 .messageRow.me .bubble {
@@ -113,25 +120,55 @@
 }
 
 .messageRow.other .bubble {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
-    color: var(--text-main);
+    background: #202c33;
+    color: #e9edef;
     border-bottom-left-radius: 4px;
+}
+
+.productLink {
+    display: block;
+    margin-top: 8px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: background 0.2s;
+}
+
+.messageRow.other .productLink {
+    background: var(--bg-hover);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.productLink:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.mediaContainer {
+    margin-bottom: 4px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.1);
+}
+
+.chatImage {
+    display: block;
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: cover;
 }
 
 .time {
     font-size: 0.65rem;
     margin-top: 4px;
     text-align: right;
-    opacity: 0.7;
-}
-
-.messageRow.me .time {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.messageRow.other .time {
-    color: var(--text-muted);
+    color: rgba(233, 237, 239, 0.6);
 }
 
 .inputArea {
@@ -210,6 +247,221 @@
     transform: scale(1.05);
 }
 
-.sendBtn:not(:disabled):active {
-    transform: scale(0.95);
+.attachTrigger {
+    background: none;
+    border: none;
+    padding: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.attachTrigger:hover {
+    color: var(--primary);
+}
+
+.micBtn {
+    background: none;
+    border: none;
+    padding: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.micBtn:hover {
+    color: var(--primary);
+}
+
+.attachmentMenu {
+    position: absolute;
+    bottom: 80px;
+    left: 16px;
+    right: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 20;
+}
+
+.attachmentBtn {
+    padding: 12px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.attachmentBtn:hover {
+    background: var(--bg-hover);
+}
+
+.voiceMessageLayout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+    min-width: 220px;
+}
+
+.voiceAvatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.voiceAvatar img, .avatarPlaceholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.micBadge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: var(--primary);
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-elevated);
+}
+
+.voiceControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.playBtn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.playBtn:hover {
+    transform: scale(1.1);
+}
+
+.waveformContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.waveform {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.waveBar {
+    flex: 1;
+    background: var(--text-muted);
+    border-radius: 1px;
+    opacity: 0.4;
+    min-height: 2px;
+}
+
+.me .waveBar {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.me .activeWaveBar {
+    background: #fff;
+}
+
+.voiceMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.duration {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.me .duration {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    background: #007AFF; /* Standard blue for unread voice */
+    border-radius: 50%;
+}
+
+.stickerSelection {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: var(--bg-hover);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.stickerItem {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stickerItem img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.stickerItem:hover {
+    transform: scale(1.2);
+}
+
+.stickerImage {
+    max-width: 120px;
+    height: auto;
+}
+
+.msgText {
+    margin-top: 4px;
 }

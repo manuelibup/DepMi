@@ -229,3 +229,115 @@
 .chatBtn:active {
     transform: scale(0.97);
 }
+
+/* ── Share sheet ──────────────────────────────────────── */
+
+.shareOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 150ms ease-out both;
+}
+
+.shareSheet {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px 32px;
+    animation: slideUp 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sheetHandle {
+    width: 36px;
+    height: 4px;
+    background: var(--card-border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.sheetTitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 14px;
+}
+
+.sheetSubtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: -8px 0 18px;
+}
+
+.sheetOptions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.sheetOption {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: opacity var(--transition-fast);
+}
+
+.sheetOption:hover {
+    opacity: 0.8;
+}
+
+.sheetOptionCopied {
+    color: var(--primary);
+}
+
+.sheetIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--card-border);
+}
+
+.sheetCancel {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    border: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.sheetCancel:hover {
+    background: var(--bg-hover);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}

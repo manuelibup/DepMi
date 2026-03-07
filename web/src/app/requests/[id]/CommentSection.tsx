@@ -9,7 +9,7 @@ import styles from './RequestDetail.module.css';
 interface CommentItem {
     id: string;
     text: string;
-    author: { displayName: string; username?: string | null };
+    author: { displayName: string; username?: string | null; avatarUrl?: string | null };
     createdAt: string;
 }
 
@@ -229,7 +229,11 @@ export default function CommentSection({
                         <div key={c.id} className={styles.commentCard}>
                             <div className={styles.commentHeader}>
                                 <div className={styles.commentAvatar}>
-                                    {c.author.displayName.substring(0, 2).toUpperCase()}
+                                    {c.author.avatarUrl ? (
+                                        <img src={c.author.avatarUrl} alt={c.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                    ) : (
+                                        c.author.displayName.substring(0, 2).toUpperCase()
+                                    )}
                                 </div>
                                 <div className={styles.commentMeta}>
                                     <span className={styles.commentAuthor}>{c.author.displayName}</span>
@@ -270,7 +274,11 @@ export default function CommentSection({
             <form onSubmit={handleSubmit} className={styles.commentForm}>
                 <div className={styles.commentInputWrap}>
                     <div className={styles.commentUserAvatar}>
-                        {session?.user?.name?.substring(0, 2).toUpperCase() ?? '?'}
+                        {session?.user?.image ? (
+                            <img src={session.user.image} alt="User Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        ) : (
+                            session?.user?.name?.substring(0, 2).toUpperCase() ?? '?'
+                        )}
                     </div>
                     <div className={styles.commentInputArea}>
                         <textarea

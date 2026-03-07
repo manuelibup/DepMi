@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <!-- Centered mathematically to Y=500 so next/image aligns it perfectly with inline text -->
+  
+  <!-- Handle and Main Diagonal -->
+  <path d="M 180 180 L 250 180 L 450 580" 
+        stroke="#00E676" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Basket -->
+  <path d="M 325 330 L 850 330 L 850 500 L 450 580" 
+        stroke="#00E676" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Base Chassis Curve & Horizontal Bar -->
+  <path d="M 450 580 C 410 650, 440 680, 500 680 L 850 680" 
+        stroke="#00E676" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Wheels (Detached) -->
+  <circle cx="550" cy="790" r="35" stroke="#00E676" stroke-width="45" />
+  <circle cx="770" cy="790" r="35" stroke="#00E676" stroke-width="45" />
+</svg>

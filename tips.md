@@ -196,3 +196,56 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Issue**: Vercel's build process runs a highly restrictive `tsc` check. If you attempt to use `Array.from(new Set(match.map(...)))` without an explicit generic type like `<string>`, TypeScript assumes it returns an `unknown[]` and will crash the deployment. Ensure you use `new Set<string>(...)`.
 - **Prisma Relations**: Always double-check your Prisma `schema.prisma` definition when chaining nested `.findUnique({ include: {...} })` queries. If the relation name is `seller` but your query asks for `store`, Vercel will halt the build with an `Object literal may only specify known properties` error.
 - **Turbopack Caches (`.next/` folder)**: If a build throws bizarre type errors (e.g., `Module '"./routes.js"' has no exported member 'AppRouteHandlerRoutes'`), the Next.js cache has desynced itself from your actual source files. Run `rm -rf .next` (or `Remove-Item .next` on Windows) to destroy the corrupted cache before compiling.
+
+---
+
+## 🔢 16. Serializing Prisma Decimals for Client Components
+
+*This tip was added after a crash on the Orders page (`Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.`).*
+
+- **The Issue**: Prisma returns numbers as special `Decimal` instances if you define them as `Decimal` in `schema.prisma` (e.g., `price Decimal`). If a Server Component passes a raw Prisma object down to a Client Component prop, Next.js throws a strict 500 error because prototypes like `Decimal` and `Date` cannot cross the server-client boundary naturally within Turbopack/App Router.
+- **The Fix**: Always create a distinct `serialise()` helper in your Next.js page that strips away the prototypes and reformats them.
+  - Map Prisma Decimals to raw JS Numbers using `Number(o.price)`.
+  - Map Prisma Dates to plain ISO strings using `o.createdAt.toISOString()`.
+  - Explicitly construct and return only the plain fields (`{ id, status, total: Number(o.totalAmount), createdAt: o.createdAt.toISOString() }`) rather than lazily spreading the entire Prisma object (`...o`), to prevent nested generic objects from crashing the tree!
+
+---
+
+## 🔒 17. Race Conditions & DB Unique Constraints (TOCTOU Pattern)
+
+*This tip was added after a codebase audit revealed check-then-create patterns across registration and phone verification routes.*
+
+- **The Problem (TOCTOU):** "Time-of-check, time-of-use" — two concurrent requests both pass the `findUnique` pre-check, then both `create` succeeds, violating uniqueness. Classic race condition.
+- **The Fix:** Remove pre-check queries. Let Prisma `create` run directly and catch `PrismaClientKnownRequestError` with code `P2002` (unique constraint violation). Inspect `error.meta?.target` to identify which field caused the conflict and return a specific error message.
+  ```typescript
+  import { Prisma } from "@prisma/client";
+  // ...
+  } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          const target = error.meta?.target as string[] | undefined;
+          if (target?.includes("email")) return NextResponse.json({ message: "Email already exists" }, { status: 409 });
+          if (target?.includes("username")) return NextResponse.json({ message: "Username taken" }, { status: 409 });
+      }
+  }
+  ```
+- **For transactions:** If a `$transaction` body can also hit a unique constraint (e.g. two users claiming the same phone number), handle `P2002` in the outer `catch` block — it bubbles up naturally from inside the transaction.
+- **Never use `catch (error: any)`** — always use `error: unknown` and narrow types explicitly.
+
+---
+
+## 🔑 18. Env Var Validation in auth.ts (Build Safety)
+
+*This tip was added after fixing `GOOGLE_CLIENT_ID || ""` silently allowing broken OAuth.*
+
+- **The Problem:** `process.env.GOOGLE_CLIENT_ID || ""` passes TypeScript and builds fine, but Google OAuth silently fails at runtime with empty credentials.
+- **The Fix:** Use an IIFE (immediately invoked function expression) inside the provider config to throw a descriptive error:
+  ```typescript
+  GoogleProvider({
+      clientId: (() => {
+          if (!process.env.GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is not set");
+          return process.env.GOOGLE_CLIENT_ID;
+      })(),
+  })
+  ```
+- **Build safety:** Unlike top-level `throw` (which can crash the Vercel build per Tip 11), IIFEs inside `authOptions` are only evaluated at request time in Next.js App Router's Node.js runtime, not during static analysis. Safe for Vercel builds **as long as the env var IS set in Vercel's project settings** (which it must be for OAuth to work anyway).
+- **For non-auth files** (regular API routes): put env var checks inside the handler function body, not at the module level.

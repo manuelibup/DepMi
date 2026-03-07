@@ -24,7 +24,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     const demand = await prisma.demand.findUnique({
         where: { id },
         include: {
-            user: { select: { displayName: true, username: true } },
+            user: { select: { displayName: true, username: true, avatarUrl: true } },
             bids: {
                 include: {
                     store: { select: { name: true, depCount: true, depTier: true } },
@@ -33,7 +33,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 orderBy: { createdAt: 'desc' }
             },
             comments: {
-                include: { author: { select: { displayName: true, username: true } } },
+                include: { author: { select: { displayName: true, username: true, avatarUrl: true } } },
                 orderBy: { createdAt: 'asc' }
             }
         }
@@ -79,7 +79,6 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         product: bid.product ? { title: bid.product.title } : null,
     }));
 
-    // Serialize comments (Dates → strings for client component)
     const serializedComments = demand.comments.map(c => ({
         id: c.id,
         text: c.text,
@@ -106,7 +105,13 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                         className={styles.posterInfo}
                         style={{ textDecoration: 'none' }}
                     >
-                        <div className={styles.avatar}>{demand.user.displayName.substring(0, 2).toUpperCase()}</div>
+                        <div className={styles.avatar}>
+                            {demand.user.avatarUrl ? (
+                                <img src={demand.user.avatarUrl} alt={demand.user.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                            ) : (
+                                demand.user.displayName.substring(0, 2).toUpperCase()
+                            )}
+                        </div>
                         <div>
                             <p className={styles.posterName}>{demand.user.displayName}</p>
                             <p className={styles.meta}>Looking for &bull; {timeAgo}</p>

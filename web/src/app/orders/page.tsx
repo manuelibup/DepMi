@@ -25,7 +25,7 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             seller: { select: { name: true } }
         }
@@ -37,21 +37,27 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             buyer: { select: { displayName: true, username: true } }
         }
     }) : [];
 
-    // Serialise Decimal + Date fields for the client component
+    // Serialise plain fields for the client component (drops Prisma Decimals)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serialise = (arr: any[]) => arr.map(o => ({
-        ...o,
+        id: o.id,
+        status: o.status,
+        escrowStatus: o.escrowStatus,
         total: Number(o.totalAmount),
-        product: o.items?.[0]?.product || { title: 'Unknown', images: [] },
-        store: o.seller,
         createdAt: o.createdAt.toISOString(),
-        updatedAt: o.updatedAt.toISOString(),
+        product: o.items?.[0]?.product ? {
+            id: o.items[0].product.id,
+            title: o.items[0].product.title,
+            images: o.items[0].product.images,
+        } : { id: '', title: 'Unknown', images: [] },
+        store: o.seller,
+        buyer: o.buyer,
     }));
 
     return (

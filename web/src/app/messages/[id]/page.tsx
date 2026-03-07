@@ -4,14 +4,23 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import ChatClient from './ChatClient';
+import Header from '@/components/Header';
 
-export default async function MessageThreadPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MessageThreadPage({ 
+    params, 
+    searchParams 
+}: { 
+    params: Promise<{ id: string }>, 
+    searchParams?: Promise<{ text?: string }> 
+}) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         redirect('/login');
     }
 
     const { id } = await params;
+    const resolvedSearchParams = await searchParams;
+    const initialText = resolvedSearchParams?.text || '';
 
     const conversation = await prisma.conversation.findUnique({
         where: { id },
@@ -50,11 +59,14 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
     }
 
     return (
-        <ChatClient 
-            conversationId={id} 
-            initialMessages={messages} 
-            otherUser={otherUser} 
-            currentUserId={session.user.id} 
-        />
+        <main style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
+            <ChatClient 
+                conversationId={id} 
+                initialMessages={messages} 
+                otherUser={otherParticipant} 
+                currentUserId={session.user.id} 
+                initialText={initialText}
+            />
+        </main>
     );
 }

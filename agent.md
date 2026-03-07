@@ -208,6 +208,14 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
     - **Notification System (10 event types):** BID_RECEIVED, BID_ACCEPTED, ORDER_PLACED, ORDER_CONFIRMED, ORDER_SHIPPED, ORDER_DELIVERED, PAYMENT_RELEASED, DISPUTE_OPENED, DISPUTE_RESOLVED, PRODUCT_AVAILABLE (ProductWatch).
     - **Launch Pilot** with first 20 vendors.
 
+### **Phase 4: Social Connectivity (Week 7)**
+*   **W7: Interactions & Retention:** Establish the social feedback loops that drive daily active usage (DAU).
+    - **Direct Messaging (DMs):** Real-time buyer-to-vendor communication (`/messages`). Polling-based or WebSocket chat interface with optimistic UI updates.
+    - **Comment Engine:** Contextual comments on Demand Requests and Products (`/api/products/[id]/comments`). Include `@mentions` parsing that translates to clickable profile links and triggers push notifications.
+    - **Interactive Notifications Feed:** A dedicated `/notifications` tab that consolidates all `MENTION`, `ORDER_UPDATE`, and system alerts.
+    - **Share Sheet UX:** A unified, cross-platform custom share menu replacing native browser capabilities to ensure a consistent referral experience across WhatsApp, X, and Facebook.
+    - **Responsive Desktop Architecture:** Prevent the "stretched mobile app" look. Enforce strict max-width constraints (e.g., `maxWidth: 600px`) on desktop views for central feed, product details, and checkout to ensure premium aesthetics on all monitor sizes.
+
 ---
 
 ## 6. Data Architecture (Current Schema)
@@ -224,8 +232,14 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Comment** — `{ id, text, authorId, productId?, demandId?, createdAt, updatedAt }`. Belongs to either a Product OR a Demand (nullable FK). KYC-gated (UNVERIFIED users cannot comment). Text limit 500 chars. Supports inline product mentions via `[Title](/p/id)` syntax rendered as green chip links.
 - **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`.
 - **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
+- **StoreFollow** — `{ id, userId, storeId, notify (bool), createdAt, updatedAt }`. Tracks store follows + per-follow notification toggle ("Bell" icon). `@@unique([userId, storeId])`.
+- **Conversation** — `{ id, participants (User[]), messages, lastMessageAt, lastMessagePreview, createdAt, updatedAt }`. Many-to-many with User via implicit join.
+- **Message** — `{ id, conversationId, senderId, text?, type (MessageType), mediaUrl?, read, createdAt }`. `MessageType` enum: `TEXT | IMAGE | AUDIO | STICKER`.
 - **DepTransaction** — Audit trail for trust scores (buyer + seller tracked separately).
-- **Notification** — 12 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE | COMMENT_RECEIVED | MENTION`.
+- **Notification** — 15 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE | COMMENT_RECEIVED | MENTION | NEW_PRODUCT_FROM_STORE | DEP_EARNED | SYSTEM`.
+- **New Enums (Phase 3+):** `EscrowStatus (HELD | RELEASING | RELEASED)`, `PaymentRail (NAIRA | CRYPTO)`, `StoreVerificationStatus (UNVERIFIED | PENDING | VERIFIED | REJECTED)`, `MessageType (TEXT | IMAGE | AUDIO | STICKER)`.
+- **Store — extended fields:** `rating` (Float), `reviewCount` (Int), `bankCode/bankAccountNo/bankAccountName` (Monnify NGN payout), `cryptoWalletAddr/preferredPayoutRail` (crypto payout), `verificationStatus` (StoreVerificationStatus), `cacDocUrl/rcNumber/tin` (business verification docs).
+- **Order — extended fields:** `paymentRail` (PaymentRail), `escrowStatus` (EscrowStatus), `virtualAcctNo/virtualAcctBank/virtualAcctExpiry` (Monnify virtual account per checkout), `platformFeeNgn` (5% fee tracking), `cryptoTxHash/cryptoAmountUsdc` (crypto rail).
 
 ---
 

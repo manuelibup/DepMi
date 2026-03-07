@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
     images: {
@@ -9,10 +10,17 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: 'https',
-                hostname: 'lh3.googleusercontent.com', // Google profile pictures
+                hostname: 'lh3.googleusercontent.com',
             },
         ],
     },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+    org: "depmi",
+    project: "javascript-nextjs",
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+});

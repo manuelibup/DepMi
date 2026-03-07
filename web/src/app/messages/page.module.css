@@ -8,42 +8,42 @@
     margin: 0 auto;
 }
 
-.header {
+.titleRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
     background: var(--bg-color);
-    border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.06));
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 .title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--text-main);
     margin: 0;
+    letter-spacing: -0.5px;
 }
 
 .newChatBtn {
-    background: var(--bg-hover);
+    background: var(--bg-elevated);
     border: none;
     border-radius: var(--radius-full);
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-main);
+    color: var(--primary);
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
 }
 
 .newChatBtn:hover {
-    background: var(--bg-elevated);
-    box-shadow: var(--shadow-sm);
+    background: var(--primary);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .content {

@@ -52,7 +52,7 @@ export async function POST(
             demandId,
         },
         include: {
-            author: { select: { displayName: true, username: true } }
+            author: { select: { displayName: true, username: true, avatarUrl: true } }
         }
     });
 

@@ -3,8 +3,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
-import { Message } from '@prisma/client';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import VoiceRecorder from '@/components/VoiceRecorder';
 import styles from './page.module.css';
+
+// Local interface since prisma client may not have generated types yet due to DLL lock
+interface ChatMessage {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    text: string | null;
+    type: 'TEXT' | 'IMAGE' | 'AUDIO' | 'STICKER';
+    mediaUrl: string | null;
+    read: boolean;
+    createdAt: string | Date;
+}
 
 interface UserParticipant {
     id: string;
@@ -15,66 +28,55 @@ interface UserParticipant {
 
 interface ChatClientProps {
     conversationId: string;
-    initialMessages: Message[];
+    initialMessages: any[]; 
     otherUser: UserParticipant;
     currentUserId: string;
+    initialText?: string;
 }
 
-export default function ChatClient({ conversationId, initialMessages, otherUser, currentUserId }: ChatClientProps) {
-    const [messages, setMessages] = useState<Message[]>(initialMessages);
-    const [text, setText] = useState('');
+export default function ChatClient({ conversationId, initialMessages, otherUser, currentUserId, initialText = '' }: ChatClientProps) {
+    const [messages, setMessages] = useState<ChatMessage[]>(initialMessages as ChatMessage[]);
+    const [text, setText] = useState(initialText);
     const [sending, setSending] = useState(false);
+    const [showAttachments, setShowAttachments] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to bottom on load and new message
+    // Auto-scroll to bottom
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Real-time updates via Server-Sent Events (SSE)
+    // SSE
     useEffect(() => {
         const eventSource = new EventSource(`/api/messages/stream?conversationId=${conversationId}`);
-
         eventSource.onmessage = (event) => {
             try {
                 const newMsgs = JSON.parse(event.data);
                 if (Array.isArray(newMsgs) && newMsgs.length > 0) {
                     setMessages((prev) => {
-                        // Filter out duplicates (e.g. from optimistic UI updates)
                         const existingIds = new Set(prev.map((m) => m.id));
                         const uniqueNew = newMsgs.filter((m) => m.id && !existingIds.has(m.id));
                         if (uniqueNew.length === 0) return prev;
                         return [...prev, ...uniqueNew];
                     });
                 }
-            } catch (err) {
-                console.error('SSE data parse error', err);
-            }
+            } catch (err) {}
         };
-
-        eventSource.onerror = () => {
-            // EventSource auto-reconnects by default. 
-            console.log('SSE connection lost or reconnecting...');
-        };
-
-        return () => {
-            eventSource.close();
-        };
+        return () => eventSource.close();
     }, [conversationId]);
 
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!text.trim() || sending) return;
-
+    const handleSend = async (payload: { text?: string, type?: string, mediaUrl?: string }) => {
+        if (sending) return;
         setSending(true);
-        const currentText = text;
-        setText(''); // optimistic clear
-
+        
         try {
             const res = await fetch(`/api/messages/${conversationId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: currentText.trim() })
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
@@ -83,12 +85,44 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                     if (prev.some(m => m.id === sentMsg.id)) return prev;
                     return [...prev, sentMsg];
                 });
-            } else {
-                // Return text if failed
-                setText(currentText);
+                if (payload.text) setText('');
+                setShowAttachments(false);
             }
         } catch (err) {
-            setText(currentText);
+            console.error(err);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleUploadSuccess = (result: CloudinaryUploadResult) => {
+        handleSend({ type: 'IMAGE', mediaUrl: result.secure_url });
+    };
+
+    const handleVoiceRecordingComplete = async (blob: Blob) => {
+        setSending(true);
+        setIsRecording(false);
+        try {
+            // Upload audio blob to Cloudinary
+            const resSig = await fetch('/api/upload/sign');
+            const { timestamp, folder, signature, apiKey, cloudName } = await resSig.json();
+
+            const formData = new FormData();
+            formData.append('file', blob);
+            formData.append('api_key', apiKey);
+            formData.append('timestamp', timestamp.toString());
+            formData.append('signature', signature);
+            formData.append('folder', folder);
+
+            const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
+            const uploadRes = await fetch(uploadUrl, { method: 'POST', body: formData });
+            
+            if (uploadRes.ok) {
+                const cloudData = await uploadRes.json();
+                handleSend({ type: 'AUDIO', mediaUrl: cloudData.secure_url });
+            }
+        } catch (err) {
+            console.error('Audio upload failed', err);
         } finally {
             setSending(false);
         }
@@ -97,77 +131,190 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSend(e as unknown as React.FormEvent);
+            if (text.trim()) handleSend({ text: text.trim(), type: 'TEXT' });
         }
+    };
+
+    const togglePlayAudio = (msgId: string, url: string) => {
+        if (playingAudioId === msgId) {
+            audioRef.current?.pause();
+            setPlayingAudioId(null);
+        } else {
+            if (audioRef.current) {
+                audioRef.current.src = url;
+                audioRef.current.play();
+                setPlayingAudioId(msgId);
+                audioRef.current.onended = () => setPlayingAudioId(null);
+            }
+        }
+    };
+
+    const renderMessageText = (content: string | null) => {
+        if (!content) return null;
+        
+        // Regex to find [product:uuid]
+        const parts = content.split(/(\[product:[0-9a-f-]{36}\])/gi);
+        
+        return parts.map((part, i) => {
+            const match = part.match(/\[product:([0-9a-f-]{36})\]/i);
+            if (match) {
+                const productId = match[1];
+                return (
+                    <Link 
+                        key={i} 
+                        href={`/p/${productId}`} 
+                        className={styles.productLink}
+                    >
+                        View Product
+                    </Link>
+                );
+            }
+            return part;
+        });
     };
 
     return (
         <div className={styles.container}>
-            {/* Header */}
             <header className={styles.header}>
                 <BackButton className={styles.backBtn} />
-                
                 <Link href={otherUser.username ? `/u/${otherUser.username}` : '#'} className={styles.userInfo}>
                     {otherUser.avatarUrl ? (
                         <img src={otherUser.avatarUrl} alt="" className={styles.avatar} />
                     ) : (
-                        <div className={styles.avatar}>
-                            {otherUser.displayName.substring(0, 2).toUpperCase()}
-                        </div>
+                        <div className={styles.avatar}>{otherUser.displayName[0]}</div>
                     )}
                     <div className={styles.nameBlock}>
                         <h2 className={styles.userName}>{otherUser.displayName}</h2>
-                        {otherUser.username && <span className={styles.userHandle}>@{otherUser.username}</span>}
                     </div>
                 </Link>
             </header>
 
-            {/* Chat Area */}
             <div className={styles.chatArea}>
-                {messages.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '20px' }}>
-                        Start a conversation with {otherUser.displayName}
-                    </div>
-                ) : (
-                    messages.map((msg, idx) => {
-                        const isMe = msg.senderId === currentUserId;
-                        // Simple time formatter for bubble
-                        const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                {messages.map((msg, idx) => {
+                    const isMe = msg.senderId === currentUserId;
+                    const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        return (
-                            <div key={msg.id || idx} className={`${styles.messageRow} ${isMe ? styles.me : styles.other}`}>
-                                <div className={styles.bubble}>
-                                    {msg.text}
-                                    <div className={styles.time}>{timeStr}</div>
-                                </div>
+                    return (
+                        <div key={msg.id || idx} className={`${styles.messageRow} ${isMe ? styles.me : styles.other}`}>
+                            <div className={styles.bubble}>
+                                {msg.type === 'IMAGE' && msg.mediaUrl && (
+                                    <div className={styles.mediaContainer}>
+                                        <img src={msg.mediaUrl} alt="uploaded" className={styles.chatImage} />
+                                    </div>
+                                )}
+                                
+                                {msg.type === 'AUDIO' && msg.mediaUrl && (
+                                    <div className={styles.voiceMessageLayout}>
+                                        {!isMe && (
+                                            <div className={styles.voiceAvatar}>
+                                                {otherUser.avatarUrl ? (
+                                                    <img src={otherUser.avatarUrl} alt="" />
+                                                ) : (
+                                                    <div className={styles.avatarPlaceholder}>{otherUser.displayName[0]}</div>
+                                                )}
+                                                <div className={styles.micBadge}>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className={styles.voiceControls}>
+                                            <button 
+                                                className={styles.playBtn} 
+                                                onClick={() => togglePlayAudio(msg.id, msg.mediaUrl!)}
+                                            >
+                                                {playingAudioId === msg.id ? (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                                ) : (
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                                )}
+                                            </button>
+                                            <div className={styles.waveformContainer}>
+                                                <div className={styles.waveform}>
+                                                    {[...Array(20)].map((_, i) => (
+                                                        <div key={i} className={styles.waveBar} style={{ height: `${Math.random() * 100}%` }} />
+                                                    ))}
+                                                </div>
+                                                <div className={styles.voiceMeta}>
+                                                    <span className={styles.duration}>0:00</span>
+                                                    {!msg.read && !isMe && <span className={styles.unreadDot} />}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {isMe && (
+                                            <div className={styles.voiceAvatar}>
+                                                <div className={styles.avatarPlaceholder}>Me</div>
+                                                <div className={styles.micBadge}>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {msg.type === 'STICKER' && msg.mediaUrl && (
+                                    <div className={styles.stickerContainer}>
+                                        <img src={msg.mediaUrl} alt="sticker" className={styles.stickerImage} />
+                                    </div>
+                                )}
+                                {msg.text && <div className={styles.msgText}>{renderMessageText(msg.text)}</div>}
+                                <div className={styles.time}>{timeStr}</div>
                             </div>
-                        );
-                    })
-                )}
+                        </div>
+                    );
+                })}
                 <div ref={chatEndRef} />
             </div>
 
-            {/* Input Area */}
+            <audio ref={audioRef} style={{ display: 'none' }} />
+
             <div className={styles.inputArea}>
-                <form className={styles.inputForm} onSubmit={handleSend}>
-                    <div className={styles.inputWrap}>
-                        <textarea
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Message..."
-                            className={styles.textarea}
-                            rows={1}
-                            maxLength={1000}
-                        />
-                    </div>
-                    <button type="submit" className={styles.sendBtn} disabled={!text.trim() || sending}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                    </button>
-                </form>
+                {isRecording ? (
+                    <VoiceRecorder onRecordingComplete={handleVoiceRecordingComplete} onCancel={() => setIsRecording(false)} />
+                ) : (
+                    <>
+                        {showAttachments && (
+                            <div className={styles.attachmentMenu}>
+                                <CloudinaryUploader 
+                                    onUploadSuccess={handleUploadSuccess} 
+                                    buttonText="Send Photo"
+                                    accept="image/*"
+                                    maxSizeMB={10}
+                                />
+                                <div className={styles.stickerSelection}>
+                                    {['https://res.cloudinary.com/demo/image/upload/v1/sample.jpg', '🚀', '🔥', '💎'].map(s => (
+                                        <button key={s} className={styles.stickerItem} onClick={() => handleSend({ type: 'STICKER', mediaUrl: s })}>
+                                            {s.startsWith('http') ? <img src={s} alt="" /> : s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <form className={styles.inputForm} onSubmit={(e) => { e.preventDefault(); if (text.trim()) handleSend({ text: text.trim(), type: 'TEXT' }); }}>
+                            <button type="button" className={styles.attachTrigger} onClick={() => setShowAttachments(!showAttachments)}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            </button>
+                            <div className={styles.inputWrap}>
+                                <textarea
+                                    value={text}
+                                    onChange={(e) => setText(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Message..."
+                                    className={styles.textarea}
+                                    rows={1}
+                                />
+                            </div>
+                            {text.trim() ? (
+                                <button type="submit" className={styles.sendBtn} disabled={sending}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                </button>
+                            ) : (
+                                <button type="button" className={styles.micBtn} onClick={() => setIsRecording(true)}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                </button>
+                            )}
+                        </form>
+                    </>
+                )}
             </div>
         </div>
     );

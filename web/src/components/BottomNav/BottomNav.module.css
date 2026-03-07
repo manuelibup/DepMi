@@ -119,6 +119,13 @@
     margin-bottom: 12px;
 }
 
+.sheetDivider {
+    height: 1px;
+    background: var(--card-border);
+    margin: 4px 16px;
+    opacity: 0.5;
+}
+
 .sheetOption {
     display: flex;
     align-items: center;

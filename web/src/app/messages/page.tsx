@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
 import styles from './page.module.css';
@@ -53,7 +54,9 @@ export default async function MessagesInboxPage() {
 
     return (
         <main className={styles.container}>
-            <header className={styles.header}>
+            <Header />
+            
+            <div className={styles.titleRow}>
                 <h1 className={styles.title}>Messages</h1>
                 
                 <Link href="/search" className={styles.newChatBtn} title="New Message">
@@ -62,7 +65,7 @@ export default async function MessagesInboxPage() {
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                 </Link>
-            </header>
+            </div>
 
             <div className={styles.content}>
                 {conversations.length === 0 ? (

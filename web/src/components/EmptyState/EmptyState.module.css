@@ -4,11 +4,8 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 64px 24px;
-    background: var(--card-bg, #ffffff);
-    border: 1px dashed var(--border, #e2e8f0);
-    border-radius: 16px;
-    margin: 24px auto;
+    padding: 16px 8px;
+    margin: 8px auto;
     max-width: 500px;
     width: 100%;
 }
@@ -51,10 +48,10 @@
     background: var(--primary, #FDCB6E);
     color: #000;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s ease;

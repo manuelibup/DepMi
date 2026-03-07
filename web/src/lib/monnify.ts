@@ -79,30 +79,44 @@ export async function createOrderVirtualAccount(params: {
 
   const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000)
 
-  const body = await monnifyFetch('/api/v2/bank-transfer/reserved-accounts', {
-    method: 'POST',
-    body: JSON.stringify({
+  try {
+    const body = await monnifyFetch('/api/v2/bank-transfer/reserved-accounts', {
+      method: 'POST',
+      body: JSON.stringify({
+        accountReference: `depmi-order-${orderId}`,
+        accountName: buyerName,
+        currencyCode: 'NGN',
+        contractCode: CONTRACT_CODE,
+        customerEmail: buyerEmail,
+        customerName: buyerName,
+        // Restrict to exact amount — Monnify rejects transfers of wrong amount
+        restrictPaymentOnVerifiedItems: true,
+        paymentDescription: `DepMi Order #${orderId.slice(-6).toUpperCase()}`,
+      }),
+    })
+
+    // Monnify returns multiple bank options — pick the first
+    const account = body.accounts?.[0] ?? body
+
+    return {
+      accountNumber: account.accountNumber,
+      bankName: account.bankName,
+      accountName: body.accountName,
       accountReference: `depmi-order-${orderId}`,
-      accountName: buyerName,
-      currencyCode: 'NGN',
-      contractCode: CONTRACT_CODE,
-      customerEmail: buyerEmail,
-      customerName: buyerName,
-      // Restrict to exact amount — Monnify rejects transfers of wrong amount
-      restrictPaymentOnVerifiedItems: true,
-      paymentDescription: `DepMi Order #${orderId.slice(-6).toUpperCase()}`,
-    }),
-  })
-
-  // Monnify returns multiple bank options — pick the first
-  const account = body.accounts?.[0] ?? body
-
-  return {
-    accountNumber: account.accountNumber,
-    bankName: account.bankName,
-    accountName: body.accountName,
-    accountReference: `depmi-order-${orderId}`,
-    expiresAt,
+      expiresAt,
+    }
+  } catch (error) {
+    if (API_KEY.startsWith('MK_TEST_')) {
+      console.warn('Monnify reserved account failed in Sandbox, mocking response for development.', error)
+      return {
+        accountNumber: '9988776655',
+        bankName: 'Monnify Sandbox Bank',
+        accountName: `DepMi - ${buyerName}`,
+        accountReference: `depmi-order-${orderId}`,
+        expiresAt,
+      }
+    }
+    throw error;
   }
 }
 
