@@ -49,6 +49,25 @@ export default async function MessageThreadPage({
         take: 100 // To do: pagination for huge chats
     });
 
+    // Serialize Prisma objects (strip non-plain symbol properties) before passing to Client Component
+    const plainMessages = messages.map(m => ({
+        id: m.id,
+        conversationId: m.conversationId,
+        senderId: m.senderId,
+        text: m.text,
+        type: m.type,
+        mediaUrl: m.mediaUrl,
+        read: m.read,
+        createdAt: m.createdAt.toISOString(),
+    }));
+
+    const plainOtherUser = {
+        id: otherUser.id,
+        displayName: otherUser.displayName,
+        username: otherUser.username,
+        avatarUrl: otherUser.avatarUrl,
+    };
+
     // Mark unread messages from other user as read
     const unreadIds = messages.filter(m => !m.read && m.senderId !== session.user.id).map(m => m.id);
     if (unreadIds.length > 0) {
@@ -60,11 +79,11 @@ export default async function MessageThreadPage({
 
     return (
         <main style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
-            <ChatClient 
-                conversationId={id} 
-                initialMessages={messages} 
-                otherUser={otherParticipant} 
-                currentUserId={session.user.id} 
+            <ChatClient
+                conversationId={id}
+                initialMessages={plainMessages}
+                otherUser={plainOtherUser}
+                currentUserId={session.user.id}
                 initialText={initialText}
             />
         </main>
