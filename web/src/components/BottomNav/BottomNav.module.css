@@ -3,17 +3,22 @@
     bottom: 0;
     left: 0;
     right: 0;
-    max-width: 480px;
-    margin: 0 auto;
-    background: var(--card-bg-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    height: var(--bottom-nav-height);
+    background: var(--bg-elevated);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-around;
-    align-items: flex-end;
-    padding: 8px 0 max(env(safe-area-inset-bottom, 8px), 12px);
-    box-shadow: 0 -1px 0 var(--card-border);
-    z-index: 100;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.navHidden {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
 }
 
 .navItem {

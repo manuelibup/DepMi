@@ -11,6 +11,7 @@ import EnquireButton from './EnquireButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import CommentSection from '@/app/requests/[id]/CommentSection';
+import BackButton from '@/components/BackButton';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -68,7 +69,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
             <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
                 {/* Media section */}
-                <div style={{ background: '#000', width: '100%' }}>
+                <div style={{ background: '#000', width: '100%', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50 }}>
+                        <BackButton style={{ 
+                            background: 'rgba(0,0,0,0.5)', 
+                            backdropFilter: 'blur(8px)',
+                            borderRadius: '50%',
+                            width: '40px',
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#fff',
+                            border: '1px solid rgba(255,255,255,0.2)'
+                        }} />
+                    </div>
                     {hasVideo ? (
                         <ProductVideoPlayer src={product.videoUrl!} poster={product.images[0]?.url} />
                     ) : (

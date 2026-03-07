@@ -34,6 +34,56 @@ interface ChatClientProps {
     initialText?: string;
 }
 
+function ProductPreview({ id }: { id: string }) {
+    const [product, setProduct] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`/api/products/${id}/preview`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) setProduct(data);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className={styles.productLinkSkeleton}>
+                <div className={styles.skeletonThumbnail} />
+                <div className={styles.skeletonText} />
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <Link href={`/p/${id}`} className={styles.productLink}>
+                <span className={styles.productLinkIcon}>🛍️</span>
+                <div className={styles.productLinkText}>
+                    <p className={styles.productLinkLabel}>View Product</p>
+                    <p className={styles.productIdHint}>Ref: {id.slice(0, 8)}...</p>
+                </div>
+            </Link>
+        );
+    }
+
+    return (
+        <Link href={`/p/${id}`} className={styles.productCard}>
+            {product.thumbnail && (
+                <div className={styles.productThumb}>
+                    <img src={product.thumbnail} alt="" />
+                </div>
+            )}
+            <div className={styles.cardContent}>
+                <p className={styles.cardTitle}>{product.title}</p>
+                <p className={styles.cardPrice}>₦{Number(product.price).toLocaleString()}</p>
+            </div>
+        </Link>
+    );
+}
+
 export default function ChatClient({ conversationId, initialMessages, otherUser, currentUserId, initialText = '' }: ChatClientProps) {
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages as ChatMessage[]);
     const [text, setText] = useState(initialText);
@@ -41,6 +91,8 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     const [showAttachments, setShowAttachments] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+    const [audioProgress, setAudioProgress] = useState<{ [id: string]: number }>({});
+    const [audioDurations, setAudioDurations] = useState<{ [id: string]: number }>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -144,9 +196,29 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                 audioRef.current.src = url;
                 audioRef.current.play();
                 setPlayingAudioId(msgId);
-                audioRef.current.onended = () => setPlayingAudioId(null);
+                
+                audioRef.current.ontimeupdate = () => {
+                    const progress = (audioRef.current!.currentTime / audioRef.current!.duration) * 100;
+                    setAudioProgress(prev => ({ ...prev, [msgId]: progress }));
+                };
+
+                audioRef.current.onloadedmetadata = () => {
+                    setAudioDurations(prev => ({ ...prev, [msgId]: audioRef.current!.duration }));
+                };
+
+                audioRef.current.onended = () => {
+                    setPlayingAudioId(null);
+                    setAudioProgress(prev => ({ ...prev, [msgId]: 0 }));
+                };
             }
         }
+    };
+
+    const formatDuration = (seconds: number) => {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     const renderMessageText = (content: string | null) => {
@@ -158,16 +230,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         return parts.map((part, i) => {
             const match = part.match(/\[product:([0-9a-f-]{36})\]/i);
             if (match) {
-                const productId = match[1];
-                return (
-                    <Link 
-                        key={i} 
-                        href={`/p/${productId}`} 
-                        className={styles.productLink}
-                    >
-                        View Product
-                    </Link>
-                );
+                return <ProductPreview key={i} id={match[1]} />;
             }
             return part;
         });
@@ -177,11 +240,15 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         <div className={styles.container}>
             <header className={styles.header}>
                 <BackButton className={styles.backBtn} />
-                <Link href={otherUser.username ? `/u/${otherUser.username}` : '#'} className={styles.userInfo}>
+                <Link href={`/u/${otherUser.username}`} className={styles.headerInfo}>
                     {otherUser.avatarUrl ? (
-                        <img src={otherUser.avatarUrl} alt="" className={styles.avatar} />
+                        <div className={styles.headerAvatar}>
+                            <img src={otherUser.avatarUrl} alt={otherUser.displayName} />
+                        </div>
                     ) : (
-                        <div className={styles.avatar}>{otherUser.displayName[0]}</div>
+                        <div className={styles.headerAvatarPlaceholder}>
+                            {otherUser.displayName.charAt(0)}
+                        </div>
                     )}
                     <div className={styles.nameBlock}>
                         <h2 className={styles.userName}>{otherUser.displayName}</h2>
@@ -230,12 +297,25 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                             </button>
                                             <div className={styles.waveformContainer}>
                                                 <div className={styles.waveform}>
-                                                    {[...Array(20)].map((_, i) => (
-                                                        <div key={i} className={styles.waveBar} style={{ height: `${Math.random() * 100}%` }} />
-                                                    ))}
+                                                    {[...Array(20)].map((_, i) => {
+                                                        const threshold = (i / 19) * 100;
+                                                        const isActive = (audioProgress[msg.id] || 0) >= threshold;
+                                                        return (
+                                                            <div 
+                                                                key={i} 
+                                                                className={`${styles.waveBar} ${isActive ? styles.activeWaveBar : ''}`} 
+                                                                style={{ height: `${20 + (Math.sin(i * 1.5) * 15 + 15)}%` }} 
+                                                            />
+                                                        );
+                                                    })}
                                                 </div>
                                                 <div className={styles.voiceMeta}>
-                                                    <span className={styles.duration}>0:00</span>
+                                                    <span className={styles.duration}>
+                                                        {playingAudioId === msg.id 
+                                                            ? formatDuration(audioRef.current?.currentTime || 0)
+                                                            : formatDuration(audioDurations[msg.id] || 0)
+                                                        }
+                                                    </span>
                                                     {!msg.read && !isMe && <span className={styles.unreadDot} />}
                                                 </div>
                                             </div>
