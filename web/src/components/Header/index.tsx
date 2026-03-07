@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import styles from './Header.module.css';
 
 export default function Header() {
+    const isVisible = useScrollDirection();
     const [unreadNotifs, setUnreadNotifs] = useState(0);
     const [unreadMessages, setUnreadMessages] = useState(0);
 
@@ -24,7 +26,7 @@ export default function Header() {
     }, []);
 
     return (
-        <header className={styles.header}>
+        <header className={`${styles.header} ${!isVisible ? styles.headerHidden : ''}`}>
             <Link href="/" className={styles.logoWrap}>
                 <Image src="/depmi-logo.svg" alt="DepMi logo" width={44} height={44} className={styles.logoMark} />
                 <span className={styles.logoText}>DepMi</span>

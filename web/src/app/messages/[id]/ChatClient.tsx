@@ -30,7 +30,7 @@ interface ChatClientProps {
     conversationId: string;
     initialMessages: any[]; 
     otherUser: UserParticipant;
-    currentUserId: string;
+    currentUser: UserParticipant;
     initialText?: string;
 }
 
@@ -84,7 +84,7 @@ function ProductPreview({ id }: { id: string }) {
     );
 }
 
-export default function ChatClient({ conversationId, initialMessages, otherUser, currentUserId, initialText = '' }: ChatClientProps) {
+export default function ChatClient({ conversationId, initialMessages, otherUser, currentUser, initialText = '' }: ChatClientProps) {
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages as ChatMessage[]);
     const [text, setText] = useState(initialText);
     const [sending, setSending] = useState(false);
@@ -258,7 +258,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
 
             <div className={styles.chatArea}>
                 {messages.map((msg, idx) => {
-                    const isMe = msg.senderId === currentUserId;
+                    const isMe = msg.senderId === currentUser.id;
                     const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                     return (
@@ -322,7 +322,11 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                         </div>
                                         {isMe && (
                                             <div className={styles.voiceAvatar}>
-                                                <div className={styles.avatarPlaceholder}>Me</div>
+                                                {currentUser.avatarUrl ? (
+                                                    <img src={currentUser.avatarUrl} alt="" />
+                                                ) : (
+                                                    <div className={styles.avatarPlaceholder}>{currentUser.displayName[0]}</div>
+                                                )}
                                                 <div className={styles.micBadge}>
                                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
                                                 </div>

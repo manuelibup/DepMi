@@ -39,7 +39,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
-      store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true } },
+      store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true } },
       images: true,
       ...(session?.user?.id ? {
         likes: { where: { userId: session.user.id }, select: { id: true } },
@@ -128,6 +128,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 image: product.images && product.images.length > 0 ? product.images[0].url : '',
                 viewers: product.viewCount,
                 id: product.id,
+                ownerId: product.store.ownerId,
                 ...(session?.user?.id ? {
                   isLiked: product.likes && product.likes.length > 0,
                   isSaved: product.saves && product.saves.length > 0

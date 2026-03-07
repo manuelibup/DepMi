@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthGate } from '@/context/AuthGate';
 import { useSession } from 'next-auth/react';
@@ -19,6 +20,7 @@ export interface ProductData {
     image: string;
     viewers?: number;
     id?: string;
+    ownerId?: string;
     isLiked?: boolean;
     isSaved?: boolean;
 }
@@ -122,11 +124,28 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
         if (data.id) router.push(`/p/${data.id}`);
     };
 
-    const handleAction = (e: React.MouseEvent, action: string) => {
+    const handleAction = async (e: React.MouseEvent, action: string) => {
         e.preventDefault();
         e.stopPropagation();
         if (status === 'unauthenticated') { openGate(); return; }
-        if (action === 'buy' && data.id) router.push(`/checkout/${data.id}`);
+        
+        if (action === 'buy' && data.id) {
+            router.push(`/checkout/${data.id}`);
+        } else if (action === 'chat' && data.ownerId) {
+            try {
+                const res = await fetch('/api/messages/new', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: data.ownerId })
+                });
+                const result = await res.json();
+                if (result.conversationId) {
+                    router.push(`/messages/${result.conversationId}`);
+                }
+            } catch (err) {
+                console.error('Failed to start chat:', err);
+            }
+        }
     };
 
     const handleCardClick = () => {
@@ -142,7 +161,11 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
         >
             {/* Store Header */}
             <div className={styles.header}>
-                <div className={styles.storeInfo}>
+                <Link 
+                    href={data.id ? `/store/${data.store.toLowerCase().replace(/\s+/g, '-')}` : '#'} 
+                    className={styles.storeInfo}
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <div className={styles.storeAvatar} style={{ background: data.storeColor }}>
                         {data.storeInitial}
                     </div>
@@ -153,8 +176,12 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                             <span>{data.deps} Deps</span>
                         </div>
                     </div>
-                </div>
-                <button className={styles.moreBtn} aria-label="More options">
+                </Link>
+                <button 
+                    className={styles.moreBtn} 
+                    aria-label="More options"
+                    onClick={(e) => { e.stopPropagation(); /* future menu */ }}
+                >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
                     </svg>

@@ -27,7 +27,8 @@ interface Props {
 
 function statusLabel(status: string): string {
     const map: Record<string, string> = {
-        PENDING: 'Pending',
+        PENDING: 'Pending — Awaiting Payment',
+        EXPIRED: 'Payment Expired',
         CONFIRMED: 'Paid — Awaiting Shipment',
         SHIPPED: 'Shipped',
         DELIVERED: 'Delivered',
@@ -42,7 +43,8 @@ function statusLabel(status: string): string {
 }
 
 function statusClass(status: string): string {
-    if (status === 'PENDING') return styles.status_ESCROW_HELD;
+    if (status === 'PENDING') return styles.status_PENDING;
+    if (status === 'EXPIRED') return styles.status_EXPIRED;
     if (status === 'CONFIRMED') return styles.status_SHIPPED;
     if (status === 'SHIPPED') return styles.status_SHIPPED;
     if (['DELIVERED', 'COMPLETED'].includes(status)) return styles.status_COMPLETED;
@@ -61,6 +63,19 @@ function OrderCard({ order, role, onStatusChange }: {
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [disputeReason, setDisputeReason] = useState('');
     const [localStatus, setLocalStatus] = useState(order.status);
+
+    useEffect(() => {
+        // If pending, check if expired (e.g. 15 mins)
+        // For simplicity, we can do client side check or wait for next refresh
+        // But the user wants the label update.
+        if (localStatus === 'PENDING') {
+            const created = new Date(order.createdAt).getTime();
+            const now = Date.now();
+            if (now - created > 15 * 60 * 1000) {
+                setLocalStatus('EXPIRED');
+            }
+        }
+    }, [localStatus, order.createdAt]);
 
     const handleConfirmDelivery = async () => {
         if (!confirm('Confirm that you received this order? This will release payment to the seller.')) return;
@@ -134,22 +149,31 @@ function OrderCard({ order, role, onStatusChange }: {
                 </Link>
 
                 {/* Buyer actions */}
-                {role === 'buyer' && localStatus === 'SHIPPED' && (
+                {role === 'buyer' && (
                     <div className={styles.orderAction}>
-                        <button
-                            className={`${styles.actionBtn} ${styles.primary}`}
-                            onClick={handleConfirmDelivery}
-                            disabled={loading}
-                        >
-                            {loading ? 'Processing…' : 'Mark as Received'}
-                        </button>
-                        <button
-                            className={`${styles.actionBtn} ${styles.danger}`}
-                            onClick={() => setShowDisputeModal(true)}
-                            disabled={loading}
-                        >
-                            Open Dispute
-                        </button>
+                        {localStatus === 'PENDING' && (
+                            <Link href={`/checkout/${order.product.id}?resume=${order.id}`} className={`${styles.actionBtn} ${styles.primary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                                Resume Checkout
+                            </Link>
+                        )}
+                        {localStatus === 'SHIPPED' && (
+                            <>
+                                <button
+                                    className={`${styles.actionBtn} ${styles.primary}`}
+                                    onClick={handleConfirmDelivery}
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Processing…' : 'Mark as Received'}
+                                </button>
+                                <button
+                                    className={`${styles.actionBtn} ${styles.danger}`}
+                                    onClick={() => setShowDisputeModal(true)}
+                                    disabled={loading}
+                                >
+                                    Open Dispute
+                                </button>
+                            </>
+                        )}
                     </div>
                 )}
 

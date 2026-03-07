@@ -57,6 +57,48 @@ export default function ClientCheckoutForm({
     const [copied, setCopied] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    // ── Resume Order Logic ───────────────────────────────────────────────────
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const resumeId = params.get('resume');
+        
+        if (resumeId) {
+            setStage('submitting');
+            fetch(`/api/checkout/resume?orderId=${resumeId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        setError(data.error);
+                        setStage('form');
+                    } else {
+                        setOrderId(data.orderId);
+                        setVirtualAccount(data.virtualAccount);
+                        setBreakdown(data.breakdown);
+                        
+                        // Calculate remaining time
+                        const created = new Date(data.createdAt).getTime();
+                        const now = Date.now();
+                        const elapsedSecs = Math.floor((now - created) / 1000);
+                        const totalSecs = 30 * 60;
+                        const remaining = Math.max(0, totalSecs - elapsedSecs);
+                        
+                        setSecondsLeft(remaining);
+                        if (remaining <= 0) {
+                            setError('Payment window expired. Please start a new order.');
+                            setStage('form');
+                        } else {
+                            setStage('awaiting_payment');
+                        }
+                    }
+                })
+                .catch(() => {
+                    setError('Failed to resume order.');
+                    setStage('form');
+                });
+        }
+    }, []);
+
     // ── Countdown timer ─────────────────────────────────────────────────────
     useEffect(() => {
         if (stage !== 'awaiting_payment') return;

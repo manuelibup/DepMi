@@ -465,12 +465,36 @@ model Order {
   updatedAt DateTime @updatedAt
 
   // Relations
-  items  OrderItem[]
-  review Review?
+  items   OrderItem[]
+  review  Review?
+  payment Payment?
 
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  // Virtual account details (Monnify)
+  virtualAccountNumber String?
+  bankName             String?
+  accountName          String?
+  expiresAt            DateTime?
+
+  // Native Paystack ref
+  paystackReference String? @unique
+
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("NGN")
+
+  paid      Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model OrderItem {

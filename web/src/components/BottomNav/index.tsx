@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuthGate } from '@/context/AuthGate';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import styles from './BottomNav.module.css';
 
 type StoreInfo = { slug: string; name: string };
@@ -58,10 +59,8 @@ export default function BottomNav() {
     const { openGate } = useAuthGate();
     const [stores, setStores] = useState<StoreInfo[]>([]);
     const [sheetOpen, setSheetOpen] = useState(false);
-    const [isVisible, setIsVisible] = useState(true);
-    const [lastScrollY, setLastScrollY] = useState(0);
+    const isVisible = useScrollDirection();
 
-    // Fetch user's stores once authenticated
     useEffect(() => {
         if (status !== 'authenticated') return;
         fetch('/api/user/stores')
@@ -69,25 +68,6 @@ export default function BottomNav() {
             .then((data) => setStores(data.stores ?? []))
             .catch(() => {});
     }, [status]);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            
-            if (currentScrollY < 10) {
-                setIsVisible(true);
-            } else if (currentScrollY > lastScrollY) {
-                setIsVisible(false);
-            } else {
-                setIsVisible(true);
-            }
-            
-            setLastScrollY(currentScrollY);
-        };
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [lastScrollY]);
 
     const handleAddPress = useCallback(() => {
         if (status === 'unauthenticated') {

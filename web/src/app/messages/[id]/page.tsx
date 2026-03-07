@@ -83,7 +83,12 @@ export default async function MessageThreadPage({
                 conversationId={id}
                 initialMessages={plainMessages}
                 otherUser={plainOtherUser}
-                currentUserId={session.user.id}
+                currentUser={{
+                    id: session.user.id,
+                    displayName: session.user.name || 'User',
+                    username: (session.user as any).username || null,
+                    avatarUrl: session.user.image || null,
+                }}
                 initialText={initialText}
             />
         </main>

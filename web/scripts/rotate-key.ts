@@ -66,8 +66,8 @@ async function rotate() {
     console.log(`Rotating sensitive data for ${users.length} users...`);
     for (const user of users) {
         const updates: any = {};
-        if (user.phoneNumber) updates.phoneNumber = encrypt(decrypt(user.phoneNumber, OLD_KEY), NEW_KEY);
-        if (user.address) updates.address = encrypt(decrypt(user.address, OLD_KEY), NEW_KEY);
+        if (user.phoneNumber) updates.phoneNumber = encrypt(decrypt(user.phoneNumber, OLD_KEY as string), NEW_KEY as string);
+        if (user.address) updates.address = encrypt(decrypt(user.address, OLD_KEY as string), NEW_KEY as string);
         
         await prisma.user.update({
             where: { id: user.id },
@@ -85,7 +85,7 @@ async function rotate() {
         if (msg.text) {
             await prisma.message.update({
                 where: { id: msg.id },
-                data: { text: encrypt(decrypt(msg.text, OLD_KEY), NEW_KEY) }
+                data: { text: encrypt(decrypt(msg.text, OLD_KEY as string), NEW_KEY as string) }
             });
         }
     }

@@ -53,23 +53,24 @@
 }
 
 .iconBtn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
     color: #fff;
     border: none;
-    backdrop-filter: blur(8px);
     cursor: pointer;
     transition: all var(--transition-fast);
+    backdrop-filter: blur(4px);
 }
 
 .iconBtn:hover {
-    background: rgba(0, 0, 0, 0.65);
-    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .iconBtnRight {
@@ -83,6 +84,16 @@
     padding: 0 18px 20px;
     position: relative;
     z-index: 2;
+    background: var(--bg-color);
+}
+
+.identityActions {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
 }
 
 /* Avatar row: avatar pulled up over cover, action button aligned to bottom */
