@@ -199,3 +199,83 @@ export async function notifyRestockWatchers({
         }),
     );
 }
+
+/**
+ * Called when an order status changes (PAID, SHIPPED, DELIVERED, COMPLETED).
+ * Sends an email to the relevant party (buyer or seller).
+ */
+export async function notifyOrderUpdate({
+    orderId,
+    status,
+    userId,
+    userName,
+    userEmail,
+    productTitle,
+    amount,
+    link,
+}: {
+    orderId: string;
+    status: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    productTitle: string;
+    amount?: number;
+    link: string;
+}) {
+    const shortId = orderId.slice(-6).toUpperCase();
+    let subject = '';
+    let headline = '';
+    let body = '';
+    let buttonText = 'View Order';
+
+    switch (status) {
+        case 'PAID':
+            subject = `Order #${shortId} confirmed!`;
+            headline = `Payment received, ${userName}!`;
+            body = `Good news! Your payment for <strong>${productTitle}</strong> was successful. The seller has been notified to ship your item.`;
+            break;
+        case 'SHIPPED':
+            subject = `Your order #${shortId} is on the way!`;
+            headline = `It's coming, ${userName}!`;
+            body = `The seller has shipped <strong>${productTitle}</strong>. You can track your package in your dashboard.`;
+            buttonText = 'Track Order';
+            break;
+        case 'DELIVERED':
+            subject = `Order #${shortId} has arrived!`;
+            headline = `Package delivered!`;
+            body = `Your order for <strong>${productTitle}</strong> has been marked as delivered. Please confirm receipt to release funds to the seller.`;
+            buttonText = 'Confirm Receipt';
+            break;
+        case 'COMPLETED':
+            subject = `Payment released for Order #${shortId}`;
+            headline = `Funds are here, ${userName}!`;
+            body = `The buyer has confirmed receipt of <strong>${productTitle}</strong>. ₦${amount?.toLocaleString()} has been sent to your bank account.`;
+            break;
+        default:
+            return;
+    }
+
+    try {
+        await resend.emails.send({
+            from: 'DepMi <noreply@depmi.com>',
+            to: userEmail,
+            subject,
+            html: `
+                <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:20px;border:1px solid #eee;border-radius:12px">
+                    <h2 style="color:#111;margin-top:0">${headline}</h2>
+                    <p style="color:#444;line-height:1.6">${body}</p>
+                    <div style="margin:24px 0;padding:16px;background:#f9f9f9;border-radius:8px">
+                        <p style="margin:0;font-size:0.85rem;color:#777">Order ID</p>
+                        <p style="margin:4px 0 0;font-weight:bold;font-family:monospace">#${shortId}</p>
+                    </div>
+                    <a href="${BASE_URL}${link}" style="display:inline-block;background:#FFD700;color:#000;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold">${buttonText} →</a>
+                    <hr style="margin:30px 0;border:none;border-top:1px solid #eee" />
+                    <p style="color:#999;font-size:12px;text-align:center">DepMi Escrow — Secure Social Commerce</p>
+                </div>
+            `,
+        });
+    } catch (err) {
+        console.error('Resend error (order update):', err);
+    }
+}

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@prisma/client": "^6.19.2",
+    "@prisma/client": "^6.2.0",
     "@sentry/nextjs": "^10.42.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
@@ -32,9 +32,10 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prisma": "^6.19.2",
+    "prisma": "^6.2.0",
     "typescript": "^5"
   }
 }

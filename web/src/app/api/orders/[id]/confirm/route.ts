@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { initiatePayout } from '@/lib/monnify'
+import { OtpType } from '@prisma/client'
 
 /**
  * POST /api/orders/[id]/confirm
@@ -17,6 +18,8 @@ import { initiatePayout } from '@/lib/monnify'
  * 6. Award Deps to buyer and seller
  * 7. Notify seller of payment
  */
+import { verifyOtp } from '@/lib/otp'
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -27,20 +30,26 @@ export async function POST(
   }
 
   const { id: orderId } = await params
+  const body = await req.json().catch(() => ({}));
+  const { code } = body;
+
+  if (!code) {
+    return NextResponse.json({ error: 'Verification code is required' }, { status: 400 });
+  }
+
+  const isOtpValid = await verifyOtp(session.user.id, OtpType.TRANSACTIONAL, code);
+  if (!isOtpValid) {
+    return NextResponse.json({ error: 'Invalid or expired verification code' }, { status: 400 });
+  }
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       seller: {
-        select: {
-          id: true,
-          ownerId: true,
-          name: true,
-          bankCode: true,
-          bankAccountNo: true,
-          bankAccountName: true,
-        },
+        include: { owner: true }
       },
+      buyer: { select: { id: true, displayName: true, email: true } },
+      items: { include: { product: { select: { title: true } } }, take: 1 }
     },
   })
 
@@ -164,6 +173,21 @@ export async function POST(
         link: '/orders',
       },
     })
+
+    // Send Email to Seller
+    if (order.seller.owner.email) {
+      const { notifyOrderUpdate } = await import('@/lib/notify-watchers');
+      await notifyOrderUpdate({
+        orderId,
+        status: 'COMPLETED',
+        userId: order.seller.ownerId,
+        userName: order.seller.owner.displayName,
+        userEmail: order.seller.owner.email,
+        productTitle: order.items[0]?.product.title || 'Product',
+        amount: sellerAmount,
+        link: '/orders'
+      });
+    }
   })
 
   return NextResponse.json({ ok: true, payoutReference: payoutResult.reference })

@@ -20,6 +20,8 @@ enum AuthProvider {
 enum OtpType {
   PHONE_VERIFICATION
   EMAIL_RESET
+  TRANSACTIONAL    // For order confirmation
+  ACCOUNT_UPDATE   // For sensitive setting changes
 }
 
 enum InviteStatus {
@@ -389,6 +391,8 @@ model Product {
   isFeatured Boolean @default(false) // Pinned to owner's profile showcase
   viewCount  Int     @default(0)
   inStock    Boolean @default(true)
+  stock      Int     @default(1) // Number of items available in stock
+  deliveryFee Decimal @default(2500) @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -439,7 +443,9 @@ model Order {
   bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
 
   // Payment rail
-  paymentRail  PaymentRail  @default(NAIRA)
+  paymentRail  PaymentRail @default(NAIRA)
+  deliveryMethod String      @default("DELIVERY") // "DELIVERY" or "PICKUP"
+  trackingNo   String?
 
   // Escrow — paystackRef reused for Monnify transaction reference
   paystackRef  String?      @unique

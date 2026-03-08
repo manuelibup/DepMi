@@ -37,12 +37,16 @@ export async function GET(
             bankAccountName: store.bankAccountName,
             banks,
         });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Payout GET error:', error);
         return NextResponse.json({ message: 'Failed to load payout details' }, { status: 500 });
     }
 }
+
+import { verifyOtp } from '@/lib/otp';
+
+// ... existing code ...
 
 // PATCH — save bank account details
 export async function PATCH(
@@ -63,7 +67,14 @@ export async function PATCH(
         if (store.ownerId !== session.user.id) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
 
         const body = await req.json();
-        const parsed = payoutSchema.safeParse(body);
+        const { code, ...payoutData } = body;
+
+        if (!code) return NextResponse.json({ message: 'Verification code required' }, { status: 400 });
+
+        const isOtpValid = await verifyOtp(session.user.id, 'ACCOUNT_UPDATE', code);
+        if (!isOtpValid) return NextResponse.json({ message: 'Invalid or expired code' }, { status: 400 });
+
+        const parsed = payoutSchema.safeParse(payoutData);
         if (!parsed.success) return NextResponse.json({ message: 'Invalid input', errors: parsed.error.format() }, { status: 400 });
 
         const { bankCode, bankAccountNo, bankAccountName } = parsed.data;
@@ -74,7 +85,7 @@ export async function PATCH(
         });
 
         return NextResponse.json({ message: 'Payout account saved' });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Payout PATCH error:', error);
         return NextResponse.json({ message: 'Failed to save payout account' }, { status: 500 });
@@ -103,7 +114,7 @@ export async function POST(
 
         const accountName = await resolveAccountName(accountNumber, bankCode);
         return NextResponse.json({ accountName });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Resolve account error:', error);
         return NextResponse.json({ message: error.message ?? 'Could not verify account' }, { status: 422 });

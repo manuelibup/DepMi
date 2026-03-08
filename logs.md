@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 49 — Mar 8, 2026 — Waitlist V3.3 Overhaul & Mobile Refinement](#session-49--mar-8-2026--waitlist-v33-overhaul--mobile-refinement)
 - [Session 48 — Mar 7, 2026 — Business Strategy, Security Audit & Critical Fixes](#session-48--mar-7-2026--business-strategy-security-audit--critical-fixes)
 - [Session 43 — Mar 4, 2026 — Social Interactions, Comments Engine & Product Slugs](#session-43--mar-4-2026--social-interactions-comments-engine--product-slugs)
 - [Session 1 — Feb 26, 2026 (Pre-dawn)](#session-1--feb-26-2026-pre-dawn)
@@ -1903,3 +1904,41 @@ Comprehensive code review performed across all API routes, auth, schema, compone
 
 ### Outcome:
 Direct Messaging is now a rich, multi-media experience. The "mention" loop is closed, allowing vendors to be notified when their products are discussed/linked, significantly increasing the "sticky" nature of the platform.
+
+---
+
+## Session 49 — Mar 8, 2026 — Waitlist V3.3 Overhaul & Mobile Refinement
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+
+#### Waitlist V3 Overhaul & Polishing
+- **Human-Centric Copy:** Replaced generic marketing titles with accessible, core-principle copy ("Buy & Sell as Easily as Liking a Post").
+- **Balanced Messaging:** Updated the subtitle and feature cards to explicitly address the value proposition for both **Buyers** (finding what they need) and **Sellers** (reaching ready customers).
+- **High-Fidelity UI:**
+    - Replaced incoherent emojis with sharp, consistent **Lucide React** icons (`MessageSquarePlus`, `Zap`, `ShieldCheck`).
+    - Fixed the broken `fadeInUp` animation by properly defining the keyframes and adding `animation-fill-mode: backwards` to prevent initial "flash" on load.
+    - Switched from the white-background `depmi-logo.png` to a crisp, transparent **`depmi-logo.svg`** for the main page more professional feel.
+    - Updated the site **Favicon** to use the transparent SVG.
+
+#### Mobile & Desktop Layout Optimisation
+- **Desktop Breadth:** Increased the main hero container width from `600px` to **`800px`** on desktop to avoid the "compact/squeezed" feeling.
+- **Mobile Readability:**
+    - Forced "Buyers:" and "Sellers:" markers onto separate lines using `<br />` tags within feature cards to ensure readability on small screens.
+    - Reduced branding scale (logo and text) on mobile to preserve vertical space.
+    - Collapsed the email signup form into a vertical stack for easier interaction on touch devices.
+
+#### Technical Housekeeping & Strategy
+- **Niche Comparison Strategy:** Added a detailed analysis to `agent.md` comparing the "DepMi Social Commerce Engine" (Demand-First) vs traditional Directory models (like Hustla.live).
+- **Environment Management:** Ensured `NEXT_PUBLIC_SHOW_WAITLIST` is correctly toggled for local verification.
+- **Windows Process Management:** Documented and cleared orphaned Node.js processes locking port 3000.
+
+### Validations Run:
+- **Responsive Verification:** Used browser subagent to verify 800px desktop layout vs iPhone 12/13 mobile layout.
+- **Build Status:** `npm run dev` checked; all components rendering with updated branding.
+- **Favicon Integrity:** Verified metadata in `layout.tsx` and moved conflicting `icon.png` to ensure SVG priority.
+
+### Outcome:
+The Waitlist page is now a premium, branded landing experience that effectively communicates the DepMi mission to all users before launch. It is technically sound across all screen sizes and serves as a high-conversion gateway.
+

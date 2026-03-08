@@ -35,7 +35,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   // Fetch real products
   const products = await prisma.product.findMany({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    where: { inStock: true, ...(category ? { category: category as any } : {}) },
+    where: { stock: { gt: 0 }, ...(category ? { category: category as any } : {}) },
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
@@ -68,7 +68,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     select: { id: true, name: true, slug: true, logoUrl: true, depCount: true }
   });
 
-    // Interleave them mathematically (e.g. 1 demand, 1 product, 1 demand, 1 product)
+  // Interleave them mathematically (e.g. 1 demand, 1 product, 1 demand, 1 product)
   const feed = [];
   const maxLength = Math.max(demands.length, products.length);
   for (let i = 0; i < maxLength; i++) {
@@ -84,7 +84,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
       <div className={styles.feed}>
         {feed.length === 0 ? (
-          <EmptyState 
+          <EmptyState
             title="No activity yet"
             description="Be the first to list a product or request an item!"
             actionLabel="Post a Request"
@@ -93,7 +93,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         ) : (
           feed.map((item, index) => {
             let cardContent = null;
-            
+
             if (item.type === 'demand') {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const demand = item.data as any;
@@ -140,17 +140,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 </div>
               );
             }
-            
+
             // Inject SuggestedProfiles after the 3rd feed item (index 2)
             if (index === 2 && topStores.length > 0) {
-                return (
-                    <React.Fragment key={`feed-item-${index}`}>
-                        {cardContent}
-                        <SuggestedProfiles stores={topStores} />
-                    </React.Fragment>
-                );
+              return (
+                <React.Fragment key={`feed-item-${index}`}>
+                  {cardContent}
+                  <SuggestedProfiles stores={topStores} />
+                </React.Fragment>
+              );
             }
-            
+
             return cardContent;
           })
         )}

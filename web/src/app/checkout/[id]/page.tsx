@@ -28,7 +28,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         notFound();
     }
 
-    const deliveryFee = 2500; // Mock fixed delivery fee for Phase 3 UI preview
+    const deliveryFee = Number(product.deliveryFee) || 0;
     const total = Number(product.price) + deliveryFee;
 
     // Try to get user data to pre-fill phone and address
@@ -70,6 +70,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                     total={total} 
                     deliveryFee={deliveryFee} 
                     subtotal={Number(product.price)} 
+                    stock={product.stock}
                     defaultPhone={user?.phoneNumber || ''}
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}

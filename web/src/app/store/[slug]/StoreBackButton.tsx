@@ -11,7 +11,6 @@ export default function StoreBackButton() {
             onClick={() => router.back()}
             aria-label="Go back"
             style={{
-                position: 'absolute', top: 16, left: 16,
                 color: '#fff', background: 'rgba(0,0,0,0.3)',
                 padding: '6px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

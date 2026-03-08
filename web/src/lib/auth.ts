@@ -145,14 +145,22 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
 
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             // Credentials sign-in: user.id is the DB id returned by authorize()
             if (user) {
                 token.id = user.id;
             }
 
-            // Always fetch the latest from DB (username, id, avatarUrl)
-            if (token.email) {
+            // Handle manual session update (from Client update() call)
+            if (trigger === "update" && session) {
+                if (session.username) token.username = session.username;
+                if (session.name) token.name = session.name;
+                if (session.picture) token.picture = session.picture;
+            }
+
+            // Always fetch the latest from DB if we don't have a username or on sign-in
+            // This ensures server-side redirects work after onboarding
+            if (token.email && (!token.username || trigger === "signIn")) {
                 const dbUser = await prisma.user.findUnique({
                     where: { email: token.email },
                     select: { id: true, username: true, avatarUrl: true },

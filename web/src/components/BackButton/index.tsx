@@ -5,15 +5,26 @@ import { useRouter } from 'next/navigation';
 
 interface Props {
     className?: string;
+    style?: any;
 }
 
-export default function BackButton({ className }: Props) {
+export default function BackButton({ className, style }: Props) {
     const router = useRouter();
     return (
         <button
             onClick={() => router.back()}
             className={className}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', padding: '4px' }}
+            style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                color: 'var(--text-main)', 
+                padding: '4px',
+                ...style 
+            }}
             aria-label="Go back"
         >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -26,9 +26,13 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         category: 'OTHER',
         imageUrl: '',
         videoUrl: '',
+        stock: '1',
+        displayStock: '1',
+        deliveryFee: '2500',
+        displayDeliveryFee: '2,500',
     });
 
-    const [activeInput, setActiveInput] = useState<'price' | 'category' | null>(null);
+    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'stock' | 'deliveryFee' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Load draft
@@ -62,13 +66,28 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 price: rawValue,
                 displayPrice: formattedValue
             }));
+        } else if (e.target.name === 'stock') {
+            const rawValue = e.target.value.replace(/\D/g, '');
+            setForm(prev => ({ 
+                ...prev, 
+                stock: rawValue,
+                displayStock: rawValue
+            }));
+        } else if (e.target.name === 'deliveryFee') {
+            const rawValue = e.target.value.replace(/\D/g, '');
+            const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
+            setForm(prev => ({ 
+                ...prev, 
+                deliveryFee: rawValue,
+                displayDeliveryFee: formattedValue
+            }));
         } else {
             setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
         }
     };
 
     const handleClose = () => {
-        if (form.title || form.description || form.price || form.imageUrl || form.videoUrl) {
+        if (form.title || form.description || form.price || form.imageUrl || form.videoUrl || Number(form.stock) > 1) {
             const save = confirm("Save as draft?");
             if (save) {
                 localStorage.setItem(`product_draft_${storeId}`, JSON.stringify(form));
@@ -104,6 +123,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             category: form.category,
             images: form.imageUrl ? [form.imageUrl] : [],
             videoUrl: form.videoUrl || null,
+            stock: Number(form.stock) || 1,
+            deliveryFee: Number(form.deliveryFee) || 0,
         };
 
         try {
@@ -274,6 +295,39 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 </div>
             )}
 
+            {activeInput === 'stock' && (
+                <div className={styles.inlineInputRow}>
+                    <input 
+                        type="text" 
+                        name="stock"
+                        inputMode="numeric"
+                        placeholder="Available quantity"
+                        value={form.displayStock}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        autoFocus
+                    />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                </div>
+            )}
+
+            {activeInput === 'deliveryFee' && (
+                <div className={styles.inlineInputRow}>
+                    <span className={styles.inputPrefix}>₦</span>
+                    <input 
+                        type="text" 
+                        name="deliveryFee"
+                        inputMode="numeric"
+                        placeholder="Set Delivery Fee"
+                        value={form.displayDeliveryFee}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        autoFocus
+                    />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                </div>
+            )}
+
             {/* Bottom action bar */}
             <div className={styles.actionBar}>
                 <div className={styles.pillsScroll}>
@@ -293,6 +347,28 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     >
                         <FolderOpen size={16} className={styles.pillIcon} />
                         {form.category === 'OTHER' ? 'Category' : form.category}
+                    </button>
+
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${Number(form.stock) > 1 ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'stock' ? null : 'stock')}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/>
+                        </svg>
+                        {form.stock ? `${form.stock} In Stock` : 'Stock'}
+                    </button>
+
+                    <button 
+                        type="button" 
+                        className={`${styles.pill} ${form.deliveryFee !== '2500' ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
+                            <rect width="16" height="12" x="4" y="9" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5"/><circle cx="12" cy="14" r="2"/>
+                        </svg>
+                        {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
                     </button>
                 </div>
             </div>

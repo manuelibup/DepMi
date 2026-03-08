@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "The social commerce platform for African entrepreneurs. Discover products, request what you need, and transact with trust.",
   icons: {
-    icon: '/depmi-logo.png',
+    icon: '/depmi-logo.svg',
   },
   alternates: {
     canonical: '/',
@@ -21,11 +21,13 @@ export const metadata: Metadata = {
     siteName: "DepMi",
     type: "website",
     url: 'https://depmi.com',
+    images: [{ url: '/depmi-logo-text-dark.png', width: 1200, height: 630, alt: 'DepMi logo' }],
   },
   twitter: {
     card: "summary_large_image",
     title: "DepMi — Social Commerce for Africa",
     description: "The social commerce platform for African entrepreneurs.",
+    images: ['/depmi-logo-text-dark.png'],
   }
 };
 

@@ -12,13 +12,15 @@ export async function POST(
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+        const bodyData = await _req.json().catch(() => ({}));
         const { id: orderId } = await params;
 
         const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
                 seller: { select: { ownerId: true, name: true } },
-                buyer: { select: { id: true } },
+                buyer: { select: { id: true, displayName: true, email: true } },
+                items: { include: { product: { select: { title: true } } }, take: 1 }
             },
         });
 
@@ -29,18 +31,36 @@ export async function POST(
         await prisma.$transaction([
             prisma.order.update({
                 where: { id: orderId },
-                data: { status: 'SHIPPED' },
+                data: { 
+                    status: 'SHIPPED',
+                    trackingNo: bodyData.trackingNo || null,
+                    deliveryMethod: bodyData.deliveryMethod || 'Standard Delivery'
+                },
             }),
             prisma.notification.create({
                 data: {
                     userId: order.buyerId,
                     type: NotificationType.ORDER_SHIPPED,
                     title: 'Your Order Has Been Shipped!',
-                    body: `${order.seller.name} has shipped your order. You can now confirm delivery once it arrives.`,
+                    body: `${order.seller.name} has shipped your order${bodyData.trackingNo ? ` (Tracking: ${bodyData.trackingNo})` : ''}. You can now confirm delivery once it arrives.`,
                     link: `/orders`,
                 },
             }),
         ]);
+
+        // Send Email
+        if (order.buyer.email) {
+            const { notifyOrderUpdate } = await import('@/lib/notify-watchers');
+            await notifyOrderUpdate({
+                orderId,
+                status: 'SHIPPED',
+                userId: order.buyer.id,
+                userName: order.buyer.displayName,
+                userEmail: order.buyer.email,
+                productTitle: order.items[0]?.product.title || 'Product',
+                link: '/orders'
+            });
+        }
 
         return NextResponse.json({ message: 'Order marked as shipped' });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

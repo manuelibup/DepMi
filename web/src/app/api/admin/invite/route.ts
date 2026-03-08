@@ -1,80 +1,40 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
-export async function POST(req: Request) {
+const ADMIN_EMAILS = [process.env.ADMIN_EMAIL || 'admin@depmi.com'];
+
+export async function POST(req: NextRequest) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
-        const session = await getServerSession(authOptions);
+        const { email } = await req.json();
+        if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 });
 
-        // Admin guard — only the email in ADMIN_EMAIL env var can use this route.
-        // Add ADMIN_EMAIL=your@email.com to .env.local and Vercel environment variables.
-        if (!session?.user?.id) {
-            return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
-        }
-
-        const adminEmail = process.env.ADMIN_EMAIL;
-        if (!adminEmail || session.user.email !== adminEmail) {
-            return NextResponse.json({ message: "Forbidden. Admin access only." }, { status: 403 });
-        }
-
-        const body = await req.json();
-        const { email } = body;
-
-        if (!email) {
-            return NextResponse.json({ message: "Email is required" }, { status: 400 });
-        }
-
-        // Check if an invite already exists and is pending
-        const existingInvite = await prisma.storeInvite.findFirst({
-            where: {
-                email,
-                status: "PENDING"
-            }
-        });
-
-        if (existingInvite) {
-            // Check if it's expired
-            if (new Date() > existingInvite.expiresAt) {
-                await prisma.storeInvite.update({
-                    where: { id: existingInvite.id },
-                    data: { status: "EXPIRED" }
-                });
-                // We'll proceed to create a new one below
-            } else {
-                return NextResponse.json(
-                    { message: "Active invite already sent to this email", inviteId: existingInvite.id },
-                    { status: 409 }
-                );
-            }
-        }
-
-        // Generate a new Invite covering the next 48 hours
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 48);
+        expiresAt.setDate(expiresAt.getDate() + 7);
 
         const invite = await prisma.storeInvite.create({
             data: {
-                email,
+                id: uuidv4(),
+                email: email.toLowerCase(),
                 expiresAt,
+                status: 'PENDING'
             }
         });
 
-        // In a real production app, we would integrate SendGrid, Postmark, or AWS SES right here 
-        // to email the invite link: `https://depmi.com/invite/${invite.id}`. 
-        // For the pilot MVP, we will simply return the link directly in the API response 
-        // so you can instantly copy it and paste it to the vendor in WhatsApp or X DMs!
+        // The join URL format
+        const inviteUrl = `${process.env.NEXTAUTH_URL}/register?type=vendor&invite=${invite.id}`;
 
-        const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.id}`;
-
-        return NextResponse.json({
-            message: "Invite generated successfully",
-            inviteUrl,
-            expiresAt
-        }, { status: 201 });
-
-    } catch (error: unknown) {
-        console.error("Admin Invite Error:", error);
-        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ inviteUrl, inviteId: invite.id });
+    } catch (error) {
+        console.error('Invite API Error:', error);
+        return NextResponse.json({ error: 'Failed to generate invite' }, { status: 500 });
     }
 }

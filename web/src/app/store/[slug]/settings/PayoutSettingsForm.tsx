@@ -21,10 +21,13 @@ export default function PayoutSettingsForm({ slug }: Props) {
         bankAccountNo: '',
         bankAccountName: ''
     });
-    
+
     const [loading, setLoading] = useState(true);
     const [resolving, setResolving] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
     const [msg, setMsg] = useState({ text: '', type: '' });
 
     useEffect(() => {
@@ -82,33 +85,60 @@ export default function PayoutSettingsForm({ slug }: Props) {
     const handleBankChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setFormData(prev => ({ ...prev, bankCode: e.target.value, bankAccountName: '' }));
     };
-    
+
     // Attempt resolution when bank code changes and account number is 10 digits
     useEffect(() => {
         if (formData.bankAccountNo.length === 10 && formData.bankCode && !formData.bankAccountName && !resolving) {
             handleAccountBlur();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData.bankCode]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const triggerOtp = async () => {
         setSaving(true);
-        setMsg({ text: '', type: '' });
+        try {
+            const res = await fetch('/api/otp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'ACCOUNT_UPDATE' })
+            });
+            if (res.ok) {
+                setOtpSent(true);
+            } else {
+                const data = await res.json();
+                setMsg({ text: data.error || 'Failed to send verification code', type: 'error' });
+                setShowOtpModal(false);
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setMsg({ text: '', type: '' });
+        setShowOtpModal(true);
+        setOtpCode('');
+        setOtpSent(false);
+        triggerOtp();
+    };
+
+    const confirmAndSave = async () => {
+        setSaving(true);
         try {
             const res = await fetch(`/api/store/${slug}/payout`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, code: otpCode })
             });
 
             if (res.ok) {
                 setMsg({ text: 'Payout settings saved successfully!', type: 'success' });
+                setShowOtpModal(false);
                 router.refresh();
             } else {
                 const data = await res.json().catch(() => ({}));
-                setMsg({ text: data.message || 'Failed to update payout settings', type: 'error' });
+                setMsg({ text: data.message || 'Verification failed. Please check the code.', type: 'error' });
             }
         } catch (error) {
             setMsg({ text: 'An unexpected error occurred', type: 'error' });
@@ -182,6 +212,57 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 <p className={`${styles.message} ${msg.type === 'success' ? styles.success : styles.error}`}>
                     {msg.text}
                 </p>
+            )}
+
+            {showOtpModal && (
+                <div className={styles.modalOverlay} onClick={() => !saving && setShowOtpModal(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.title} style={{ textAlign: 'center' }}>Verify Identity</h3>
+                        <p className={styles.helpText} style={{ textAlign: 'center', marginBottom: '20px' }}>
+                            We've sent a code to your phone/email. Enter it to confirm these changes.
+                        </p>
+
+                        <input
+                            type="text"
+                            maxLength={6}
+                            className={styles.input}
+                            style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '8px', fontWeight: 800, marginBottom: '20px' }}
+                            placeholder="000000"
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        />
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <button
+                                type="button"
+                                className={styles.submitBtn}
+                                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--card-border)', color: 'var(--text-main)' }}
+                                onClick={() => setShowOtpModal(false)}
+                                disabled={saving}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.submitBtn}
+                                onClick={confirmAndSave}
+                                disabled={saving || otpCode.length < 6}
+                            >
+                                {saving ? 'Verifying...' : 'Confirm'}
+                            </button>
+                        </div>
+
+                        {!saving && otpSent && (
+                            <button
+                                type="button"
+                                onClick={triggerOtp}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', marginTop: '16px', cursor: 'pointer', fontWeight: 600, width: '100%' }}
+                            >
+                                Didn't receive code? Resend
+                            </button>
+                        )}
+                    </div>
+                </div>
             )}
         </form>
     );

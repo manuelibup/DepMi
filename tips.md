@@ -270,3 +270,32 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 
 - **The Pattern**: When parsing text for mentions like `[product:id]`, use `Array.from(new Set<string>(text.match(/regex/g)?.map(...)))` to ensure you only notify a store owner *once* per comment, even if their product is linked multiple times.
 - **The Query**: Use `prisma.product.findMany({ where: { id: { in: ids } }, select: { store: { select: { ownerId: true } } } })` for a high-performance, single-query lookup of all notification targets.
+
+---
+
+## Ìæ® 19. Preventing Animation "Flicker" (Backwards Fill)
+
+*This tip was added after fixing a "flashing" issue where elements appeared briefly in their final state before starting their fade-in animation.*
+
+- **The Issue**: When using `@keyframes` with `from { opacity: 0 }`, the element often renders at `opacity: 1` for a split second before the animation starts (especially with an animation delay).
+- **The Fix**: Always use **`animation-fill-mode: backwards;`** (or `both`).
+    - `backwards` forces the element to apply the styles from the **first keyframe** (`0%/`from`) as soon as the animation is applied, even during the delay period.
+    - This ensures a clean `opacity: 0` state before the fade-in begins.
+
+## Ì≥± 20. Forced Line-Breaks for Mobile Grid Clarity
+
+*This tip was added after refining feature cards for a 1-column mobile grid.*
+
+- **The Issue**: In compact grid cards (like "How it Works" sections), labels like "Buyers:" and "Sellers:" often wrap awkwardly, making the value proposition hard to scan.
+- **The Fix**: Use explicit `<br />` tags to force distinct roles onto separate lines for mobile viewports.
+    - Example: `Buyers: Post what you need. <br /> Sellers: We alert you.`
+    - This provides a structured, vertical rhythm that is much easier to read on narrow screens than a single long paragraph.
+
+## Ì∂ºÔ∏è 21. Favicon Conflicts in Next.js App Router
+
+*This tip was added after an SVG favicon was being overridden by a stale PNG file.*
+
+- **The Issue**: Next.js App Router (14/15/16) automatically looks for files named `icon.png`, `favicon.ico`, or `apple-icon.png` in the `app/` or `public/` directory. If these exist, they may silently override the `icons` configuration in your `layout.tsx` metadata.
+- **The Fix**:
+    1. If you want to use SVG or a specific path, explicitly define it in the **Metadata** object in `layout.tsx`.
+    2. **Crucially:** Delete or rename any files like `src/app/icon.png` to avoid the automatic file-based convention from taking precedence. Refined icons should be served from `/public` for maximum reliability.

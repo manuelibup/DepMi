@@ -420,17 +420,22 @@
 
 .micBadge {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
+    bottom: -1px;
+    right: -1px;
     background: var(--primary);
     color: white;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--bg-elevated);
+    border: 1.5px solid #000;
+}
+
+.micBadge svg {
+    width: 8px;
+    height: 8px;
 }
 
 .header {
@@ -443,6 +448,10 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 100;
     width: 100%;
+}
+
+.messageRow.me .playBtn {
+    color: #fff;
 }
 
 .backBtn {

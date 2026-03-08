@@ -16,19 +16,19 @@ export default function Header() {
         fetch('/api/notifications/unread-count')
             .then(r => r.json())
             .then(data => setUnreadNotifs(data.count ?? 0))
-            .catch(() => {});
+            .catch(() => { });
 
         // Fetch unread messages
         fetch('/api/messages/unread-count')
             .then(r => r.json())
             .then(data => setUnreadMessages(data.count ?? 0))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     return (
         <header className={`${styles.header} ${!isVisible ? styles.headerHidden : ''}`}>
             <Link href="/" className={styles.logoWrap}>
-                <Image src="/depmi-logo.svg" alt="DepMi logo" width={44} height={44} className={styles.logoMark} />
+                <Image src="/depmi-logo.png" alt="DepMi logo" width={48} height={48} className={styles.logoMark} />
                 <span className={styles.logoText}>DepMi</span>
             </Link>
             <div className={styles.headerActions}>

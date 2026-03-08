@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
+import { Mail, MessageSquarePlus, Zap, ShieldCheck } from 'lucide-react';
 import styles from './WaitlistHome.module.css';
 
 export default function WaitlistHome() {
@@ -27,16 +29,18 @@ export default function WaitlistHome() {
             const data = await res.json();
 
             if (!res.ok) {
+                if (res.status === 409) {
+                    throw new Error('You are already on the list! We will reach out soon.');
+                }
                 throw new Error(data.message || 'Something went wrong');
             }
 
             setStatus('success');
-            setMessage(data.message);
+            setMessage('Welcome to the future of trade! Check your inbox soon.');
             setEmail('');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             setStatus('error');
-            setMessage(error.message);
+            setMessage(error instanceof Error ? error.message : 'Something went wrong');
         }
     };
 
@@ -47,36 +51,36 @@ export default function WaitlistHome() {
             <div className={styles.bgBlob2} />
 
             <div className={styles.container}>
+                {/* Branding */}
+                <div className={styles.brandHeader}>
+                    <Image
+                        src="/depmi-logo.svg"
+                        alt="DepMi Logo"
+                        width={64}
+                        height={64}
+                        className={styles.brandLogo}
+                        priority
+                    />
+                    <h2 className={styles.brandName}>DepMi</h2>
+                </div>
+
                 <div className={styles.badge}>
                     <span className={styles.pulseDot} />
                     Coming Soon
                 </div>
 
                 <h1 className={styles.title}>
-                    The Future of <br />
-                    <span className={styles.titleHighlight}>Social Commerce</span>
+                    Buy & Sell as Easily as <br />
+                    <span className={styles.titleHighlight}>Liking a Post</span>
                 </h1>
 
                 <p className={styles.subtitle}>
-                    Join the waitlist to get early access to DepMi. Discover, bid, and trade seamlessly with trusted peers.
+                    DepMi brings trust to social commerce. Buyers find exactly what they need; sellers find customers waiting for them. Simple, social, and secure.
                 </p>
 
                 <form onSubmit={handleSubmit} className={styles.formCard}>
                     <div className={styles.inputWrapper}>
-                        <svg
-                            className={styles.inputIcon}
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <rect width="20" height="16" x="2" y="4" rx="2" />
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                        </svg>
+                        <Mail className={styles.inputIcon} size={20} />
                         <input
                             type="email"
                             className={styles.input}
@@ -92,7 +96,7 @@ export default function WaitlistHome() {
                         className={styles.submitBtn}
                         disabled={status === 'loading' || status === 'success' || !email}
                     >
-                        {status === 'loading' ? 'Joining...' : 'Join Waitlist'}
+                        {status === 'loading' ? 'Joining...' : 'Get Early Access'}
                     </button>
                 </form>
 
@@ -101,6 +105,40 @@ export default function WaitlistHome() {
                         {message}
                     </p>
                 )}
+
+                {/* How it Works Section */}
+                <div className={styles.featuresGrid}>
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIconWrapper}>
+                            <MessageSquarePlus className={styles.featureIcon} size={32} />
+                        </div>
+                        <h3 className={styles.featureTitle}>Never search again</h3>
+                        <p className={styles.featureText}>
+                            Buyers: Post what you need and wait. <br />
+                            Sellers: We alert you when someone wants what you sell.
+                        </p>
+                    </div>
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIconWrapper}>
+                            <Zap className={styles.featureIcon} size={32} />
+                        </div>
+                        <h3 className={styles.featureTitle}>Sell with a tap</h3>
+                        <p className={styles.featureText}>
+                            Sellers: Turn social posts into sales in seconds. <br />
+                            Buyers: See it, like it, buy it.
+                        </p>
+                    </div>
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIconWrapper}>
+                            <ShieldCheck className={styles.featureIcon} size={32} />
+                        </div>
+                        <h3 className={styles.featureTitle}>Peace of mind</h3>
+                        <p className={styles.featureText}>
+                            Money is held safely until the item is delivered. <br />
+                            No more &apos;pay before delivery&apos; stress.
+                        </p>
+                    </div>
+                </div>
             </div>
         </main>
     );

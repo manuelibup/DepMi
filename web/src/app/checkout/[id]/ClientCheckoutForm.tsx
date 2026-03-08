@@ -13,6 +13,7 @@ interface Props {
     defaultAddress: string;
     defaultCity: string;
     defaultState: string;
+    stock: number;
 }
 
 type Stage = 'form' | 'submitting' | 'awaiting_payment' | 'confirmed';
@@ -34,8 +35,8 @@ interface OrderBreakdown {
 const POLL_INTERVAL_MS = 5000;
 
 export default function ClientCheckoutForm({
-    productId, total, subtotal, deliveryFee,
-    defaultPhone, defaultAddress, defaultCity, defaultState,
+    productId, total: initialTotal, subtotal: itemPrice, deliveryFee: initialDeliveryFee,
+    defaultPhone, defaultAddress, defaultCity, defaultState, stock,
 }: Props) {
     const router = useRouter();
 
@@ -47,7 +48,15 @@ export default function ClientCheckoutForm({
     const [stateVal, setStateVal] = useState(defaultState);
     const [deliveryNote, setDeliveryNote] = useState('');
     const [saveDetails, setSaveDetails] = useState(true);
+    const [quantity, setQuantity] = useState(1);
+    const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [error, setError] = useState('');
+
+    // Derived values
+    const currentDeliveryFee = deliveryMethod === 'PICKUP' ? 0 : initialDeliveryFee;
+    const currentSubtotal = itemPrice * quantity;
+    const processingFee = Math.min(Math.round((currentSubtotal + currentDeliveryFee) * 0.01), 1000);
+    const finalTotal = currentSubtotal + currentDeliveryFee + processingFee;
 
     // Post-initialize state
     const [orderId, setOrderId] = useState('');
@@ -62,7 +71,7 @@ export default function ClientCheckoutForm({
         if (typeof window === 'undefined') return;
         const params = new URLSearchParams(window.location.search);
         const resumeId = params.get('resume');
-        
+
         if (resumeId) {
             setStage('submitting');
             fetch(`/api/checkout/resume?orderId=${resumeId}`)
@@ -75,14 +84,14 @@ export default function ClientCheckoutForm({
                         setOrderId(data.orderId);
                         setVirtualAccount(data.virtualAccount);
                         setBreakdown(data.breakdown);
-                        
+
                         // Calculate remaining time
                         const created = new Date(data.createdAt).getTime();
                         const now = Date.now();
                         const elapsedSecs = Math.floor((now - created) / 1000);
                         const totalSecs = 30 * 60;
                         const remaining = Math.max(0, totalSecs - elapsedSecs);
-                        
+
                         setSecondsLeft(remaining);
                         if (remaining <= 0) {
                             setError('Payment window expired. Please start a new order.');
@@ -144,8 +153,12 @@ export default function ClientCheckoutForm({
         e.preventDefault();
         setError('');
 
-        if (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim()) {
+        if (deliveryMethod === 'DELIVERY' && (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim())) {
             setError('Please fill in all delivery details.');
+            return;
+        }
+        if (deliveryMethod === 'PICKUP' && !phone.trim()) {
+            setError('Please provide a phone number for the seller to contact you.');
             return;
         }
 
@@ -157,8 +170,9 @@ export default function ClientCheckoutForm({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     productId,
-                    quantity: 1,
-                    deliveryAddress: `${address}, ${city}, ${stateVal}`,
+                    quantity,
+                    deliveryMethod,
+                    deliveryAddress: deliveryMethod === 'PICKUP' ? 'PICKUP' : `${address}, ${city}, ${stateVal}`,
                     deliveryNote: deliveryNote.trim() || undefined,
                     phone: phone.trim(),
                     addressLine: address.trim(),
@@ -206,8 +220,8 @@ export default function ClientCheckoutForm({
             <div className={styles.confirmedState}>
                 <div className={styles.confirmedIcon}>
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-                        <path d="m9 12 2 2 4-4"/>
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                        <path d="m9 12 2 2 4-4" />
                     </svg>
                 </div>
                 <h2>Payment Received!</h2>
@@ -224,14 +238,14 @@ export default function ClientCheckoutForm({
                     {/* Timer */}
                     <div className={styles.timerBanner}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                         </svg>
                         <span>Transfer within <strong>{formatTime(secondsLeft)}</strong> — account expires after that</span>
                     </div>
 
                     <h2 className={styles.sectionTitle}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+                            <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
                         </svg>
                         Transfer to this account
                     </h2>
@@ -261,11 +275,11 @@ export default function ClientCheckoutForm({
                             >
                                 {copied ? (
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12"/>
+                                        <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                 ) : (
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                                     </svg>
                                 )}
                                 {copied ? 'Copied!' : 'Copy'}
@@ -282,7 +296,7 @@ export default function ClientCheckoutForm({
                                 onClick={() => copyToClipboard(breakdown.total.toString())}
                             >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                                 </svg>
                                 Copy
                             </button>
@@ -308,8 +322,8 @@ export default function ClientCheckoutForm({
                     <div className={styles.trustBanner} style={{ marginTop: '16px' }}>
                         <div className={styles.trustIcon}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-                                <path d="m9 12 2 2 4-4"/>
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                                <path d="m9 12 2 2 4-4" />
                             </svg>
                         </div>
                         <div className={styles.trustText}>
@@ -334,26 +348,77 @@ export default function ClientCheckoutForm({
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
                     </svg>
                     Delivery Details
                 </h2>
 
+                {/* Delivery Method Toggle */}
+                <div className={styles.methodToggle}>
+                    <button
+                        type="button"
+                        className={`${styles.methodBtn} ${deliveryMethod === 'DELIVERY' ? styles.methodBtnActive : ''}`}
+                        onClick={() => setDeliveryMethod('DELIVERY')}
+                    >
+                        Delivery
+                    </button>
+                    <button
+                        type="button"
+                        className={`${styles.methodBtn} ${deliveryMethod === 'PICKUP' ? styles.methodBtnActive : ''}`}
+                        onClick={() => setDeliveryMethod('PICKUP')}
+                    >
+                        Pickup
+                    </button>
+                </div>
+
                 <div className={styles.formGroup}>
-                    <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
-                    <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                    <input className={styles.inputField} placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} required />
-                    <div className={styles.inputRow}>
-                        <input className={styles.inputField} placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} required />
-                        <input className={styles.inputField} placeholder="State" value={stateVal} onChange={(e) => setStateVal(e.target.value)} required />
+                    {/* Quantity Selector */}
+                    <div className={styles.qtyContainer}>
+                        <span className={styles.qtyLabel}>Quantity</span>
+                        <div className={styles.qtySelector}>
+                            <button
+                                type="button"
+                                className={styles.qtyBtn}
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                disabled={quantity <= 1}
+                            >
+                                -
+                            </button>
+                            <span className={styles.qtyValue}>{quantity}</span>
+                            <button
+                                type="button"
+                                className={styles.qtyBtn}
+                                onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                                disabled={quantity >= stock}
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
+
+                    {deliveryMethod === 'DELIVERY' ? (
+                        <>
+                            <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
+                            <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                            <input className={styles.inputField} placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+                            <div className={styles.inputRow}>
+                                <input className={styles.inputField} placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} required />
+                                <input className={styles.inputField} placeholder="State" value={stateVal} onChange={(e) => setStateVal(e.target.value)} required />
+                            </div>
+                        </>
+                    ) : (
+                        <div className={styles.pickupNotice}>
+                            <p>You'll need to contact the seller to arrange a pickup location after payment.</p>
+                        </div>
+                    )}
+
                     <input className={styles.inputField} placeholder="Delivery note (optional)" value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} />
-                    
+
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                        <input 
-                            type="checkbox" 
-                            checked={saveDetails} 
-                            onChange={(e) => setSaveDetails(e.target.checked)} 
+                        <input
+                            type="checkbox"
+                            checked={saveDetails}
+                            onChange={(e) => setSaveDetails(e.target.checked)}
                             style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
                         />
                         Save these delivery details for future orders
@@ -364,29 +429,29 @@ export default function ClientCheckoutForm({
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 18h6"/><path d="M12 14h.01"/><path d="M12 10h.01"/><path d="M12 6h.01"/>
+                        <rect width="16" height="20" x="4" y="2" rx="2" ry="2" /><path d="M9 18h6" /><path d="M12 14h.01" /><path d="M12 10h.01" /><path d="M12 6h.01" />
                     </svg>
                     Order Summary
                 </h2>
 
                 <div className={styles.summaryRow}>
-                    <span>Items Total</span>
-                    <span>₦{subtotal.toLocaleString()}</span>
+                    <span>Items Total ({quantity} {quantity === 1 ? 'item' : 'items'})</span>
+                    <span>₦{currentSubtotal.toLocaleString()}</span>
                 </div>
                 <div className={styles.summaryRow}>
                     <span>Delivery Fee</span>
-                    <span>₦{deliveryFee.toLocaleString()}</span>
+                    <span>₦{currentDeliveryFee.toLocaleString()}</span>
                 </div>
                 <div className={styles.summaryRow}>
-                    <span>Processing Fee (1%, max ₦1,000)</span>
-                    <span>₦{Math.min(Math.round((subtotal + deliveryFee) * 0.01), 1000).toLocaleString()}</span>
+                    <span>Processing Fee (1%)</span>
+                    <span>₦{processingFee.toLocaleString()}</span>
                 </div>
 
                 <div className={styles.trustBanner} style={{ marginTop: '16px' }}>
                     <div className={styles.trustIcon}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-                            <path d="m9 12 2 2 4-4"/>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                            <path d="m9 12 2 2 4-4" />
                         </svg>
                     </div>
                     <div className={styles.trustText}>
@@ -398,7 +463,7 @@ export default function ClientCheckoutForm({
                 <div className={styles.summaryTotal}>
                     <span>Total to Pay</span>
                     <span style={{ color: 'var(--primary)' }}>
-                        ₦{(subtotal + deliveryFee + Math.min(Math.round((subtotal + deliveryFee) * 0.01), 1000)).toLocaleString()}
+                        ₦{finalTotal.toLocaleString()}
                     </span>
                 </div>
             </section>
@@ -410,14 +475,14 @@ export default function ClientCheckoutForm({
                     {stage === 'submitting' ? (
                         <>
                             <svg className="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                             </svg>
                             Creating Secure Order…
                         </>
                     ) : (
                         <>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+                                <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
                             </svg>
                             Pay via Transfer
                         </>

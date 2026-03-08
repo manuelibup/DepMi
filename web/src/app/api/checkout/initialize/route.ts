@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId } = body
+  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY' } = body
 
   if (!productId || !deliveryAddress) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     if (!buyer) return NextResponse.json({ error: 'User not found' }, { status: 404 })
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     if (!product.inStock) return NextResponse.json({ error: 'Product out of stock' }, { status: 400 })
+    if (quantity > (product.stock ?? 1)) return NextResponse.json({ error: 'Selected quantity exceeds available stock' }, { status: 400 })
 
     // KYC gate — must be TIER_1 to buy via escrow
     const tierOrder = ['UNVERIFIED', 'TIER_0', 'TIER_1', 'TIER_2', 'TIER_3', 'BUSINESS']
@@ -63,9 +64,9 @@ export async function POST(req: NextRequest) {
     }
 
     const itemPrice = Number(product.price)
-    const totalAmount = itemPrice * quantity
-    const deliveryFee = 2500 // TODO: dynamic delivery fee in Phase 4
-    const subtotalAndDelivery = totalAmount + deliveryFee
+    const totalItemsAmount = itemPrice * quantity
+    const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
+    const subtotalAndDelivery = totalItemsAmount + deliveryFee
     const processingFee = Math.min(Math.round(subtotalAndDelivery * 0.01), 1000)
     const finalAmountToPay = subtotalAndDelivery + processingFee
 
@@ -88,11 +89,12 @@ export async function POST(req: NextRequest) {
         data: {
           buyerId: session.user.id,
           sellerId: product.store.id,
-          totalAmount: finalAmountToPay,
+          totalAmount: subtotalAndDelivery, // Exactly what the order is worth (Price + Delivery)
           status: 'PENDING',
           escrowStatus: 'HELD',
           paymentRail: 'NAIRA',
           deliveryAddress,
+          deliveryMethod,
           deliveryNote: deliveryNote ?? null,
           demandId: demandId ?? null,
           bidId: bidId ?? null,
@@ -121,11 +123,11 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
       // Clean up the order if Monnify fails
       try {
-          await prisma.order.delete({ where: { id: order.id } })
+        await prisma.order.delete({ where: { id: order.id } })
       } catch (cleanupErr) {
-          console.error('[checkout/initialize] Failed to cleanup order:', cleanupErr)
+        console.error('[checkout/initialize] Failed to cleanup order:', cleanupErr)
       }
-      
+
       console.error('[checkout/initialize] Monnify error:', err)
       return NextResponse.json(
         { error: `Payment provider error: ${err.message || 'Unavailable'}. Please try again.` },
@@ -147,7 +149,7 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       amount: finalAmountToPay,
       breakdown: {
-        subtotal: totalAmount,
+        subtotal: totalItemsAmount,
         deliveryFee,
         processingFee,
         total: finalAmountToPay,
