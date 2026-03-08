@@ -31,6 +31,9 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Persistence:** Collects and validates email addresses in the `Waitlist` model via `/api/waitlist`.
 - **Conditional Toggle:** Site conditionally renders the Waitlist based on the `NEXT_PUBLIC_SHOW_WAITLIST` environment variable.
 - **Goal:** Public pre-launch phase to build hype and capture leads while dev continues.
+- **Niche Comparison (vs Hustla.live):**
+    - **Hustla.live (Directory Model):** Focuses on list-and-find. The buyer has to search through thousands of vendors. High friction for buyers, low conversion for new sellers.
+    - **DepMi (Demand Engine Model):** Focuses on "Demand-First." Buyers post what they need; the platform alerts vendors. Zero friction for buyers, guaranteed high-intent leads for sellers. This is the core differentiator that makes DepMi a social commerce *engine* rather than just a directory.
 
 ### C. Multi-Provider Auth
 - **Email + Password** (bcrypt hashed, 12+ salt rounds — never plaintext)
