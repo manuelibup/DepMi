@@ -16,6 +16,8 @@ interface OrderItem {
     product: { id: string; title: string; images: { url: string }[] };
     store?: { name: string };
     buyer?: { displayName: string; username: string };
+    trackingNo?: string;
+    deliveryMethod?: string;
 }
 
 interface Props {
@@ -60,9 +62,18 @@ function OrderCard({ order, role, onStatusChange }: {
     const image = order.product.images[0]?.url;
     const shortId = order.id.slice(-6).toUpperCase();
     const [loading, setLoading] = useState(false);
-    const [showDisputeModal, setShowDisputeModal] = useState(false);
-    const [disputeReason, setDisputeReason] = useState('');
     const [localStatus, setLocalStatus] = useState(order.status);
+    const [showShipModal, setShowShipModal] = useState(false);
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [hasReviewed, setHasReviewed] = useState(false);
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewText, setReviewText] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [disputeReason, setDisputeReason] = useState('');
+    const [shipInfo, setShipInfo] = useState({ trackingNo: '', deliveryMethod: '' });
 
     useEffect(() => {
         // If pending, check if expired (e.g. 15 mins)
@@ -78,19 +89,43 @@ function OrderCard({ order, role, onStatusChange }: {
     }, [localStatus, order.createdAt]);
 
     const handleConfirmDelivery = async () => {
-        if (!confirm('Confirm that you received this order? This will release payment to the seller.')) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/orders/${order.id}/confirm`, { method: 'POST' });
+            const res = await fetch(`/api/orders/${order.id}/confirm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: otpCode })
+            });
             const data = await res.json();
             if (res.ok) {
                 setLocalStatus('COMPLETED');
                 onStatusChange(order.id, 'COMPLETED');
+                setShowOtpModal(false);
             } else {
-                alert(data.error ?? 'Failed to confirm delivery. Please try again.');
+                alert(data.error ?? 'Verification failed. Please check the code.');
             }
         } catch {
             alert('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const triggerOtp = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/otp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'TRANSACTIONAL' })
+            });
+            if (res.ok) {
+                setOtpSent(true);
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to send OTP.');
+                setShowOtpModal(false);
+            }
         } finally {
             setLoading(false);
         }
@@ -145,6 +180,11 @@ function OrderCard({ order, role, onStatusChange }: {
                                 : `Buyer: @${order.buyer?.username ?? order.buyer?.displayName ?? '—'}`}
                         </p>
                         <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
+                        {(order.trackingNo || order.deliveryMethod) && localStatus !== 'PENDING' && (
+                            <div className={styles.trackingInfo}>
+                                <p>📦 <strong>{order.deliveryMethod || 'Shipped'}:</strong> {order.trackingNo || 'Contact seller'}</p>
+                            </div>
+                        )}
                     </div>
                 </Link>
 
@@ -156,11 +196,24 @@ function OrderCard({ order, role, onStatusChange }: {
                                 Resume Checkout
                             </Link>
                         )}
+                        {localStatus === 'COMPLETED' && !hasReviewed && (
+                            <button
+                                className={`${styles.actionBtn} ${styles.primary}`}
+                                onClick={() => setShowReviewModal(true)}
+                            >
+                                ⭐ Leave a Review
+                            </button>
+                        )}
                         {localStatus === 'SHIPPED' && (
                             <>
                                 <button
                                     className={`${styles.actionBtn} ${styles.primary}`}
-                                    onClick={handleConfirmDelivery}
+                                    onClick={() => {
+                                        setShowOtpModal(true);
+                                        setOtpCode('');
+                                        setOtpSent(false);
+                                        triggerOtp();
+                                    }}
                                     disabled={loading}
                                 >
                                     {loading ? 'Processing…' : 'Mark as Received'}
@@ -182,24 +235,7 @@ function OrderCard({ order, role, onStatusChange }: {
                     <div className={styles.orderAction}>
                         <button
                             className={`${styles.actionBtn} ${styles.primary}`}
-                            onClick={async () => {
-                                if (!confirm('Confirm that you have shipped this order?')) return;
-                                setLoading(true);
-                                try {
-                                    const res = await fetch(`/api/orders/${order.id}/ship`, { method: 'POST' });
-                                    const data = await res.json();
-                                    if (res.ok) {
-                                        setLocalStatus('SHIPPED');
-                                        onStatusChange(order.id, 'SHIPPED');
-                                    } else {
-                                        alert(data.message ?? 'Failed to mark as shipped.');
-                                    }
-                                } catch {
-                                    alert('Network error. Please try again.');
-                                } finally {
-                                    setLoading(false);
-                                }
-                            }}
+                            onClick={() => setShowShipModal(true)}
                             disabled={loading}
                         >
                             {loading ? 'Processing…' : 'Mark as Shipped'}
@@ -207,6 +243,59 @@ function OrderCard({ order, role, onStatusChange }: {
                     </div>
                 )}
             </div>
+
+            {/* Shipping Info Modal */}
+            {showShipModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowShipModal(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>Shipping Details</h3>
+                        <p className={styles.modalDesc}>Provide tracking details so the buyer can stay updated.</p>
+                        <input
+                            type="text"
+                            className={styles.modalInput}
+                            placeholder="Delivery Method (e.g. GIG, Uber, DHL)"
+                            value={shipInfo.deliveryMethod}
+                            onChange={(e) => setShipInfo({ ...shipInfo, deliveryMethod: e.target.value })}
+                        />
+                        <input
+                            type="text"
+                            className={styles.modalInput}
+                            placeholder="Tracking Number or Phone (Optional)"
+                            value={shipInfo.trackingNo}
+                            onChange={(e) => setShipInfo({ ...shipInfo, trackingNo: e.target.value })}
+                        />
+                        <div className={styles.modalActions}>
+                            <button className={`${styles.actionBtn} ${styles.ghost}`} onClick={() => setShowShipModal(false)}>Cancel</button>
+                            <button
+                                className={`${styles.actionBtn} ${styles.primary}`}
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const res = await fetch(`/api/orders/${order.id}/ship`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(shipInfo)
+                                        });
+                                        if (res.ok) {
+                                            setLocalStatus('SHIPPED');
+                                            onStatusChange(order.id, 'SHIPPED');
+                                            setShowShipModal(false);
+                                        } else {
+                                            const data = await res.json();
+                                            alert(data.message || 'Failed to update.');
+                                        }
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading || !shipInfo.deliveryMethod}
+                            >
+                                {loading ? 'Updating…' : 'Confirm Shipment'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Dispute modal */}
             {showDisputeModal && (
@@ -242,6 +331,106 @@ function OrderCard({ order, role, onStatusChange }: {
                     </div>
                 </div>
             )}
+            {/* Review Modal */}
+            {showReviewModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowReviewModal(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>Rate your experience</h3>
+                        <p className={styles.modalDesc}>How was your order from {order.store?.name}?</p>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '12px 0' }}>
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <button
+                                    key={star}
+                                    onClick={() => setReviewRating(star)}
+                                    style={{ background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', opacity: star <= reviewRating ? 1 : 0.3 }}
+                                >
+                                    ⭐
+                                </button>
+                            ))}
+                        </div>
+                        <textarea
+                            className={styles.disputeInput}
+                            placeholder="Optional — tell others about your experience"
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            rows={3}
+                        />
+                        <div className={styles.modalActions}>
+                            <button className={`${styles.actionBtn} ${styles.ghost}`} onClick={() => setShowReviewModal(false)}>Skip</button>
+                            <button
+                                className={`${styles.actionBtn} ${styles.primary}`}
+                                disabled={reviewRating === 0 || loading}
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const res = await fetch('/api/reviews', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ orderId: order.id, rating: reviewRating, text: reviewText || undefined }),
+                                        });
+                                        if (res.ok) {
+                                            setHasReviewed(true);
+                                            setShowReviewModal(false);
+                                        }
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                            >
+                                {loading ? 'Submitting…' : 'Submit Review'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* OTP Modal */}
+            {showOtpModal && (
+                <div className={styles.modalOverlay} onClick={() => !loading && setShowOtpModal(false)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>Security Verification 🛡️</h3>
+                        <p className={styles.modalDesc}>
+                            We've sent a 6-digit code to your {otpSent ? 'phone/email' : 'contact'}. Enter it below to release funds.
+                        </p>
+
+                        <input
+                            type="text"
+                            maxLength={6}
+                            className={styles.modalInput}
+                            style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '8px', fontWeight: 800 }}
+                            placeholder="000000"
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        />
+
+                        <div className={styles.modalActions}>
+                            <button
+                                className={`${styles.actionBtn} ${styles.ghost}`}
+                                onClick={() => setShowOtpModal(false)}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={`${styles.actionBtn} ${styles.primary}`}
+                                onClick={handleConfirmDelivery}
+                                disabled={loading || otpCode.length < 6}
+                            >
+                                {loading ? 'Verifying...' : 'Confirm & Release'}
+                            </button>
+                        </div>
+
+                        {!loading && otpSent && (
+                            <button
+                                onClick={triggerOtp}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', marginTop: '16px', cursor: 'pointer', fontWeight: 600, width: '100%' }}
+                            >
+                                Didn't receive code? Resend
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
         </>
     );
 }
@@ -249,6 +438,18 @@ function OrderCard({ order, role, onStatusChange }: {
 export default function OrdersDashboard({ hasStore, storeName, purchases, sales }: Props) {
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'purchases' | 'sales'>('purchases');
+    const [earnings, setEarnings] = useState<{ totalEarned: number, pendingEscrow: number, orderCount: number, pendingCount: number } | null>(null);
+
+    useEffect(() => {
+        if (activeTab === 'sales' && hasStore) {
+            fetch('/api/store/earnings')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) setEarnings(data);
+                })
+                .catch(() => { });
+        }
+    }, [activeTab, hasStore]);
     const [showCelebration, setShowCelebration] = useState(false);
     const [localPurchases, setLocalPurchases] = useState(purchases);
     const [localSales, setLocalSales] = useState(sales);
@@ -312,6 +513,32 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {hasStore && earnings && (
+                            <div className={styles.financialsCard}>
+                                <div className={styles.financialsHeader}>
+                                    <h3 className={styles.financialsTitle}>Store Earnings</h3>
+                                    <Link href={`/store/${storeName?.toLowerCase().replace(/\s+/g, '-')}/settings`} className={styles.payoutBtn}>
+                                        Payout Settings
+                                    </Link>
+                                </div>
+                                <div className={styles.statsGrid}>
+                                    <div className={styles.statItem}>
+                                        <span className={styles.statLabel}>Total Earned</span>
+                                        <span className={styles.statValue}>₦{earnings.totalEarned.toLocaleString()}</span>
+                                    </div>
+                                    <div className={styles.statItem}>
+                                        <span className={styles.statLabel}>Pending Escrow</span>
+                                        <div className={styles.pendingWrap}>
+                                            <span className={styles.statValue}>₦{earnings.pendingEscrow.toLocaleString()}</span>
+                                            <span className={styles.pendingBadge}>{earnings.pendingCount} orders</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={styles.financialsFooter}>
+                                    <p>Funds are automatically released to your bank 24h after buyer confirmation.</p>
+                                </div>
+                            </div>
+                        )}
                         {localSales.length > 0 ? (
                             localSales.map(o => (
                                 <OrderCard key={o.id} order={o} role="seller" onStatusChange={handleStatusChange} />

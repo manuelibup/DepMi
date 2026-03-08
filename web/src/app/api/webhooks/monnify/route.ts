@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/monnify'
+import { notifyOrderUpdate } from '@/lib/notify-watchers'
 
 /**
  * Monnify payment webhook.
- * Fires when a bank transfer is received into a reserved virtual account.
  *
  * Security:
  * - Validates HMAC-SHA512 signature before touching the DB
@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
 
   // Validate Monnify HMAC signature
   const signature = req.headers.get('monnify-signature') ?? ''
+  if (!signature) {
+    console.error('[monnify-webhook] Missing signature header')
+    return NextResponse.json({ ok: false }, { status: 401 })
+  }
   if (!validateWebhookSignature(rawBody, signature)) {
     console.error('[monnify-webhook] Invalid signature')
     return NextResponse.json({ ok: false }, { status: 401 })
@@ -55,7 +59,11 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({
         where: { id: orderId },
-        include: { seller: true },
+        include: { 
+          seller: { include: { owner: true } },
+          buyer: true,
+          items: { include: { product: true }, take: 1 }
+        },
       })
 
       if (!order) {
@@ -91,6 +99,19 @@ export async function POST(req: NextRequest) {
           link: `/orders`,
         },
       })
+
+      // Send email to buyer
+      if (order.buyer.email) {
+        await notifyOrderUpdate({
+          orderId,
+          status: 'PAID',
+          userId: order.buyer.id,
+          userName: order.buyer.displayName,
+          userEmail: order.buyer.email,
+          productTitle: order.items[0]?.product.title || 'Product',
+          link: '/orders'
+        })
+      }
     })
   } catch (err) {
     // Log internally but return 200 so Monnify doesn't keep retrying

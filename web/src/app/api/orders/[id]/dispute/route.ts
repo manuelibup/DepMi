@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { resend } from '@/lib/resend'
 
 /**
  * POST /api/orders/[id]/dispute
@@ -63,8 +64,31 @@ export async function POST(
     })
   })
 
-  // TODO Phase 4: create DisputeCase record + notify admin via email/Slack
-  console.info(`[dispute] Order ${orderId} disputed by ${session.user.id}. Reason: ${reason}`)
+  // Notify all admins by email
+  const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+    .split(',').map(e => e.trim()).filter(Boolean)
+
+  if (adminEmails.length > 0) {
+    const shortId = orderId.slice(-6).toUpperCase()
+    resend.emails.send({
+      from: 'DepMi Disputes <noreply@depmi.com>',
+      to: adminEmails,
+      subject: `⚠️ Dispute Opened — Order #${shortId}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px;border:1px solid #eee;border-radius:12px">
+          <h2 style="color:#e74c3c;margin-top:0">Dispute Raised</h2>
+          <p><strong>Order:</strong> #${shortId} (<code>${orderId}</code>)</p>
+          <p><strong>Buyer ID:</strong> ${session.user.id}</p>
+          <p><strong>Seller:</strong> ${order.seller.name}</p>
+          <div style="background:#fff5f5;border-left:4px solid #e74c3c;padding:12px;border-radius:4px;margin:16px 0">
+            <p style="margin:0;font-weight:600">Reason:</p>
+            <p style="margin:8px 0 0">${reason.slice(0, 500)}</p>
+          </div>
+          <p style="color:#666;font-size:0.9rem">Escrow is frozen. Resolve via the admin panel or contact both parties directly.</p>
+        </div>
+      `,
+    }).catch((err: unknown) => console.error('[dispute] Admin email failed:', err))
+  }
 
   return NextResponse.json({ ok: true })
 }
