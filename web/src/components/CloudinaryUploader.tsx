@@ -86,7 +86,7 @@ export default function CloudinaryUploader({
       // Step A: Fetch signature from our restricted backend
       const resSig = await fetch('/api/upload/sign');
       if (!resSig.ok) throw new Error('Failed to get secure upload signature. Are you logged in?');
-      const { timestamp, folder, signature, apiKey, cloudName } = await resSig.json();
+      const { timestamp, folder, upload_preset, signature, apiKey, cloudName } = await resSig.json();
 
       if (!cloudName) throw new Error('Cloudinary environment variables missing on server.');
 
@@ -99,6 +99,7 @@ export default function CloudinaryUploader({
       formData.append('timestamp', timestamp.toString());
       formData.append('signature', signature);
       formData.append('folder', folder);
+      formData.append('upload_preset', upload_preset);
 
       const xhr = new XMLHttpRequest();
       
@@ -118,6 +119,14 @@ export default function CloudinaryUploader({
       xhr.onload = () => {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
+          // Validate the URL is actually from our Cloudinary account before storing
+          const expectedPrefix = `https://res.cloudinary.com/${cloudName}/`;
+          if (!response.secure_url?.startsWith(expectedPrefix)) {
+            setError('Upload response is invalid. Please try again.');
+            setIsUploading(false);
+            setProgress(0);
+            return;
+          }
           setProgress(100);
           setIsUploading(false);
           // Only pass back the necessary attributes mapped to our DB target strategy

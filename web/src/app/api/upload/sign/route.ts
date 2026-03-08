@@ -54,18 +54,20 @@ export async function GET() {
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000);
-    const folder = 'depmi_uploads'; // Central folder for all standard uploads
-    
-    // Cloudinary signature doesn't inherently block file size without an upload preset,
-    // but we sign the exact folder and timestamp to prevent tampering.
+    // Sub-folder per user — uploads are traceable and isolatable per account
+    const folder = `depmi_uploads/${session.user.id}`;
+    // Signed preset enforces allowed_formats + max_file_size server-side at Cloudinary
+    const upload_preset = 'depmi_strict';
+
     const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder },
+      { timestamp, folder, upload_preset },
       process.env.CLOUDINARY_API_SECRET as string
     );
 
     return NextResponse.json({
       timestamp,
       folder,
+      upload_preset,
       signature,
       apiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,

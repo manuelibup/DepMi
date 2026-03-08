@@ -157,7 +157,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         try {
             // Upload audio blob to Cloudinary
             const resSig = await fetch('/api/upload/sign');
-            const { timestamp, folder, signature, apiKey, cloudName } = await resSig.json();
+            const { timestamp, folder, upload_preset, signature, apiKey, cloudName } = await resSig.json();
 
             const formData = new FormData();
             formData.append('file', blob);
@@ -165,13 +165,17 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             formData.append('timestamp', timestamp.toString());
             formData.append('signature', signature);
             formData.append('folder', folder);
+            formData.append('upload_preset', upload_preset);
 
             const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
             const uploadRes = await fetch(uploadUrl, { method: 'POST', body: formData });
-            
+
             if (uploadRes.ok) {
                 const cloudData = await uploadRes.json();
-                handleSend({ type: 'AUDIO', mediaUrl: cloudData.secure_url });
+                const expectedPrefix = `https://res.cloudinary.com/${cloudName}/`;
+                if (cloudData.secure_url?.startsWith(expectedPrefix)) {
+                    handleSend({ type: 'AUDIO', mediaUrl: cloudData.secure_url });
+                }
             }
         } catch (err) {
             console.error('Audio upload failed', err);
