@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBankList } from '@/lib/monnify';
+import { getBankList } from '@/lib/flutterwave';
 
 export async function GET() {
     try {

@@ -2,21 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { createOrderVirtualAccount } from '@/lib/monnify'
+import { initializePayment } from '@/lib/flutterwave'
 
 /**
  * POST /api/checkout/initialize
- * Creates an Order record and a Monnify reserved virtual account for the buyer.
- * Returns the bank account details the buyer must transfer to.
- *
- * Body: {
- *   productId: string
- *   quantity: number
- *   deliveryAddress: string
- *   deliveryNote?: string
- *   demandId?: string   // if originating from a demand/bid
- *   bidId?: string
- * }
+ * Creates an Order record and a Flutterwave payment link for the buyer.
+ * Returns the payment link to redirect the buyer to.
  */
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -32,7 +23,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Fetch buyer and product
     const [buyer, product] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
@@ -49,16 +39,6 @@ export async function POST(req: NextRequest) {
     if (!product.inStock) return NextResponse.json({ error: 'Product out of stock' }, { status: 400 })
     if (quantity > (product.stock ?? 1)) return NextResponse.json({ error: 'Selected quantity exceeds available stock' }, { status: 400 })
 
-    // KYC gate — must be TIER_1 to buy via escrow
-    const tierOrder = ['UNVERIFIED', 'TIER_0', 'TIER_1', 'TIER_2', 'TIER_3', 'BUSINESS']
-    if (tierOrder.indexOf(buyer.kycTier) < tierOrder.indexOf('TIER_1')) {
-      return NextResponse.json(
-        { error: 'NIN verification required to place orders. Please complete KYC in Settings.' },
-        { status: 403 },
-      )
-    }
-
-    // Can't buy from your own store
     if (product.store.ownerId === session.user.id) {
       return NextResponse.json({ error: "You can't buy from your own store" }, { status: 400 })
     }
@@ -67,12 +47,11 @@ export async function POST(req: NextRequest) {
     const totalItemsAmount = itemPrice * quantity
     const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    const processingFee = Math.min(Math.round(subtotalAndDelivery * 0.01), 1000)
+    const processingFee = Math.min(Math.round(subtotalAndDelivery * 0.014), 2000)
     const finalAmountToPay = subtotalAndDelivery + processingFee
 
     // Create Order + OrderItem atomically
     const order = await prisma.$transaction(async (tx) => {
-      // Save user details if requested
       if (body.saveDetails) {
         await tx.user.update({
           where: { id: session.user.id },
@@ -85,11 +64,11 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      const newOrder = await tx.order.create({
+      return tx.order.create({
         data: {
           buyerId: session.user.id,
           sellerId: product.store.id,
-          totalAmount: subtotalAndDelivery, // Exactly what the order is worth (Price + Delivery)
+          totalAmount: subtotalAndDelivery,
           status: 'PENDING',
           escrowStatus: 'HELD',
           paymentRail: 'NAIRA',
@@ -107,58 +86,45 @@ export async function POST(req: NextRequest) {
           },
         },
       })
-      return newOrder
     })
 
-    // Generate Monnify reserved virtual account for this order
-    let virtualAccount
+    // Generate Flutterwave payment link
+    let payment
     try {
-      virtualAccount = await createOrderVirtualAccount({
+      payment = await initializePayment({
         orderId: order.id,
         amount: finalAmountToPay,
         buyerName: buyer.displayName,
         buyerEmail: buyer.email ?? `${session.user.id}@depmi.app`,
-        expiryMinutes: 30,
       })
     } catch (err: any) {
-      // Clean up the order if Monnify fails
       try {
         await prisma.order.delete({ where: { id: order.id } })
       } catch (cleanupErr) {
         console.error('[checkout/initialize] Failed to cleanup order:', cleanupErr)
       }
-
-      console.error('[checkout/initialize] Monnify error:', err)
+      console.error('[checkout/initialize] Flutterwave error:', err)
       return NextResponse.json(
         { error: `Payment provider error: ${err.message || 'Unavailable'}. Please try again.` },
         { status: 502 },
       )
     }
 
-    // Save virtual account details on the order
+    // Save tx_ref on the order
     await prisma.order.update({
       where: { id: order.id },
-      data: {
-        virtualAcctNo: virtualAccount.accountNumber,
-        virtualAcctBank: virtualAccount.bankName,
-        virtualAcctExpiry: virtualAccount.expiresAt,
-      },
+      data: { paystackRef: payment.txRef },
     })
 
     return NextResponse.json({
       orderId: order.id,
+      paymentLink: payment.paymentLink,
       amount: finalAmountToPay,
       breakdown: {
         subtotal: totalItemsAmount,
         deliveryFee,
         processingFee,
         total: finalAmountToPay,
-      },
-      virtualAccount: {
-        accountNumber: virtualAccount.accountNumber,
-        bankName: virtualAccount.bankName,
-        accountName: virtualAccount.accountName,
-        expiresAt: virtualAccount.expiresAt.toISOString(),
       },
     })
   } catch (error: any) {
