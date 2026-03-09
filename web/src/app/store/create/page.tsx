@@ -56,8 +56,7 @@ export default function StoreCreatePage() {
                 router.push(`/store/${data.store.slug}`);
             } else {
                 if (res.status === 403) {
-                    // TIER_2 Restriction
-                    setError("You must verify your BVN first before creating a store. Please check for an Admin invite link.");
+                    setError("You are not allowed to create a store at this time.");
                 } else {
                     setError(data.message || "Failed to create store.");
                 }
@@ -176,11 +175,11 @@ export default function StoreCreatePage() {
                                 </button>
                             </div>
                         ) : (
-                            <CloudinaryUploader 
-                                onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, logoUrl: res.secure_url })} 
+                            <CloudinaryUploader
+                                onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, logoUrl: res.secure_url })}
                                 accept="image/*"
-                                maxSizeMB={5} 
-                                buttonText="Upload Logo" 
+                                maxSizeMB={5}
+                                buttonText="Upload Logo"
                             />
                         )}
                     </div>

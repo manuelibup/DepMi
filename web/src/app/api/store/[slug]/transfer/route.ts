@@ -41,13 +41,13 @@ export async function POST(
         if (!recipient) return NextResponse.json({ message: `No user found with username @${username}` }, { status: 404 });
         if (recipient.id === session.user.id) return NextResponse.json({ message: 'You already own this store' }, { status: 400 });
 
-        // Recipient must be BVN-verified (TIER_2+) to own a store
-        const eligibleTiers = ['TIER_2', 'TIER_3', 'BUSINESS'];
-        if (!eligibleTiers.includes(recipient.kycTier)) {
-            return NextResponse.json({
-                message: `@${username} is not eligible to receive store ownership. They must be BVN-verified (KYC Tier 2+).`
-            }, { status: 400 });
-        }
+        // Recipient must be BVN-verified (TIER_2+) to own a store (Relaxed for Pilot Phase)
+        // const eligibleTiers = ['TIER_2', 'TIER_3', 'BUSINESS'];
+        // if (!eligibleTiers.includes(recipient.kycTier)) {
+        //     return NextResponse.json({
+        //         message: `@${username} is not eligible to receive store ownership. They must be BVN-verified (KYC Tier 2+).`
+        //     }, { status: 400 });
+        // }
 
         await prisma.store.update({
             where: { id: store.id },
@@ -57,7 +57,7 @@ export async function POST(
         return NextResponse.json({
             message: `${store.name} has been transferred to @${recipient.username}`,
         });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Store transfer error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

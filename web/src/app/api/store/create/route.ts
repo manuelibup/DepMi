@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { KycTier } from "@prisma/client";
 
 export async function POST(req: Request) {
     try {
@@ -12,20 +11,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Unauthorized. Please sign in." }, { status: 401 });
         }
 
-        // Fetch User with current KYC Tier
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id }
-        });
-
-        if (!user) {
-            return NextResponse.json({ message: "User not found." }, { status: 404 });
-        }
-
-        // Must be at least TIER_2 (BVN Vetted)
-        const allowedTiers: KycTier[] = ["TIER_2", "TIER_3", "BUSINESS"];
-        if (!allowedTiers.includes(user.kycTier)) {
-            return NextResponse.json({ message: "Store creation requires Identity Verification (TIER_2)." }, { status: 403 });
-        }
+        /* 
+         * Pilot Phase (0-100 vendors): KYC gate is disabled.
+         * Anyone can create a store for free during the launch pilot.
+         */
+        // const allowedTiers: KycTier[] = ["TIER_2", "TIER_3", "BUSINESS"];
+        // if (!allowedTiers.includes(user.kycTier)) {
+        //     return NextResponse.json({ message: "Store creation requires Identity Verification (TIER_2)." }, { status: 403 });
+        // }
 
         const body = await req.json();
         const { name, slug, description, location, logoUrl } = body;
@@ -61,7 +54,7 @@ export async function POST(req: Request) {
         // Create the Store
         const store = await prisma.store.create({
             data: {
-                ownerId: user.id,
+                ownerId: session.user.id,
                 name,
                 slug: normalizedSlug,
                 description,
