@@ -14,6 +14,7 @@ const FILTERS: { label: string; value: string }[] = [
     { label: 'Food', value: 'FOOD' },
     { label: 'Furniture', value: 'FURNITURE' },
     { label: 'Services', value: 'SERVICES' },
+    { label: 'Transport', value: 'TRANSPORT' },
     { label: 'Other', value: 'OTHER' },
 ];
 

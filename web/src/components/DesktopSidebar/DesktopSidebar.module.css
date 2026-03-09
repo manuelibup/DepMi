@@ -1,0 +1,245 @@
+/* Hidden on mobile, shown on desktop */
+.sidebar {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .sidebar {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 240px;
+        border-right: 1px solid var(--card-border);
+        background: var(--bg-base);
+        z-index: 100;
+        flex-direction: column;
+    }
+}
+
+.inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 16px 12px 24px;
+    gap: 4px;
+}
+
+/* Logo */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    transition: background var(--transition-fast);
+}
+
+.logo:hover {
+    background: var(--card-bg-glass);
+}
+
+.logoText {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Nav */
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 400;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    cursor: pointer;
+}
+
+.navItem:hover {
+    background: var(--card-bg-glass);
+    color: var(--text-main);
+}
+
+.navItem.active {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+/* Button reset for navItems rendered as <button> */
+.navBtn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+}
+
+.navIcon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+.navLabel {
+    line-height: 1;
+}
+
+.badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #FF3B30;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    border: 2px solid var(--bg-base);
+}
+
+/* Create button */
+.createBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.createBtn:hover {
+    opacity: 0.9;
+}
+
+.createBtn:active {
+    transform: scale(0.97);
+}
+
+/* Create sheet (reused from BottomNav style) */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px max(env(safe-area-inset-bottom, 16px), 24px);
+    animation: slideUp 0.2s ease;
+}
+
+.sheetHandle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--card-border);
+    margin: 0 auto 16px;
+}
+
+.sheetTitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.sheetDivider {
+    height: 1px;
+    background: var(--card-border);
+    margin: 4px 16px;
+    opacity: 0.5;
+}
+
+.sheetOption {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 12px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.sheetOption:hover {
+    background: var(--card-bg-glass);
+}
+
+.sheetIcon {
+    font-size: 22px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg-glass);
+    border-radius: 12px;
+    flex-shrink: 0;
+    color: var(--text-main);
+}
+
+.sheetLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.sheetDesc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}

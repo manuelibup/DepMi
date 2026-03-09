@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -7,21 +8,461 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ENUMS
-// ═══════════════════════════════════════════════════════════════════════════════
+model User {
+  id              String           @id @default(uuid())
+  email           String?          @unique
+  phoneNumber     String?          @unique
+  depTier         DepTier          @default(SEEDLING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  avatarUrl       String?
+  dateOfBirth     DateTime?
+  depCount        Int              @default(0)
+  displayName     String
+  kycTier         KycTier          @default(UNVERIFIED)
+  phoneVerified   Boolean          @default(false)
+  username        String?          @unique
+  cumulativeSpend Int              @default(0)
+  address         String?
+  city            String?
+  state           String?
+  bio             String?
+  coverUrl        String?
+  accounts        Account[]
+  comments        Comment[]        @relation("UserComments")
+  demands         Demand[]         @relation("UserDemands")
+  depTransactions DepTransaction[] @relation("UserDepTransactions")
+  kycStatus       KycStatus?
+  messagesSent    Message[]
+  notifications   Notification[]   @relation("UserNotifications")
+  ordersAsBuyer   Order[]          @relation("BuyerOrders")
+  otpTokens       OtpToken[]
+  productLikes    ProductLike[]
+  productWatches  ProductWatch[]
+  reviewsLeft     Review[]         @relation("BuyerReviews")
+  savedProducts   SavedProduct[]
+  stores          Store[]          @relation("UserStores")
+  storeFollows    StoreFollow[]    @relation("UserStoreFollows")
+  followers       UserFollow[]     @relation("UserFollowing")
+  following       UserFollow[]     @relation("UserFollowers")
+  storeInvite     StoreInvite?
+  conversations   Conversation[]   @relation("ConversationParticipants")
+}
+
+model Account {
+  id           String       @id @default(uuid())
+  userId       String
+  provider     AuthProvider
+  providerId   String?
+  passwordHash String?
+  createdAt    DateTime     @default(now())
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model KycStatus {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  socialVerified Boolean  @default(false)
+  ninRef         String?  @unique
+  bvnRef         String?  @unique
+  proofOfAddress Boolean  @default(false)
+  cacNumber      String?  @unique
+  tinNumber      String?
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model Store {
+  id                  String                  @id @default(uuid())
+  ownerId             String
+  name                String                  @unique
+  slug                String                  @unique
+  description         String?
+  bannerUrl           String?
+  logoUrl             String?
+  location            String?
+  depCount            Int                     @default(0)
+  depTier             DepTier                 @default(SEEDLING)
+  paystackSubcode     String?
+  isActive            Boolean                 @default(true)
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  rating              Float                   @default(0)
+  reviewCount         Int                     @default(0)
+  subscriptionEndsAt  DateTime?
+  tier                StoreTier               @default(TRIAL)
+  trialEndsAt         DateTime?
+  bankAccountName     String?
+  bankAccountNo       String?
+  bankCode            String?
+  cryptoWalletAddr    String?
+  preferredPayoutRail PaymentRail             @default(NAIRA)
+  cacDocUrl           String?
+  rcNumber            String?
+  tin                 String?
+  verificationStatus  StoreVerificationStatus @default(UNVERIFIED)
+  bids                Bid[]                   @relation("StoreBids")
+  depTransactions     DepTransaction[]        @relation("StoreDepTransactions")
+  ordersAsSeller      Order[]                 @relation("SellerOrders")
+  products            Product[]               @relation("StoreProducts")
+  reviews             Review[]                @relation("StoreReviews")
+  owner               User                    @relation("UserStores", fields: [ownerId], references: [id])
+  followers           StoreFollow[]           @relation("StoreFollowers")
+
+  @@index([ownerId])
+  @@index([slug])
+}
+
+model DepTransaction {
+  id        String   @id @default(uuid())
+  userId    String?
+  amount    Int
+  reason    String
+  orderId   String?
+  createdAt DateTime @default(now())
+  storeId   String?
+  store     Store?   @relation("StoreDepTransactions", fields: [storeId], references: [id])
+  user      User?    @relation("UserDepTransactions", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model Demand {
+  id        String    @id @default(uuid())
+  userId    String
+  text      String
+  budget    Decimal   @db.Decimal(10, 2)
+  category  Category  @default(OTHER)
+  location  String?
+  closesAt  DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  currency  String    @default("₦")
+  bids      Bid[]
+  comments  Comment[] @relation("DemandComments")
+  user      User      @relation("UserDemands", fields: [userId], references: [id])
+  orders    Order[]   @relation("DemandOrders")
+
+  @@index([isActive, category])
+  @@index([userId])
+}
+
+model Bid {
+  id         String   @id @default(uuid())
+  demandId   String
+  amount     Decimal  @db.Decimal(10, 2)
+  proposal   String?
+  isAccepted Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  productId  String?
+  storeId    String
+  demand     Demand   @relation(fields: [demandId], references: [id])
+  product    Product? @relation("BidProduct", fields: [productId], references: [id])
+  store      Store    @relation("StoreBids", fields: [storeId], references: [id])
+  order      Order?   @relation("BidOrder")
+
+  @@index([demandId])
+  @@index([storeId])
+}
+
+model Product {
+  id              String         @id @default(uuid())
+  storeId         String
+  title           String
+  description     String?
+  price           Decimal        @db.Decimal(10, 2)
+  category        Category       @default(OTHER)
+  viewCount       Int            @default(0)
+  inStock         Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  videoUrl        String?
+  isPortfolioItem Boolean        @default(false)
+  slug            String?        @unique
+  currency        String         @default("₦")
+  isFeatured      Boolean        @default(false)
+  deliveryFee     Decimal        @default(2500) @db.Decimal(10, 2)
+  stock           Int            @default(1)
+  bids            Bid[]          @relation("BidProduct")
+  comments        Comment[]      @relation("ProductComments")
+  orderItems      OrderItem[]
+  store           Store          @relation("StoreProducts", fields: [storeId], references: [id])
+  images          ProductImage[]
+  likes           ProductLike[]
+  productWatches  ProductWatch[]
+  saves           SavedProduct[]
+
+  @@index([category, inStock])
+  @@index([storeId])
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  url       String
+  order     Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Order {
+  id                String       @id @default(uuid())
+  buyerId           String
+  sellerId          String
+  totalAmount       Decimal      @db.Decimal(10, 2)
+  status            OrderStatus  @default(PENDING)
+  paystackRef       String?      @unique
+  deliveryAddress   String?
+  deliveryNote      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  bidId             String?      @unique
+  demandId          String?
+  escrowStatus      EscrowStatus @default(HELD)
+  cryptoAmountUsdc  Decimal?     @db.Decimal(18, 6)
+  cryptoTxHash      String?
+  paymentRail       PaymentRail  @default(NAIRA)
+  platformFeeNgn    Decimal?     @db.Decimal(10, 2)
+  virtualAcctBank   String?
+  virtualAcctExpiry DateTime?
+  virtualAcctNo     String?
+  deliveryMethod    String       @default("DELIVERY")
+  trackingNo        String?
+  bid               Bid?         @relation("BidOrder", fields: [bidId], references: [id])
+  buyer             User         @relation("BuyerOrders", fields: [buyerId], references: [id])
+  demand            Demand?      @relation("DemandOrders", fields: [demandId], references: [id])
+  seller            Store        @relation("SellerOrders", fields: [sellerId], references: [id])
+  items             OrderItem[]
+  payment           Payment?
+  review            Review?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model Payment {
+  id                   String    @id @default(uuid())
+  orderId              String    @unique
+  virtualAccountNumber String?
+  bankName             String?
+  accountName          String?
+  expiresAt            DateTime?
+  paystackReference    String?   @unique
+  amount               Decimal   @db.Decimal(10, 2)
+  currency             String    @default("NGN")
+  paid                 Boolean   @default(false)
+  paidAt               DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  order                Order     @relation(fields: [orderId], references: [id])
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation("UserNotifications", fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+model OtpToken {
+  id        String   @id @default(uuid())
+  userId    String
+  type      OtpType  @default(PHONE_VERIFICATION)
+  codeHash  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model StoreInvite {
+  id        String       @id @default(uuid())
+  email     String
+  expiresAt DateTime
+  status    InviteStatus @default(PENDING)
+  userId    String?      @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User?        @relation(fields: [userId], references: [id])
+
+  @@index([email])
+}
+
+model Waitlist {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model SavedProduct {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model ProductWatch {
+  id          String   @id @default(uuid())
+  userId      String
+  searchQuery String?
+  productId   String?
+  notified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  product     Product? @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  buyerId   String
+  storeId   String
+  rating    Int
+  text      String?
+  createdAt DateTime @default(now())
+  buyer     User     @relation("BuyerReviews", fields: [buyerId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+  store     Store    @relation("StoreReviews", fields: [storeId], references: [id])
+
+  @@index([buyerId])
+  @@index([storeId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  authorId  String
+  productId String?
+  demandId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation("UserComments", fields: [authorId], references: [id])
+  demand    Demand?  @relation("DemandComments", fields: [demandId], references: [id], onDelete: Cascade)
+  product   Product? @relation("ProductComments", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([demandId])
+  @@index([authorId])
+}
+
+model StoreFollow {
+  id        String   @id @default(uuid())
+  userId    String
+  storeId   String
+  notify    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store    @relation("StoreFollowers", fields: [storeId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserStoreFollows", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+  @@index([storeId, notify])
+  @@index([userId])
+}
+
+model UserFollow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Conversation {
+  id                 String    @id @default(uuid())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  lastMessageAt      DateTime  @default(now())
+  lastMessagePreview String?
+  messages           Message[]
+  participants       User[]    @relation("ConversationParticipants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  text           String?
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  mediaUrl       String?
+  type           MessageType  @default(TEXT)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId, read])
+}
 
 enum AuthProvider {
-  EMAIL // Email + password (bcrypt hashed)
-  GOOGLE // Google OAuth
-  WHATSAPP // WhatsApp phone verification
+  EMAIL
+  GOOGLE
+  WHATSAPP
 }
 
 enum OtpType {
   PHONE_VERIFICATION
   EMAIL_RESET
-  TRANSACTIONAL    // For order confirmation
-  ACCOUNT_UPDATE   // For sensitive setting changes
+  TRANSACTIONAL
+  ACCOUNT_UPDATE
 }
 
 enum InviteStatus {
@@ -31,11 +472,11 @@ enum InviteStatus {
 }
 
 enum DepTier {
-  SEEDLING // 0–50 Deps
-  RISING // 51–200 Deps
-  TRUSTED // 201–500 Deps
-  ELITE // 501–1000 Deps
-  LEGEND // 1000+ Deps
+  SEEDLING
+  RISING
+  TRUSTED
+  ELITE
+  LEGEND
 }
 
 enum StoreTier {
@@ -45,15 +486,13 @@ enum StoreTier {
   PRO
 }
 
-// KYC tiers — each tier unlocks platform features
-// Store creation requires TIER_2 (BVN verified) minimum
 enum KycTier {
-  UNVERIFIED // No KYC — can browse and create demands
-  TIER_0 // Social accounts linked — can bid (limited)
-  TIER_1 // NIN verified — can buy via escrow
-  TIER_2 // BVN verified — can CREATE A STORE, sell, receive payouts
-  TIER_3 // Proof of address — full access, higher transaction limits
-  BUSINESS // CAC + TIN verified — business account, highest limits
+  UNVERIFIED
+  TIER_0
+  TIER_1
+  TIER_2
+  TIER_3
+  BUSINESS
 }
 
 enum OrderStatus {
@@ -76,15 +515,15 @@ enum EscrowStatus {
 }
 
 enum PaymentRail {
-  NAIRA  // Monnify virtual account → bank transfer
-  CRYPTO // WalletConnect → USDC on Base
+  NAIRA
+  CRYPTO
 }
 
 enum StoreVerificationStatus {
-  UNVERIFIED // No docs submitted
-  PENDING    // Docs submitted, awaiting admin review
-  VERIFIED   // Admin approved — gets verified badge on storefront
-  REJECTED   // Admin rejected — can resubmit
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 enum Category {
@@ -95,6 +534,7 @@ enum Category {
   FURNITURE
   VEHICLES
   SERVICES
+  TRANSPORT
   OTHER
 }
 
@@ -116,627 +556,9 @@ enum NotificationType {
   NEW_PRODUCT_FROM_STORE
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// USER — Personal identity, auth, buying, trust
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model User {
-  id String @id @default(uuid())
-
-  // Profile
-  username      String?   @unique
-  displayName   String
-  dateOfBirth   DateTime? // Used for age gating
-  email         String?   @unique
-  phoneNumber   String?   @unique
-  phoneVerified Boolean   @default(false)
-  avatarUrl     String?
-  coverUrl      String?   // Profile banner / cover photo
-  bio           String?   // Short tagline, max 160 chars
-
-  // Delivery / Shipping
-  address String?
-  city    String?
-  state   String?
-
-  // Auth — supports multiple providers per user
-  // e.g. sign up with email, later link Google
-  accounts Account[]
-
-  // Trust score (as a buyer — stores have their own seller trust)
-  depCount Int     @default(0) // Atomic counter, incremented with DepTransaction
-  depTier  DepTier @default(SEEDLING)
-
-  // Shopping tracking for TIER_0 limits
-  cumulativeSpend Int @default(0)
-
-  // KYC — determines what the user can do
-  // UNVERIFIED → browse/demand | TIER_1 → buy | TIER_2 → CREATE STORES + sell
-  kycTier   KycTier    @default(UNVERIFIED)
-  kycStatus KycStatus?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations — personal account
-  stores          Store[]          @relation("UserStores") // Like Facebook Pages — 0, 1, or many
-  demands         Demand[]         @relation("UserDemands")
-  ordersAsBuyer   Order[]          @relation("BuyerOrders")
-  depTransactions DepTransaction[] @relation("UserDepTransactions")
-  notifications   Notification[]   @relation("UserNotifications")
-  otpTokens       OtpToken[]
-  storeInvite     StoreInvite?
-  productWatches  ProductWatch[]
-  reviewsLeft     Review[]         @relation("BuyerReviews")
-  comments        Comment[]        @relation("UserComments")
-  productLikes    ProductLike[]
-  savedProducts   SavedProduct[]
-  storeFollows    StoreFollow[]    @relation("UserStoreFollows")
-  
-  conversations   Conversation[]   @relation("ConversationParticipants")
-  messagesSent    Message[]
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AUTH — Flexible multi-provider auth (email/password, Google, WhatsApp)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Account {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  provider   AuthProvider
-  providerId String? // Google subject ID, WhatsApp phone ID — null for EMAIL
-
-  // Email/password auth only
-  // Password MUST be hashed with bcrypt (12+ salt rounds) in app layer
-  // NEVER store plaintext passwords
-  passwordHash String?
-
-  createdAt DateTime @default(now())
-
-  @@unique([provider, providerId]) // Can't have two accounts with same provider + ID
-  @@index([userId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// KYC — Detailed verification records (Smile ID / Dojah reference tokens only)
-// When a verification step completes, update this record AND bump User.kycTier
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model KycStatus {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Each step stores the verification provider's reference token
-  socialVerified Boolean @default(false) // → bumps to TIER_0 (Phone OTP)
-  ninRef         String? @unique // → bumps to TIER_1 (can buy)
-  bvnRef         String? @unique // → bumps to TIER_2 (can create stores + sell)
-  proofOfAddress Boolean @default(false) // → bumps to TIER_3
-  cacNumber      String? @unique // → bumps to BUSINESS (with tinNumber)
-  tinNumber      String? // → bumps to BUSINESS (with cacNumber)
-
-  updatedAt DateTime @updatedAt
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STORE — Business identity (like a Facebook Page)
-// A User can own multiple Stores (e.g. one for fashion, one for gadgets)
-// ⚠️ APP LOGIC: User.kycTier must be >= TIER_2 to create a Store
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Store {
-  id      String @id @default(uuid())
-  ownerId String // The personal account that owns this store
-  owner   User   @relation("UserStores", fields: [ownerId], references: [id])
-
-  // Public storefront info
-  name        String  @unique // Appears in /store/[slug]
-  slug        String  @unique // URL-safe version of name
-  description String?
-  bannerUrl   String?
-  logoUrl     String?
-  location    String? // Primary business location
-
-  // Trust score (as a seller — separate from owner's buyer trust)
-  depCount Int     @default(0)
-  depTier  DepTier @default(SEEDLING)
-
-  rating      Float @default(0)
-  reviewCount Int   @default(0)
-
-  // Paystack split payment subaccount (deprecated — kept for migration safety)
-  paystackSubcode String?
-
-  // Monnify payout details — set when seller completes KYC TIER_2
-  bankCode        String? // e.g. "058" GTBank, "044" Access, "033" UBA
-  bankAccountNo   String?
-  bankAccountName String?
-
-  // Crypto payout (optional — seller can receive USDC instead of NGN)
-  cryptoWalletAddr    String?
-  preferredPayoutRail PaymentRail @default(NAIRA)
-
-  isActive Boolean @default(true)
-
-  // Business verification (CAC / RC number)
-  verificationStatus StoreVerificationStatus @default(UNVERIFIED)
-  cacDocUrl          String? // Cloudinary URL of uploaded CAC certificate
-  rcNumber           String? // Corporate Affairs Commission RC number
-  tin                String? // Tax Identification Number (optional)
-
-  // Subscription Details
-  tier               StoreTier @default(TRIAL)
-  trialEndsAt        DateTime?
-  subscriptionEndsAt DateTime?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  products        Product[]        @relation("StoreProducts")
-  bids            Bid[]            @relation("StoreBids")
-  ordersAsSeller  Order[]          @relation("SellerOrders")
-  depTransactions DepTransaction[] @relation("StoreDepTransactions")
-  reviews         Review[]         @relation("StoreReviews")
-  followers       StoreFollow[]    @relation("StoreFollowers")
-
-  @@index([ownerId])
-  @@index([slug])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRUST SYSTEM — Audit trail for Deps
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Source of truth for trust scores
-// App logic: create DepTransaction + atomically increment User.depCount or Store.depCount
-model DepTransaction {
-  id String @id @default(uuid())
-
-  // Either userId OR storeId is set — deps for buying vs selling
-  userId  String?
-  user    User?   @relation("UserDepTransactions", fields: [userId], references: [id])
-  storeId String?
-  store   Store?  @relation("StoreDepTransactions", fields: [storeId], references: [id])
-
-  amount  Int // +1 completed purchase (user) / +1 completed sale (store)
-  reason  String // "Order #xyz completed"
-  orderId String? // Link to the order that triggered this dep
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([storeId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DEMAND ENGINE — Buyer requests + Vendor bids
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Demand {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation("UserDemands", fields: [userId], references: [id])
-
-  text     String
-  budget   Decimal  @db.Decimal(10, 2)
-  currency String   @default("₦")
-  category Category @default(OTHER)
-  location String?
-
-  closesAt DateTime?
-  isActive Boolean   @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  bids     Bid[]
-  orders   Order[]   @relation("DemandOrders")
-  comments Comment[] @relation("DemandComments")
-
-  @@index([isActive, category])
-  @@index([userId])
-}
-
-model Bid {
-  id       String @id @default(uuid())
-  demandId String
-  demand   Demand @relation(fields: [demandId], references: [id])
-
-  storeId String
-  store   Store  @relation("StoreBids", fields: [storeId], references: [id])
-
-  amount    Decimal  @db.Decimal(10, 2)
-  proposal  String?
-  productId String?
-  product   Product? @relation("BidProduct", fields: [productId], references: [id])
-
-  isAccepted Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  order Order? @relation("BidOrder")
-
-  @@index([demandId])
-  @@index([storeId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PRODUCT CATALOG
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Product {
-  id      String @id @default(uuid())
-  storeId String
-  store   Store  @relation("StoreProducts", fields: [storeId], references: [id])
-
-  title       String
-  slug        String?  @unique // URL-safe identifier e.g. "dell-xps-15-techstore"
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  currency    String   @default("₦")
-  category    Category @default(OTHER)
-
-  videoUrl        String? // Optional Cloudinary video URL for product demo
-  isPortfolioItem Boolean @default(false) // If true, showcases past work/portfolio instead of immediate sale
-
-  isFeatured Boolean @default(false) // Pinned to owner's profile showcase
-  viewCount  Int     @default(0)
-  inStock    Boolean @default(true)
-  stock      Int     @default(1) // Number of items available in stock
-  deliveryFee Decimal @default(2500) @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  images         ProductImage[]
-  orderItems     OrderItem[]
-  bids           Bid[]          @relation("BidProduct")
-  productWatches ProductWatch[]
-  comments       Comment[]      @relation("ProductComments")
-  likes          ProductLike[]
-  saves          SavedProduct[]
-
-  @@index([category, inStock])
-  @@index([storeId])
-}
-
-model ProductImage {
-  id        String  @id @default(uuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  url   String
-  order Int    @default(0)
-
-  @@index([productId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ORDERS & ESCROW
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Order {
-  id      String @id @default(uuid())
-  buyerId String
-  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id])
-
-  sellerId String
-  seller   Store  @relation("SellerOrders", fields: [sellerId], references: [id])
-
-  totalAmount Decimal     @db.Decimal(10, 2)
-  status      OrderStatus @default(PENDING)
-
-  // Origin tracking
-  demandId String?
-  demand   Demand? @relation("DemandOrders", fields: [demandId], references: [id])
-  bidId    String? @unique
-  bid      Bid?    @relation("BidOrder", fields: [bidId], references: [id])
-
-  // Payment rail
-  paymentRail  PaymentRail @default(NAIRA)
-  deliveryMethod String      @default("DELIVERY") // "DELIVERY" or "PICKUP"
-  trackingNo   String?
-
-  // Escrow — paystackRef reused for Monnify transaction reference
-  paystackRef  String?      @unique
-  escrowStatus EscrowStatus @default(HELD)
-
-  // Monnify virtual account (generated per-checkout, tied to this order)
-  virtualAcctNo     String?    // e.g. "1234567890" (Wema Bank)
-  virtualAcctBank   String?    // e.g. "Wema Bank"
-  virtualAcctExpiry DateTime?  // Expires after checkout window (e.g. 30 min)
-
-  // Fee tracking
-  platformFeeNgn Decimal? @db.Decimal(10, 2) // 5% fee deducted on release
-
-  // Crypto rail fields
-  cryptoTxHash     String?
-  cryptoAmountUsdc Decimal? @db.Decimal(18, 6)
-
-  // Delivery
-  deliveryAddress String?
-  deliveryNote    String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  items   OrderItem[]
-  review  Review?
-  payment Payment?
-
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([status])
-}
-
-model Payment {
-  id      String @id @default(uuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  // Virtual account details (Monnify)
-  virtualAccountNumber String?
-  bankName             String?
-  accountName          String?
-  expiresAt            DateTime?
-
-  // Native Paystack ref
-  paystackReference String? @unique
-
-  amount   Decimal @db.Decimal(10, 2)
-  currency String  @default("NGN")
-
-  paid      Boolean   @default(false)
-  paidAt    DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model OrderItem {
-  id      String @id @default(uuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-
-  quantity Int     @default(1)
-  price    Decimal @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([orderId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NOTIFICATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Notification {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation("UserNotifications", fields: [userId], references: [id])
-
-  type   NotificationType
-  title  String
-  body   String
-  link   String?
-  isRead Boolean          @default(false)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, isRead])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: VENDOR INVITE & OTP SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model OtpToken {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      OtpType  @default(PHONE_VERIFICATION)
-  codeHash  String
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
-model StoreInvite {
-  id        String       @id @default(uuid())
-  email     String
-  expiresAt DateTime
-  status    InviteStatus @default(PENDING)
-  userId    String?      @unique
-  user      User?        @relation(fields: [userId], references: [id])
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  @@index([email])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// WAITLIST
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Waitlist {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: PRODUCT LIKES & SAVES (WISHLIST)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model ProductLike {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@index([productId])
-  @@index([userId])
-}
-
-model SavedProduct {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@index([productId])
-  @@index([userId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: PRODUCT WATCH & REVIEWS (PHASE 2/3)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model ProductWatch {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  searchQuery String? // If they clicked "Notify Me" on a search that returned 0 results
-  productId   String? // If they clicked "Notify Me" on an out-of-stock product
-  product     Product? @relation(fields: [productId], references: [id])
-
-  notified  Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([productId])
-}
-
-model Review {
-  id      String @id @default(uuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  buyerId String
-  buyer   User   @relation("BuyerReviews", fields: [buyerId], references: [id])
-
-  storeId String
-  store   Store  @relation("StoreReviews", fields: [storeId], references: [id])
-
-  rating Int // 1-5
-  text   String?
-
-  createdAt DateTime @default(now())
-
-  @@index([buyerId])
-  @@index([storeId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: COMMENTS & MENTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Comment {
-  id   String @id @default(uuid())
-  text String @db.Text
-
-  authorId String
-  author   User   @relation("UserComments", fields: [authorId], references: [id])
-
-  // A comment belongs to either a Product or a Demand
-  productId String?
-  product   Product? @relation("ProductComments", fields: [productId], references: [id], onDelete: Cascade)
-
-  demandId String?
-  demand   Demand? @relation("DemandComments", fields: [demandId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([productId])
-  @@index([demandId])
-  @@index([authorId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: STORE FOLLOWERS & NOTIFICATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model StoreFollow {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation("UserStoreFollows", fields: [userId], references: [id], onDelete: Cascade)
-  storeId   String
-  store     Store    @relation("StoreFollowers", fields: [storeId], references: [id], onDelete: Cascade)
-  
-  notify    Boolean  @default(true) // Toggle for "Bell" icon to silence new product alerts
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, storeId])
-  @@index([storeId, notify])
-  @@index([userId])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NEW: DIRECT MESSAGING
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Conversation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  participants User[] @relation("ConversationParticipants")
-  messages     Message[]
-
-  // Cache for inbox list sorting and preview
-  lastMessageAt      DateTime @default(now())
-  lastMessagePreview String?
-}
-
 enum MessageType {
   TEXT
   IMAGE
   AUDIO
   STICKER
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId       String
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  text           String?      @db.Text
-  type           MessageType  @default(TEXT)
-  mediaUrl       String?      // Cloudinary URL for image/audio/sticker
-  
-  read           Boolean      @default(false)
-
-  createdAt      DateTime     @default(now())
-
-  @@index([conversationId])
-  @@index([senderId, read])
 }

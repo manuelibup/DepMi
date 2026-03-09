@@ -104,6 +104,13 @@ img {
   display: block;
 }
 
+/* Desktop layout: offset content to the right of the fixed sidebar */
+@media (min-width: 640px) {
+  .desktop-content {
+    margin-left: 240px;
+  }
+}
+
 /* Keyframe Animations */
 @keyframes fadeInUp {
   from {

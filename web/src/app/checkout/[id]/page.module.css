@@ -212,6 +212,13 @@
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
+@media (min-width: 768px) {
+    .footer {
+        left: 240px;
+        padding: 16px 24px;
+    }
+}
+
 .payBtn {
     width: 100%;
     max-width: 600px;

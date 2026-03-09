@@ -8,6 +8,12 @@
     border-bottom: 1px solid var(--card-border);
 }
 
+@media (min-width: 768px) {
+    .wrapper {
+        top: 0;
+    }
+}
+
 .scroll {
     display: flex;
     overflow-x: auto;

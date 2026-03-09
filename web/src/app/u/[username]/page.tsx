@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import ProfileProductsGrid from './ProfileProductsGrid';
 import ProfileMessageButton from './ProfileMessageButton';
+import ProfileFollowButton from './ProfileFollowButton';
 
 interface ProfilePageProps {
     params: Promise<{ username: string }>;
@@ -43,10 +44,25 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 select: { id: true, slug: true, name: true },
                 take: 1,
             },
+            _count: {
+                select: {
+                    followers: true,
+                    following: true,
+                }
+            }
         },
     });
 
     if (!user) notFound();
+
+    // Check if current user follows this profile
+    let isFollowing = false;
+    if (session?.user?.id && !isOwnProfile) {
+        const follow = await prisma.userFollow.findUnique({
+            where: { followerId_followingId: { followerId: session.user.id, followingId: user.id } },
+        });
+        isFollowing = !!follow;
+    }
 
     const joinDate = new Date(user.createdAt).toLocaleDateString('en-US', {
         month: 'long', year: 'numeric',
@@ -72,6 +88,22 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         },
     }) : [];
 
+    // Fetch user's recent comments (replies)
+    const replies = await prisma.comment.findMany({
+        where: { authorId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+            id: true,
+            text: true,
+            createdAt: true,
+            productId: true,
+            demandId: true,
+            product: { select: { title: true, slug: true, id: true } },
+            demand: { select: { text: true, id: true } },
+        },
+    });
+
     const serializedProducts = storeProducts.map(p => ({
         id: p.id,
         title: p.title,
@@ -87,11 +119,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {/* ── Cover ─────────────────────────────────── */}
             <div className={styles.cover}>
                 {user.coverUrl ? (
-                    <Image src={user.coverUrl} alt="cover" fill style={{ objectFit: 'cover' }} priority sizes="480px" />
+                    <Image src={user.coverUrl} alt="cover" fill style={{ objectFit: 'cover' }} priority sizes="680px" />
                 ) : (
                     <div className={styles.coverFallback} />
                 )}
-                {/* Scrim for button legibility */}
                 <div className={styles.coverScrim} />
 
                 <div className={styles.topActions}>
@@ -114,8 +145,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
             {/* ── Identity ──────────────────────────────── */}
             <div className={styles.identity}>
-                <div className={styles.identityActions} />
-                {/* Avatar row: avatar left, action button right */}
+                {/* Avatar row */}
                 <div className={styles.avatarRow}>
                     <div className={styles.avatar}>
                         {user.avatarUrl ? (
@@ -128,31 +158,32 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                         )}
                     </div>
 
-                    {isOwnProfile ? (
-                        <Link href="/settings" className={styles.editBtn}>Edit profile</Link>
-                    ) : (
-                        <ProfileMessageButton targetUserId={user.id} />
-                    )}
+                    <div className={styles.profileActions}>
+                        {isOwnProfile ? (
+                            <Link href="/settings" className={styles.editBtn}>Edit profile</Link>
+                        ) : (
+                            <>
+                                <ProfileMessageButton targetUserId={user.id} />
+                                <ProfileFollowButton targetUserId={user.id} initialFollowing={isFollowing} />
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                {/* Name + handle */}
                 <h1 className={styles.displayName}>{user.displayName}</h1>
                 <p className={styles.handle}>@{user.username}</p>
-
-                {/* Bio */}
                 {user.bio && <p className={styles.bio}>{user.bio}</p>}
 
-                {/* Meta row: tier · joined · store link */}
                 <div className={styles.metaRow}>
                     <span className={styles.tierChip}>{tierLabel}</span>
                     <span className={styles.metaSep}>·</span>
-                    <span className={styles.metaText}>{joinDate}</span>
+                    <span className={styles.metaText}>Joined {joinDate}</span>
                     <span className={styles.metaSep}>·</span>
                     <span className={styles.metaText}>{user.depCount} deps</span>
                     {userStore && (
                         <>
                             <span className={styles.metaSep}>·</span>
-                            <Link href={`/store/${userStore.slug}`} className={styles.storeLink}>
+                            <Link href={'/store/' + userStore.slug} className={styles.storeLink}>
                                 {userStore.name}
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: 3 }}><path d="M7 17L17 7M7 7h10v10" /></svg>
                             </Link>
@@ -160,7 +191,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     )}
                 </div>
 
-                {/* Own profile quick actions */}
+                {/* Following / Followers counts */}
+                <div className={styles.followRow}>
+                    <span className={styles.followStat}>
+                        <strong>{user._count.following}</strong> Following
+                    </span>
+                    <span className={styles.followStat}>
+                        <strong>{user._count.followers}</strong> Followers
+                    </span>
+                </div>
+
                 {isOwnProfile && (
                     <div className={styles.quickActions}>
                         <Link href="/orders" className={styles.quickChip}>
@@ -168,7 +208,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                             Orders
                         </Link>
                         {userStore ? (
-                            <Link href={`/store/${userStore.slug}`} className={`${styles.quickChip} ${styles.quickChipPrimary}`}>
+                            <Link href={'/store/' + userStore.slug} className={styles.quickChip + ' ' + styles.quickChipPrimary}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
                                 My Store
                             </Link>
@@ -192,7 +232,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                                 <p className={styles.sectionHint}>Tap ☆ to pin a product to your profile</p>
                             )}
                         </div>
-                        <Link href={`/store/${userStore.slug}`} className={styles.seeAll}>See all</Link>
+                        <Link href={'/store/' + userStore.slug} className={styles.seeAll}>See all</Link>
                     </div>
                     <ProfileProductsGrid
                         products={serializedProducts}
@@ -209,16 +249,48 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     </div>
                     <div className={styles.requestList}>
                         {demands.map(d => (
-                            <Link key={d.id} href={`/requests/${d.id}`} className={styles.requestItem}>
+                            <Link key={d.id} href={'/requests/' + d.id} className={styles.requestItem}>
                                 <p className={styles.requestText}>{d.text}</p>
                                 <div className={styles.requestMeta}>
-                                    <span className={styles.requestBudget}>₦{Number(d.budget).toLocaleString()}</span>
+                                    <span className={styles.requestBudget}>&#x20A6;{Number(d.budget).toLocaleString()}</span>
                                     <span className={styles.requestSub}>
-                                        {d._count.bids} bid{d._count.bids !== 1 ? 's' : ''} · {new Date(d.createdAt).toLocaleDateString()}
+                                        {d._count.bids} bid{d._count.bids !== 1 ? 's' : ''} &middot; {new Date(d.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
                             </Link>
                         ))}
+                    </div>
+                </section>
+            )}
+
+            {/* ── Replies ───────────────────────────────── */}
+            {replies.length > 0 && (
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>Replies</h2>
+                    </div>
+                    <div className={styles.replyList}>
+                        {replies.map(r => {
+                            const href = r.productId
+                                ? '/p/' + (r.product?.slug ?? r.productId)
+                                : r.demandId
+                                    ? '/requests/' + r.demandId
+                                    : '#';
+                            const context = r.product
+                                ? 'on "' + r.product.title + '"'
+                                : r.demand
+                                    ? 'on a request'
+                                    : '';
+                            return (
+                                <Link key={r.id} href={href} className={styles.replyItem}>
+                                    <div className={styles.replyMeta}>
+                                        <span className={styles.replyContext}>{context}</span>
+                                        <span className={styles.replySub}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className={styles.replyText}>{r.text}</p>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </section>
             )}

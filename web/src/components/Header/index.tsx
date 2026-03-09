@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -12,13 +12,11 @@ export default function Header() {
     const [unreadMessages, setUnreadMessages] = useState(0);
 
     useEffect(() => {
-        // Fetch unread notifications
         fetch('/api/notifications/unread-count')
             .then(r => r.json())
             .then(data => setUnreadNotifs(data.count ?? 0))
             .catch(() => { });
 
-        // Fetch unread messages
         fetch('/api/messages/unread-count')
             .then(r => r.json())
             .then(data => setUnreadMessages(data.count ?? 0))
@@ -28,7 +26,7 @@ export default function Header() {
     return (
         <header className={`${styles.header} ${!isVisible ? styles.headerHidden : ''}`}>
             <Link href="/" className={styles.logoWrap}>
-                <Image src="/depmi-logo.png" alt="DepMi logo" width={48} height={48} className={styles.logoMark} />
+                <Image src="/depmi-logo.svg" alt="DepMi logo" width={48} height={48} className={styles.logoMark} />
                 <span className={styles.logoText}>DepMi</span>
             </Link>
             <div className={styles.headerActions}>

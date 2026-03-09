@@ -299,3 +299,12 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Fix**:
     1. If you want to use SVG or a specific path, explicitly define it in the **Metadata** object in `layout.tsx`.
     2. **Crucially:** Delete or rename any files like `src/app/icon.png` to avoid the automatic file-based convention from taking precedence. Refined icons should be served from `/public` for maximum reliability.
+
+---
+
+## í´— 21. Neon Postgres Connection Parameters (Prisma)
+
+*This tip was added after a "Can't reach database server" error in Prisma initialization.*
+
+- **The Issue**: Appending standard PostgreSQL connection parameters like `connection_limit`, `connect_timeout`, or `pool_timeout` to a Neon database URL can sometimes cause a `PrismaClientInitializationError` ("Can't reach database server") depending on the environment or the specific Neon proxy state.
+- **The Fix**: If you encounter connectivity issues with Neon, simplify your `DATABASE_URL` by removing any extra appended parameters and relying on the default Neon string (usually ending in `?sslmode=require`). prisma's default pooling is sufficient for most local development and early-stage production workloads on Neon.

@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/Providers";
+import DesktopSidebar from "@/components/DesktopSidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,7 +48,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          {children}
+          <DesktopSidebar />
+          <div className="desktop-content">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>

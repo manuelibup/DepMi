@@ -1,16 +1,16 @@
-/* ── Layout ───────────────────────────────────────────── */
+/* ── Base (mobile-first) ───────────────────────────────── */
 
 .container {
-    max-width: 480px;
+    max-width: 600px;
     margin: 0 auto;
     min-height: 100vh;
     background-color: var(--bg-color);
     display: flex;
     flex-direction: column;
-    padding-bottom: 60px;
+    padding-bottom: 80px;
 }
 
-/* ── Cover ────────────────────────────────────────────── */
+/* ── Cover ─────────────────────────────────────────────── */
 
 .cover {
     width: 100%;
@@ -26,7 +26,6 @@
     background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
 }
 
-/* subtle dark gradient so white icons stay readable */
 .coverScrim {
     position: absolute;
     inset: 0;
@@ -65,26 +64,21 @@
     cursor: pointer;
     transition: all var(--transition-fast);
     backdrop-filter: blur(4px);
+    text-decoration: none;
 }
 
 .iconBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--primary);
-    color: var(--primary);
+    background: rgba(255, 255, 255, 0.15);
 }
 
-.iconBtnRight {
-    left: auto;
-    right: 14px;
-}
-
-/* ── Identity ─────────────────────────────────────────── */
+/* ── Identity ──────────────────────────────────────────── */
 
 .identity {
     padding: 0 18px 20px;
     position: relative;
     z-index: 2;
     background: var(--bg-color);
+    border-bottom: 1px solid var(--card-border);
 }
 
 .identityActions {
@@ -96,7 +90,6 @@
     z-index: 10;
 }
 
-/* Avatar row: avatar pulled up over cover, action button aligned to bottom */
 .avatarRow {
     display: flex;
     justify-content: space-between;
@@ -105,11 +98,18 @@
     margin-bottom: 14px;
 }
 
+.profileActions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
 .avatar {
     width: 88px;
     height: 88px;
     border-radius: 50%;
-    border: 3px solid var(--bg-color);
+    border: 4px solid var(--bg-color);
     background: var(--bg-elevated);
     overflow: hidden;
     display: flex;
@@ -139,7 +139,7 @@
     background: transparent;
     color: var(--text-main);
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
     transition: background var(--transition-fast), border-color var(--transition-fast);
     white-space: nowrap;
@@ -162,18 +162,17 @@
 .handle {
     font-size: 0.9rem;
     color: var(--text-muted);
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     font-weight: 400;
 }
 
 .bio {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-main);
-    margin: 0 0 10px;
+    margin: 0 0 12px;
     line-height: 1.5;
 }
 
-/* Meta row — tier, joined, store link inline */
 .metaRow {
     display: flex;
     align-items: center;
@@ -217,7 +216,6 @@
     opacity: 0.8;
 }
 
-/* Quick action chips */
 .quickActions {
     display: flex;
     gap: 8px;
@@ -236,7 +234,7 @@
     font-size: 0.83rem;
     font-weight: 600;
     text-decoration: none;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
+    transition: background var(--transition-fast);
 }
 
 .quickChip:hover {
@@ -253,7 +251,63 @@
     background: rgba(0, 200, 83, 0.12);
 }
 
-/* ── Sections ─────────────────────────────────────────── */
+/* ── Follow row ─────────────────────────────────────────── */
+
+.followRow {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 14px;
+}
+
+.followStat {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.followStat strong {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+/* ── Follow / Following buttons ─────────────────────────── */
+
+.followBtn {
+    padding: 7px 18px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #000;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+}
+
+.followBtn:hover {
+    opacity: 0.85;
+}
+
+.followingBtn {
+    padding: 7px 18px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: 1.5px solid var(--card-border);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.followingBtn:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+/* ── Sections ──────────────────────────────────────────── */
 
 .section {
     border-top: 1px solid var(--card-border);
@@ -290,7 +344,7 @@
     padding-top: 2px;
 }
 
-/* ── Products grid (Instagram-style 3-col) ────────────── */
+/* ── Products grid ─────────────────────────────────────── */
 
 .productsGrid {
     display: grid;
@@ -329,7 +383,6 @@
     color: var(--text-muted);
 }
 
-/* Price overlay at bottom of image */
 .productCellOverlay {
     position: absolute;
     bottom: 0;
@@ -345,7 +398,6 @@
     color: #fff;
 }
 
-/* Featured star badge (shown on image) */
 .featuredDot {
     position: absolute;
     top: 5px;
@@ -356,7 +408,6 @@
     line-height: 1;
 }
 
-/* Feature toggle button (own profile only) */
 .featureToggle {
     position: absolute;
     top: 4px;
@@ -389,7 +440,7 @@
     background: rgba(0, 0, 0, 0.45);
 }
 
-/* ── Requests list ────────────────────────────────────── */
+/* ── Requests list ─────────────────────────────────────── */
 
 .requestList {
     display: flex;
@@ -441,4 +492,131 @@
 .requestSub {
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+/* ── Replies list ──────────────────────────────────────────── */
+
+.replyList {
+    display: flex;
+    flex-direction: column;
+}
+
+.replyItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--card-border);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.replyItem:last-child {
+    border-bottom: none;
+}
+
+.replyItem:hover {
+    background: var(--bg-hover);
+}
+
+.replyMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.replyContext {
+    font-size: 0.75rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.replySub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.replyText {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    font-weight: 400;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ══ DESKTOP — X/Twitter style ═════════════════════════════
+   The profile column sits inside the .desktop-content div
+   which already has margin-left: 240px (sidebar offset).
+   We just need to widen and style it properly.
+═══════════════════════════════════════════════════════════ */
+
+@media (min-width: 640px) {
+    .container {
+        max-width: 680px;
+        padding-bottom: 48px;
+        border-right: 1px solid var(--card-border);
+        min-height: 100vh;
+    }
+
+    .cover {
+        height: 220px;
+    }
+
+    .avatar {
+        width: 120px;
+        height: 120px;
+        border-width: 4px;
+    }
+
+    .avatarRow {
+        margin-top: -60px;
+        margin-bottom: 16px;
+    }
+
+    .followRow {
+        gap: 24px;
+        margin-bottom: 16px;
+    }
+
+    .replyItem {
+        padding: 14px 24px;
+    }
+
+    .avatarInitial {
+        font-size: 2.8rem;
+    }
+
+    .identity {
+        padding: 0 24px 24px;
+    }
+
+    .displayName {
+        font-size: 1.4rem;
+    }
+
+    .handle {
+        font-size: 0.95rem;
+    }
+
+    .bio {
+        font-size: 1rem;
+        max-width: 500px;
+    }
+
+    .sectionHeader {
+        padding: 0 24px 14px;
+    }
+
+    .requestItem {
+        padding: 14px 24px;
+    }
+
+    /* Bigger product grid on desktop */
+    .productsGrid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }

@@ -16,3 +16,15 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* Desktop: wider content, top padding replaces hidden header */
+@media (min-width: 640px) {
+  .main {
+    max-width: 680px;
+    margin: 0;
+  }
+
+  .feed {
+    padding-bottom: 40px;
+  }
+}

@@ -228,15 +228,29 @@ export default function CommentSection({
                     comments.map(c => (
                         <div key={c.id} className={styles.commentCard}>
                             <div className={styles.commentHeader}>
-                                <div className={styles.commentAvatar}>
-                                    {c.author.avatarUrl ? (
-                                        <img src={c.author.avatarUrl} alt={c.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                                    ) : (
-                                        c.author.displayName.substring(0, 2).toUpperCase()
-                                    )}
-                                </div>
+                                {c.author.username ? (
+                                    <Link href={`/u/${c.author.username}`} className={styles.commentAvatar} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        {c.author.avatarUrl ? (
+                                            <img src={c.author.avatarUrl} alt={c.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                        ) : (
+                                            c.author.displayName.substring(0, 2).toUpperCase()
+                                        )}
+                                    </Link>
+                                ) : (
+                                    <div className={styles.commentAvatar}>
+                                        {c.author.avatarUrl ? (
+                                            <img src={c.author.avatarUrl} alt={c.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                        ) : (
+                                            c.author.displayName.substring(0, 2).toUpperCase()
+                                        )}
+                                    </div>
+                                )}
                                 <div className={styles.commentMeta}>
-                                    <span className={styles.commentAuthor}>{c.author.displayName}</span>
+                                    {c.author.username ? (
+                                        <Link href={`/u/${c.author.username}`} className={styles.commentAuthor} style={{ textDecoration: 'none' }}>{c.author.displayName}</Link>
+                                    ) : (
+                                        <span className={styles.commentAuthor}>{c.author.displayName}</span>
+                                    )}
                                     <span className={styles.commentTime}>{timeAgo(c.createdAt)}</span>
                                 </div>
                             </div>

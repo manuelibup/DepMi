@@ -1,0 +1,92 @@
+/* ── Mobile: single column ─────────────────────────────── */
+.page {
+    min-height: 100dvh;
+    background: var(--bg-color);
+    padding-bottom: 80px;
+}
+
+.wrapper {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.mediaCol {
+    background: #000;
+    width: 100%;
+    position: relative;
+}
+
+.backBtnWrap {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.infoCol {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.divider {
+    height: 8px;
+    background: var(--bg-hover);
+    width: 100%;
+}
+
+/* ── Desktop: two-column layout ────────────────────────── */
+@media (min-width: 768px) {
+    .page {
+        padding-bottom: 0;
+    }
+
+    .wrapper {
+        max-width: 1080px;
+        padding: 32px 24px 0;
+    }
+
+    .twoCol {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 32px;
+        align-items: start;
+    }
+
+    .mediaCol {
+        background: transparent;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .infoCol {
+        padding: 0;
+        position: sticky;
+        top: 24px;
+    }
+
+    .divider {
+        display: none;
+    }
+
+    .fullWidthSection {
+        margin-top: 32px;
+        border-top: 1px solid var(--card-border);
+        padding-top: 32px;
+        padding-bottom: 48px;
+    }
+}

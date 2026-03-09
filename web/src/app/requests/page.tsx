@@ -84,6 +84,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
                             text: demand.text,
                             budget: `${demand.currency}${Number(demand.budget).toLocaleString()}`,
                             bids: demand._count.bids,
+                            location: demand.location ?? null,
                         };
                         return (
                             <DemandCard key={demand.id} data={dData} index={i} />

@@ -12,6 +12,13 @@
     border-bottom: 1px solid var(--card-border);
 }
 
+/* Hide mobile header on desktop — sidebar handles navigation */
+@media (min-width: 640px) {
+    .header {
+        display: none;
+    }
+}
+
 .logoWrap {
     display: flex;
     align-items: center;
@@ -41,6 +48,53 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.desktopNav {
+    display: none;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (min-width: 768px) {
+    .desktopNav {
+        display: flex;
+    }
+}
+
+.desktopNavLink {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.desktopNavLink:hover {
+    color: var(--text-main);
+    background: var(--card-bg-glass);
+}
+
+.desktopNavActive {
+    color: var(--primary);
+}
+
+.desktopCreateBtn {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    background: var(--primary);
+    padding: 6px 16px;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    margin-left: 8px;
+    transition: opacity var(--transition-fast);
+}
+
+.desktopCreateBtn:hover {
+    opacity: 0.85;
 }
 
 .headerActions {

@@ -47,8 +47,7 @@ export async function POST(req: NextRequest) {
     const totalItemsAmount = itemPrice * quantity
     const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    const processingFee = Math.min(Math.round(subtotalAndDelivery * 0.014), 2000)
-    const finalAmountToPay = subtotalAndDelivery + processingFee
+    const finalAmountToPay = subtotalAndDelivery
 
     // Create Order + OrderItem atomically
     const order = await prisma.$transaction(async (tx) => {
@@ -123,7 +122,6 @@ export async function POST(req: NextRequest) {
       breakdown: {
         subtotal: totalItemsAmount,
         deliveryFee,
-        processingFee,
         total: finalAmountToPay,
       },
     })

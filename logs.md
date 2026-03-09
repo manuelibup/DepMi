@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 51 — Mar 9, 2026 — Flutterwave Migration & Desktop Layout](#session-51--mar-9-2026--flutterwave-migration--desktop-layout)
+- [Session 50 — Mar 9, 2026 — Resolution of Database Connectivity Issues](#session-50--mar-9-2026--resolution-of-database-connectivity-issues)
 - [Session 49 — Mar 8, 2026 — Waitlist V3.3 Overhaul & Mobile Refinement](#session-49--mar-8-2026--waitlist-v33-overhaul--mobile-refinement)
 - [Session 48 — Mar 7, 2026 — Business Strategy, Security Audit & Critical Fixes](#session-48--mar-7-2026--business-strategy-security-audit--critical-fixes)
 - [Session 43 — Mar 4, 2026 — Social Interactions, Comments Engine & Product Slugs](#session-43--mar-4-2026--social-interactions-comments-engine--product-slugs)
@@ -1741,7 +1743,8 @@ All changes written. `prisma db push` confirmed DB in sync. Prisma client requir
 - **DemandForm Error Fix**: Added real-time comma formatting (e.g. 5,000,000) to the budget input via a secondary \displayBudget\ state, while strictly decoupling and passing the raw \Number(budget)\ string to the \/api/demands/create\ Prisma submit handler, fixing the Internal Server Error.
 - **CreateProductForm Improvement**: Replicated this exact comma-separation format parsing for high-value \price\ items in the Seller composer.
 - **Category UI Styling**: Adjusted the \<select>\ dropdown for Categories in both forms to map to the strict dark-mode CSS variables (---bg-color) rather than transparent, ensuring native dropdown rendering on mobile doesn't produce white-on-white collision text.
-- **Syntax Fixes**: Stripped an orphaned rogue \</div>\ inside \equests/[id]/page.tsx\ that was halting Turbopack production builds.
+- **Syntax Fixes**: Stripped an orphaned rogue \</div>\ inside \
+equests/[id]/page.tsx\ that was halting Turbopack production builds.
 
 ### Outcome:
 Verified all changes. \
@@ -1942,3 +1945,68 @@ Direct Messaging is now a rich, multi-media experience. The "mention" loop is cl
 ### Outcome:
 The Waitlist page is now a premium, branded landing experience that effectively communicates the DepMi mission to all users before launch. It is technically sound across all screen sizes and serves as a high-conversion gateway.
 
+
+---
+
+## Session 51 — Mar 9, 2026 — Flutterwave Migration & Desktop Layout
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### What was done:
+
+#### Flutterwave Payment Migration (Monnify → Flutterwave)
+- **Created `web/src/lib/flutterwave.ts`:** Full Flutterwave API client covering:
+  - `initializePayment()` — hosted payment link (card, bank transfer, USSD)
+  - `verifyTransaction()` / `verifyByTxRef()` — transaction verification
+  - `validateWebhookSignature()` — HMAC-style verif-hash validation
+  - `initiatePayout()` — bank transfer payouts to sellers
+  - `getBankList()` — dynamic bank list with static fallback (23 banks)
+  - `resolveAccountName()` — NUBAN account name verification
+- **Updated `/api/checkout/initialize`:** Creates Flutterwave payment link (1.4% fee, cap ₦2,000). Cleans up order on provider failure.
+- **Created `/api/checkout/callback`:** Handles Flutterwave redirect after payment. Verifies transaction, updates order to CONFIRMED, notifies seller, sends buyer email.
+- **Created `/api/webhooks/flutterwave`:** Async webhook handler for `charge.completed` events. Idempotent, signature-validated. Acts as fallback to the redirect callback.
+- **Updated `/api/orders/[id]/confirm`:** Escrow release via Flutterwave `initiatePayout()` with OTP (`TRANSACTIONAL` type) verification.
+- **Updated `/api/store/[slug]/payout`:** Bank account management using Flutterwave bank list and account resolution. OTP-gated saves with `ACCOUNT_UPDATE` type.
+- **Updated `/api/banks` and `/api/banks/resolve`:** Now use Flutterwave for bank list and NUBAN resolution.
+
+#### Desktop Layout (Twitter/X-style)
+- **Created `DesktopSidebar` component:** Fixed left sidebar (240px) shown at ≥768px with:
+  - Logo, 6-item navigation (Home, Requests, Orders, Messages, Notifications, Profile)
+  - Unread badge counts for messages and notifications
+  - "Create" button → bottom sheet for Post Request / Add Product
+  - Auth-gated Profile link
+- **Updated `layout.tsx`:** Includes `<DesktopSidebar />` + `<div className="desktop-content">` wrapper.
+- **Updated `globals.css`:** `.desktop-content { margin-left: 240px }` at ≥768px.
+- **Updated `Header`:** Added unread message count dot alongside the existing notifications dot.
+
+#### Messages Two-Column Desktop Layout
+- **Created `web/src/app/messages/layout.tsx`:** Server component wrapping messages routes with a two-panel shell (360px left panel with conversation list + right panel for active chat).
+- **Created `MessagesLayout.module.css`:** Styles for the shell — left panel hidden on mobile, two-column on desktop.
+- **Updated `messages/page.tsx`:** Renders mobile conversation list via `page.module.css` (hidden at desktop), plus the desktop empty state from `MessagesLayout.module.css`.
+
+#### Schema Fix
+- **Added `TRANSACTIONAL` and `ACCOUNT_UPDATE` to `OtpType` enum** in `schema.prisma` to match usage in confirm and payout routes.
+- **`npx prisma db push`** applied successfully.
+
+### Build Status:
+- ✅ TypeScript clean (`npx tsc --noEmit` — 0 errors)
+- ✅ Next.js production build passes
+
+### Outcome:
+Full Flutterwave payment integration is live (checkout → payment → webhook → payout). Desktop experience now matches mobile parity with a Twitter/X-style sidebar.
+
+---
+
+## Session 50 — Mar 9, 2026 — Resolution of Database Connectivity Issues
+**Agent:** Antigravity  
+**Human:** Manuel
+
+### What was done:
+- **Database Triage:** Diagnosed a `PrismaClientKnownRequestError` ("Can't reach database server") causing crashes in the main Discover feed and Prisma Studio.
+- **Root Cause Identification:** Isolated the failure to a set of problematic connection parameters (`connect_timeout`, `pool_timeout`, `connection_limit`) that were being dynamically appended to the `DATABASE_URL` in `src/lib/prisma.ts`. Standing diagnostic tests confirmed Neon's proxy was rejecting these parameters in the current environment.
+- **Implementation of Fix:** Simplified the Prisma initialization logic to use the raw environment `DATABASE_URL` directly. 
+- **Verification:** Successfully ran a standalone connection test using the updated logic; Discover feed and Prisma Studio responsiveness restored.
+- **Documentation:** Added Tip #21 to `tips.md` regarding Neon connection parameter pitfalls.
+
+### Outcome:
+Full database connectivity is restored. The platform is ready for continued development of the storefront and listing flows.

@@ -169,6 +169,12 @@
     color: var(--text-muted);
 }
 
+@media (min-width: 640px) {
+    .nav {
+        display: none;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

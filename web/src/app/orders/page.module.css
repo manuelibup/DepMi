@@ -35,6 +35,12 @@
     overflow-x: auto;
 }
 
+@media (min-width: 640px) {
+    .tabs {
+        top: 0;
+    }
+}
+
 .tab {
     background: transparent;
     border: none;
@@ -442,4 +448,11 @@
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
+}
+
+/* Desktop: no bottom nav padding needed */
+@media (min-width: 768px) {
+    .main {
+        padding-bottom: 0;
+    }
 }

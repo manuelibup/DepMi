@@ -56,7 +56,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     take: 20,
     include: {
       user: { select: { displayName: true, username: true, avatarUrl: true } },
-      _count: { select: { bids: true } }
+      _count: { select: { bids: true } },
     }
   });
 
@@ -107,6 +107,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 text: demand.text || '',
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
                 bids: demand._count.bids,
+                location: demand.location ?? null,
               };
               cardContent = <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
             } else {

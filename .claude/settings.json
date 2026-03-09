@@ -23,7 +23,13 @@
       "Bash(git add web/next.config.ts)",
       "Bash(git push)",
       "Bash(git diff web/src/app/messages/[id]/page.tsx)",
-      "Bash(git add \"web/src/app/messages/[id]/page.tsx\")"
+      "Bash(git add \"web/src/app/messages/[id]/page.tsx\")",
+      "Bash(pg_dump --version)",
+      "Bash(xargs grep -l -i \"monnify\")",
+      "Bash(curl -s https://depmi.com/api/ping)",
+      "Bash(curl -sL https://depmi.com/api/ping)",
+      "Bash(npm run build)",
+      "Bash(grep -E \"\\\\.\\(tsx|css\\)$\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

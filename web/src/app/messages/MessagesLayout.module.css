@@ -1,0 +1,225 @@
+/* Mobile: single column, layout is transparent */
+.shell {
+    display: flex;
+    min-height: 100dvh;
+    background: var(--bg-color);
+}
+
+.leftPanel {
+    display: none; /* hidden on mobile — page.tsx renders the list */
+}
+
+.rightPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Desktop: two-panel split */
+@media (min-width: 768px) {
+    .shell {
+        height: 100dvh;
+        overflow: hidden;
+        border-right: 1px solid var(--card-border);
+    }
+
+    .leftPanel {
+        display: flex;
+        flex-direction: column;
+        width: 360px;
+        flex-shrink: 0;
+        border-right: 1px solid var(--card-border);
+        background: var(--bg-color);
+        overflow: hidden;
+    }
+
+    .rightPanel {
+        flex: 1;
+        overflow: hidden;
+    }
+}
+
+/* Left panel internals */
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 12px;
+    flex-shrink: 0;
+}
+
+.panelTitle {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: -0.4px;
+}
+
+.newChatBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--text-main);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.newChatBtn:hover {
+    background: var(--card-bg-glass);
+}
+
+.convList {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.convItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    text-decoration: none;
+    background: transparent;
+    transition: background var(--transition-fast);
+    border-radius: 0;
+    position: relative;
+}
+
+.convItem:hover {
+    background: var(--card-bg-glass);
+}
+
+.convItem.active {
+    background: var(--card-bg-glass);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.topRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.convName {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.convTime {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.convPreview {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* Right panel empty state */
+.emptyState {
+    display: none; /* hidden on mobile — no empty state needed */
+}
+
+@media (min-width: 768px) {
+    .emptyState {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 16px;
+        color: var(--text-muted);
+    }
+}
+
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--card-bg-glass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.emptyTitle {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.emptyDesc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: center;
+    max-width: 280px;
+}
+
+.newMsgBtn {
+    margin-top: 8px;
+    padding: 10px 24px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+}
+
+.newMsgBtn:hover {
+    opacity: 0.85;
+}

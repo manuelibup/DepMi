@@ -9,7 +9,7 @@ function createExtendedClient() {
     const client = new PrismaClient({
         datasources: {
             db: {
-                url: process.env.DATABASE_URL + (process.env.DATABASE_URL?.includes('?') ? '&' : '?') + 'connect_timeout=30&pool_timeout=45&connection_limit=5'
+                url: process.env.DATABASE_URL
             }
         },
         log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
