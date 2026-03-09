@@ -28,7 +28,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const session = await getServerSession(authOptions);
     const isOwnProfile = session?.user?.username === username;
 
-    const user = (await prisma.user.findFirst({
+    const user = (await (prisma.user as any).findFirst({
         where: { username: { equals: username, mode: 'insensitive' } },
         select: {
             id: true,
@@ -58,7 +58,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Check if current user follows this profile
     let isFollowing = false;
     if (session?.user?.id && !isOwnProfile) {
-        const follow = await prisma.userFollow.findUnique({
+        const follow = await (prisma as any).userFollow.findUnique({
             where: { followerId_followingId: { followerId: session.user.id, followingId: user.id } },
         });
         isFollowing = !!follow;

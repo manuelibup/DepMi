@@ -14,7 +14,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     const q = sp.q || '';
 
     // Advanced search: simple insensitive match on text or location
-    const demands = (await prisma.demand.findMany({
+    const demands = (await (prisma.demand as any).findMany({
         where: {
             isActive: true,
             ...(q ? {

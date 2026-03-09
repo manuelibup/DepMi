@@ -21,7 +21,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         userKycTier = u?.kycTier ?? 'UNVERIFIED';
     }
 
-    const demand = (await prisma.demand.findUnique({
+    const demand = (await (prisma.demand as any).findUnique({
         where: { id },
         include: {
             user: { select: { displayName: true, username: true, avatarUrl: true } },
@@ -73,7 +73,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     }
 
     // Serialize bids for client component
-    const serializedBids = demand.bids.map(bid => ({
+    const serializedBids = demand.bids.map((bid: any) => ({
         id: bid.id,
         amount: Number(bid.amount),
         proposal: bid.proposal,
@@ -82,7 +82,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         product: bid.product ? { title: bid.product.title } : null,
     }));
 
-    const serializedComments = demand.comments.map(c => ({
+    const serializedComments = demand.comments.map((c: any) => ({
         id: c.id,
         text: c.text,
         author: c.author,
