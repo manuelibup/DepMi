@@ -21,23 +21,26 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         userKycTier = u?.kycTier ?? 'UNVERIFIED';
     }
 
-    const demand = await prisma.demand.findUnique({
+    const demand = (await prisma.demand.findUnique({
         where: { id },
         include: {
             user: { select: { displayName: true, username: true, avatarUrl: true } },
+            images: { orderBy: { order: 'asc' }, select: { url: true } },
             bids: {
+                orderBy: { createdAt: 'desc' },
                 include: {
                     store: { select: { name: true, depCount: true, depTier: true } },
                     product: { select: { title: true, images: { take: 1, select: { url: true } } } }
-                },
-                orderBy: { createdAt: 'desc' }
+                }
             },
             comments: {
-                include: { author: { select: { displayName: true, username: true, avatarUrl: true } } },
-                orderBy: { createdAt: 'asc' }
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    author: { select: { displayName: true, username: true, avatarUrl: true } }
+                }
             }
         }
-    });
+    }) as any);
 
     if (!demand) notFound();
 
@@ -128,11 +131,31 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     </div>
                     {demand.location && (
                         <p className={styles.location}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
                             {demand.location}
                         </p>
                     )}
                 </div>
+
+                {/* Media (NEW) */}
+                <div className={styles.mediaContainer}>
+                    {demand.videoUrl && (
+                        <div className={styles.videoPlayer}>
+                            <video src={demand.videoUrl} controls playsInline />
+                        </div>
+                    )}
+                    {demand.images && demand.images.length > 0 && (
+                        <div className={styles.imageGallery} data-count={demand.images.length}>
+                            {demand.images.map((img: any, i: number) => (
+                                <div key={i} className={styles.galleryItem}>
+                                    <img src={img.url} alt="Request Details" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.divider} />
 
                 <BidsCommentsTab
                     bids={serializedBids}

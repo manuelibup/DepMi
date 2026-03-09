@@ -17,10 +17,10 @@ interface ProfilePageProps {
 
 const TIER_LABELS: Record<string, string> = {
     SEEDLING: '🌱 Seedling',
-    RISING:   '⭐ Rising',
-    TRUSTED:  '🔥 Trusted',
-    ELITE:    '💎 Elite',
-    LEGEND:   '🏆 Legend',
+    RISING: '⭐ Rising',
+    TRUSTED: '🔥 Trusted',
+    ELITE: '💎 Elite',
+    LEGEND: '🏆 Legend',
 };
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
@@ -28,8 +28,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const session = await getServerSession(authOptions);
     const isOwnProfile = session?.user?.username === username;
 
-    const user = await prisma.user.findUnique({
-        where: { username },
+    const user = (await prisma.user.findFirst({
+        where: { username: { equals: username, mode: 'insensitive' } },
         select: {
             id: true,
             username: true,
@@ -51,7 +51,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 }
             }
         },
-    });
+    }) as any);
 
     if (!user) notFound();
 
@@ -129,7 +129,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <BackButton className={styles.iconBtn} />
                     <div className={styles.rightActions}>
                         <Link href="/search" className={styles.iconBtn} aria-label="Search">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                         </Link>
                         {isOwnProfile && (
                             <Link href="/settings" className={styles.iconBtn} aria-label="Settings">

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 import styles from './FilterBar.module.css';
 
 // Label → URL category value (empty string = no filter)
@@ -19,11 +20,12 @@ const FILTERS: { label: string; value: string }[] = [
 ];
 
 function FilterBarInner() {
+    const isHeaderVisible = useScrollDirection();
     const searchParams = useSearchParams();
     const activeCategory = searchParams?.get('category') ?? '';
 
     return (
-        <nav className={styles.wrapper}>
+        <nav className={`${styles.wrapper} ${!isHeaderVisible ? styles.fullTop : ''}`}>
             <div className={styles.scroll}>
                 {FILTERS.map((f) => {
                     const href = f.value ? `/?category=${f.value}` : '/';

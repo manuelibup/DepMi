@@ -132,24 +132,36 @@ model DepTransaction {
 }
 
 model Demand {
-  id        String    @id @default(uuid())
+  id        String        @id @default(uuid())
   userId    String
   text      String
-  budget    Decimal   @db.Decimal(10, 2)
-  category  Category  @default(OTHER)
+  budget    Decimal       @db.Decimal(10, 2)
+  category  Category      @default(OTHER)
   location  String?
   closesAt  DateTime?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  currency  String    @default("₦")
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  currency  String        @default("₦")
+  videoUrl  String?
+  images    DemandMedia[]
   bids      Bid[]
-  comments  Comment[] @relation("DemandComments")
-  user      User      @relation("UserDemands", fields: [userId], references: [id])
-  orders    Order[]   @relation("DemandOrders")
+  comments  Comment[]     @relation("DemandComments")
+  user      User          @relation("UserDemands", fields: [userId], references: [id])
+  orders    Order[]       @relation("DemandOrders")
 
   @@index([isActive, category])
   @@index([userId])
+}
+
+model DemandMedia {
+  id       String @id @default(uuid())
+  demandId String
+  url      String
+  order    Int    @default(0)
+  demand   Demand @relation(fields: [demandId], references: [id], onDelete: Cascade)
+
+  @@index([demandId])
 }
 
 model Bid {

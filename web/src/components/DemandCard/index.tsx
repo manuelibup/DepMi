@@ -19,6 +19,8 @@ export interface DemandData {
     bids: number;
     urgency?: string;
     location?: string | null;
+    images?: string[];
+    videoUrl?: string | null;
 }
 
 interface DemandCardProps {
@@ -124,6 +126,29 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
 
                 {/* Body */}
                 <p className={styles.text}>{data.text}</p>
+
+                {/* Media Preview (NEW) */}
+                {(data.images && data.images.length > 0) || data.videoUrl ? (
+                    <div className={styles.mediaContainer} onClick={e => e.stopPropagation()}>
+                        {data.videoUrl ? (
+                            <div className={styles.videoWrapper}>
+                                <video src={data.videoUrl} muted playsInline onClick={(e) => (e.target as HTMLVideoElement).play()} />
+                                <div className={styles.videoBadge}>VIDEO</div>
+                            </div>
+                        ) : data.images && data.images.length > 0 ? (
+                            <div className={styles.imageGrid} data-count={data.images.length}>
+                                {data.images.slice(0, 3).map((img, i) => (
+                                    <div key={i} className={styles.imageItem}>
+                                        <img src={img} alt="Product Request" />
+                                        {i === 2 && data.images!.length > 3 && (
+                                            <div className={styles.imageOverlay}>+{data.images!.length - 2}</div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 {/* Budget Bar */}
                 <div className={styles.budgetBar}>

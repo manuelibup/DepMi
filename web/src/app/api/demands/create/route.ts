@@ -11,6 +11,8 @@ const demandSchema = z.object({
     budget: z.number().min(100, "Budget must be at least 100"),
     currency: z.string().default("₦"),
     location: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    videoUrl: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -30,11 +32,11 @@ export async function POST(req: Request) {
             );
         }
 
-        const { text, category, budget, currency, location } = parsed.data;
+        const { text, category, budget, currency, location, images, videoUrl } = parsed.data;
 
         // NOTE: We do not limit buyers from creating demands based on KYC alone, 
         // UNVERIFIED users can browse and create demands (from agent.md).
-        
+
         const demand = await prisma.demand.create({
             data: {
                 userId: session.user.id,
@@ -43,13 +45,23 @@ export async function POST(req: Request) {
                 budget,
                 currency,
                 location,
+                videoUrl,
                 isActive: true,
+                images: images ? {
+                    create: images.map((url, index) => ({
+                        url,
+                        order: index
+                    }))
+                } : undefined
+            },
+            include: {
+                images: true
             }
         });
 
         return NextResponse.json({ message: 'Demand successfully posted', demand }, { status: 201 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Demand Creation Error:', error);
         return NextResponse.json(

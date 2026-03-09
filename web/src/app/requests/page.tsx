@@ -14,7 +14,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     const q = sp.q || '';
 
     // Advanced search: simple insensitive match on text or location
-    const demands = await prisma.demand.findMany({
+    const demands = (await prisma.demand.findMany({
         where: {
             isActive: true,
             ...(q ? {
@@ -32,6 +32,10 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
                     avatarUrl: true,
                 }
             },
+            images: {
+                orderBy: { order: 'asc' },
+                select: { url: true }
+            },
             _count: {
                 select: { bids: true }
             }
@@ -39,26 +43,26 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
         orderBy: {
             createdAt: 'desc'
         }
-    });
+    }) as any);
 
     return (
         <main className={styles.container}>
             <Header />
-            
+
             <div className={styles.searchHeader}>
                 <h1 className={styles.title}>Demand Engine</h1>
                 <p className={styles.subtitle}>Browse active requests and bid with your products.</p>
-                
+
                 <form action="/requests" method="GET" className={styles.searchForm}>
-                    <input 
-                        type="search" 
-                        name="q" 
-                        defaultValue={q} 
-                        placeholder="Search for requests..." 
+                    <input
+                        type="search"
+                        name="q"
+                        defaultValue={q}
+                        placeholder="Search for requests..."
                         className={styles.searchInput}
                     />
                     <button type="submit" className={styles.searchBtn} aria-label="Search">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                     </button>
                 </form>
             </div>
@@ -85,6 +89,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
                             budget: `${demand.currency}${Number(demand.budget).toLocaleString()}`,
                             bids: demand._count.bids,
                             location: demand.location ?? null,
+                            images: demand.images.map((img: any) => img.url),
+                            videoUrl: demand.videoUrl,
                         };
                         return (
                             <DemandCard key={demand.id} data={dData} index={i} />

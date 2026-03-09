@@ -111,11 +111,20 @@ export const authOptions: NextAuthOptions = {
                         }
                     } else {
                         // Create a new user from Google profile
+                        const baseUsername = (user.name || user.email.split("@")[0])
+                            .toLowerCase()
+                            .replace(/\s+/g, '')
+                            .replace(/[^\w-]/g, '');
+
+                        // Add a small random suffix to ensure uniqueness on first try
+                        const randomSuffix = Math.random().toString(36).substring(2, 6);
+                        const finalUsername = `${baseUsername}${randomSuffix}`;
+
                         await prisma.user.create({
                             data: {
                                 email: user.email,
-                                displayName:
-                                    user.name ?? user.email.split("@")[0],
+                                username: finalUsername,
+                                displayName: user.name ?? user.email.split("@")[0],
                                 avatarUrl: user.image,
                                 accounts: {
                                     create: {

@@ -1,11 +1,18 @@
 .wrapper {
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--card-bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     position: sticky;
     top: 61px;
     z-index: 40;
     border-bottom: 1px solid var(--card-border);
+    margin-top: -1px;
+    /* Overlap header border slightly */
+    transition: top 0.3s ease;
+}
+
+.fullTop {
+    top: 0 !important;
 }
 
 @media (min-width: 768px) {

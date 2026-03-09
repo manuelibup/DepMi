@@ -1,9 +1,8 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { X, CreditCard, FolderOpen, MapPin } from 'lucide-react';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import { X, CreditCard, FolderOpen, MapPin, Camera, Video } from 'lucide-react';
 import styles from './DemandForm.module.css';
 
 const CATEGORIES = [
@@ -14,7 +13,7 @@ const CURRENCIES = ['₦', '$', '£', '€'];
 export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     const router = useRouter();
     const { data: session } = useSession();
-    
+
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [errorMsg, setErrorMsg] = useState('');
 
@@ -25,9 +24,11 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
         budget: '', // Raw unformatted number string for API
         displayBudget: '', // Formatted string with commas for UI
         location: '',
+        images: [] as string[],
+        videoUrl: '',
     });
 
-    const [activeInput, setActiveInput] = useState<'budget' | 'category' | 'location' | null>(null);
+    const [activeInput, setActiveInput] = useState<'budget' | 'category' | 'location' | 'media' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Load draft on mount
@@ -37,7 +38,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
             try {
                 const parsed = JSON.parse(draft);
                 setFormData(prev => ({ ...prev, ...parsed }));
-            } catch (e) {}
+            } catch (e) { }
         }
     }, [defaultQuery]);
 
@@ -55,9 +56,9 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
             const rawValue = e.target.value.replace(/\D/g, '');
             // Format with commas for display
             const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
-            
-            setFormData(prev => ({ 
-                ...prev, 
+
+            setFormData(prev => ({
+                ...prev,
                 budget: rawValue,
                 displayBudget: formattedValue
             }));
@@ -67,7 +68,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     };
 
     const handleClose = () => {
-        if (formData.text || formData.budget || formData.location) {
+        if (formData.text || formData.budget || formData.location || formData.images.length > 0 || formData.videoUrl) {
             const save = confirm("Save as draft?");
             if (save) {
                 localStorage.setItem('demand_draft', JSON.stringify(formData));
@@ -80,7 +81,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Basic validation before submission to ensure both text and budget are provided
         if (!formData.text.trim()) {
             setErrorMsg('Please enter what you are looking for.');
@@ -105,6 +106,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     budget: parseFloat(formData.budget),
                     currency: formData.currency,
                     location: formData.location || undefined,
+                    images: formData.images,
+                    videoUrl: formData.videoUrl || undefined,
                 })
             });
 
@@ -116,11 +119,11 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
 
             setStatus('success');
             localStorage.removeItem('demand_draft');
-            
+
             // Redirect to Requests feed
             router.push('/requests');
             router.refresh();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setStatus('error');
             setErrorMsg(err.message || 'An unexpected error occurred.');
@@ -137,8 +140,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                 <button type="button" onClick={handleClose} className={styles.iconBtn} aria-label="Cancel">
                     <X size={24} />
                 </button>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     className={styles.postBtn}
                     disabled={!canPost}
                     onClick={handleSubmit}
@@ -167,7 +170,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     </div>
                 </div>
 
-                <textarea 
+                <textarea
                     ref={textareaRef}
                     name="text"
                     className={styles.composer}
@@ -176,21 +179,69 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     onChange={handleChange}
                     autoFocus
                 />
+
+                <div className={styles.mediaSection}>
+                    {formData.images.map((url, idx) => (
+                        <div key={idx} className={styles.mediaPreview}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={url} alt="Requested Item" />
+                            <button
+                                type="button"
+                                className={styles.removeBtn}
+                                onClick={() => setFormData(prev => ({ ...prev, images: prev.images.filter((_: any, i: number) => i !== idx) }))}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ))}
+
+                    {formData.videoUrl && (
+                        <div className={styles.mediaPreview}>
+                            <video src={formData.videoUrl} muted playsInline onClick={(e) => (e.target as HTMLVideoElement).play()} />
+                            <button
+                                type="button"
+                                className={styles.removeBtn}
+                                onClick={() => setFormData({ ...formData, videoUrl: '' })}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+
+                    {formData.images.length < 4 && (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setFormData(prev => ({ ...prev, images: [...prev.images, res.secure_url] }))}
+                            accept="image/*"
+                            maxSizeMB={10}
+                            buttonText="Add Photo"
+                        />
+                    )}
+
+                    {!formData.videoUrl && (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setFormData({ ...formData, videoUrl: res.secure_url })}
+                            accept="video/*"
+                            maxSizeMB={100}
+                            maxDurationSeconds={60}
+                            buttonText="Add Video"
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Inline expandable inputs based on active pill */}
             {activeInput === 'budget' && (
                 <div className={styles.inlineInputRow}>
-                    <select 
-                        name="currency" 
-                        value={formData.currency} 
-                        onChange={handleChange} 
+                    <select
+                        name="currency"
+                        value={formData.currency}
+                        onChange={handleChange}
                         className={styles.currencySelect}
                     >
                         {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         name="budget"
                         inputMode="numeric"
                         placeholder="Budget amount"
@@ -205,10 +256,10 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
 
             {activeInput === 'category' && (
                 <div className={styles.inlineInputRow}>
-                    <select 
-                        name="category" 
-                        value={formData.category} 
-                        onChange={handleChange} 
+                    <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
                         className={styles.categorySelect}
                         autoFocus
                     >
@@ -220,8 +271,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
 
             {activeInput === 'location' && (
                 <div className={styles.inlineInputRow}>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         name="location"
                         placeholder="E.g., Lagos / Nationwide"
                         value={formData.location}
@@ -236,17 +287,17 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
             {/* Bottom action bar */}
             <div className={styles.actionBar}>
                 <div className={styles.pillsScroll}>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`${styles.pill} ${formData.budget ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'budget' ? null : 'budget')}
                     >
                         <CreditCard size={16} className={styles.pillIcon} />
                         {formData.budget ? `${formData.currency}${formData.displayBudget}` : 'Budget'}
                     </button>
-                    
-                    <button 
-                        type="button" 
+
+                    <button
+                        type="button"
                         className={`${styles.pill} ${formData.category !== 'OTHER' ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'category' ? null : 'category')}
                     >
@@ -254,8 +305,8 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                         {formData.category === 'OTHER' ? 'Category' : formData.category}
                     </button>
 
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`${styles.pill} ${formData.location ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'location' ? null : 'location')}
                     >

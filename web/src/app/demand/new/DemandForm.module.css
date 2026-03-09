@@ -2,7 +2,8 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    height: 100dvh; /* mobile-friendly */
+    height: 100dvh;
+    /* mobile-friendly */
     background: var(--bg-color);
     position: relative;
     overflow: hidden;
@@ -152,8 +153,15 @@
 }
 
 @keyframes slideUp {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .currencySelect {
@@ -167,7 +175,8 @@
     transition: all 0.2s ease;
     box-shadow: 0 0 10px rgba(0, 200, 83, 0.05);
     outline: none;
-    appearance: none; /* remove default arrow to look cleaner */
+    appearance: none;
+    /* remove default arrow to look cleaner */
 }
 
 .currencySelect:focus {
@@ -232,7 +241,8 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 4px; /* for scrollbar space if any */
+    padding-bottom: 4px;
+    /* for scrollbar space if any */
 }
 
 .pillsScroll::-webkit-scrollbar {
@@ -263,4 +273,53 @@
     background: rgba(0, 200, 83, 0.1);
     border-color: rgba(0, 200, 83, 0.3);
     color: var(--primary);
+}
+
+/* Media Section */
+.mediaSection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    padding-bottom: 24px;
+}
+
+.mediaPreview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+}
+
+.mediaPreview img,
+.mediaPreview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.removeBtn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.removeBtn:hover {
+    background: rgba(0, 0, 0, 0.8);
 }

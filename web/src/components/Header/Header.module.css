@@ -10,6 +10,11 @@
     top: 0;
     z-index: 50;
     border-bottom: 1px solid var(--card-border);
+    transition: transform 0.3s ease;
+}
+
+.headerHidden {
+    transform: translateY(-100%);
 }
 
 /* Hide mobile header on desktop — sidebar handles navigation */
@@ -22,8 +27,10 @@
 .logoWrap {
     display: flex;
     align-items: center;
-    gap: 8px; /* Slightly tighter gap for a unified look */
-    text-decoration: none; /* Strip underline from the Link */
+    gap: 8px;
+    /* Slightly tighter gap for a unified look */
+    text-decoration: none;
+    /* Strip underline from the Link */
     transition: opacity 0.2s ease;
 }
 
@@ -40,8 +47,10 @@
 .logoText {
     font-size: 26px;
     font-family: inherit;
-    font-weight: 500; /* Thinner weight so the bold logo pops */
-    letter-spacing: -0.8px; /* Tighter kerning makes it look more tailored/premium */
+    font-weight: 500;
+    /* Thinner weight so the bold logo pops */
+    letter-spacing: -0.8px;
+    /* Tighter kerning makes it look more tailored/premium */
     margin: 0;
     line-height: 1;
     background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
