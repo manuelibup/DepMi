@@ -21,10 +21,7 @@
 
 /* Mobile-optimized header, but visible everywhere */
 @media (min-width: 640px) {
-    .header {
-        /* Keep it visible but maybe adjust desktop padding if needed */
-        /* display: flex; (already default) */
-    }
+    /* Desktop-specific adjustments can go here */
 }
 
 .logoWrap {
@@ -57,6 +54,10 @@
     margin: 0;
     line-height: 1;
     color: var(--primary);
+    background: transparent !important;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    -webkit-text-fill-color: initial;
 }
 
 .desktopNav {

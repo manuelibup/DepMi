@@ -73,7 +73,7 @@ export default function LandingPage() {
                                     <div className={styles.mockSearch}>Search DepMi...</div>
                                 </div>
                                 <Image
-                                    src="/app-screenshot.png"
+                                    src="/app-screenshot-v3.png"
                                     alt="DepMi App Feed"
                                     width={375}
                                     height={812}
