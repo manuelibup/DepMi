@@ -457,3 +457,41 @@
         padding-bottom: 0;
     }
 }
+
+/* Order Instructions Banner */
+.orderInstructions {
+    background: rgba(0, 184, 148, 0.08);
+    border: 1px solid rgba(0, 184, 148, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.orderInstructions p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.orderInstructions strong {
+    color: #00B894;
+}
+
+/* Additional status colours */
+.status_PENDING {
+    background: rgba(253, 203, 110, 0.15);
+    color: #FDCB6E;
+    border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.status_CANCELLED {
+    background: rgba(150, 150, 150, 0.12);
+    color: #999;
+    border: 1px solid rgba(150, 150, 150, 0.25);
+}
+
+.status_EXPIRED {
+    background: rgba(150, 150, 150, 0.12);
+    color: #999;
+    border: 1px solid rgba(150, 150, 150, 0.25);
+}

@@ -27,7 +27,7 @@ export default async function OrdersPage() {
             items: {
                 include: { product: { select: { id: true, title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
-            seller: { select: { name: true } },
+            seller: { select: { name: true, ownerId: true } },
             review: { select: { id: true } }
         }
     });
@@ -58,6 +58,7 @@ export default async function OrdersPage() {
             images: o.items[0].product.images,
         } : { id: '', title: 'Unknown', images: [] },
         store: o.seller,
+        seller: o.seller,
         buyer: o.buyer,
         hasReviewed: !!o.review,
     }));

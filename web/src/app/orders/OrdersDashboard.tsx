@@ -15,6 +15,7 @@ interface OrderItem {
     createdAt: string;
     product: { id: string; title: string; images: { url: string }[] };
     store?: { name: string };
+    seller?: { name: string; ownerId: string };
     buyer?: { displayName: string; username: string };
     trackingNo?: string;
     deliveryMethod?: string;
@@ -48,6 +49,7 @@ function statusLabel(status: string): string {
 function statusClass(status: string): string {
     if (status === 'PENDING') return styles.status_PENDING;
     if (status === 'EXPIRED') return styles.status_EXPIRED;
+    if (status === 'CANCELLED') return styles.status_CANCELLED;
     if (status === 'CONFIRMED') return styles.status_SHIPPED;
     if (status === 'SHIPPED') return styles.status_SHIPPED;
     if (['DELIVERED', 'COMPLETED'].includes(status)) return styles.status_COMPLETED;
@@ -193,13 +195,13 @@ function OrderCard({ order, role, onStatusChange }: {
                 {role === 'buyer' && (
                     <div className={styles.orderAction}>
                         {localStatus === 'PENDING' && (
-                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                <Link href={`/checkout/${order.product.id}?resume=${order.id}`} className={`${styles.actionBtn} ${styles.primary}`} style={{ textDecoration: 'none', textAlign: 'center', flex: 1 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', width: '100%' }}>
+                                <Link href={`/checkout/${order.product.id}?resume=${order.id}`} className={`${styles.actionBtn} ${styles.primary}`} style={{ textDecoration: 'none', textAlign: 'center', flex: '1 1 120px' }}>
                                     Resume Checkout
                                 </Link>
                                 <button
                                     className={`${styles.actionBtn} ${styles.ghost}`}
-                                    style={{ flex: 1 }}
+                                    style={{ flex: '1 1 120px' }}
                                     onClick={async () => {
                                         setLoading(true);
                                         try {
@@ -208,7 +210,6 @@ function OrderCard({ order, role, onStatusChange }: {
                                             if (res.ok && data.success) {
                                                 setLocalStatus('CONFIRMED');
                                                 onStatusChange(order.id, 'CONFIRMED');
-                                                // Trigger refresh of earnings if on sales tab
                                                 window.dispatchEvent(new Event('refresh_earnings'));
                                             } else {
                                                 alert(data.message || data.error || 'Verification failed.');
@@ -222,6 +223,60 @@ function OrderCard({ order, role, onStatusChange }: {
                                     disabled={loading}
                                 >
                                     {loading ? 'Checking...' : 'Verify Payment'}
+                                </button>
+                                <button
+                                    className={`${styles.actionBtn} ${styles.danger}`}
+                                    style={{ flex: '1 1 100%', marginTop: '4px' }}
+                                    onClick={async () => {
+                                        if (!confirm('Are you sure you want to cancel this pending order?')) return;
+                                        setLoading(true);
+                                        try {
+                                            const res = await fetch(`/api/orders/${order.id}/cancel`, { method: 'POST' });
+                                            if (res.ok) {
+                                                setLocalStatus('CANCELLED');
+                                                onStatusChange(order.id, 'CANCELLED');
+                                            } else {
+                                                const data = await res.json();
+                                                alert(data.error || 'Failed to cancel.');
+                                            }
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
+                                    disabled={loading}
+                                >
+                                    Cancel Order
+                                </button>
+                            </div>
+                        )}
+                        {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                                <div className={styles.orderInstructions}>
+                                    <p>✅ <strong>Payment Confirmed.</strong> The seller has been notified to prepare your order. You can chat with them to discuss delivery.</p>
+                                </div>
+                                <button
+                                    className={`${styles.actionBtn} ${styles.primary}`}
+                                    onClick={async () => {
+                                        setLoading(true);
+                                        try {
+                                            const sellerId = order.seller?.ownerId;
+                                            if (!sellerId) return alert('Seller info missing');
+                                            const res = await fetch('/api/messages/new', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ userId: sellerId })
+                                            });
+                                            if (res.ok) {
+                                                const { conversationId } = await res.json();
+                                                window.location.href = `/messages/${conversationId}?text=${encodeURIComponent(`[order:${order.id}]`)}`;
+                                            }
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
+                                    disabled={loading}
+                                >
+                                    💬 Chat with Seller
                                 </button>
                             </div>
                         )}

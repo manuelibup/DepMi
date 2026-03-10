@@ -333,9 +333,10 @@ model StoreInvite {
 }
 
 model Waitlist {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  createdAt          DateTime  @default(now())
+  launchEmailSentAt  DateTime?
 }
 
 model ProductLike {
@@ -474,6 +475,7 @@ enum AuthProvider {
 enum OtpType {
   PHONE_VERIFICATION
   EMAIL_RESET
+  EMAIL_VERIFICATION
   TRANSACTIONAL
   ACCOUNT_UPDATE
 }

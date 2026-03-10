@@ -84,9 +84,74 @@ function ProductPreview({ id }: { id: string }) {
     );
 }
 
+function OrderPreview({ id }: { id: string }) {
+    const [order, setOrder] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`/api/orders/${id}/preview`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.error) setOrder(data);
+            })
+            .catch(() => { })
+            .finally(() => setLoading(false));
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className={styles.productLinkSkeleton}>
+                <div className={styles.skeletonThumbnail} />
+                <div className={styles.skeletonText} />
+            </div>
+        );
+    }
+
+    if (!order) {
+        return (
+            <div className={styles.productLink}>
+                <span className={styles.productLinkIcon}>📦</span>
+                <div className={styles.productLinkText}>
+                    <p className={styles.productLinkLabel}>Order Reference</p>
+                    <p className={styles.productIdHint}>Ref: {id.slice(0, 8)}...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.productCard}>
+            {order.thumbnail && (
+                <div className={styles.productThumb}>
+                    <img src={order.thumbnail} alt="" />
+                </div>
+            )}
+            <div className={styles.cardContent}>
+                <p className={styles.cardTitle}>{order.productTitle}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                    <p className={styles.cardPrice}>₦{Number(order.totalAmount).toLocaleString()}</p>
+                    <span className={styles.statusBadge} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: 'var(--primary)' }}>
+                        {order.status}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function ChatClient({ conversationId, initialMessages, otherUser, currentUser, initialText = '' }: ChatClientProps) {
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages as ChatMessage[]);
     const [text, setText] = useState(initialText);
+
+    // If initialText is provided via URL (e.g. [order:id]), we might want to pre-fill it
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const queryText = params.get('text');
+        if (queryText && !initialText) {
+            setText(queryText);
+        }
+    }, [initialText]);
+
     const [sending, setSending] = useState(false);
     const [showAttachments, setShowAttachments] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -248,13 +313,17 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     const renderMessageText = (content: string | null) => {
         if (!content) return null;
 
-        // Regex to find [product:uuid]
-        const parts = content.split(/(\[product:[0-9a-f-]{36}\])/gi);
+        // Regex to find [product:uuid] or [order:uuid]
+        const parts = content.split(/(\[(?:product|order):[0-9a-f-]{36}\])/gi);
 
         return parts.map((part, i) => {
-            const match = part.match(/\[product:([0-9a-f-]{36})\]/i);
-            if (match) {
-                return <ProductPreview key={i} id={match[1]} />;
+            const productMatch = part.match(/\[product:([0-9a-f-]{36})\]/i);
+            if (productMatch) {
+                return <ProductPreview key={i} id={productMatch[1]} />;
+            }
+            const orderMatch = part.match(/\[order:([0-9a-f-]{36})\]/i);
+            if (orderMatch) {
+                return <OrderPreview key={i} id={orderMatch[1]} />;
             }
             return part;
         });

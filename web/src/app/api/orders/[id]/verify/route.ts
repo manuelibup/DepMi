@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyByTxRef } from '@/lib/flutterwave';
-import { notifyOrderUpdate } from '@/lib/notify-watchers';
 
 export async function POST(
     req: NextRequest,
