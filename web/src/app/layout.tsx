@@ -46,6 +46,59 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://depmi.com/#organization",
+                  "name": "DepMi",
+                  "alternateName": "DepMi Nigeria",
+                  "url": "https://depmi.com",
+                  "logo": "https://depmi.com/depmi-logo.svg",
+                  "description": "DepMi (\"Buy Here\" in Ibibio) is a social commerce platform for African entrepreneurs. Buy, sell, and discover products with trust-based escrow, demand-driven marketplace, and credibility scores.",
+                  "foundingDate": "2025",
+                  "founder": { "@type": "Person", "name": "Manuel" },
+                  "areaServed": { "@type": "Place", "name": "Africa" },
+                  "sameAs": [
+                    "https://x.com/web5manuel",
+                    "https://instagram.com/depmilimited"
+                  ]
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://depmi.com/#website",
+                  "url": "https://depmi.com",
+                  "name": "DepMi",
+                  "publisher": { "@id": "https://depmi.com/#organization" },
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://depmi.com/search?q={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                  }
+                },
+                {
+                  "@type": "WebApplication",
+                  "name": "DepMi",
+                  "url": "https://depmi.com",
+                  "applicationCategory": "ShoppingApplication",
+                  "operatingSystem": "Any",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "NGN"
+                  },
+                  "description": "The social commerce platform for African entrepreneurs. Buy, sell, and discover products with trust."
+                }
+              ]
+            })
+          }}
+        />
+      </head>
       <body>
         <Providers>
           <NavigationWrapper>

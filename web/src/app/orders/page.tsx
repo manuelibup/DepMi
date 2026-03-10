@@ -52,6 +52,7 @@ export default async function OrdersPage() {
         escrowStatus: o.escrowStatus,
         total: Number(o.totalAmount),
         createdAt: o.createdAt.toISOString(),
+        paystackRef: o.paystackRef || null,
         product: o.items?.[0]?.product ? {
             id: o.items[0].product.id,
             title: o.items[0].product.title,
