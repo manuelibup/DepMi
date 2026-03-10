@@ -193,9 +193,37 @@ function OrderCard({ order, role, onStatusChange }: {
                 {role === 'buyer' && (
                     <div className={styles.orderAction}>
                         {localStatus === 'PENDING' && (
-                            <Link href={`/checkout/${order.product.id}?resume=${order.id}`} className={`${styles.actionBtn} ${styles.primary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
-                                Resume Checkout
-                            </Link>
+                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                <Link href={`/checkout/${order.product.id}?resume=${order.id}`} className={`${styles.actionBtn} ${styles.primary}`} style={{ textDecoration: 'none', textAlign: 'center', flex: 1 }}>
+                                    Resume Checkout
+                                </Link>
+                                <button
+                                    className={`${styles.actionBtn} ${styles.ghost}`}
+                                    style={{ flex: 1 }}
+                                    onClick={async () => {
+                                        setLoading(true);
+                                        try {
+                                            const res = await fetch(`/api/orders/${order.id}/verify`, { method: 'POST' });
+                                            const data = await res.json();
+                                            if (res.ok && data.success) {
+                                                setLocalStatus('CONFIRMED');
+                                                onStatusChange(order.id, 'CONFIRMED');
+                                                // Trigger refresh of earnings if on sales tab
+                                                window.dispatchEvent(new Event('refresh_earnings'));
+                                            } else {
+                                                alert(data.message || data.error || 'Verification failed.');
+                                            }
+                                        } catch {
+                                            alert('Network error. Please try again.');
+                                        } finally {
+                                            setLoading(false);
+                                        }
+                                    }}
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Checking...' : 'Verify Payment'}
+                                </button>
+                            </div>
                         )}
                         {localStatus === 'COMPLETED' && !hasReviewed && (
                             <button

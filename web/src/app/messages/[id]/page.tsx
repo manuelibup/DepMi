@@ -6,12 +6,12 @@ import { redirect } from 'next/navigation';
 import ChatClient from './ChatClient';
 import Header from '@/components/Header';
 
-export default async function MessageThreadPage({ 
-    params, 
-    searchParams 
-}: { 
-    params: Promise<{ id: string }>, 
-    searchParams?: Promise<{ text?: string }> 
+export default async function MessageThreadPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>,
+    searchParams?: Promise<{ text?: string }>
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -40,7 +40,10 @@ export default async function MessageThreadPage({
         redirect('/messages');
     }
 
-    const otherUser = conversation.participants.find(p => p.id !== session.user.id)!;
+    const otherUser = conversation.participants.find(p => p.id !== session.user.id);
+    if (!otherUser) {
+        redirect('/messages');
+    }
 
     // Fetch initial messages
     const messages = await prisma.message.findMany({

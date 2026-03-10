@@ -163,14 +163,13 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         setIsRecording(false);
         try {
             console.log('Requesting upload signature...');
-            const resSig = await fetch('/api/upload/sign');
+            const resSig = await fetch('/api/upload/sign?resourceType=video');
             if (!resSig.ok) throw new Error('Failed to get upload signature');
 
             const { timestamp, folder, upload_preset, signature, apiKey, cloudName } = await resSig.json();
             console.log('Signature received, starting Cloudinary upload...');
 
             const formData = new FormData();
-            // Important: Add a filename so Cloudinary can correctly infer the extension/resource_type
             const extension = blob.type.split('/')[1] || 'webm';
             formData.append('file', blob, `voice-note.${extension}`);
             formData.append('api_key', apiKey);
@@ -178,8 +177,9 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             formData.append('signature', signature);
             formData.append('folder', folder);
             formData.append('upload_preset', upload_preset);
+            formData.append('resource_type', 'video');
 
-            const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+            const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
             const uploadRes = await fetch(uploadUrl, { method: 'POST', body: formData });
 
             if (uploadRes.ok) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
 interface Props {
@@ -21,6 +22,9 @@ export default function ClientCheckoutForm({
     productId, subtotal: itemPrice, deliveryFee: initialDeliveryFee,
     defaultPhone, defaultAddress, defaultCity, defaultState, stock,
 }: Props) {
+    const searchParams = useSearchParams();
+    const resumeOrderId = searchParams.get('resume');
+
     const [stage, setStage] = useState<Stage>('form');
     const [name, setName] = useState('');
     const [phone, setPhone] = useState(defaultPhone);
@@ -67,6 +71,7 @@ export default function ClientCheckoutForm({
                     city: city.trim(),
                     stateVal: stateVal.trim(),
                     saveDetails,
+                    resumeOrderId,
                 }),
             });
 

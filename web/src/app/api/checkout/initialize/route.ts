@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
     const finalAmountToPay = subtotalAndDelivery
 
-    // Create Order + OrderItem atomically
+    // Create or find existing Order
     const order = await prisma.$transaction(async (tx) => {
       if (body.saveDetails) {
         await tx.user.update({
@@ -61,6 +61,23 @@ export async function POST(req: NextRequest) {
             state: body.stateVal,
           }
         })
+      }
+
+      if (body.resumeOrderId) {
+        const existing = await tx.order.findUnique({
+          where: { id: body.resumeOrderId },
+        })
+        if (existing && existing.buyerId === session.user.id && existing.status === 'PENDING') {
+          return tx.order.update({
+            where: { id: body.resumeOrderId },
+            data: {
+              totalAmount: subtotalAndDelivery,
+              deliveryAddress,
+              deliveryMethod,
+              deliveryNote: deliveryNote ?? null,
+            }
+          })
+        }
       }
 
       return tx.order.create({

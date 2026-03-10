@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { tx_ref, id: transactionId, amount } = payload.data
-    const orderId = tx_ref?.replace('depmi-order-', '')
+    let orderId = tx_ref?.replace('depmi-order-', '')
 
     if (!orderId) {
         console.error('[flutterwave-webhook] Could not parse orderId from', tx_ref)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     try {
         await prisma.$transaction(async (tx) => {
-            const order = await tx.order.findUnique({
+            let order = await tx.order.findUnique({
                 where: { id: orderId },
                 include: {
                     seller: { include: { owner: true } },
@@ -47,6 +47,19 @@ export async function POST(req: NextRequest) {
                     items: { include: { product: true }, take: 1 }
                 },
             })
+
+            // Fallback for different txRef formats or IDs
+            if (!order) {
+                order = await tx.order.findFirst({
+                    where: { OR: [{ id: tx_ref }, { paystackRef: tx_ref }] },
+                    include: {
+                        seller: { include: { owner: true } },
+                        buyer: true,
+                        items: { include: { product: true }, take: 1 }
+                    },
+                })
+                if (order) orderId = order.id
+            }
 
             if (!order) {
                 console.error('[flutterwave-webhook] Order not found:', orderId)

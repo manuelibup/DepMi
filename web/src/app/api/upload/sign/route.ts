@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { v2 as cloudinary } from 'cloudinary';
@@ -42,8 +42,11 @@ cloudinary.config({
   secure: true,
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const resourceType = searchParams.get('resourceType') || 'image';
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -54,7 +57,7 @@ export async function GET() {
     }
 
     const timestamp = Math.round(new Date().getTime() / 1000);
-    // Sub-folder per user — uploads are traceable and isolatable per account
+    // Sub-folder per user
     const folder = `depmi_uploads/${session.user.id}`;
     // Signed preset enforces allowed_formats + max_file_size server-side at Cloudinary
     const upload_preset = 'depmi_strict';
@@ -71,8 +74,9 @@ export async function GET() {
       signature,
       apiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
+      resourceType,
     });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Cloudinary Sign Error:', error);
     return NextResponse.json({ message: 'Internal server error signing upload request' }, { status: 500 });

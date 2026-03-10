@@ -31,17 +31,31 @@ export async function GET(req: NextRequest) {
         }
 
         // Find order by tx_ref
-        const orderId = txRef.replace('depmi-order-', '')
-        const order = await prisma.order.findUnique({
+        let orderId = txRef.replace('depmi-order-', '');
+        let order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
                 seller: { include: { owner: true } },
                 buyer: true,
                 items: { include: { product: true }, take: 1 }
             },
-        })
+        });
+
+        // Fallback for different txRef formats or IDs
+        if (!order) {
+            order = await prisma.order.findFirst({
+                where: { OR: [{ id: txRef }, { paystackRef: txRef }] },
+                include: {
+                    seller: { include: { owner: true } },
+                    buyer: true,
+                    items: { include: { product: true }, take: 1 }
+                },
+            });
+            if (order) orderId = order.id;
+        }
 
         if (!order) {
+            console.error('[checkout/callback] Order not found for txRef:', txRef);
             return NextResponse.redirect(`${baseUrl}/orders?payment=failed`)
         }
 
