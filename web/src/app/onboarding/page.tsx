@@ -125,7 +125,7 @@ export default function OnboardingPage() {
                                 className={`${styles.input} ${styles.inputWithPrefix}`}
                                 placeholder="username"
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                                 required
                                 disabled={loading}
                             />
