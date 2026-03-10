@@ -67,7 +67,7 @@ export default function Error({
 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                     <button
-                        onClick={reset}
+                        onClick={() => window.location.reload()}
                         style={{
                             background: 'var(--primary, #00C853)',
                             color: '#000',

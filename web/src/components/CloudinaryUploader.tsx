@@ -47,18 +47,18 @@ export default function CloudinaryUploader({
 
     // 2. Video Duration Validation
     if (file.type.startsWith('video/')) {
-        try {
-            const duration = await getVideoDuration(file);
-            if (duration > maxDurationSeconds) {
-                setError(`Video length must be ${maxDurationSeconds} seconds or less.`);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                return;
-            }
-        } catch {
-            setError('Could not read video metadata.');
-            if (fileInputRef.current) fileInputRef.current.value = '';
-            return;
+      try {
+        const duration = await getVideoDuration(file);
+        if (duration > maxDurationSeconds) {
+          setError(`Video length must be ${maxDurationSeconds} seconds or less.`);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
         }
+      } catch {
+        setError('Could not read video metadata.');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
     }
 
     // Proceed to upload
@@ -66,25 +66,26 @@ export default function CloudinaryUploader({
   };
 
   const getVideoDuration = (file: File): Promise<number> => {
-      return new Promise((resolve, reject) => {
-          const video = document.createElement('video');
-          video.preload = 'metadata';
-          video.onloadedmetadata = () => {
-              window.URL.revokeObjectURL(video.src);
-              resolve(video.duration);
-          };
-          video.onerror = () => reject('Invalid video file');
-          video.src = window.URL.createObjectURL(file);
-      });
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration);
+      };
+      video.onerror = () => reject('Invalid video file');
+      video.src = window.URL.createObjectURL(file);
+    });
   };
 
   const uploadToCloudinary = async (file: File) => {
     setIsUploading(true);
     setProgress(10);
-    
+
     try {
+      const resourceType = file.type.startsWith('video/') ? 'auto' : 'image';
       // Step A: Fetch signature from our restricted backend
-      const resSig = await fetch('/api/upload/sign');
+      const resSig = await fetch(`/api/upload/sign?resourceType=${resourceType}`);
       if (!resSig.ok) throw new Error('Failed to get secure upload signature. Are you logged in?');
       const { timestamp, folder, upload_preset, signature, apiKey, cloudName } = await resSig.json();
 
@@ -102,9 +103,9 @@ export default function CloudinaryUploader({
       formData.append('upload_preset', upload_preset);
 
       const xhr = new XMLHttpRequest();
-      
-      const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+
+      const resourceTypeParam = resourceType === 'auto' ? 'auto' : 'image';
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceTypeParam}/upload`;
 
       xhr.open('POST', uploadUrl, true);
 
@@ -112,7 +113,7 @@ export default function CloudinaryUploader({
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
           // Scale 30% to 100% since we already jumped to 30 from the sig fetch
-          setProgress(30 + Math.round(percentComplete * 0.7)); 
+          setProgress(30 + Math.round(percentComplete * 0.7));
         }
       };
 
@@ -131,18 +132,18 @@ export default function CloudinaryUploader({
           setIsUploading(false);
           // Only pass back the necessary attributes mapped to our DB target strategy
           onUploadSuccess({
-              public_id: response.public_id,
-              format: response.format,
-              secure_url: response.secure_url,
-              original_filename: response.original_filename
+            public_id: response.public_id,
+            format: response.format,
+            secure_url: response.secure_url,
+            original_filename: response.original_filename
           });
           if (fileInputRef.current) fileInputRef.current.value = '';
         } else {
           try {
-             const errorData = JSON.parse(xhr.responseText);
-             setError(errorData.error?.message || 'Upload failed at Cloudinary');
+            const errorData = JSON.parse(xhr.responseText);
+            setError(errorData.error?.message || 'Upload failed at Cloudinary');
           } catch {
-             setError('Upload failed at Cloudinary (Unknown error)');
+            setError('Upload failed at Cloudinary (Unknown error)');
           }
           setIsUploading(false);
           setProgress(0);
@@ -157,8 +158,13 @@ export default function CloudinaryUploader({
         if (fileInputRef.current) fileInputRef.current.value = '';
       };
 
+      // Ensure resource_type is in the body for auto/video uploads
+      if (resourceType !== 'image') {
+        formData.append('resource_type', resourceType);
+      }
+
       xhr.send(formData);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
       setIsUploading(false);
@@ -176,7 +182,7 @@ export default function CloudinaryUploader({
         accept={accept}
         style={{ display: 'none' }}
       />
-      
+
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
@@ -197,35 +203,36 @@ export default function CloudinaryUploader({
         }}
       >
         {isUploading ? (
-            <>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-              Uploading ({progress}%)
-            </>
+          <>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Uploading ({progress}%)
+          </>
         ) : (
-            <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" x2="12" y1="3" y2="15" />
-                </svg>
-                {buttonText}
-            </>
+          <>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" x2="12" y1="3" y2="15" />
+            </svg>
+            {buttonText}
+          </>
         )}
       </button>
 
       {/* Progress Bar (Visible when uploading) */}
       {isUploading && (
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--bg-elevated)', borderRadius: '2px', overflow: 'hidden' }}>
-              <div style={{ width: `${progress}%`, height: '100%', backgroundColor: 'var(--primary)', transition: 'width 0.2s ease' }} />
-          </div>
+        <div style={{ width: '100%', height: '4px', backgroundColor: 'var(--bg-elevated)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: `${progress}%`, height: '100%', backgroundColor: 'var(--primary)', transition: 'width 0.2s ease' }} />
+        </div>
       )}
 
       {/* Error Message */}
       {error && <p style={{ color: 'var(--error)', fontSize: '0.875rem', margin: '0' }}>{error}</p>}
-      
-      <style dangerouslySetInnerHTML={{ __html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes spin { 100% { transform: rotate(360deg); } }
       `}} />
     </div>

@@ -4,8 +4,7 @@
     background-color: var(--bg-color);
     display: flex;
     flex-direction: column;
-    max-width: 480px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 /* Desktop: mobile list is hidden — layout.tsx left panel renders it */
@@ -75,21 +74,22 @@
     transition: background var(--transition-fast);
 }
 
-.convCard:hover, .convCard:active {
+.convCard:hover,
+.convCard:active {
     background: var(--bg-hover);
 }
 
 .avatar {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: var(--bg-elevated);
-    border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+    border: 1.5px solid var(--card-border);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     color: var(--text-muted);
     flex-shrink: 0;
     object-fit: cover;
@@ -100,7 +100,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .topRow {
@@ -110,25 +110,26 @@
 }
 
 .name {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-main);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -0.2px;
 }
 
 .time {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: 12px;
 }
 
 .preview {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -136,10 +137,10 @@
 }
 
 .unreadDot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--primary);
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: 12px;
 }
