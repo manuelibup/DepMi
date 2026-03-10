@@ -119,6 +119,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
               const pData = {
                 store: product.store.name,
+                storeSlug: product.store.slug,
                 storeInitial: product.store.name.charAt(0).toUpperCase(),
                 storeColor: colors[colorIndex],
                 deps: product.store.depCount,

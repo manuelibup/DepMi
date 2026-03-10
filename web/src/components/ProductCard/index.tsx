@@ -10,6 +10,7 @@ import styles from './ProductCard.module.css';
 
 export interface ProductData {
     store: string;
+    storeSlug: string;
     storeInitial: string;
     storeColor: string;
     deps: number;
@@ -162,7 +163,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
             {/* Store Header */}
             <div className={styles.header}>
                 <Link 
-                    href={data.id ? `/store/${data.store.toLowerCase().replace(/\s+/g, '-')}` : '#'} 
+                    href={data.id ? `/store/${data.storeSlug}` : '#'}
                     className={styles.storeInfo}
                     onClick={(e) => e.stopPropagation()}
                 >
