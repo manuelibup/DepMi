@@ -42,3 +42,10 @@ next-env.d.ts
 
 /src/generated/prisma
 flutterwave-keys.txt
+env.txt
+
+# temp / debug scripts (may contain hardcoded credentials)
+test-*.js
+test-*.ts
+/tmp/
+lint*.txt

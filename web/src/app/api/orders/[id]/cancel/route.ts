@@ -17,7 +17,7 @@ export async function POST(
     try {
         const order = await prisma.order.findUnique({
             where: { id: orderId },
-            select: { buyerId: true, status: true }
+            select: { buyerId: true, status: true, paystackRef: true }
         });
 
         if (!order) {
@@ -30,6 +30,13 @@ export async function POST(
 
         if (order.status !== 'PENDING') {
             return NextResponse.json({ error: 'Cannot cancel an order that is not pending.' }, { status: 400 });
+        }
+
+        // Guard: if a payment was initiated, warn the user
+        if (order.paystackRef) {
+            return NextResponse.json({
+                error: 'A payment was initiated for this order. Please use "Verify Payment" first to check if it went through. If it did, the order will be confirmed instead.'
+            }, { status: 409 });
         }
 
         await prisma.order.update({

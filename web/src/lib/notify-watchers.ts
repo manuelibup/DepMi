@@ -3,6 +3,10 @@ import { resend } from '@/lib/resend';
 
 const BASE_URL = process.env.NEXTAUTH_URL || 'https://depmi.com';
 
+function escHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 async function sendSms(to: string, message: string) {
     if (!process.env.TERMII_API_KEY) return;
     try {
@@ -92,10 +96,10 @@ export async function notifySearchWatchers({
                     subject: `We found it: ${productTitle}`,
                     html: `
                         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-                            <h2 style="color:#00C853">Good news, ${user.displayName}!</h2>
+                            <h2 style="color:#00C853">Good news, ${escHtml(user.displayName)}!</h2>
                             <p>A product matching your search just dropped on DepMi:</p>
-                            <h3 style="margin:0">${productTitle}</h3>
-                            <p style="color:#666;margin:4px 0">by <strong>${storeName}</strong></p>
+                            <h3 style="margin:0">${escHtml(productTitle)}</h3>
+                            <p style="color:#666;margin:4px 0">by <strong>${escHtml(storeName)}</strong></p>
                             <p style="font-size:1.4rem;font-weight:bold;color:#111">${priceFormatted}</p>
                             <a href="${productUrl}" style="display:inline-block;background:#00C853;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">View Product →</a>
                             <p style="margin-top:24px;color:#999;font-size:12px">You're receiving this because you set a watch on DepMi. <a href="${BASE_URL}/notifications">Manage alerts</a></p>
@@ -175,8 +179,8 @@ export async function notifyRestockWatchers({
                     subject: `${productTitle} is back in stock!`,
                     html: `
                         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-                            <h2 style="color:#00C853">It's back, ${user.displayName}!</h2>
-                            <p><strong>${productTitle}</strong> by <strong>${storeName}</strong> is back in stock on DepMi.</p>
+                            <h2 style="color:#00C853">It's back, ${escHtml(user.displayName)}!</h2>
+                            <p><strong>${escHtml(productTitle)}</strong> by <strong>${escHtml(storeName)}</strong> is back in stock on DepMi.</p>
                             <p style="color:#999;font-size:13px">Don't wait — stock may go fast.</p>
                             <a href="${productUrl}" style="display:inline-block;background:#00C853;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">Buy Now →</a>
                             <p style="margin-top:24px;color:#999;font-size:12px">You're receiving this because you set a watch on DepMi. <a href="${BASE_URL}/notifications">Manage alerts</a></p>
@@ -224,6 +228,8 @@ export async function notifyOrderUpdate({
     link: string;
 }) {
     const shortId = orderId.slice(-6).toUpperCase();
+    const safeName = escHtml(userName);
+    const safeProduct = escHtml(productTitle);
     let subject = '';
     let headline = '';
     let body = '';
@@ -232,31 +238,31 @@ export async function notifyOrderUpdate({
     switch (status) {
         case 'NEW_ORDER':
             subject = `New order #${shortId} — action required`;
-            headline = `You've got an order, ${userName}!`;
-            body = `A buyer just purchased <strong>${productTitle}</strong>${amount ? ` for <strong>₦${amount.toLocaleString()}</strong>` : ''}. Funds are held in escrow — prepare to ship!`;
+            headline = `You've got an order, ${safeName}!`;
+            body = `A buyer just purchased <strong>${safeProduct}</strong>${amount ? ` for <strong>₦${amount.toLocaleString()}</strong>` : ''}. Funds are held in escrow — prepare to ship!`;
             buttonText = 'View Order';
             break;
         case 'PAID':
             subject = `Order #${shortId} confirmed!`;
-            headline = `Payment received, ${userName}!`;
-            body = `Good news! Your payment for <strong>${productTitle}</strong> was successful. The seller has been notified to ship your item.`;
+            headline = `Payment received, ${safeName}!`;
+            body = `Good news! Your payment for <strong>${safeProduct}</strong> was successful. The seller has been notified to ship your item.`;
             break;
         case 'SHIPPED':
             subject = `Your order #${shortId} is on the way!`;
-            headline = `It's coming, ${userName}!`;
-            body = `The seller has shipped <strong>${productTitle}</strong>. You can track your package in your dashboard.`;
+            headline = `It's coming, ${safeName}!`;
+            body = `The seller has shipped <strong>${safeProduct}</strong>. You can track your package in your dashboard.`;
             buttonText = 'Track Order';
             break;
         case 'DELIVERED':
             subject = `Order #${shortId} has arrived!`;
             headline = `Package delivered!`;
-            body = `Your order for <strong>${productTitle}</strong> has been marked as delivered. Please confirm receipt to release funds to the seller.`;
+            body = `Your order for <strong>${safeProduct}</strong> has been marked as delivered. Please confirm receipt to release funds to the seller.`;
             buttonText = 'Confirm Receipt';
             break;
         case 'COMPLETED':
             subject = `Payment released for Order #${shortId}`;
-            headline = `Funds are here, ${userName}!`;
-            body = `The buyer has confirmed receipt of <strong>${productTitle}</strong>. ₦${amount?.toLocaleString()} has been sent to your bank account.`;
+            headline = `Funds are here, ${safeName}!`;
+            body = `The buyer has confirmed receipt of <strong>${safeProduct}</strong>. ₦${amount?.toLocaleString()} has been sent to your bank account.`;
             break;
         default:
             return;

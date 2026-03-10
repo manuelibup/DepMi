@@ -4,6 +4,23 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyByTxRef } from '@/lib/flutterwave';
 
+// Simple per-user rate limiting: max 5 verify attempts per 10 minutes
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_VERIFY_ATTEMPTS = 5;
+const verifyRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+function isVerifyRateLimited(userId: string): boolean {
+    const now = Date.now();
+    const entry = verifyRateLimit.get(userId);
+    if (!entry || now > entry.resetAt) {
+        verifyRateLimit.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+        return false;
+    }
+    if (entry.count >= MAX_VERIFY_ATTEMPTS) return true;
+    entry.count++;
+    return false;
+}
+
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -11,6 +28,13 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (isVerifyRateLimited(session.user.id)) {
+        return NextResponse.json(
+            { error: 'Too many verification attempts. Please wait 10 minutes.' },
+            { status: 429 }
+        );
     }
 
     const { id: orderId } = await params;
@@ -41,7 +65,6 @@ export async function POST(
         const flwStatus = await verifyByTxRef(txRef);
 
         if (flwStatus && flwStatus.paid) {
-            // Update order to CONFIRMED
             const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.05 * 100) / 100;
 
             await prisma.order.update({
@@ -53,7 +76,6 @@ export async function POST(
                 }
             });
 
-            // Notify seller
             await prisma.notification.create({
                 data: {
                     userId: order.seller.ownerId,

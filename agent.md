@@ -509,3 +509,19 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 - **Browse-First UX (non-negotiable):** Never block content browsing behind auth. Guests can see all public content. Auth gates fire only at action points (buy, bid, post demand, view profile). Use `openGate(hint, callbackUrl)` from `AuthGateProvider` context — never `router.push('/login')` from within a page. Middleware handles hard-blocked private routes only.
 - **Media uploads always go through Cloudinary.** Never store file bytes in the DB. Never handle file streams in Vercel functions. Always use signed upload tokens via `GET /api/upload/sign`. Store only the resulting Cloudinary URL.
 - **Batch import is free for onboarding, Pro for sync.** Initial AI catalog import (up to 500 products) is a free onboarding tool. Scheduled re-sync is a Pro subscription feature. Do not gate the first import.
+
+### 🔐 Security Rules (MANDATORY for ALL agents — never violate)
+
+> [!CAUTION]
+> These rules exist because hardcoded credentials were previously committed to Git and exposed. Violating any of these will compromise the application.
+
+1. **NEVER hardcode secrets, API keys, passwords, or connection strings.** Always use `process.env.VARIABLE_NAME`. This applies to every file — scripts, tests, one-off debug tools, everything. No exceptions.
+2. **NEVER create test/debug scripts with real credentials.** If you need to test a DB connection, read from `process.env.DATABASE_URL`. Never paste a connection string.
+3. **NEVER commit files outside of `src/` and `prisma/` without checking `.gitignore`.** Temp files, debug scripts, lint output, and scratch files MUST go in `/tmp/` (which is gitignored) or be explicitly added to `.gitignore` first.
+4. **Always check `.gitignore` before creating any new file** in the project root. Files like `test-*.js`, `*.txt`, `tmp/` are gitignored for a reason.
+5. **All API routes that call external services (Flutterwave, Cloudinary, etc.) must have rate limiting.** Use in-memory Maps at minimum.
+6. **All destructive order actions (cancel, refund) must check `paystackRef`** to prevent race conditions where a user cancels an order that has an in-flight payment.
+7. **Admin endpoints must always validate `ADMIN_SECRET`** from the request body. No admin route should be callable without it.
+8. **Webhook endpoints must always validate the provider signature** (e.g., `verif-hash` for Flutterwave) before touching the database.
+9. **User-generated content in emails must be HTML-escaped.** Use `escHtml()` for display names, product titles, and any user-controlled strings in email templates.
+10. **Never remove safety fallback lookups in payment code** without explicit approval. Payment reconciliation must be resilient to format changes.

@@ -18,9 +18,22 @@ export async function GET(req: Request) {
 
         const accountName = await resolveAccountName(accountNumber, bankCode);
         return NextResponse.json({ accountName });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        console.error('Resolve account error:', error);
-        return NextResponse.json({ message: error.message ?? 'Could not verify account' }, { status: 422 });
+        console.error('[resolve-account] Flutterwave error:', error?.message, '| bankCode:', new URL(req.url).searchParams.get('bankCode'));
+
+        // Map common Flutterwave errors to user-friendly messages
+        const flwMsg = (error?.message || '').toLowerCase();
+        let userMessage = 'Could not verify this account. Please double-check the account number and bank.';
+
+        if (flwMsg.includes('could not verify') || flwMsg.includes('could not resolve')) {
+            userMessage = 'Account not found. Please check the account number is correct for this bank.';
+        } else if (flwMsg.includes('no bank found') || flwMsg.includes('bank not found')) {
+            userMessage = 'This bank is not currently supported for account verification. You can still save other bank details.';
+        } else if (flwMsg.includes('timeout') || flwMsg.includes('connect')) {
+            userMessage = 'Sorry, we could not connect to your bank. Please try again in a moment.';
+        }
+
+        return NextResponse.json({ message: userMessage }, { status: 422 });
     }
 }

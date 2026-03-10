@@ -16,7 +16,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Verification code is required' }, { status: 400 });
         }
 
-        const isValid = await verifyOtp(session.user.id, 'EMAIL_RESET', code);
+        const isValid = await verifyOtp(session.user.id, 'EMAIL_VERIFICATION', code);
         if (!isValid) {
             return NextResponse.json({ message: 'Invalid or expired code' }, { status: 400 });
         }

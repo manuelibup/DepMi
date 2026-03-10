@@ -7,6 +7,10 @@ import { resend } from './resend';
 const FROM = process.env.RESEND_FROM_EMAIL || 'DepMi <hello@depmi.com>';
 const APP_URL = process.env.NEXTAUTH_URL || 'https://depmi.com';
 
+function escHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ─── Shared HTML layout ────────────────────────────────────────────────────────
 
 function layout(body: string): string {
@@ -44,13 +48,14 @@ function btn(label: string, href: string): string {
 // ─── Welcome email ─────────────────────────────────────────────────────────────
 
 export async function sendWelcomeEmail(to: string, displayName: string): Promise<void> {
+    const safeName = escHtml(displayName);
     try {
         await resend.emails.send({
             from: FROM,
             to,
-            subject: `Welcome to DepMi, ${displayName}!`,
+            subject: `Welcome to DepMi, ${safeName}!`,
             html: layout(`
-                <h2 style="margin:0 0 8px;font-size:1.4rem;color:#fff">Welcome, ${displayName}!</h2>
+                <h2 style="margin:0 0 8px;font-size:1.4rem;color:#fff">Welcome, ${safeName}!</h2>
                 <p style="margin:0 0 24px;color:#aaa;line-height:1.6">
                     You just joined Africa's marketplace built on <strong style="color:#00C853">trust</strong>.
                     Here's what you can do on DepMi:

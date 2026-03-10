@@ -1,4 +1,3 @@
-import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import styles from './page.module.css';
@@ -14,13 +13,59 @@ interface StorePageProps {
     params: Promise<{ slug: string }>;
 }
 
-const TIER_LABELS: Record<string, string> = {
-    SEEDLING: '🌱 Seedling',
-    RISING: '⭐ Rising',
-    TRUSTED: '🔥 Trusted',
-    ELITE: '💎 Elite',
-    LEGEND: '🏆 Legend',
+const TIER_TEXT: Record<string, string> = {
+    SEEDLING: 'Seedling',
+    RISING: 'Rising',
+    TRUSTED: 'Trusted',
+    ELITE: 'Elite',
+    LEGEND: 'Legend',
 };
+
+function TierIcon({ tier }: { tier: string }) {
+    switch (tier) {
+        case 'SEEDLING':
+            return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12"/><path d="M5 3a7 7 0 0 0 7 7 7 7 0 0 0 7-7"/><path d="M5 3h14"/></svg>;
+        case 'RISING':
+            return <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>;
+        case 'TRUSTED':
+            return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+        case 'ELITE':
+            return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/><path d="m7 10 3 3 7-7"/></svg>;
+        case 'LEGEND':
+            return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>;
+        default:
+            return null;
+    }
+}
+
+function StarRating({ rating, count }: { rating: number; count: number }) {
+    const full = Math.floor(rating);
+    const half = rating - full >= 0.5;
+    const empty = 5 - full - (half ? 1 : 0);
+    const stars = [
+        ...Array(full).fill('full'),
+        ...(half ? ['half'] : []),
+        ...Array(empty).fill('empty'),
+    ];
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ display: 'flex', gap: '1px' }}>
+                {stars.map((t, i) => (
+                    <svg key={i} width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                        {t === 'full' && <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="#FFD700" stroke="#FFD700" strokeWidth="1" />}
+                        {t === 'half' && <>
+                            <defs><linearGradient id="hg"><stop offset="50%" stopColor="#FFD700" /><stop offset="50%" stopColor="transparent" /></linearGradient></defs>
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="url(#hg)" stroke="#FFD700" strokeWidth="1" />
+                        </>}
+                        {t === 'empty' && <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="transparent" stroke="#FFD700" strokeWidth="1" />}
+                    </svg>
+                ))}
+            </span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{rating.toFixed(1)}</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({count} review{count !== 1 ? 's' : ''})</span>
+        </div>
+    );
+}
 
 export default async function StorefrontPage({ params }: StorePageProps) {
     const { slug } = await params;
@@ -45,7 +90,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
         ? store.products
         : store.products.filter(p => p.inStock || p.isPortfolioItem);
 
-    const tierLabel = TIER_LABELS[store.depTier] ?? TIER_LABELS.SEEDLING;
+    const tierLabel = TIER_TEXT[store.depTier] ?? TIER_TEXT.SEEDLING;
     const isPremium = store.owner.kycTier === 'TIER_3' || store.owner.kycTier === 'BUSINESS';
     const isVerified = isBvnVerified(store.owner.kycTier);
 
@@ -138,10 +183,22 @@ export default async function StorefrontPage({ params }: StorePageProps) {
 
                 {/* Meta row: tier + followers */}
                 <div className={styles.metaRow}>
-                    <span className={styles.tierChip}>{tierLabel}</span>
+                    <span className={styles.tierChip} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <TierIcon tier={store.depTier} />
+                        {tierLabel}
+                    </span>
                     <span className={styles.metaSep}>·</span>
                     <span className={styles.metaText}>{store._count.followers} follower{store._count.followers !== 1 ? 's' : ''}</span>
                 </div>
+
+                {/* Star rating */}
+                {store.reviewCount > 0 ? (
+                    <div style={{ marginTop: '6px' }}>
+                        <StarRating rating={Number(store.rating)} count={store.reviewCount} />
+                    </div>
+                ) : (
+                    <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>No reviews yet</p>
+                )}
 
                 {/* Follow button for non-owners */}
                 {!isOwner && (

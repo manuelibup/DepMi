@@ -1,15 +1,15 @@
 /**
  * One-time admin endpoint to retroactively seed default follows for all existing users.
- * Protected by ADMIN_SECRET env var.
- * GET /api/admin/seed-follows?secret=<ADMIN_SECRET>
+ * POST /api/admin/seed-follows
+ * Body: { secret: string }
  */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { seedDefaultFollows } from '@/lib/auto-follow';
 
-export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const secret = searchParams.get('secret');
+export async function POST(req: Request) {
+    const body = await req.json().catch(() => ({}));
+    const { secret } = body as { secret?: string };
 
     if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });

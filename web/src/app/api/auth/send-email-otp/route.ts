@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcrypt";
 import { resend } from "@/lib/resend";
+import { randomInt } from "crypto";
 
 export async function POST(req: Request) {
     try {
@@ -29,8 +30,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Email specified does not match your active account." }, { status: 403 });
         }
 
-        // Generate 6-digit Email OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // Generate 6-digit Email OTP using CSPRNG
+        const otpCode = randomInt(100000, 1000000).toString();
 
         // Hash it for secure storage
         const salt = await bcrypt.genSalt(10);
@@ -43,13 +44,13 @@ export async function POST(req: Request) {
         // Transactional insertion
         await prisma.$transaction([
             prisma.otpToken.updateMany({
-                where: { userId: session.user.id, used: false, type: "EMAIL_RESET" },
+                where: { userId: session.user.id, used: false, type: "EMAIL_VERIFICATION" },
                 data: { used: true }
             }),
             prisma.otpToken.create({
                 data: {
                     userId: session.user.id,
-                    type: "EMAIL_RESET",
+                    type: "EMAIL_VERIFICATION",
                     codeHash,
                     expiresAt
                 }

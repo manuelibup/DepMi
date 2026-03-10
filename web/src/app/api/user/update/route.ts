@@ -73,6 +73,18 @@ export async function PATCH(req: Request) {
             }
         }
 
+        // If phone number is changing, reset verification status
+        let resetPhoneVerified = false;
+        if (phoneNumber !== undefined) {
+            const current = await prisma.user.findUnique({
+                where: { id: session.user.id },
+                select: { phoneNumber: true },
+            });
+            if (current?.phoneNumber !== phoneNumber) {
+                resetPhoneVerified = true;
+            }
+        }
+
         const updated = await prisma.user.update({
             where: { id: session.user.id },
             data: {
@@ -81,7 +93,7 @@ export async function PATCH(req: Request) {
                 ...(avatarUrl !== undefined && { avatarUrl }),
                 ...(coverUrl !== undefined && { coverUrl }),
                 ...(bio !== undefined && { bio }),
-                ...(phoneNumber !== undefined && { phoneNumber }),
+                ...(phoneNumber !== undefined && { phoneNumber, ...(resetPhoneVerified && { phoneVerified: false }) }),
                 ...(address !== undefined && { address }),
                 ...(city !== undefined && { city }),
                 ...(state !== undefined && { state }),

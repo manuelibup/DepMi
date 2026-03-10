@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.redirect(`${baseUrl}/orders?payment=failed`)
         }
 
-        // Find order by tx_ref
-        let orderId = txRef.replace('depmi-order-', '');
+        // Find order by tx_ref (format: depmi-order-{orderId})
+        const orderId = txRef.replace('depmi-order-', '')
         let order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
@@ -39,25 +39,25 @@ export async function GET(req: NextRequest) {
                 buyer: true,
                 items: { include: { product: true }, take: 1 }
             },
-        });
+        })
 
-        // Fallback for different txRef formats or IDs
+        // Fallback: search by paystackRef in case txRef format differs
         if (!order) {
             order = await prisma.order.findFirst({
-                where: { OR: [{ id: txRef }, { paystackRef: txRef }] },
+                where: { paystackRef: txRef },
                 include: {
                     seller: { include: { owner: true } },
                     buyer: true,
                     items: { include: { product: true }, take: 1 }
                 },
-            });
-            if (order) orderId = order.id;
+            })
         }
 
         if (!order) {
-            console.error('[checkout/callback] Order not found for txRef:', txRef);
+            console.error('[checkout/callback] Order not found for txRef:', txRef)
             return NextResponse.redirect(`${baseUrl}/orders?payment=failed`)
         }
+
 
         // Idempotency check
         if (order.status === 'CONFIRMED') {

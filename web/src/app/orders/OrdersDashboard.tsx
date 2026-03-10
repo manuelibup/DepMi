@@ -172,7 +172,9 @@ function OrderCard({ order, role, onStatusChange }: {
                         {image ? (
                             <Image src={image} alt={order.product.title} width={64} height={64} style={{ objectFit: 'cover', borderRadius: '12px' }} />
                         ) : (
-                            <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>📦</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </div>
                         )}
                     </div>
                     <div className={styles.itemInfo}>
@@ -185,7 +187,10 @@ function OrderCard({ order, role, onStatusChange }: {
                         <p className={styles.itemPrice}>₦{order.total.toLocaleString()}</p>
                         {(order.trackingNo || order.deliveryMethod) && localStatus !== 'PENDING' && (
                             <div className={styles.trackingInfo}>
-                                <p>📦 <strong>{order.deliveryMethod || 'Shipped'}:</strong> {order.trackingNo || 'Contact seller'}</p>
+                                <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                    <strong>{order.deliveryMethod || 'Shipped'}:</strong> {order.trackingNo || 'Contact seller'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -252,7 +257,10 @@ function OrderCard({ order, role, onStatusChange }: {
                         {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
                                 <div className={styles.orderInstructions}>
-                                    <p>✅ <strong>Payment Confirmed.</strong> The seller has been notified to prepare your order. You can chat with them to discuss delivery.</p>
+                                    <p style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                        <svg style={{ flexShrink: 0, marginTop: '1px' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                        <span><strong>Payment Confirmed.</strong> The seller has been notified to prepare your order. You can chat with them to discuss delivery.</span>
+                                    </p>
                                 </div>
                                 <button
                                     className={`${styles.actionBtn} ${styles.primary}`}
@@ -276,7 +284,10 @@ function OrderCard({ order, role, onStatusChange }: {
                                     }}
                                     disabled={loading}
                                 >
-                                    💬 Chat with Seller
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        Chat with Seller
+                                    </span>
                                 </button>
                             </div>
                         )}
@@ -285,7 +296,10 @@ function OrderCard({ order, role, onStatusChange }: {
                                 className={`${styles.actionBtn} ${styles.primary}`}
                                 onClick={() => setShowReviewModal(true)}
                             >
-                                ⭐ Leave a Review
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+                                    Leave a Review
+                                </span>
                             </button>
                         )}
                         {localStatus === 'SHIPPED' && (
@@ -421,14 +435,14 @@ function OrderCard({ order, role, onStatusChange }: {
                     <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                         <h3 className={styles.modalTitle}>Rate your experience</h3>
                         <p className={styles.modalDesc}>How was your order from {order.store?.name}?</p>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '12px 0' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', margin: '12px 0' }}>
                             {[1, 2, 3, 4, 5].map(star => (
                                 <button
                                     key={star}
                                     onClick={() => setReviewRating(star)}
-                                    style={{ background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', opacity: star <= reviewRating ? 1 : 0.3 }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', opacity: star <= reviewRating ? 1 : 0.25, transition: 'opacity 0.15s', color: '#FFD700' }}
                                 >
-                                    ⭐
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
                                 </button>
                             ))}
                         </div>
@@ -450,7 +464,7 @@ function OrderCard({ order, role, onStatusChange }: {
                                         const res = await fetch('/api/reviews', {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ orderId: order.id, rating: reviewRating, text: reviewText || undefined }),
+                                            body: JSON.stringify({ orderId: order.id, rating: reviewRating, text: reviewText || undefined, productId: order.product?.id }),
                                         });
                                         if (res.ok) {
                                             setHasReviewed(true);
@@ -472,7 +486,10 @@ function OrderCard({ order, role, onStatusChange }: {
             {showOtpModal && (
                 <div className={styles.modalOverlay} onClick={() => !loading && setShowOtpModal(false)}>
                     <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                        <h3 className={styles.modalTitle}>Security Verification 🛡️</h3>
+                        <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            Security Verification
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </h3>
                         <p className={styles.modalDesc}>
                             We've sent a 6-digit code to your {otpSent ? 'phone/email' : 'contact'}. Enter it below to release funds.
                         </p>
@@ -572,7 +589,9 @@ export default function OrdersDashboard({ hasStore, storeName, purchases, sales 
             <div className={styles.container}>
                 {showCelebration && activeTab === 'purchases' && (
                     <div className={styles.celebration}>
-                        <div className={styles.celebrationIcon}>🏆</div>
+                        <div className={styles.celebrationIcon}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+                    </div>
                         <div className={styles.celebrationText}>
                             <h3>Order Placed Successfully!</h3>
                             <p>Your funds are safely locked in DepMi Escrow. The seller has been notified to ship.</p>

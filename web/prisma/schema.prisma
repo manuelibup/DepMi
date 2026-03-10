@@ -205,6 +205,7 @@ model Product {
   bids            Bid[]          @relation("BidProduct")
   comments        Comment[]      @relation("ProductComments")
   orderItems      OrderItem[]
+  reviews         Review[]       @relation("ProductReviews")
   store           Store          @relation("StoreProducts", fields: [storeId], references: [id])
   images          ProductImage[]
   likes           ProductLike[]
@@ -384,15 +385,18 @@ model Review {
   orderId   String   @unique
   buyerId   String
   storeId   String
+  productId String?
   rating    Int
   text      String?
   createdAt DateTime @default(now())
   buyer     User     @relation("BuyerReviews", fields: [buyerId], references: [id])
   order     Order    @relation(fields: [orderId], references: [id])
   store     Store    @relation("StoreReviews", fields: [storeId], references: [id])
+  product   Product? @relation("ProductReviews", fields: [productId], references: [id])
 
   @@index([buyerId])
   @@index([storeId])
+  @@index([productId])
 }
 
 model Comment {

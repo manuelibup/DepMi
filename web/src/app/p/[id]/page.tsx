@@ -11,6 +11,7 @@ import EnquireButton from './EnquireButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import CommentSection from '@/app/requests/[id]/CommentSection';
+import ProductReviews from './ProductReviews';
 import BackButton from '@/components/BackButton';
 import styles from './page.module.css';
 
@@ -31,7 +32,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         include: {
             images: { orderBy: { order: 'asc' } },
             store: {
-                select: { id: true, name: true, slug: true, logoUrl: true, depCount: true, depTier: true, ownerId: true }
+                select: { id: true, name: true, slug: true, logoUrl: true, depCount: true, depTier: true, ownerId: true, rating: true, reviewCount: true }
             },
             comments: {
                 include: { author: { select: { displayName: true, username: true, avatarUrl: true } } },
@@ -140,7 +141,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             </div>
                             <div style={{ flex: 1 }}>
                                 <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>{product.store.name}</p>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{product.store.depCount} Deps &middot; {product.store.depTier}</p>
+                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                    {product.store.reviewCount > 0
+                                        ? <><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', marginBottom: '1px' }} width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>{Number(product.store.rating).toFixed(1)} &middot; </>
+                                        : null
+                                    }
+                                    {product.store.depCount} Deps &middot; {product.store.depTier}
+                                </p>
                             </div>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}>
                                 <path d="m9 18 6-6-6-6" />
@@ -171,6 +178,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Reviews — full width below both columns */}
+                <div className={styles.divider} />
+                <div className={styles.fullWidthSection}>
+                    <ProductReviews productId={product.id} />
                 </div>
 
                 {/* Comments — full width below both columns */}
