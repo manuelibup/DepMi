@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { seedDefaultFollows } from "@/lib/auto-follow";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const registerSchema = z.object({
     email: z.email("Invalid email address"),
@@ -51,8 +52,9 @@ export async function POST(req: Request) {
             },
         });
 
-        // Seed default follows (non-blocking)
+        // Seed default follows + welcome email (non-blocking)
         void seedDefaultFollows(newUser.id);
+        void sendWelcomeEmail(email, displayName);
 
         // Don't return full user object for security
         return NextResponse.json(

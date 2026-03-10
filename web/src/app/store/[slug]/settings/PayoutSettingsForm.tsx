@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +22,11 @@ export default function PayoutSettingsForm({ slug }: Props) {
         bankAccountName: ''
     });
 
+    // Bank search combobox state
+    const [bankSearch, setBankSearch] = useState('');
+    const [showBankList, setShowBankList] = useState(false);
+    const bankSearchRef = useRef<HTMLDivElement>(null);
+
     const [loading, setLoading] = useState(true);
     const [resolving, setResolving] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -30,20 +35,37 @@ export default function PayoutSettingsForm({ slug }: Props) {
     const [otpSent, setOtpSent] = useState(false);
     const [msg, setMsg] = useState({ text: '', type: '' });
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (bankSearchRef.current && !bankSearchRef.current.contains(e.target as Node)) {
+                setShowBankList(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     useEffect(() => {
         const load = async () => {
             try {
                 const res = await fetch(`/api/store/${slug}/payout`);
                 if (res.ok) {
                     const data = await res.json();
-                    setBanks(data.banks || []);
+                    const bankList: Bank[] = data.banks || [];
+                    setBanks(bankList);
                     setFormData({
                         bankCode: data.bankCode || '',
                         bankAccountNo: data.bankAccountNo || '',
                         bankAccountName: data.bankAccountName || ''
                     });
+                    // Populate search input with saved bank name
+                    if (data.bankCode) {
+                        const saved = bankList.find((b: Bank) => b.code === data.bankCode);
+                        if (saved) setBankSearch(saved.name);
+                    }
                 }
-            } catch (err) {
+            } catch {
                 console.error('Failed to load payout settings');
             } finally {
                 setLoading(false);
@@ -51,6 +73,16 @@ export default function PayoutSettingsForm({ slug }: Props) {
         };
         load();
     }, [slug]);
+
+    const filteredBanks = banks
+        .filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    const handleBankSelect = (bank: Bank) => {
+        setBankSearch(bank.name);
+        setShowBankList(false);
+        setFormData(prev => ({ ...prev, bankCode: bank.code, bankAccountName: '' }));
+    };
 
     const handleAccountBlur = async () => {
         if (formData.bankAccountNo.length === 10 && formData.bankCode) {
@@ -66,7 +98,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
                     setFormData(prev => ({ ...prev, bankAccountName: '' }));
                     setMsg({ text: data.message || 'Could not verify account number', type: 'error' });
                 }
-            } catch (err) {
+            } catch {
                 setMsg({ text: 'Error verifying account', type: 'error' });
             } finally {
                 setResolving(false);
@@ -76,18 +108,14 @@ export default function PayoutSettingsForm({ slug }: Props) {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         if (e.target.name === 'bankAccountNo') {
             setFormData(prev => ({ ...prev, bankAccountName: '' }));
         }
     };
 
-    const handleBankChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFormData(prev => ({ ...prev, bankCode: e.target.value, bankAccountName: '' }));
-    };
-
-    // Attempt resolution when bank code changes and account number is 10 digits
+    // Auto-resolve when bank code changes and account number is 10 digits
     useEffect(() => {
         if (formData.bankAccountNo.length === 10 && formData.bankCode && !formData.bankAccountName && !resolving) {
             handleAccountBlur();
@@ -141,7 +169,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 const data = await res.json().catch(() => ({}));
                 setMsg({ text: data.message || 'Verification failed. Please check the code.', type: 'error' });
             }
-        } catch (error) {
+        } catch {
             setMsg({ text: 'An unexpected error occurred', type: 'error' });
         } finally {
             setSaving(false);
@@ -157,21 +185,81 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 <p className={styles.helpText}>Provide the bank account where you want to receive your earnings.</p>
             </div>
 
+            {/* — Searchable bank picker — */}
             <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="bankCode">Bank Name</label>
-                <select
-                    id="bankCode"
-                    name="bankCode"
-                    className={styles.input}
-                    value={formData.bankCode}
-                    onChange={handleBankChange}
-                    required
-                >
-                    <option value="">Select a bank</option>
-                    {banks.map(b => (
-                        <option key={b.code} value={b.code}>{b.name}</option>
-                    ))}
-                </select>
+                <label className={styles.label}>Bank Name</label>
+                <div ref={bankSearchRef} style={{ position: 'relative' }}>
+                    <input
+                        type="text"
+                        className={styles.input}
+                        placeholder="Search bank..."
+                        value={bankSearch}
+                        autoComplete="off"
+                        onChange={(e) => {
+                            setBankSearch(e.target.value);
+                            setShowBankList(true);
+                            // Clear selection if user edits
+                            setFormData(prev => ({ ...prev, bankCode: '', bankAccountName: '' }));
+                        }}
+                        onFocus={() => setShowBankList(true)}
+                    />
+                    {/* Search icon */}
+                    <svg
+                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    >
+                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                    </svg>
+
+                    {showBankList && bankSearch.length > 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 4px)',
+                            left: 0,
+                            right: 0,
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--card-border)',
+                            borderRadius: '12px',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            zIndex: 50,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                        }}>
+                            {filteredBanks.length === 0 ? (
+                                <div style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                                    No banks found
+                                </div>
+                            ) : (
+                                filteredBanks.map(bank => (
+                                    <button
+                                        key={bank.code}
+                                        type="button"
+                                        onMouseDown={(e) => { e.preventDefault(); handleBankSelect(bank); }}
+                                        style={{
+                                            display: 'block',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            padding: '11px 16px',
+                                            background: formData.bankCode === bank.code ? 'rgba(0,200,83,0.08)' : 'transparent',
+                                            border: 'none',
+                                            color: formData.bankCode === bank.code ? 'var(--primary)' : 'var(--text-main)',
+                                            fontWeight: formData.bankCode === bank.code ? 600 : 400,
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        {bank.name}
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    )}
+                </div>
+                {formData.bankCode && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--primary)', margin: '4px 0 0', fontWeight: 600 }}>
+                        ✓ {bankSearch}
+                    </p>
+                )}
             </div>
 
             <div className={styles.formGroup}>
@@ -205,7 +293,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 />
             </div>
 
-            <button type="submit" className={styles.submitBtn} disabled={saving || resolving || !formData.bankAccountName}>
+            <button type="submit" className={styles.submitBtn} disabled={saving || resolving || !formData.bankAccountName || !formData.bankCode}>
                 {saving ? 'Saving...' : 'Save Payout Settings'}
             </button>
 

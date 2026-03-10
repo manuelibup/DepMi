@@ -186,6 +186,31 @@
     border-radius: 999px;
 }
 
+.ownerLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.ownerLink:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+}
+
+.ownerLink strong {
+    color: var(--primary);
+    margin-left: 2px;
+}
+
 .metaSep {
     color: var(--text-muted);
     font-size: 0.85rem;

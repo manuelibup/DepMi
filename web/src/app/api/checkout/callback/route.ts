@@ -86,6 +86,20 @@ export async function GET(req: NextRequest) {
             })
         }
 
+        const sellerOwner = order.seller.owner
+        if (sellerOwner?.email) {
+            void notifyOrderUpdate({
+                orderId,
+                status: 'NEW_ORDER',
+                userId: sellerOwner.id,
+                userName: sellerOwner.displayName,
+                userEmail: sellerOwner.email,
+                productTitle: order.items[0]?.product.title || 'Product',
+                amount: Number(order.totalAmount),
+                link: '/orders'
+            })
+        }
+
         return NextResponse.redirect(`${baseUrl}/orders?success=true`)
     } catch (err) {
         console.error('[checkout/callback] Error:', err)

@@ -32,6 +32,8 @@ export async function GET() {
                 coverUrl: true,
                 bio: true,
                 phoneNumber: true,
+                phoneVerified: true,
+                emailVerified: true,
                 address: true,
                 city: true,
                 state: true,

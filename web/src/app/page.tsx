@@ -45,7 +45,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     orderBy: { createdAt: 'desc' },
     take: 20,
     include: {
-      store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true } },
+      store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
       images: true,
       ...(session?.user?.id ? {
         likes: { where: { userId: session.user.id }, select: { id: true } },
@@ -137,6 +137,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 viewers: product.viewCount,
                 id: product.id,
                 ownerId: product.store.ownerId,
+                ownerUsername: product.store.owner.username,
                 ...(session?.user?.id ? {
                   isLiked: product.likes && product.likes.length > 0,
                   isSaved: product.saves && product.saves.length > 0

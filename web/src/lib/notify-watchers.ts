@@ -230,6 +230,12 @@ export async function notifyOrderUpdate({
     let buttonText = 'View Order';
 
     switch (status) {
+        case 'NEW_ORDER':
+            subject = `New order #${shortId} — action required`;
+            headline = `You've got an order, ${userName}!`;
+            body = `A buyer just purchased <strong>${productTitle}</strong>${amount ? ` for <strong>₦${amount.toLocaleString()}</strong>` : ''}. Funds are held in escrow — prepare to ship!`;
+            buttonText = 'View Order';
+            break;
         case 'PAID':
             subject = `Order #${shortId} confirmed!`;
             headline = `Payment received, ${userName}!`;

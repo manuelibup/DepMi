@@ -5,6 +5,7 @@ import { AuthProvider, Account as PrismaAccount } from "@prisma/client";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
 import { seedDefaultFollows } from "./auto-follow";
+import { sendWelcomeEmail } from "./email";
 
 // Extend NextAuth Session to expose the DB user id on session.user.id
 declare module "next-auth" {
@@ -135,8 +136,9 @@ export const authOptions: NextAuthOptions = {
                                 },
                             },
                         });
-                        // Seed default follows (non-blocking)
+                        // Seed default follows + welcome email (non-blocking)
                         void seedDefaultFollows(createdUser.id);
+                        void sendWelcomeEmail(user.email!, user.name ?? 'there');
                     }
                     return true;
                 } catch (error) {

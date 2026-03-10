@@ -16,10 +16,10 @@ interface StorePageProps {
 
 const TIER_LABELS: Record<string, string> = {
     SEEDLING: '🌱 Seedling',
-    RISING:   '⭐ Rising',
-    TRUSTED:  '🔥 Trusted',
-    ELITE:    '💎 Elite',
-    LEGEND:   '🏆 Legend',
+    RISING: '⭐ Rising',
+    TRUSTED: '🔥 Trusted',
+    ELITE: '💎 Elite',
+    LEGEND: '🏆 Legend',
 };
 
 export default async function StorefrontPage({ params }: StorePageProps) {
@@ -29,7 +29,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     const store = await prisma.store.findUnique({
         where: { slug },
         include: {
-            owner: { select: { kycTier: true } },
+            owner: { select: { kycTier: true, username: true, displayName: true } },
             _count: { select: { followers: true } },
             products: {
                 orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
@@ -64,11 +64,11 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     <StoreBackButton />
                     <div className={styles.rightActions}>
                         <Link href={`/search?store=${store.slug}`} className={styles.iconBtn} aria-label="Search">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                         </Link>
                         {isOwner && (
                             <Link href={`/store/${store.slug}/settings`} className={styles.iconBtn} aria-label="Settings">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
                             </Link>
                         )}
                     </div>
@@ -81,10 +81,10 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     {isOwner && (
                         <>
                             <Link href={`/store/${store.slug}/products/new`} className={styles.iconBtn} aria-label="Add Product">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
                             </Link>
                             <Link href={`/store/${store.slug}/ai-import`} className={styles.iconBtn} aria-label="AI Import">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="m22 2-10 10"/><path d="m17 2 5 5-5 5"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><path d="m22 2-10 10" /><path d="m17 2 5 5-5 5" /></svg>
                             </Link>
                         </>
                     )}
@@ -119,6 +119,11 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 </h1>
 
                 <p className={styles.handle}>@{store.slug}</p>
+
+                <Link href={`/u/${store.owner.username}`} className={styles.ownerLink}>
+                    <span>Owned by <strong>{store.owner.displayName || store.owner.username}</strong></span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M7 7h10v10" /></svg>
+                </Link>
 
                 {store.location && (
                     <p className={styles.location}>

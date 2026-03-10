@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { sendWaitlistConfirmEmail } from '@/lib/email';
 
 const waitlistSchema = z.object({
     email: z.string().email(),
@@ -25,6 +26,9 @@ export async function POST(req: Request) {
         await prisma.waitlist.create({
             data: { email },
         });
+
+        // Send confirmation email (non-blocking)
+        void sendWaitlistConfirmEmail(email);
 
         return NextResponse.json({ message: 'Successfully joined waitlist' });
      

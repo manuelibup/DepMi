@@ -23,6 +23,16 @@ export default function SettingsPage() {
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
 
+    const [emailVerified, setEmailVerified] = useState(false);
+    const [phoneVerified, setPhoneVerified] = useState(false);
+
+    // Verification flow state
+    const [emailOtpStep, setEmailOtpStep] = useState<'idle' | 'sending' | 'entering' | 'verifying'>('idle');
+    const [emailOtpCode, setEmailOtpCode] = useState('');
+    const [phoneOtpStep, setPhoneOtpStep] = useState<'idle' | 'sending' | 'entering' | 'verifying'>('idle');
+    const [phoneOtpCode, setPhoneOtpCode] = useState('');
+    const [verifyMsg, setVerifyMsg] = useState({ text: '', type: '' });
+
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
@@ -53,6 +63,8 @@ export default function SettingsPage() {
                     setAddress(data.user.address ?? '');
                     setCity(data.user.city ?? '');
                     setState(data.user.state ?? '');
+                    setEmailVerified(data.user.emailVerified ?? false);
+                    setPhoneVerified(data.user.phoneVerified ?? false);
                 }
             })
             .catch(() => {});
@@ -61,6 +73,102 @@ export default function SettingsPage() {
     if (status === 'loading') {
         return <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>;
     }
+
+    const sendEmailOtp = async () => {
+        setEmailOtpStep('sending');
+        setVerifyMsg({ text: '', type: '' });
+        try {
+            const res = await fetch('/api/auth/send-email-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: session!.user.email }),
+            });
+            if (res.ok) {
+                setEmailOtpStep('entering');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setVerifyMsg({ text: d.message || 'Failed to send code', type: 'error' });
+                setEmailOtpStep('idle');
+            }
+        } catch {
+            setVerifyMsg({ text: 'Network error', type: 'error' });
+            setEmailOtpStep('idle');
+        }
+    };
+
+    const verifyEmail = async () => {
+        setEmailOtpStep('verifying');
+        try {
+            const res = await fetch('/api/auth/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: emailOtpCode }),
+            });
+            if (res.ok) {
+                setEmailVerified(true);
+                setEmailOtpStep('idle');
+                setEmailOtpCode('');
+                setVerifyMsg({ text: 'Email verified!', type: 'success' });
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setVerifyMsg({ text: d.message || 'Invalid code', type: 'error' });
+                setEmailOtpStep('entering');
+            }
+        } catch {
+            setVerifyMsg({ text: 'Network error', type: 'error' });
+            setEmailOtpStep('entering');
+        }
+    };
+
+    const sendPhoneOtp = async () => {
+        if (!phoneNumber.trim()) {
+            setVerifyMsg({ text: 'Save your phone number first', type: 'error' });
+            return;
+        }
+        setPhoneOtpStep('sending');
+        setVerifyMsg({ text: '', type: '' });
+        try {
+            const res = await fetch('/api/auth/send-phone-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phoneNumber: phoneNumber.trim() }),
+            });
+            if (res.ok) {
+                setPhoneOtpStep('entering');
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setVerifyMsg({ text: d.message || 'Failed to send SMS', type: 'error' });
+                setPhoneOtpStep('idle');
+            }
+        } catch {
+            setVerifyMsg({ text: 'Network error', type: 'error' });
+            setPhoneOtpStep('idle');
+        }
+    };
+
+    const verifyPhone = async () => {
+        setPhoneOtpStep('verifying');
+        try {
+            const res = await fetch('/api/auth/verify-phone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phoneNumber: phoneNumber.trim(), code: phoneOtpCode }),
+            });
+            if (res.ok) {
+                setPhoneVerified(true);
+                setPhoneOtpStep('idle');
+                setPhoneOtpCode('');
+                setVerifyMsg({ text: 'Phone verified!', type: 'success' });
+            } else {
+                const d = await res.json().catch(() => ({}));
+                setVerifyMsg({ text: d.message || 'Invalid code', type: 'error' });
+                setPhoneOtpStep('entering');
+            }
+        } catch {
+            setVerifyMsg({ text: 'Network error', type: 'error' });
+            setPhoneOtpStep('entering');
+        }
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -310,6 +418,108 @@ export default function SettingsPage() {
                                     style={inputStyle}
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* — Verification section — */}
+                    <div style={sectionStyle}>
+                        <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Verification</p>
+
+                        {verifyMsg.text && (
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: verifyMsg.type === 'success' ? 'var(--primary)' : 'var(--error)', background: verifyMsg.type === 'success' ? 'rgba(0,200,83,0.08)' : 'var(--error-bg)', padding: '8px 12px', borderRadius: '8px' }}>
+                                {verifyMsg.text}
+                            </p>
+                        )}
+
+                        {/* Email verification row */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                                <div>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Email</p>
+                                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-main)' }}>{session?.user?.email}</p>
+                                </div>
+                                {emailVerified ? (
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(0,200,83,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={sendEmailOtp}
+                                        disabled={emailOtpStep !== 'idle'}
+                                        style={{ flexShrink: 0, padding: '7px 14px', borderRadius: '10px', background: 'transparent', border: '1.5px solid var(--primary)', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8rem', cursor: emailOtpStep !== 'idle' ? 'not-allowed' : 'pointer', opacity: emailOtpStep !== 'idle' ? 0.6 : 1 }}
+                                    >
+                                        {emailOtpStep === 'sending' ? 'Sending...' : 'Verify Email'}
+                                    </button>
+                                )}
+                            </div>
+                            {emailOtpStep === 'entering' || emailOtpStep === 'verifying' ? (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={emailOtpCode}
+                                        onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Enter 6-digit code"
+                                        style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', letterSpacing: '4px', outline: 'none', textAlign: 'center' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={verifyEmail}
+                                        disabled={emailOtpCode.length < 6 || emailOtpStep === 'verifying'}
+                                        style={{ padding: '10px 16px', borderRadius: '10px', background: 'var(--primary)', color: '#000', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: emailOtpCode.length < 6 ? 'not-allowed' : 'pointer', opacity: emailOtpCode.length < 6 ? 0.5 : 1 }}
+                                    >
+                                        {emailOtpStep === 'verifying' ? '...' : 'Confirm'}
+                                    </button>
+                                </div>
+                            ) : null}
+                        </div>
+
+                        {/* Divider */}
+                        <div style={{ height: 1, background: 'var(--card-border)' }} />
+
+                        {/* Phone verification row */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                                <div>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Phone</p>
+                                    <p style={{ margin: 0, fontSize: '0.875rem', color: phoneNumber ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                                        {phoneNumber || 'No phone number saved'}
+                                    </p>
+                                </div>
+                                {phoneVerified ? (
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(0,200,83,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={sendPhoneOtp}
+                                        disabled={!phoneNumber || phoneOtpStep !== 'idle'}
+                                        style={{ flexShrink: 0, padding: '7px 14px', borderRadius: '10px', background: 'transparent', border: `1.5px solid ${phoneNumber ? 'var(--primary)' : 'var(--card-border)'}`, color: phoneNumber ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: '0.8rem', cursor: (!phoneNumber || phoneOtpStep !== 'idle') ? 'not-allowed' : 'pointer', opacity: phoneOtpStep !== 'idle' ? 0.6 : 1 }}
+                                    >
+                                        {phoneOtpStep === 'sending' ? 'Sending...' : 'Verify Phone'}
+                                    </button>
+                                )}
+                            </div>
+                            {phoneOtpStep === 'entering' || phoneOtpStep === 'verifying' ? (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={phoneOtpCode}
+                                        onChange={(e) => setPhoneOtpCode(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Enter 6-digit code"
+                                        style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontSize: '1rem', letterSpacing: '4px', outline: 'none', textAlign: 'center' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={verifyPhone}
+                                        disabled={phoneOtpCode.length < 6 || phoneOtpStep === 'verifying'}
+                                        style={{ padding: '10px 16px', borderRadius: '10px', background: 'var(--primary)', color: '#000', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: phoneOtpCode.length < 6 ? 'not-allowed' : 'pointer', opacity: phoneOtpCode.length < 6 ? 0.5 : 1 }}
+                                    >
+                                        {phoneOtpStep === 'verifying' ? '...' : 'Confirm'}
+                                    </button>
+                                </div>
+                            ) : null}
                         </div>
                     </div>
 

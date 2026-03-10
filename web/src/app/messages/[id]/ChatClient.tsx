@@ -179,7 +179,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             formData.append('folder', folder);
             formData.append('upload_preset', upload_preset);
 
-            const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`;
+            const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
             const uploadRes = await fetch(uploadUrl, { method: 'POST', body: formData });
 
             if (uploadRes.ok) {
