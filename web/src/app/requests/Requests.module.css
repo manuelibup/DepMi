@@ -4,17 +4,36 @@
     background-color: var(--bg-color);
     display: flex;
     flex-direction: column;
-    max-width: 480px;
-    margin: 0 auto;
 }
 
 .searchHeader {
     padding: 24px 20px 16px;
     background: var(--bg-color);
     position: sticky;
-    top: 60px; /* Below header */
+    top: 60px; /* Below mobile header */
     z-index: 10;
-    border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.05));
+    border-bottom: 1px solid var(--card-border);
+}
+
+@media (min-width: 640px) {
+    .container {
+        max-width: 720px;
+        border-right: 1px solid var(--card-border);
+        min-height: 100vh;
+    }
+
+    .searchHeader {
+        top: 0;
+        padding: 36px 32px 20px;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .feed {
+        padding: 20px 32px 60px;
+    }
 }
 
 .title {

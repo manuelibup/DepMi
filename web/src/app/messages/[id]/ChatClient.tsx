@@ -28,7 +28,7 @@ interface UserParticipant {
 
 interface ChatClientProps {
     conversationId: string;
-    initialMessages: any[]; 
+    initialMessages: any[];
     otherUser: UserParticipant;
     currentUser: UserParticipant;
     initialText?: string;
@@ -44,7 +44,7 @@ function ProductPreview({ id }: { id: string }) {
             .then(data => {
                 if (!data.error) setProduct(data);
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -115,7 +115,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                         return [...prev, ...uniqueNew];
                     });
                 }
-            } catch (err) {}
+            } catch (err) { }
         };
         return () => eventSource.close();
     }, [conversationId]);
@@ -123,7 +123,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     const handleSend = async (payload: { text?: string, type?: string, mediaUrl?: string }) => {
         if (sending) return;
         setSending(true);
-        
+
         try {
             const res = await fetch(`/api/messages/${conversationId}`, {
                 method: 'POST',
@@ -133,15 +133,21 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
 
             if (res.ok) {
                 const sentMsg = await res.json();
+                console.log('Message sent successfully:', sentMsg.id);
                 setMessages((prev) => {
                     if (prev.some(m => m.id === sentMsg.id)) return prev;
                     return [...prev, sentMsg];
                 });
                 if (payload.text) setText('');
                 setShowAttachments(false);
+            } else {
+                const errData = await res.json();
+                console.error('Failed to send message:', errData);
+                alert(`Error: ${errData.message || 'Failed to send message'}`);
             }
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error('Send error:', err);
+            alert(`Network error: ${err.message || 'Could not reach server'}`);
         } finally {
             setSending(false);
         }
@@ -152,12 +158,16 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     };
 
     const handleVoiceRecordingComplete = async (blob: Blob) => {
+        console.log('Voice recording complete, size:', blob.size);
         setSending(true);
         setIsRecording(false);
         try {
-            // Upload audio blob to Cloudinary
+            console.log('Requesting upload signature...');
             const resSig = await fetch('/api/upload/sign');
+            if (!resSig.ok) throw new Error('Failed to get upload signature');
+
             const { timestamp, folder, upload_preset, signature, apiKey, cloudName } = await resSig.json();
+            console.log('Signature received, starting Cloudinary upload...');
 
             const formData = new FormData();
             formData.append('file', blob);
@@ -172,13 +182,21 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
 
             if (uploadRes.ok) {
                 const cloudData = await uploadRes.json();
-                const expectedPrefix = `https://res.cloudinary.com/${cloudName}/`;
-                if (cloudData.secure_url?.startsWith(expectedPrefix)) {
-                    handleSend({ type: 'AUDIO', mediaUrl: cloudData.secure_url });
+                console.log('Cloudinary upload success:', cloudData.secure_url);
+
+                if (cloudData.secure_url) {
+                    await handleSend({ type: 'AUDIO', mediaUrl: cloudData.secure_url });
+                } else {
+                    throw new Error('Cloudinary response missing secure_url');
                 }
+            } else {
+                const errData = await uploadRes.json();
+                console.error('Cloudinary upload error:', errData);
+                throw new Error(errData.error?.message || 'Cloudinary upload failed');
             }
-        } catch (err) {
-            console.error('Audio upload failed', err);
+        } catch (err: any) {
+            console.error('Audio upload failed:', err);
+            alert(`Voice note failed to send: ${err.message || 'Unknown error'}`);
         } finally {
             setSending(false);
         }
@@ -200,7 +218,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                 audioRef.current.src = url;
                 audioRef.current.play();
                 setPlayingAudioId(msgId);
-                
+
                 audioRef.current.ontimeupdate = () => {
                     const progress = (audioRef.current!.currentTime / audioRef.current!.duration) * 100;
                     setAudioProgress(prev => ({ ...prev, [msgId]: progress }));
@@ -227,10 +245,10 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
 
     const renderMessageText = (content: string | null) => {
         if (!content) return null;
-        
+
         // Regex to find [product:uuid]
         const parts = content.split(/(\[product:[0-9a-f-]{36}\])/gi);
-        
+
         return parts.map((part, i) => {
             const match = part.match(/\[product:([0-9a-f-]{36})\]/i);
             if (match) {
@@ -273,7 +291,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                         <img src={msg.mediaUrl} alt="uploaded" className={styles.chatImage} />
                                     </div>
                                 )}
-                                
+
                                 {msg.type === 'AUDIO' && msg.mediaUrl && (
                                     <div className={styles.voiceMessageLayout}>
                                         {!isMe && (
@@ -284,19 +302,19 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                                     <div className={styles.avatarPlaceholder}>{otherUser.displayName[0]}</div>
                                                 )}
                                                 <div className={styles.micBadge}>
-                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
                                                 </div>
                                             </div>
                                         )}
                                         <div className={styles.voiceControls}>
-                                            <button 
-                                                className={styles.playBtn} 
+                                            <button
+                                                className={styles.playBtn}
                                                 onClick={() => togglePlayAudio(msg.id, msg.mediaUrl!)}
                                             >
                                                 {playingAudioId === msg.id ? (
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
                                                 ) : (
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                                                 )}
                                             </button>
                                             <div className={styles.waveformContainer}>
@@ -305,17 +323,17 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                                         const threshold = (i / 19) * 100;
                                                         const isActive = (audioProgress[msg.id] || 0) >= threshold;
                                                         return (
-                                                            <div 
-                                                                key={i} 
-                                                                className={`${styles.waveBar} ${isActive ? styles.activeWaveBar : ''}`} 
-                                                                style={{ height: `${20 + (Math.sin(i * 1.5) * 15 + 15)}%` }} 
+                                                            <div
+                                                                key={i}
+                                                                className={`${styles.waveBar} ${isActive ? styles.activeWaveBar : ''}`}
+                                                                style={{ height: `${20 + (Math.sin(i * 1.5) * 15 + 15)}%` }}
                                                             />
                                                         );
                                                     })}
                                                 </div>
                                                 <div className={styles.voiceMeta}>
                                                     <span className={styles.duration}>
-                                                        {playingAudioId === msg.id 
+                                                        {playingAudioId === msg.id
                                                             ? formatDuration(audioRef.current?.currentTime || 0)
                                                             : formatDuration(audioDurations[msg.id] || 0)
                                                         }
@@ -332,7 +350,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                                     <div className={styles.avatarPlaceholder}>{currentUser.displayName[0]}</div>
                                                 )}
                                                 <div className={styles.micBadge}>
-                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
                                                 </div>
                                             </div>
                                         )}
@@ -362,8 +380,8 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                     <>
                         {showAttachments && (
                             <div className={styles.attachmentMenu}>
-                                <CloudinaryUploader 
-                                    onUploadSuccess={handleUploadSuccess} 
+                                <CloudinaryUploader
+                                    onUploadSuccess={handleUploadSuccess}
                                     buttonText="Send Photo"
                                     accept="image/*"
                                     maxSizeMB={10}
@@ -379,7 +397,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                         )}
                         <form className={styles.inputForm} onSubmit={(e) => { e.preventDefault(); if (text.trim()) handleSend({ text: text.trim(), type: 'TEXT' }); }}>
                             <button type="button" className={styles.attachTrigger} onClick={() => setShowAttachments(!showAttachments)}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                             </button>
                             <div className={styles.inputWrap}>
                                 <textarea
@@ -393,11 +411,11 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                             </div>
                             {text.trim() ? (
                                 <button type="submit" className={styles.sendBtn} disabled={sending}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                                 </button>
                             ) : (
                                 <button type="button" className={styles.micBtn} onClick={() => setIsRecording(true)}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
                                 </button>
                             )}
                         </form>

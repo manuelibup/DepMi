@@ -5,12 +5,12 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 
 const updateSchema = z.object({
-    displayName: z.string().min(2).max(50).optional(),
+    displayName: z.string().min(1).max(50).optional(),
     username: z.string().min(3).max(30).regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores').optional(),
     avatarUrl: z.string().url().optional().nullable(),
     coverUrl: z.string().url().optional().nullable(),
     bio: z.string().max(160).optional().nullable(),
-    phoneNumber: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/, 'Invalid phone number').optional().nullable(),
+    phoneNumber: z.string().min(7).max(20).optional().nullable(),
     address: z.string().max(200).optional().nullable(),
     city: z.string().max(100).optional().nullable(),
     state: z.string().max(100).optional().nullable(),

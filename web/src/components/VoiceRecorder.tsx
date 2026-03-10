@@ -37,7 +37,9 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
             };
 
             mediaRecorder.onstop = () => {
+                console.log('MediaRecorder stopped, creating blob...');
                 const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                console.log('Blob created:', blob.size, 'bytes. Calling onRecordingComplete...');
                 onRecordingComplete(blob);
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -83,12 +85,12 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
             width: '100%',
             animation: 'slideUp 0.3s ease-out'
         }}>
-            <button 
-                type="button" 
-                onClick={onCancel} 
-                style={{ 
-                    color: 'var(--text-muted)', 
-                    fontSize: '0.9rem', 
+            <button
+                type="button"
+                onClick={onCancel}
+                style={{
+                    color: 'var(--text-muted)',
+                    fontSize: '0.9rem',
                     fontWeight: 600,
                     padding: '8px'
                 }}
@@ -104,15 +106,15 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
                     borderRadius: '50%',
                     animation: 'pulseRed 1s infinite'
                 }} />
-                <span style={{ 
-                    fontFamily: 'monospace', 
-                    fontSize: '1.1rem', 
+                <span style={{
+                    fontFamily: 'monospace',
+                    fontSize: '1.1rem',
                     fontWeight: 600,
                     color: 'var(--text-main)'
                 }}>
                     {formatDuration(duration)}
                 </span>
-                
+
                 {/* Waveform simulation dots */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1, justifyContent: 'center' }}>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -127,17 +129,17 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
                 </div>
             </div>
 
-            <button 
-                type="button" 
+            <button
+                type="button"
                 onClick={stopAndSend}
-                style={{ 
-                    background: 'var(--primary)', 
-                    border: 'none', 
-                    borderRadius: '50%', 
-                    width: '44px', 
-                    height: '44px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                style={{
+                    background: 'var(--primary)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '44px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     boxShadow: '0 2px 8px var(--primary-glow)',
@@ -152,7 +154,8 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
                 </svg>
             </button>
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes pulseRed {
                     0% { opacity: 1; transform: scale(1); }
                     50% { opacity: 0.5; transform: scale(1.2); }

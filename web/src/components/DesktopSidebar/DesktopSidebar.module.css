@@ -10,11 +10,91 @@
         top: 0;
         left: 0;
         bottom: 0;
-        width: 240px;
+        width: 72px;
         border-right: 1px solid var(--card-border);
         background: var(--bg-base);
         z-index: 100;
         flex-direction: column;
+    }
+
+    .inner {
+        padding: 16px 8px 24px;
+        align-items: center;
+    }
+
+    .logo {
+        justify-content: center;
+        padding: 10px;
+        width: 100%;
+    }
+
+    .logoText {
+        display: none;
+    }
+
+    .navItem {
+        justify-content: center;
+        padding: 12px;
+        gap: 0;
+        width: 100%;
+    }
+
+    .navLabel {
+        display: none;
+    }
+
+    .createBtn {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 50%;
+        margin-top: 8px;
+    }
+
+    .createBtnLabel {
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        width: 240px;
+    }
+
+    .inner {
+        padding: 16px 12px 24px;
+        align-items: stretch;
+    }
+
+    .logo {
+        justify-content: flex-start;
+        padding: 10px 12px;
+    }
+
+    .logoText {
+        display: block;
+    }
+
+    .navItem {
+        justify-content: flex-start;
+        padding: 12px 14px;
+        gap: 14px;
+    }
+
+    .navLabel {
+        display: block;
+    }
+
+    .createBtn {
+        width: 100%;
+        height: auto;
+        padding: 14px;
+        border-radius: var(--radius-full);
+        margin-top: 12px;
+    }
+
+    .createBtnLabel {
+        display: inline;
     }
 }
 

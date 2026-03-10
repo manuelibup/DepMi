@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 52 — Mar 9, 2026 — Production Bug Fixes (Profile 404 + Settings "Invalid input")](#session-52--mar-9-2026--production-bug-fixes-profile-404--settings-invalid-input)
 - [Session 51 — Mar 9, 2026 — Flutterwave Migration & Desktop Layout](#session-51--mar-9-2026--flutterwave-migration--desktop-layout)
 - [Session 50 — Mar 9, 2026 — Resolution of Database Connectivity Issues](#session-50--mar-9-2026--resolution-of-database-connectivity-issues)
 - [Session 49 — Mar 8, 2026 — Waitlist V3.3 Overhaul & Mobile Refinement](#session-49--mar-8-2026--waitlist-v33-overhaul--mobile-refinement)
@@ -34,6 +35,34 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 52 — Mar 9, 2026 — Production Bug Fixes (Profile 404 + Settings "Invalid input")
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Issues reported
+1. `/u/[username]` and `/store/[slug]` pages returning 404 in production for some users
+2. Settings page showing "Invalid input" when users tried to update their bio
+
+### Root cause analysis
+**404 errors:** Gemini (Session 51) rewrote the profile and store pages to query new tables/columns (`UserFollow`, `StoreFollow`, `bio`, `coverUrl` on User, `isFeatured`/`currency` on Product) that were added to `schema.prisma` but never pushed to the live Neon DB. Prisma throws P2022 at runtime → Next.js 404/500.
+**Fix required:** `npx prisma db push` from `web/` — blocked by Neon P1001 (database sleeping; must wake it via Neon Console first).
+
+**"Invalid input" error:** The Zod schema in `/api/user/update` had two over-strict rules:
+- `displayName: z.string().min(2)` — rejects 1-char display names which the frontend allows
+- `phoneNumber: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/)` — rejects phone numbers stored in older formats, triggering when ANY field (including bio) is saved
+
+### Fixes applied
+- **`web/src/app/api/user/update/route.ts`**: `displayName` min lowered to 1; `phoneNumber` regex removed, replaced with `.min(7).max(20)` length-only check
+- **`web/src/app/settings/page.tsx`**: Added `onChange` sanitization on phone input — strips any character outside `[0-9+\s\-()]` as the user types, preventing invalid chars from reaching the API
+- **`tips.md`**: Added Tip 22 on the two-layer form validation pattern (client sanitize + lenient API validate), plus the Neon P1001 sleep wake-up note
+
+### Pending
+- Run `npx prisma db push` after waking the Neon DB (Console → project → Resume) to fix the 404 errors
+
+---
 
 ## Session 1 — Feb 26, 2026 (Pre-dawn)
 **Agent:** Google Gemini (via previous conversation)  

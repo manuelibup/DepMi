@@ -266,7 +266,7 @@ export default function SettingsPage() {
                             <input
                                 type="tel"
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9+\s\-()]/g, ''))}
                                 placeholder="+234 800 000 0000"
                                 style={inputStyle}
                             />

@@ -107,6 +107,12 @@ img {
 /* Desktop layout: offset content to the right of the fixed sidebar */
 @media (min-width: 640px) {
   .desktop-content {
+    margin-left: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-content {
     margin-left: 240px;
   }
 }
