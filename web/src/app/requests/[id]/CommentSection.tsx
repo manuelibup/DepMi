@@ -300,7 +300,8 @@ export default function CommentSection({
                             value={text}
                             onChange={handleTextChange}
                             onFocus={() => { if (status === 'unauthenticated') openGate(); }}
-                            placeholder="Add a comment..."
+                            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); } }}
+                            placeholder="Add a comment... (Ctrl+Enter to post)"
                             rows={2}
                             maxLength={500}
                             className={styles.commentTextarea}

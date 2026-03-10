@@ -179,6 +179,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     placeholder="What are you looking for? (e.g. iPhone 13 Pro Max 256GB)"
                     value={formData.text}
                     onChange={handleChange}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); } }}
                     autoFocus
                 />
 

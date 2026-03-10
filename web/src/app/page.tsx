@@ -17,12 +17,18 @@ import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
 import SuggestedProfiles from '@/components/SuggestedProfiles';
 
+import LandingPage from '@/components/LandingPage';
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
     return <WaitlistHome />;
   }
 
   const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return <LandingPage />;
+  }
 
   if (session?.user && !session.user.username) {
     redirect('/onboarding');

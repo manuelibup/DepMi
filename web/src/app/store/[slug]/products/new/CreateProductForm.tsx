@@ -199,13 +199,14 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     autoFocus
                 />
 
-                <textarea 
+                <textarea
                     ref={textareaRef}
                     name="description"
                     className={styles.composer}
                     placeholder="Add a description... (optional)"
                     value={form.description}
                     onChange={handleChange}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); } }}
                 />
 
                 <div className={styles.mediaSection}>

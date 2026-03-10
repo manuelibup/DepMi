@@ -13,7 +13,7 @@
     position: absolute;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+    background: var(--primary-glow);
     border-radius: 50%;
     filter: blur(100px);
     z-index: 0;

@@ -126,13 +126,14 @@ export default function BidForm({
 
             <div className={styles.inputGroup}>
                 <label htmlFor="proposal">Message / Proposal (Optional)</label>
-                <textarea 
-                    id="proposal" 
-                    name="proposal" 
+                <textarea
+                    id="proposal"
+                    name="proposal"
                     value={formData.proposal}
                     onChange={handleChange}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); } }}
                     className={styles.textarea}
-                    placeholder="I have exactly what you need in pristine condition..."
+                    placeholder="I have exactly what you need in pristine condition... (Ctrl+Enter to submit)"
                     rows={2}
                 />
             </div>

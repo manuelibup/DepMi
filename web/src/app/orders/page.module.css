@@ -78,8 +78,8 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    background: linear-gradient(145deg, var(--card-bg) 0%, var(--bg-elevated) 100%);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .financialsHeader {
@@ -206,7 +206,8 @@
 }
 
 /* Status Colors */
-.status_PENDING_PAYMENT, .status_ESCROW_HELD {
+.status_PENDING_PAYMENT,
+.status_ESCROW_HELD {
     background: rgba(253, 203, 110, 0.15);
     color: #FDCB6E;
     border: 1px solid rgba(253, 203, 110, 0.3);

@@ -3,6 +3,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 20px;
+    height: var(--header-height);
+    box-sizing: border-box;
     background: var(--card-bg-glass);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -10,17 +12,18 @@
     top: 0;
     z-index: 50;
     border-bottom: 1px solid var(--card-border);
-    transition: transform 0.3s ease, top 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
 .headerHidden {
-    top: -80px;
+    transform: translateY(-100%);
 }
 
-/* Hide mobile header on desktop — sidebar handles navigation */
+/* Mobile-optimized header, but visible everywhere */
 @media (min-width: 640px) {
     .header {
-        display: none;
+        /* Keep it visible but maybe adjust desktop padding if needed */
+        /* display: flex; (already default) */
     }
 }
 
@@ -40,8 +43,8 @@
 
 .logoMark {
     display: block;
-    /* Optional: apply a subtle drop shadow to the image if it fits the brand */
-    filter: drop-shadow(0px 2px 4px rgba(0, 230, 118, 0.2));
+    /* Updated drop shadow to match brand emerald green */
+    filter: drop-shadow(0px 2px 4px rgba(5, 150, 105, 0.2));
 }
 
 .logoText {
@@ -53,10 +56,7 @@
     /* Tighter kerning makes it look more tailored/premium */
     margin: 0;
     line-height: 1;
-    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--primary);
 }
 
 .desktopNav {

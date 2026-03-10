@@ -1,14 +1,14 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/Providers";
-import DesktopSidebar from "@/components/DesktopSidebar";
+import NavigationWrapper from "@/components/NavigationWrapper";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://depmi.com'),
   title: "DepMi — Buy Here. Build Here. Grow Here.",
   description:
-    "The social commerce platform for African entrepreneurs. Discover products, request what you need, and transact with trust.",
+    "Buy Here. Build Here. Grow Here. DepMi is the social commerce platform for African entrepreneurs.",
   icons: {
     icon: '/depmi-logo.svg',
   },
@@ -48,10 +48,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <DesktopSidebar />
-          <div className="desktop-content">
+          <NavigationWrapper>
             {children}
-          </div>
+          </NavigationWrapper>
         </Providers>
       </body>
     </html>

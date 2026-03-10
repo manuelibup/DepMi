@@ -62,8 +62,9 @@ export default function PayoutSettingsForm({ slug }: Props) {
                     const data = await res.json();
                     setFormData(prev => ({ ...prev, bankAccountName: data.accountName }));
                 } else {
+                    const data = await res.json().catch(() => ({}));
                     setFormData(prev => ({ ...prev, bankAccountName: '' }));
-                    setMsg({ text: 'Could not verify account number', type: 'error' });
+                    setMsg({ text: data.message || 'Could not verify account number', type: 'error' });
                 }
             } catch (err) {
                 setMsg({ text: 'Error verifying account', type: 'error' });

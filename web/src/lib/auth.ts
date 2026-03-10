@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { AuthProvider, Account as PrismaAccount } from "@prisma/client";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
+import { seedDefaultFollows } from "./auto-follow";
 
 // Extend NextAuth Session to expose the DB user id on session.user.id
 declare module "next-auth" {
@@ -114,13 +115,13 @@ export const authOptions: NextAuthOptions = {
                         const baseUsername = (user.name || user.email.split("@")[0])
                             .toLowerCase()
                             .replace(/\s+/g, '')
-                            .replace(/[^\w-]/g, '');
+                            .replace(/[^a-z0-9_]/g, '');
 
                         // Add a small random suffix to ensure uniqueness on first try
                         const randomSuffix = Math.random().toString(36).substring(2, 6);
                         const finalUsername = `${baseUsername}${randomSuffix}`;
 
-                        await prisma.user.create({
+                        const createdUser = await prisma.user.create({
                             data: {
                                 email: user.email,
                                 username: finalUsername,
@@ -134,6 +135,8 @@ export const authOptions: NextAuthOptions = {
                                 },
                             },
                         });
+                        // Seed default follows (non-blocking)
+                        void seedDefaultFollows(createdUser.id);
                     }
                     return true;
                 } catch (error) {

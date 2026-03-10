@@ -23,13 +23,13 @@
 .coverFallback {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
+    background: var(--primary);
 }
 
 .coverScrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 60%);
+    background: rgba(0, 0, 0, 0.4);
     pointer-events: none;
     z-index: 1;
 }
@@ -262,7 +262,7 @@
     left: 7px;
     font-size: 0.8rem;
     color: #FFD700;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
     line-height: 1;
     z-index: 2;
 }
@@ -276,7 +276,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #fff;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(4px);
     border-radius: 4px;
     padding: 3px 6px;

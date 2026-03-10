@@ -18,6 +18,7 @@ interface OrderItem {
     buyer?: { displayName: string; username: string };
     trackingNo?: string;
     deliveryMethod?: string;
+    hasReviewed?: boolean;
 }
 
 interface Props {
@@ -67,7 +68,7 @@ function OrderCard({ order, role, onStatusChange }: {
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
-    const [hasReviewed, setHasReviewed] = useState(false);
+    const [hasReviewed, setHasReviewed] = useState(order.hasReviewed || false);
     const [reviewRating, setReviewRating] = useState(0);
     const [reviewText, setReviewText] = useState('');
     const [otpCode, setOtpCode] = useState('');

@@ -170,7 +170,9 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             console.log('Signature received, starting Cloudinary upload...');
 
             const formData = new FormData();
-            formData.append('file', blob);
+            // Important: Add a filename so Cloudinary can correctly infer the extension/resource_type
+            const extension = blob.type.split('/')[1] || 'webm';
+            formData.append('file', blob, `voice-note.${extension}`);
             formData.append('api_key', apiKey);
             formData.append('timestamp', timestamp.toString());
             formData.append('signature', signature);
@@ -203,7 +205,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             if (text.trim()) handleSend({ text: text.trim(), type: 'TEXT' });
         }
@@ -404,7 +406,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                     value={text}
                                     onChange={(e) => setText(e.target.value)}
                                     onKeyDown={handleKeyDown}
-                                    placeholder="Message..."
+                                    placeholder="Message... (Ctrl+Enter to send)"
                                     className={styles.textarea}
                                     rows={1}
                                 />

@@ -30,7 +30,7 @@
 .avatar {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    background: #ecfdf5;
     color: var(--primary);
     border-radius: 50%;
     display: flex;

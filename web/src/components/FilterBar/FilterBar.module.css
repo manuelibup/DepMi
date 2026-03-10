@@ -3,7 +3,7 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     position: sticky;
-    top: 61px;
+    top: var(--header-height);
     z-index: 40;
     border-bottom: 1px solid var(--card-border);
     margin-top: -1px;

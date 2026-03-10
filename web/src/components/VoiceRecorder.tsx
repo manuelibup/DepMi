@@ -38,8 +38,9 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRe
 
             mediaRecorder.onstop = () => {
                 console.log('MediaRecorder stopped, creating blob...');
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                console.log('Blob created:', blob.size, 'bytes. Calling onRecordingComplete...');
+                const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+                const blob = new Blob(chunksRef.current, { type: mimeType });
+                console.log(`Blob created: ${blob.size} bytes, type: ${mimeType}. Calling onRecordingComplete...`);
                 onRecordingComplete(blob);
                 stream.getTracks().forEach(track => track.stop());
             };

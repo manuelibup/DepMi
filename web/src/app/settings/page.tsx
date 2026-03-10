@@ -35,7 +35,7 @@ export default function SettingsPage() {
     useEffect(() => {
         if (session?.user) {
             setDisplayName(session.user.name ?? '');
-            setUsername(session.user.username ?? '');
+            setUsername((session.user.username ?? '').toLowerCase().replace(/[^a-z0-9_]/g, ''));
             setAvatarUrl(session.user.image ?? '');
         }
     }, [session]);
@@ -244,6 +244,7 @@ export default function SettingsPage() {
                             <textarea
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSave(e as unknown as React.FormEvent); } }}
                                 maxLength={160}
                                 rows={2}
                                 placeholder="Tell people a bit about yourself..."
