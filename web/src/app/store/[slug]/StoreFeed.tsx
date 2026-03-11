@@ -144,11 +144,12 @@ export default function StoreFeed({ storeId, storeSlug, sessionUserId, isOwner }
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            {images.length < 4 && (
+                            {images.length < 10 && (
                                 <CloudinaryUploader
                                     onUploadSuccess={(res: CloudinaryUploadResult) => setImages(prev => [...prev, res.secure_url])}
                                     accept="image/*"
                                     maxSizeMB={10}
+                                    multiple
                                     buttonText="Photo"
                                 />
                             )}

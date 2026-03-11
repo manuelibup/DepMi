@@ -15,6 +15,7 @@ interface CloudinaryUploaderProps {
   maxSizeMB?: number;
   maxDurationSeconds?: number;
   buttonText?: string;
+  multiple?: boolean;
 }
 
 export default function CloudinaryUploader({
@@ -23,46 +24,47 @@ export default function CloudinaryUploader({
   maxSizeMB = 100, // Default to 100MB
   maxDurationSeconds = 60, // Default to 60s
   buttonText = 'Upload Media',
+  multiple = false,
 }: CloudinaryUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const resetInput = () => {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-    // Reset states
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
     setError('');
     setProgress(0);
 
-    // 1. File Size Validation (100MB limit)
-    if (file.size > maxSizeMB * 1024 * 1024) {
-      setError(`File exceeds the ${maxSizeMB}MB limit.`);
-      // Reset input specifically for Chrome
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    // 2. Video Duration Validation
-    if (file.type.startsWith('video/')) {
-      try {
-        const duration = await getVideoDuration(file);
-        if (duration > maxDurationSeconds) {
-          setError(`Video length must be ${maxDurationSeconds} seconds or less.`);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          return;
-        }
-      } catch {
-        setError('Could not read video metadata.');
-        if (fileInputRef.current) fileInputRef.current.value = '';
+    for (const file of files) {
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        setError(`"${file.name}" exceeds the ${maxSizeMB}MB limit.`);
+        resetInput();
         return;
       }
+      if (file.type.startsWith('video/')) {
+        try {
+          const duration = await getVideoDuration(file);
+          if (duration > maxDurationSeconds) {
+            setError(`Video must be ${maxDurationSeconds}s or less.`);
+            resetInput();
+            return;
+          }
+        } catch {
+          setError('Could not read video metadata.');
+          resetInput();
+          return;
+        }
+      }
+      await uploadToCloudinary(file);
     }
-
-    // Proceed to upload
-    uploadToCloudinary(file);
+    resetInput();
   };
 
   const getVideoDuration = (file: File): Promise<number> => {
@@ -180,6 +182,7 @@ export default function CloudinaryUploader({
         ref={fileInputRef}
         onChange={handleFileChange}
         accept={accept}
+        multiple={multiple}
         style={{ display: 'none' }}
       />
 

@@ -24,7 +24,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         price: '', // Raw unformatted number string for API
         displayPrice: '', // Formatted string with commas for UI
         category: 'OTHER',
-        imageUrl: '',
+        imageUrls: [] as string[],
         videoUrl: '',
         stock: '1',
         displayStock: '1',
@@ -87,7 +87,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
     };
 
     const handleClose = () => {
-        if (form.title || form.description || form.price || form.imageUrl || form.videoUrl || Number(form.stock) > 1) {
+        if (form.title || form.description || form.price || form.imageUrls.length > 0 || form.videoUrl || Number(form.stock) > 1) {
             const save = confirm("Save as draft?");
             if (save) {
                 localStorage.setItem(`product_draft_${storeId}`, JSON.stringify(form));
@@ -121,7 +121,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             price: Number(form.price),
             currency: form.currency,
             category: form.category,
-            images: form.imageUrl ? [form.imageUrl] : [],
+            images: form.imageUrls,
             videoUrl: form.videoUrl || null,
             stock: Number(form.stock) || 1,
             deliveryFee: Number(form.deliveryFee) || 0,
@@ -210,26 +210,32 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 />
 
                 <div className={styles.mediaSection}>
-                    {!form.imageUrl && (
-                        <CloudinaryUploader 
-                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm({ ...form, imageUrl: res.secure_url })} 
-                            accept="image/*"
-                            maxSizeMB={10} 
-                            buttonText="Add Photo" 
-                        />
-                    )}
-                    {form.imageUrl && (
-                        <div className={styles.mediaPreview}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={form.imageUrl} alt="Preview" />
-                            <button
-                                type="button"
-                                className={styles.removeBtn}
-                                onClick={() => setForm({ ...form, imageUrl: '' })}
-                            >
-                                ✕
-                            </button>
+                    {/* Image previews */}
+                    {form.imageUrls.length > 0 && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                            {form.imageUrls.map((url, i) => (
+                                <div key={i} className={styles.mediaPreview}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={url} alt={`Photo ${i + 1}`} />
+                                    <button
+                                        type="button"
+                                        className={styles.removeBtn}
+                                        onClick={() => setForm(f => ({ ...f, imageUrls: f.imageUrls.filter((_, idx) => idx !== i) }))}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
                         </div>
+                    )}
+                    {form.imageUrls.length < 10 && (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
+                            accept="image/*"
+                            maxSizeMB={10}
+                            multiple
+                            buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                        />
                     )}
 
                     {!form.videoUrl && (

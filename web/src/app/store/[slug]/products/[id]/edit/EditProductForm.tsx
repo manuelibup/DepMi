@@ -20,6 +20,7 @@ interface ProductData {
     currency: string;
     category: string;
     imageUrl: string;
+    imageUrls?: string[];
     videoUrl: string;
     inStock: boolean;
     isPortfolioItem: boolean;
@@ -39,7 +40,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
         price: rawPrice,
         displayPrice: Number(rawPrice).toLocaleString(),
         category: product.category,
-        imageUrl: product.imageUrl,
+        imageUrls: product.imageUrls ?? (product.imageUrl ? [product.imageUrl] : []),
         videoUrl: product.videoUrl,
         inStock: product.inStock,
         isPortfolioItem: product.isPortfolioItem,
@@ -91,7 +92,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     price: Number(form.price),
                     currency: form.currency,
                     category: form.category,
-                    imageUrl: form.imageUrl,
+                    images: form.imageUrls,
                     videoUrl: form.videoUrl || null,
                     inStock: form.inStock,
                     isPortfolioItem: form.isPortfolioItem,
@@ -171,25 +172,31 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                 />
 
                 <div className={styles.mediaSection}>
-                    {!form.imageUrl ? (
+                    {form.imageUrls.length > 0 && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                            {form.imageUrls.map((url, i) => (
+                                <div key={i} className={styles.mediaPreview}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={url} alt={`Photo ${i + 1}`} />
+                                    <button
+                                        type="button"
+                                        className={styles.removeBtn}
+                                        onClick={() => setForm(f => ({ ...f, imageUrls: f.imageUrls.filter((_, idx) => idx !== i) }))}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {form.imageUrls.length < 10 && (
                         <CloudinaryUploader
-                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrl: res.secure_url }))}
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
-                            buttonText="Add Photo"
+                            multiple
+                            buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
                         />
-                    ) : (
-                        <div className={styles.mediaPreview}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={form.imageUrl} alt="Preview" />
-                            <button
-                                type="button"
-                                className={styles.removeBtn}
-                                onClick={() => setForm(f => ({ ...f, imageUrl: '' }))}
-                            >
-                                ✕
-                            </button>
-                        </div>
                     )}
 
                     {!form.videoUrl ? (

@@ -8,7 +8,7 @@ import { PostType } from '@prisma/client';
 const createSchema = z.object({
     body: z.string().min(1).max(2000),
     type: z.nativeEnum(PostType).default('POST'),
-    images: z.array(z.string().url()).max(4).optional(),
+    images: z.array(z.string().url()).max(10).optional(),
 });
 
 // GET /api/posts?storeId=xxx&cursor=xxx  — paginated posts for a store

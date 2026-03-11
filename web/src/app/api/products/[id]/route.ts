@@ -46,7 +46,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title, description, price, currency, category, imageUrl, videoUrl, inStock, isPortfolioItem } = body;
+    const { title, description, price, currency, category, images, imageUrl, videoUrl, inStock, isPortfolioItem } = body;
 
     const updated = await prisma.product.update({
         where: { id },
@@ -62,11 +62,18 @@ export async function PATCH(
         },
     });
 
-    if (imageUrl !== undefined) {
+    // Accept `images: string[]` (new multi-image) or legacy `imageUrl: string`
+    const imageList: string[] = Array.isArray(images)
+        ? images
+        : imageUrl !== undefined
+            ? (imageUrl ? [imageUrl] : [])
+            : [];
+
+    if (Array.isArray(images) || imageUrl !== undefined) {
         await prisma.productImage.deleteMany({ where: { productId: id } });
-        if (imageUrl) {
-            await prisma.productImage.create({
-                data: { productId: id, url: imageUrl, order: 0 },
+        if (imageList.length > 0) {
+            await prisma.productImage.createMany({
+                data: imageList.map((url: string, order: number) => ({ productId: id, url, order })),
             });
         }
     }
