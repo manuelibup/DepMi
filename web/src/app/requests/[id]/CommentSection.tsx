@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useAuthGate } from '@/context/AuthGate';
@@ -76,12 +76,16 @@ export default function CommentSection({
     canComment,
     isLoggedIn,
     showTitle = true,
+    prefillText,
+    onPrefillConsumed,
 }: {
     apiPath: string; // e.g. /api/demands/[id]/comments or /api/products/[id]/comments
     initialComments: CommentItem[];
     canComment: boolean;
     isLoggedIn: boolean;
     showTitle?: boolean;
+    prefillText?: string;
+    onPrefillConsumed?: () => void;
 }) {
     const { data: session, status } = useSession();
     const { openGate } = useAuthGate();
@@ -105,6 +109,20 @@ export default function CommentSection({
     const userSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // When a prefill mention is pushed in (e.g. from "Ask" button on a bid card)
+    useEffect(() => {
+        if (prefillText) {
+            setText(prefillText);
+            setTimeout(() => {
+                textareaRef.current?.focus();
+                const len = prefillText.length;
+                textareaRef.current?.setSelectionRange(len, len);
+            }, 50);
+            onPrefillConsumed?.();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prefillText]);
 
     const searchProducts = useCallback((q: string) => {
         if (searchTimeout.current) clearTimeout(searchTimeout.current);

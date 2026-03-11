@@ -69,6 +69,27 @@ export async function POST(
         }).catch(() => {}); // fire-and-forget
     }
 
+    // If the commenter IS the poster, notify all unique bidders (store owners)
+    if (demand.userId === session.user.id) {
+        const bids = await prisma.bid.findMany({
+            where: { demandId },
+            include: { store: { select: { owner: { select: { id: true } } } } }
+        });
+        const bidderIds = [...new Set(bids.map((b: any) => b.store.owner.id).filter((id: string) => id !== session.user.id))];
+        if (bidderIds.length > 0) {
+            await prisma.notification.createMany({
+                data: bidderIds.map((uid: string) => ({
+                    userId: uid,
+                    type: NotificationType.COMMENT_RECEIVED,
+                    title: 'Reply on a request you bid on',
+                    body: `${comment.author.displayName}: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
+                    link: `/requests/${demandId}#discussion`,
+                })),
+                skipDuplicates: true,
+            }).catch(() => {});
+        }
+    }
+
     // Extract @mentions and notify users
     const mentions = Array.from(new Set<string>(text.match(/@([a-zA-Z0-9_]+)/g)?.map((m: string) => m.substring(1)) || []));
     if (mentions.length > 0) {

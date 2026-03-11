@@ -29,7 +29,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             bids: {
                 orderBy: { createdAt: 'desc' },
                 include: {
-                    store: { select: { name: true, depCount: true, depTier: true } },
+                    store: { select: { name: true, slug: true, depCount: true, depTier: true, owner: { select: { id: true, username: true } } } },
                     product: { select: { title: true, images: { take: 1, select: { url: true } } } }
                 }
             },
@@ -78,7 +78,9 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         amount: Number(bid.amount),
         proposal: bid.proposal,
         isAccepted: bid.isAccepted,
-        store: { name: bid.store.name },
+        store: { name: bid.store.name, slug: bid.store.slug },
+        ownerUserId: bid.store.owner?.id ?? null,
+        ownerUsername: bid.store.owner?.username ?? null,
         product: bid.product ? { title: bid.product.title } : null,
     }));
 
@@ -168,6 +170,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     storeProducts={storeProducts}
                     canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
                     isLoggedIn={!!userId}
+                    sessionUserId={userId ?? undefined}
                     apiPath={`/api/demands/${demand.id}/comments`}
                 />
 

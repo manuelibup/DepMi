@@ -849,3 +849,79 @@
 .commentGateBtn:hover {
     opacity: 0.88;
 }
+
+/* ── Bid card store info + action buttons ────────────────── */
+
+.bidStoreInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bidStoreName {
+    font-weight: 700;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color var(--transition-fast);
+}
+
+.bidStoreName:hover {
+    color: var(--primary);
+}
+
+.bidOwnerHandle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.bidOwnerHandle:hover {
+    color: var(--primary);
+}
+
+.bidActions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.bidContactBtns {
+    display: flex;
+    gap: 8px;
+}
+
+.bidAskBtn,
+.bidMsgBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-full);
+    padding: 6px 13px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.bidAskBtn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: rgba(0, 200, 83, 0.06);
+}
+
+.bidMsgBtn:hover {
+    color: #0984E3;
+    border-color: #0984E3;
+    background: rgba(9, 132, 227, 0.06);
+}
+
+.bidMsgBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
