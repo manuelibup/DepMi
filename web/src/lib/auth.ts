@@ -175,14 +175,20 @@ export const authOptions: NextAuthOptions = {
             // Always fetch the latest from DB if we don't have a username or on sign-in
             // This ensures server-side redirects work after onboarding
             if (token.email && (!token.username || trigger === "signIn")) {
-                const dbUser = await prisma.user.findUnique({
-                    where: { email: token.email },
-                    select: { id: true, username: true, avatarUrl: true },
-                });
-                if (dbUser) {
-                    token.id = dbUser.id;
-                    token.username = dbUser.username;
-                    token.picture = dbUser.avatarUrl ?? null;
+                try {
+                    const dbUser = await prisma.user.findUnique({
+                        where: { email: token.email },
+                        select: { id: true, username: true, avatarUrl: true },
+                    });
+                    if (dbUser) {
+                        token.id = dbUser.id;
+                        token.username = dbUser.username;
+                        token.picture = dbUser.avatarUrl ?? null;
+                    }
+                } catch (err) {
+                    // DB temporarily unreachable — return the token as-is so the
+                    // session survives without crashing the entire page request.
+                    console.error('[JWT] DB lookup failed, using cached token:', err);
                 }
             }
             return token;

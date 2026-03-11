@@ -125,7 +125,8 @@ export async function POST(
       data: { status: 'DELIVERED', escrowStatus: 'RELEASING' },
     })
     console.error('[orders/confirm] Payout failed:', err)
-    return NextResponse.json({ error: 'Payout failed — support has been notified' }, { status: 502 })
+    const errorMsg = (err instanceof Error) ? err.message : 'Payout failed'
+    return NextResponse.json({ error: `${errorMsg} — support has been notified` }, { status: 502 })
   }
 
   // Finalize: COMPLETED + RELEASED + award Deps

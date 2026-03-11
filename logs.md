@@ -38,6 +38,65 @@
 
 ---
 
+## Session 53 — Mar 11, 2026 — Features, Security Audit & Production Crash Fix
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Work done
+
+#### 1. Vendor email notifications on new orders
+- Added `NEW_ORDER` case to `notifyOrderUpdate()` in `web/src/lib/notify-watchers.ts`
+- Added `escHtml()` helper to prevent HTML injection in email templates; applied across all templates
+- `web/src/app/api/checkout/callback/route.ts` — triggers seller notification after buyer confirmation
+
+#### 2. Security audit & fixes (Gemini code review)
+- **`/api/admin/blast-waitlist`** — changed GET → POST; secret moved from query param to request body; added idempotency via `launchEmailSentAt` + batch `limit` param to avoid Vercel timeouts
+- **`/api/admin/seed-follows`** — same GET → POST + body secret fix
+- **`/api/auth/send-email-otp`** — replaced `Math.random()` with `crypto.randomInt()` (CSPRNG); changed OTP type from `EMAIL_RESET` → `EMAIL_VERIFICATION` (added new enum value)
+- **`/api/auth/verify-email`** — updated to use `EMAIL_VERIFICATION` type
+- **`/api/user/update`** — added phone number change detection; only resets `phoneVerified` when number actually changes
+- **`web/src/lib/email.ts`** — added `escHtml()` + applied to welcome email
+- **Schema** — added `launchEmailSentAt DateTime?` to Waitlist; added `EMAIL_VERIFICATION` to OtpType enum
+
+#### 3. Store star ratings (CGPA-style aggregate)
+- `Store.rating` and `Store.reviewCount` were already maintained by POST /api/reviews
+- Added `StarRating` SVG server component to `web/src/app/store/[slug]/page.tsx`
+- Added star row to store header (shows rating + count, or "No reviews yet")
+
+#### 4. Product-level reviews (separate from comments)
+- Added `productId String?` to Review model + `product Product? @relation("ProductReviews")`; backward-compatible (null = store review only)
+- Added `reviews Review[] @relation("ProductReviews")` to Product model
+- `GET /api/reviews?productId=xxx` — public endpoint returning reviews list + avgRating + count
+- `POST /api/reviews` — updated to accept and store optional `productId`
+- New `web/src/app/p/[id]/ProductReviews.tsx` client component — SVG star rating, time-ago, avatar, verified purchase summary
+- `OrdersDashboard.tsx` — passes `productId` in review POST body
+
+#### 5. Emoji → SVG icon sweep (all recently touched files)
+- Replaced all emoji-as-icon usage across: `OrdersDashboard.tsx`, `p/[id]/page.tsx`, `store/[slug]/page.tsx`
+- Store page: `TIER_LABELS` emoji strings → `TIER_TEXT` + `TierIcon` component (per-tier SVG)
+- `error.tsx` / `global-error.tsx`: ⚠️, 🔄 — noted, kept as-is (caught in next sweep)
+
+#### 6. Production crash fix — `EPERM chmod` on Vercel (root cause of all hiccup errors)
+- **Root cause (confirmed via Sentry):** `engineType = "binary"` in `schema.prisma` caused Prisma to try `chmod` on the query engine binary at runtime. Vercel's serverless filesystem is read-only → EPERM → every single Prisma query fails → error boundary fires.
+- **Fix:** Changed `engineType = "binary"` → `engineType = "library"` in `schema.prisma`; ran `prisma generate`
+- **Secondary fix:** Wrapped JWT callback DB lookup in try-catch (`web/src/lib/auth.ts`) so a transient DB error no longer crashes `getServerSession()` and takes down every page
+- **Null-safety fixes:** `demand.user.displayName.substring()` in home feed and `otherUser.displayName.substring()` in messages — now fall back to username or '?'
+
+#### 7. Onboarding — real-time username availability
+- New `GET /api/user/check-username` endpoint — validates chars, length, and DB uniqueness
+- `web/src/app/onboarding/page.tsx` — 400ms debounced check; green check / red X inline feedback; submit button disabled until `available`; race condition handled on submit
+
+### Schema changes pushed
+- `launchEmailSentAt DateTime?` on Waitlist
+- `EMAIL_VERIFICATION` added to OtpType enum
+- `productId String?` + relation on Review; `reviews` relation on Product
+
+### Vercel action required
+- Set `DATABASE_URL` to **Neon pooler URL** (`-pooler.` in hostname) — prevents cold-start timeouts
+- Set `DIRECT_URL` to Neon direct URL — required by schema `directUrl = env("DIRECT_URL")`
+
+---
+
 ## Session 52 — Mar 9, 2026 — Production Bug Fixes (Profile 404 + Settings "Invalid input")
 **Agent:** Claude Sonnet 4.6
 **Human:** Manuel

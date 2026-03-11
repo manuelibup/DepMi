@@ -107,7 +107,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 id: demand.id,
                 username: demand.user.username ?? undefined,
                 user: demand.user.displayName,
-                initials: demand.user.displayName.substring(0, 2).toUpperCase(),
+                initials: (demand.user.displayName || demand.user.username || '??').substring(0, 2).toUpperCase(),
                 avatarUrl: demand.user.avatarUrl ?? null,
                 timeAgo: new Date(demand.createdAt).toLocaleDateString(),
                 text: demand.text || '',

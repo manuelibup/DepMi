@@ -20,7 +20,7 @@ export default function LandingPage() {
                     </div>
                     <div className={styles.navActions}>
                         <button onClick={() => signIn()} className={styles.loginBtn}>Log in</button>
-                        <Link href="/signup" className={styles.signupBtn}>Sign up</Link>
+                        <Link href="/register" className={styles.signupBtn}>Sign up</Link>
                     </div>
                 </div>
             </header>
@@ -51,7 +51,7 @@ export default function LandingPage() {
                                 <span>or</span>
                             </div>
 
-                            <Link href="/signup" className={styles.createAccountBtn}>
+                            <Link href="/register" className={styles.createAccountBtn}>
                                 Create account
                             </Link>
 

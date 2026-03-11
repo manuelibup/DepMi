@@ -288,7 +288,12 @@ function OrderCard({ order, role, onStatusChange }: {
                                     }}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Checking...' : '✅ Verify Payment'}
+                                    {loading ? 'Checking...' : (
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                            Verify Payment
+                                        </span>
+                                    )}
                                 </button>
                             </div>
                         )}
@@ -340,7 +345,7 @@ function OrderCard({ order, role, onStatusChange }: {
                                 </span>
                             </button>
                         )}
-                        {localStatus === 'SHIPPED' && (
+                        {['SHIPPED', 'DELIVERED'].includes(localStatus) && (
                             <>
                                 <button
                                     className={`${styles.actionBtn} ${styles.primary}`}

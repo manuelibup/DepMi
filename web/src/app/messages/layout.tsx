@@ -61,7 +61,7 @@ export default async function MessagesLayout({ children }: { children: React.Rea
                                     <img src={otherUser.avatarUrl} alt="" className={styles.avatar} />
                                 ) : (
                                     <div className={styles.avatar}>
-                                        {otherUser.displayName.substring(0, 2).toUpperCase()}
+                                        {(otherUser.displayName || otherUser.username || '?').substring(0, 2).toUpperCase()}
                                     </div>
                                 )}
                                 <div className={styles.details}>

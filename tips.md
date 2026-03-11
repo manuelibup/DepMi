@@ -328,3 +328,57 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
      ```
 - **Also fix:** `displayName: z.string().min(1)` not `min(2)` — a 1-char display name is technically valid and blocking it causes "Invalid input" when a user sets a very short name.
 - **Neon `npx prisma db push` P1001 ("Can't reach database server"):** Neon free-tier databases auto-pause after inactivity. If you get P1001, open the **Neon Console → your project** to wake it up, then retry. Production traffic (Vercel) wakes the DB automatically via the connection pooler URL — the issue only happens with direct `psql`/CLI connections from a sleeping state.
+
+---
+
+## 🔥 23. Prisma `engineType = "binary"` Kills Vercel Serverless (EPERM chmod)
+
+*This tip was added after Sentry revealed every single production Prisma query failing with EPERM.*
+
+- **The Issue**: Every page on `depmi.com` shows the error boundary ("Oops! Just a hiccup"). Sentry shows: `EPERM: operation not permitted, chmod '/var/task/web/node_modules/.prisma/client/query-engine-rhel-openssl-3.0.x'`
+- **The Cause**: `engineType = "binary"` in `schema.prisma` tells Prisma to use a native binary. On first run, Prisma attempts to `chmod +x` that binary. Vercel's Lambda filesystem is **read-only** (except `/tmp`) — `chmod` fails → `PrismaClientKnownRequestError` on **every single query**.
+- **The Fix**: Change `engineType = "binary"` to `engineType = "library"` (or remove the line — `library` is the default in Prisma 6+). Then run `npx prisma generate` locally before pushing.
+  ```prisma
+  generator client {
+    provider   = "prisma-client-js"
+    engineType = "library"   // ← was "binary", never use binary on Vercel
+  }
+  ```
+- **Rule**: Never set `engineType = "binary"` for any Vercel-hosted project. The `library` engine uses a native Node.js `.node` addon that doesn't need filesystem permission changes.
+
+---
+
+## 🔑 24. Neon Pooler URL vs Direct URL (Vercel Env Vars)
+
+*This tip was added after diagnosing cold-start timeouts causing intermittent page crashes.*
+
+- **The Problem**: Neon free-tier auto-pauses DB after ~5 min of inactivity. When Vercel serverless hits a paused DB, the TCP handshake takes 1–5 seconds. Combined with other queries, the function can exceed Vercel's timeout and crash.
+- **The Fix**: Use Neon's **PgBouncer pooler URL** as `DATABASE_URL`. The pooler maintains warm connections and routes traffic even during DB cold-starts.
+- **Two env vars needed on Vercel:**
+  | Variable | Value | Purpose |
+  |---|---|---|
+  | `DATABASE_URL` | Pooler URL (`...ep-xxx-pooler.aws.neon.tech/...`) | All runtime Prisma queries |
+  | `DIRECT_URL` | Direct URL (`...ep-xxx.aws.neon.tech/...`) | `prisma db push` / migrations only |
+- **In `schema.prisma`**: `url = env("DATABASE_URL")` + `directUrl = env("DIRECT_URL")` — both must be set on Vercel or Prisma throws at startup.
+- **How to get the pooler URL**: Neon Dashboard → your project → Connection Details → toggle **"Pooled connection"** ON.
+
+---
+
+## 🛡️ 25. JWT Callback DB Failures Crash Every Page
+
+*This tip was added after discovering getServerSession() was the common failure point for both home and messages pages.*
+
+- **The Problem**: NextAuth's `jwt` callback fetches the user from DB (`prisma.user.findUnique`) to keep the session token up-to-date. If the DB is down or cold-starting, this throws — and since `getServerSession()` is called in nearly every server page, the error propagates and crashes the entire page render.
+- **The Fix**: Wrap the DB lookup in try-catch and return the cached token on failure. The user stays logged in with slightly stale data rather than seeing an error boundary.
+  ```typescript
+  if (token.email && (!token.username || trigger === "signIn")) {
+      try {
+          const dbUser = await prisma.user.findUnique({ ... });
+          if (dbUser) { token.id = dbUser.id; token.username = dbUser.username; }
+      } catch (err) {
+          console.error('[JWT] DB lookup failed, using cached token:', err);
+          // Don't rethrow — return token as-is
+      }
+  }
+  ```
+- **Rule**: Any Prisma call inside NextAuth callbacks must be wrapped in try-catch. Auth callbacks run on every authenticated request — a single uncaught DB error takes down your whole app.

@@ -65,7 +65,7 @@ export async function POST(
   })
 
   // Notify all admins by email
-  const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+  const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '')
     .split(',').map(e => e.trim()).filter(Boolean)
 
   if (adminEmails.length > 0) {
