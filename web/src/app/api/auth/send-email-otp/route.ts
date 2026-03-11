@@ -57,9 +57,17 @@ export async function POST(req: Request) {
             })
         ]);
 
+        // Guard: if key is missing, fail fast with a clear server log
+        if (!process.env.RESEND_API_KEY) {
+            console.error("[send-email-otp] RESEND_API_KEY is not set in environment variables.");
+            return NextResponse.json({ message: "Email service is not configured. Contact support." }, { status: 503 });
+        }
+
+        const fromAddress = process.env.RESEND_FROM_EMAIL || "DepMi Security <security@depmi.com>";
+
         // Dispatch Email via Resend
-        const { error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || "DepMi Security <security@depmi.com>",
+        const { data: emailData, error } = await resend.emails.send({
+            from: fromAddress,
             to: email,
             subject: "Your DepMi verification code",
             html: `
@@ -73,9 +81,11 @@ export async function POST(req: Request) {
         });
 
         if (error) {
-            console.error("Resend API Error:", error);
+            console.error("[send-email-otp] Resend error:", JSON.stringify(error));
             return NextResponse.json({ message: "Failed to send email. Please try again." }, { status: 502 });
         }
+
+        console.log("[send-email-otp] Sent to", email, "id:", emailData?.id);
 
         return NextResponse.json({ message: "Verification code sent successfully!" }, { status: 200 });
 
