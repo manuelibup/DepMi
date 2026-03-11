@@ -6,6 +6,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    overflow: hidden;
 }
 
 .announcement {
@@ -84,31 +85,152 @@
     word-break: break-word;
 }
 
-/* Image grid */
-.imageGrid {
-    display: grid;
-    gap: 4px;
-    border-radius: 12px;
-    overflow: hidden;
-}
+/* ── Single image — natural aspect ratio ──────────────── */
 
-.imgGrid1 { grid-template-columns: 1fr; }
-.imgGrid2 { grid-template-columns: 1fr 1fr; }
-.imgGrid3 { grid-template-columns: 1fr 1fr; }
-.imgGrid4 { grid-template-columns: 1fr 1fr; }
-
-.imageCell {
-    position: relative;
-    aspect-ratio: 1;
+.singleImage {
+    /* Bleed to card edges */
+    margin: 0 -16px;
     overflow: hidden;
+    border-radius: 0;
     background: var(--bg-elevated);
 }
 
-.imgGrid1 .imageCell {
-    aspect-ratio: 16 / 10;
+/* First child of card: round the top too */
+.card > .singleImage:first-child {
+    margin-top: -16px;
+    border-radius: 16px 16px 0 0;
 }
 
-/* Actions */
+.singleImg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 560px;
+    object-fit: contain;
+    background: var(--bg-elevated);
+}
+
+/* ── Carousel ─────────────────────────────────────────── */
+
+.carousel {
+    position: relative;
+    /* Bleed to card edges */
+    margin: 0 -16px;
+    overflow: hidden;
+    border-radius: 0;
+    background: var(--bg-elevated);
+    /* prevent text-select during swipe */
+    user-select: none;
+}
+
+.carouselTrack {
+    display: flex;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.carouselSlide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    background: var(--bg-elevated);
+}
+
+.carouselImg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 560px;
+    object-fit: contain;
+    background: var(--bg-elevated);
+    pointer-events: none; /* prevents drag-image interference */
+}
+
+/* Counter badge: "2 / 5" */
+.counter {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    pointer-events: none;
+    letter-spacing: 0.03em;
+}
+
+/* Arrow buttons — hidden on mobile, shown on desktop */
+.arrow {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    z-index: 2;
+}
+
+.arrow:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.arrowLeft { left: 10px; }
+.arrowRight { right: 10px; }
+
+@media (hover: hover) and (pointer: fine) {
+    .carousel:hover .arrow {
+        display: flex;
+    }
+}
+
+/* Dots */
+.dots {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    pointer-events: none;
+}
+
+/* Show dots as clickable when not many */
+.dots {
+    pointer-events: auto;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+
+.dotActive {
+    background: #fff;
+    transform: scale(1.3);
+}
+
+/* ── Actions ─────────────────────────────────────────── */
+
 .actions {
     display: flex;
     gap: 16px;
@@ -145,7 +267,8 @@
     color: #e0004e;
 }
 
-/* Comments */
+/* ── Comments ────────────────────────────────────────── */
+
 .commentsSection {
     display: flex;
     flex-direction: column;

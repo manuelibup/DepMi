@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import styles from './PostCard.module.css';
 
@@ -34,6 +34,99 @@ function timeAgo(iso: string): string {
     if (days < 7) return `${days}d`;
     return new Date(iso).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
 }
+
+// ── Media Carousel ────────────────────────────────────────────────────────────
+
+function MediaCarousel({ images }: { images: { url: string }[] }) {
+    const [index, setIndex] = useState(0);
+    const touchStartX = useRef<number | null>(null);
+    const trackRef = useRef<HTMLDivElement>(null);
+
+    const prev = useCallback(() => setIndex(i => Math.max(0, i - 1)), []);
+    const next = useCallback(() => setIndex(i => Math.min(images.length - 1, i + 1)), [images.length]);
+
+    function onTouchStart(e: React.TouchEvent) {
+        touchStartX.current = e.touches[0].clientX;
+    }
+    function onTouchEnd(e: React.TouchEvent) {
+        if (touchStartX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        touchStartX.current = null;
+        if (dx < -40) next();
+        else if (dx > 40) prev();
+    }
+
+    // Single image — natural aspect ratio, no chrome
+    if (images.length === 1) {
+        return (
+            <div className={styles.singleImage}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                    src={images[0].url}
+                    alt=""
+                    className={styles.singleImg}
+                    loading="lazy"
+                />
+            </div>
+        );
+    }
+
+    // Multi-image carousel
+    return (
+        <div className={styles.carousel}>
+            {/* Track */}
+            <div
+                ref={trackRef}
+                className={styles.carouselTrack}
+                style={{ transform: `translateX(-${index * 100}%)` }}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
+            >
+                {images.map((img, i) => (
+                    <div key={i} className={styles.carouselSlide}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={img.url}
+                            alt=""
+                            className={styles.carouselImg}
+                            loading={i === 0 ? 'eager' : 'lazy'}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* Counter badge */}
+            <div className={styles.counter}>{index + 1} / {images.length}</div>
+
+            {/* Desktop arrow buttons */}
+            {index > 0 && (
+                <button type="button" className={`${styles.arrow} ${styles.arrowLeft}`} onClick={prev} aria-label="Previous">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                </button>
+            )}
+            {index < images.length - 1 && (
+                <button type="button" className={`${styles.arrow} ${styles.arrowRight}`} onClick={next} aria-label="Next">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
+            )}
+
+            {/* Dot indicators */}
+            <div className={styles.dots}>
+                {images.map((_, i) => (
+                    <button
+                        key={i}
+                        type="button"
+                        aria-label={`Go to image ${i + 1}`}
+                        className={`${styles.dot} ${i === index ? styles.dotActive : ''}`}
+                        onClick={() => setIndex(i)}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ── PostCard ──────────────────────────────────────────────────────────────────
 
 export default function PostCard({ data, sessionUserId }: { data: PostData; sessionUserId?: string }) {
     const [liked, setLiked] = useState(data.isLiked ?? false);
@@ -123,15 +216,9 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
             {/* Body */}
             <p className={styles.body}>{data.body}</p>
 
-            {/* Images */}
+            {/* Images — carousel or single natural-ratio */}
             {data.images.length > 0 && (
-                <div className={`${styles.imageGrid} ${styles[`imgGrid${Math.min(data.images.length, 4)}`]}`}>
-                    {data.images.slice(0, 4).map((img, i) => (
-                        <div key={i} className={styles.imageCell}>
-                            <Image src={img.url} alt="" fill sizes="240px" style={{ objectFit: 'cover' }} />
-                        </div>
-                    ))}
-                </div>
+                <MediaCarousel images={data.images} />
             )}
 
             {/* Actions */}
