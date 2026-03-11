@@ -1,0 +1,50 @@
+/* ── Tab Bar ───────────────────────────────────────────── */
+
+.tabBar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.tab {
+    flex: 1;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.tab:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
+}
+
+.tabActive {
+    color: var(--text-main);
+    border-bottom-color: var(--primary);
+}
+
+/* ── Products section ──────────────────────────────────── */
+
+.productsSection {
+    padding: 20px;
+}
+
+/* ── Updates section ───────────────────────────────────── */
+
+.updatesSection {
+    padding-top: 4px;
+}
