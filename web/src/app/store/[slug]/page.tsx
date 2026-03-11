@@ -8,6 +8,7 @@ import StoreBackButton from './StoreBackButton';
 import { authOptions } from '@/lib/auth';
 import EmptyState from '@/components/EmptyState';
 import FollowButton from '@/components/FollowButton';
+import StoreFeed from './StoreFeed';
 
 interface StorePageProps {
     params: Promise<{ slug: string }>;
@@ -216,7 +217,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
             </div>
 
             {/* ── Products ──────────────────────────────── */}
-            <section className={styles.productsSection}>
+            <section className={styles.productsSection} style={{ marginBottom: '8px' }}>
                 {visibleProducts.length === 0 ? (
                     <EmptyState
                         title="No products listed yet"
@@ -293,6 +294,14 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     </div>
                 )}
             </section>
+
+            {/* ── Store Feed (Posts / Announcements) ────── */}
+            <StoreFeed
+                storeId={store.id}
+                storeSlug={store.slug}
+                sessionUserId={session?.user?.id}
+                isOwner={isOwner}
+            />
         </main>
     );
 }

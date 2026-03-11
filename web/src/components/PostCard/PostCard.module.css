@@ -1,0 +1,216 @@
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.announcement {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 5%, var(--card-bg));
+}
+
+.announcementBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    align-self: flex-start;
+}
+
+.authorRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarInitial {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.authorMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.authorName {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.time {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.body {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Image grid */
+.imageGrid {
+    display: grid;
+    gap: 4px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.imgGrid1 { grid-template-columns: 1fr; }
+.imgGrid2 { grid-template-columns: 1fr 1fr; }
+.imgGrid3 { grid-template-columns: 1fr 1fr; }
+.imgGrid4 { grid-template-columns: 1fr 1fr; }
+
+.imageCell {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--bg-elevated);
+}
+
+.imgGrid1 .imageCell {
+    aspect-ratio: 16 / 10;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 16px;
+    padding-top: 4px;
+}
+
+.actionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 4px 0;
+    transition: color 0.15s;
+}
+
+.actionBtn:hover {
+    color: var(--text-secondary);
+}
+
+.actionBtn:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.actionBtnLiked {
+    color: #e0004e;
+}
+
+.actionBtnLiked:hover {
+    color: #e0004e;
+}
+
+/* Comments */
+.commentsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--card-border);
+}
+
+.comment {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+}
+
+.commentAuthor {
+    font-weight: 700;
+    color: var(--text-main);
+    flex-shrink: 0;
+}
+
+.commentText {
+    color: var(--text-secondary);
+    word-break: break-word;
+}
+
+.commentForm {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.commentInput {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    outline: none;
+}
+
+.commentInput:focus {
+    border-color: var(--primary);
+}
+
+.commentSubmit {
+    background: var(--primary);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #000;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+}
+
+.commentSubmit:disabled {
+    opacity: 0.4;
+    cursor: default;
+}

@@ -382,3 +382,6 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   }
   ```
 - **Rule**: Any Prisma call inside NextAuth callbacks must be wrapped in try-catch. Auth callbacks run on every authenticated request — a single uncaught DB error takes down your whole app.
+- **Tip 26 — Order Status Visibility**: When implementing buyer actions like "Mark as Received", always check for both `SHIPPED` and `DELIVERED` statuses. System-automated transitions or seller manual updates might move an order to `DELIVERED` before the buyer sees it, and they should still be able to confirm receipt or open a dispute from that state.
+- **Tip 27 — Consistent Route Naming**: Always verify the naming convention for auth-related routes. In this project, the signup page is located at `/register`, not `/signup`. Using the folder name as the route (Next.js default) is safer than assuming standard naming. Check `app/(auth)` for the source of truth.
+

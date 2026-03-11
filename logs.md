@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 54 — Mar 11, 2026 — Critical Bug Fixes (Signup, Orders, Payouts)](#session-54--mar-11-2026--critical-bug-fixes-signup-orders-payouts)
+- [Session 53 — Mar 11, 2026 — Features, Security Audit & Production Crash Fix](#session-53--mar-11-2026--features-security-audit--production-crash-fix)
 - [Session 52 — Mar 9, 2026 — Production Bug Fixes (Profile 404 + Settings "Invalid input")](#session-52--mar-9-2026--production-bug-fixes-profile-404--settings-invalid-input)
 - [Session 51 — Mar 9, 2026 — Flutterwave Migration & Desktop Layout](#session-51--mar-9-2026--flutterwave-migration--desktop-layout)
 - [Session 50 — Mar 9, 2026 — Resolution of Database Connectivity Issues](#session-50--mar-9-2026--resolution-of-database-connectivity-issues)
@@ -37,6 +39,41 @@
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
 
 ---
+
+## Session 54 — Mar 11, 2026 — Critical Bug Fixes (Signup, Orders, Payouts)
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### Work done
+
+#### 1. Signup Flow Fix
+- **Issue:** Users were hitting 404 on "Sign up" and "Create account" links on the Landing Page.
+- **Root Cause:** Links were pointing to `/signup` while the actual route is `/register`.
+- **Fix:** Updated the `LandingPage/index.tsx` to point to `/register`.
+- **Related:** Updated `NavigationWrapper.tsx` GUEST_PAGES to include both `/signup` and `/register` for sidebar exclusion.
+
+#### 2. Order Status Visibility
+- **Issue:** Buyers couldn't see the "Mark as Received" button for orders in `DELIVERED` status.
+- **Root Cause:** Condition in `OrdersDashboard.tsx` only checked for `SHIPPED`.
+- **Fix:** Updated condition to `['SHIPPED', 'DELIVERED'].includes(localStatus)`.
+
+#### 3. Payout Error Transparency
+- **Issue:** Payout failures were generic ("Payout failed"), making it hard to diagnose balance or bank issues.
+- **Fix:** Updated `api/orders/[id]/confirm` to return the specific error message from the payout helper/Flutterwave.
+
+#### 4. Dispute Notification Fallback
+- **Issue:** Uncertainty about admin notifications for disputes.
+- **Fix:** Updated `api/orders/[id]/dispute` to fallback to `ADMIN_EMAIL` if `ADMIN_EMAILS` is not set, ensuring reliable email alerts.
+
+#### 5. Database Performance and Resilience
+- Changed `engineType = "binary"` to `engineType = "library"` in `schema.prisma` to prevent permission errors on Vercel.
+- Added `connect_timeout` and `pool_timeout` to database connection strings in `.env` and `.env.local` to mitigate Cold Start issues with serverless DBs (Neon).
+
+#### 6. UI Polish
+- Updated the "Verify Payment" button with a sleek SVG checkmark icon for better visual feedback.
+
+---
+
 
 ## Session 53 — Mar 11, 2026 — Features, Security Audit & Production Crash Fix
 **Agent:** Claude Sonnet 4.6

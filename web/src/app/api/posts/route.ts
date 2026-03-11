@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
             commentCount: p._count.comments,
             createdAt: p.createdAt.toISOString(),
             author: p.author,
-            images: p.images.map(i => i.url),
+            images: p.images,
             isLiked: session?.user?.id ? ((p as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
         })),
         nextCursor,
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         commentCount: 0,
         createdAt: post.createdAt.toISOString(),
         author: post.author,
-        images: post.images.map(i => i.url),
+        images: post.images,
         isLiked: false,
     }, { status: 201 });
 }
