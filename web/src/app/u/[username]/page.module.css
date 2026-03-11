@@ -262,7 +262,13 @@
 .followStat {
     font-size: 0.875rem;
     color: var(--text-muted);
-    cursor: default;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.followStat:hover {
+    color: var(--text-main);
 }
 
 .followStat strong {

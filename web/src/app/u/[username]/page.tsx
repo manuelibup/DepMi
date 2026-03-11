@@ -7,9 +7,9 @@ import Image from 'next/image';
 import BackButton from '@/components/BackButton';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import ProfileProductsGrid from './ProfileProductsGrid';
 import ProfileMessageButton from './ProfileMessageButton';
 import ProfileFollowButton from './ProfileFollowButton';
+import ProfileTabs from './ProfileTabs';
 
 interface ProfilePageProps {
     params: Promise<{ username: string }>;
@@ -193,12 +193,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
                 {/* Following / Followers counts */}
                 <div className={styles.followRow}>
-                    <span className={styles.followStat}>
+                    <Link href={`/u/${username}/following`} className={styles.followStat}>
                         <strong>{user._count.following}</strong> Following
-                    </span>
-                    <span className={styles.followStat}>
+                    </Link>
+                    <Link href={`/u/${username}/followers`} className={styles.followStat}>
                         <strong>{user._count.followers}</strong> Followers
-                    </span>
+                    </Link>
                 </div>
 
                 {isOwnProfile && (
@@ -222,78 +222,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 )}
             </div>
 
-            {/* ── Products ──────────────────────────────── */}
-            {serializedProducts.length > 0 && userStore && (
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <div>
-                            <h2 className={styles.sectionTitle}>{userStore.name}</h2>
-                            {isOwnProfile && (
-                                <p className={styles.sectionHint}>Tap ☆ to pin a product to your profile</p>
-                            )}
-                        </div>
-                        <Link href={'/store/' + userStore.slug} className={styles.seeAll}>See all</Link>
-                    </div>
-                    <ProfileProductsGrid
-                        products={serializedProducts}
-                        isOwnProfile={isOwnProfile}
-                    />
-                </section>
-            )}
-
-            {/* ── Requests ──────────────────────────────── */}
-            {demands.length > 0 && (
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>Requests</h2>
-                    </div>
-                    <div className={styles.requestList}>
-                        {demands.map(d => (
-                            <Link key={d.id} href={'/requests/' + d.id} className={styles.requestItem}>
-                                <p className={styles.requestText}>{d.text}</p>
-                                <div className={styles.requestMeta}>
-                                    <span className={styles.requestBudget}>&#x20A6;{Number(d.budget).toLocaleString()}</span>
-                                    <span className={styles.requestSub}>
-                                        {d._count.bids} bid{d._count.bids !== 1 ? 's' : ''} &middot; {new Date(d.createdAt).toLocaleDateString()}
-                                    </span>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* ── Replies ───────────────────────────────── */}
-            {replies.length > 0 && (
-                <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>Replies</h2>
-                    </div>
-                    <div className={styles.replyList}>
-                        {replies.map(r => {
-                            const href = r.productId
-                                ? '/p/' + (r.product?.slug ?? r.productId)
-                                : r.demandId
-                                    ? '/requests/' + r.demandId
-                                    : '#';
-                            const context = r.product
-                                ? 'on "' + r.product.title + '"'
-                                : r.demand
-                                    ? 'on a request'
-                                    : '';
-                            return (
-                                <Link key={r.id} href={href} className={styles.replyItem}>
-                                    <div className={styles.replyMeta}>
-                                        <span className={styles.replyContext}>{context}</span>
-                                        <span className={styles.replySub}>{new Date(r.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                    <p className={styles.replyText}>{r.text}</p>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
+            {/* ── Tabbed content (Posts / Requests / Replies) ── */}
+            <ProfileTabs
+                products={serializedProducts}
+                demands={demands.map(d => ({
+                    ...d,
+                    budget: Number(d.budget),
+                    createdAt: d.createdAt.toISOString(),
+                }))}
+                replies={replies.map(r => ({
+                    ...r,
+                    createdAt: r.createdAt.toISOString(),
+                }))}
+                isOwnProfile={isOwnProfile}
+                userStore={userStore ?? null}
+            />
 
         </main>
     );

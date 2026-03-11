@@ -6,9 +6,8 @@ import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import StoreBackButton from './StoreBackButton';
 import { authOptions } from '@/lib/auth';
-import EmptyState from '@/components/EmptyState';
 import FollowButton from '@/components/FollowButton';
-import StoreFeed from './StoreFeed';
+import StoreTabBar from './StoreTabBar';
 
 interface StorePageProps {
     params: Promise<{ slug: string }>;
@@ -90,6 +89,18 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     const visibleProducts = isOwner
         ? store.products
         : store.products.filter(p => p.inStock || p.isPortfolioItem);
+
+    const serializedProducts = visibleProducts.map(p => ({
+        id: p.id,
+        title: p.title,
+        price: Number(p.price),
+        slug: p.slug ?? null,
+        isFeatured: p.isFeatured,
+        inStock: p.inStock,
+        isPortfolioItem: p.isPortfolioItem,
+        imageUrl: p.images?.[0]?.url ?? null,
+        currency: p.currency,
+    }));
 
     const tierLabel = TIER_TEXT[store.depTier] ?? TIER_TEXT.SEEDLING;
     const isPremium = store.owner.kycTier === 'TIER_3' || store.owner.kycTier === 'BUSINESS';
@@ -216,87 +227,9 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 )}
             </div>
 
-            {/* ── Products ──────────────────────────────── */}
-            <section className={styles.productsSection} style={{ marginBottom: '8px' }}>
-                {visibleProducts.length === 0 ? (
-                    <EmptyState
-                        title="No products listed yet"
-                        description={isOwner
-                            ? "Your store is ready — add your first product to start selling."
-                            : "This store hasn't added any products yet. Check back soon!"}
-                        actionLabel={isOwner ? "Add Your First Product" : undefined}
-                        actionHref={isOwner ? `/store/${store.slug}/products/new` : undefined}
-                    />
-                ) : (
-                    <div className={styles.productsGrid}>
-                        {visibleProducts.map(product => {
-                            const cellClass = `${styles.productCell} ${(!product.inStock && !product.isPortfolioItem) ? styles.productCellDim : ''}`;
-                            const cellContent = (
-                                <>
-                                    <div className={styles.productImg}>
-                                        {product.images?.[0] ? (
-                                            <Image
-                                                src={product.images[0].url}
-                                                alt={product.title}
-                                                fill
-                                                style={{ objectFit: 'cover' }}
-                                                sizes="(max-width: 480px) 50vw, 240px"
-                                            />
-                                        ) : (
-                                            <div className={styles.productImgPlaceholder}>
-                                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-                                            </div>
-                                        )}
-
-                                        {/* Badges */}
-                                        {product.isFeatured && (
-                                            <span className={styles.featuredBadge}>★</span>
-                                        )}
-                                        {product.isPortfolioItem && (
-                                            <span className={styles.portfolioBadge}>Portfolio</span>
-                                        )}
-                                        {isOwner && !product.inStock && !product.isPortfolioItem && (
-                                            <span className={styles.outOfStockBadge}>Out of stock</span>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.productInfo}>
-                                        <p className={styles.productTitle}>{product.title}</p>
-                                        {product.isPortfolioItem ? (
-                                            <p className={styles.productEnquire}>Enquire</p>
-                                        ) : (
-                                            <p className={`${styles.productPrice} ${!product.inStock ? styles.productPriceDim : ''}`}>
-                                                {product.currency}{Number(product.price).toLocaleString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                </>
-                            );
-
-                            return isOwner ? (
-                                <div key={product.id} className={cellClass}>
-                                    <Link href={`/p/${product.slug ?? product.id}`} style={{ display: 'contents' }}>
-                                        {cellContent}
-                                    </Link>
-                                    <Link
-                                        href={`/store/${store.slug}/products/${product.id}/edit`}
-                                        className={styles.productEditBtn}
-                                    >
-                                        ✏ Edit
-                                    </Link>
-                                </div>
-                            ) : (
-                                <Link key={product.id} href={`/p/${product.slug ?? product.id}`} className={cellClass}>
-                                    {cellContent}
-                                </Link>
-                            );
-                        })}
-                    </div>
-                )}
-            </section>
-
-            {/* ── Store Feed (Posts / Announcements) ────── */}
-            <StoreFeed
+            {/* ── Tabbed content (Products / Updates) ───── */}
+            <StoreTabBar
+                products={serializedProducts}
                 storeId={store.id}
                 storeSlug={store.slug}
                 sessionUserId={session?.user?.id}

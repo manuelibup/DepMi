@@ -31,13 +31,18 @@
       "Bash(npm run build)",
       "Bash(grep -E \"\\\\.\\(tsx|css\\)$\")",
       "Bash(xargs grep -l \"Resend\\\\|resend\\\\|email\")",
-      "Bash(xargs grep -l \"welcome\\\\|signup\\\\|register\")"
+      "Bash(xargs grep -l \"welcome\\\\|signup\\\\|register\")",
+      "Bash(git add web/src/app/api/auth/verify-email-otp/route.ts web/src/app/api/demands/create/route.ts web/src/app/demand/new/DemandForm.tsx web/src/app/page.tsx web/src/components/DemandCard/index.tsx web/prisma/schema.prisma web/src/app/api/auth/send-phone-otp/route.ts web/src/app/api/posts/)",
+      "Bash(git add web/src/components/LandingPage/LandingPage.module.css)",
+      "Bash(git add web/src/app/api/auth/send-email-otp/route.ts web/src/lib/email.ts)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\products\\[id]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\orders\\[id]",
-      "C:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi"
+      "C:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\posts\\[id]",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\u\\[username]"
     ]
   }
 }
