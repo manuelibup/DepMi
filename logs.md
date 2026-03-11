@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 55 — Mar 11, 2026 — Username Validation & Repair Flow](#session-55--mar-11-2026--username-validation--repair-flow)
 - [Session 54 — Mar 11, 2026 — Critical Bug Fixes (Signup, Orders, Payouts)](#session-54--mar-11-2026--critical-bug-fixes-signup-orders-payouts)
 - [Session 53 — Mar 11, 2026 — Features, Security Audit & Production Crash Fix](#session-53--mar-11-2026--features-security-audit--production-crash-fix)
 - [Session 52 — Mar 9, 2026 — Production Bug Fixes (Profile 404 + Settings "Invalid input")](#session-52--mar-9-2026--production-bug-fixes-profile-404--settings-invalid-input)
@@ -37,6 +38,26 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 55 — Mar 11, 2026 — Username Validation & Repair Flow
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### Work done
+
+#### 1. Strict Username Validation
+- **Issue:** Usernames with spaces were being created, causing 404 errors on profile pages.
+- **Root Cause:** Registration API and frontend lacked regex enforcement for usernames.
+- **Fix:** 
+    - Updated `api/auth/register/route.ts` with strict regex `/^[a-z0-9_]+$/`.
+    - Added real-time username cleanup to `(auth)/register/page.tsx` to strip spaces and invalid characters.
+    - Simplified `onboarding/route.ts` validation to match existing standards.
+
+#### 2. Username Repair Flow
+- **Gatekeeper:** Added logic to `app/page.tsx` that detects users with spaces in their username and redirects them to `/onboarding?repair=1`.
+- **Repair UI:** Updated `onboarding/page.tsx` to handle the `repair` param, providing a clear notice and a suggested cleaned username (spaces replaced with underscores).
 
 ---
 

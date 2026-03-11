@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
 type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -10,6 +10,9 @@ type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 export default function OnboardingPage() {
     const { data: session, status, update } = useSession();
     const router = useRouter();
+
+    const searchParams = useSearchParams();
+    const isRepair = searchParams.get('repair') === '1';
 
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
@@ -23,10 +26,19 @@ export default function OnboardingPage() {
         if (session?.user?.name && !displayName) {
             setDisplayName(session.user.name);
         }
-        if (status === 'authenticated' && session.user.username) {
+
+        // Handle Repair Flow: Auto-clean existing username with spaces
+        if (isRepair && session?.user?.username && !username) {
+            const cleaned = session.user.username.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+            setUsername(cleaned);
+            // Trigger check manually for the cleaned suggestion
+            handleUsernameChange(cleaned);
+        }
+
+        if (status === 'authenticated' && session.user.username && !isRepair) {
             router.push('/');
         }
-    }, [session, status, router, displayName]);
+    }, [session, status, router, displayName, isRepair]);
 
     const handleUsernameChange = (raw: string) => {
         // Strip invalid characters client-side immediately
@@ -36,7 +48,7 @@ export default function OnboardingPage() {
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         if (cleaned.length === 0) { setCheckState('idle'); setCheckMsg(''); return; }
-        if (cleaned.length < 3)  { setCheckState('invalid'); setCheckMsg('At least 3 characters required'); return; }
+        if (cleaned.length < 3) { setCheckState('invalid'); setCheckMsg('At least 3 characters required'); return; }
         if (cleaned.length > 20) { setCheckState('invalid'); setCheckMsg('Maximum 20 characters'); return; }
 
         setCheckState('checking');
@@ -88,7 +100,7 @@ export default function OnboardingPage() {
             router.push('/');
             router.refresh();
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -98,13 +110,13 @@ export default function OnboardingPage() {
 
     const inputBorderColor =
         checkState === 'available' ? 'var(--primary)' :
-        checkState === 'taken' || checkState === 'invalid' ? '#e74c3c' :
-        undefined;
+            checkState === 'taken' || checkState === 'invalid' ? '#e74c3c' :
+                undefined;
 
     const checkColor =
         checkState === 'available' ? 'var(--primary)' :
-        checkState === 'taken' || checkState === 'invalid' ? '#e74c3c' :
-        'var(--text-muted)';
+            checkState === 'taken' || checkState === 'invalid' ? '#e74c3c' :
+                'var(--text-muted)';
 
     const canSubmit = !loading && displayName.trim().length >= 2 && checkState === 'available';
 
@@ -129,9 +141,33 @@ export default function OnboardingPage() {
 
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Set up your profile</h1>
-                    <p className={styles.subtitle}>Choose a unique username to start discovery on DepMi.</p>
+                    <h1 className={styles.title}>{isRepair ? 'Update your username' : 'Set up your profile'}</h1>
+                    <p className={styles.subtitle}>
+                        {isRepair
+                            ? 'Your current username contains spaces, which is no longer supported. Please choose a new handle.'
+                            : 'Choose a unique username to start discovery on DepMi.'}
+                    </p>
                 </div>
+
+                {isRepair && (
+                    <div style={{
+                        background: 'rgba(52, 152, 219, 0.1)',
+                        border: '1px solid var(--primary)',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        marginBottom: '20px',
+                        fontSize: '0.9rem',
+                        color: 'var(--text-main)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--primary)' }}>
+                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span>We've suggested a cleaned version for you below.</span>
+                    </div>
+                )}
 
                 {error && (
                     <div className={styles.error}>
@@ -187,10 +223,10 @@ export default function OnboardingPage() {
                                 <span style={{ marginRight: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>checking...</span>
                             )}
                             {checkState === 'available' && (
-                                <svg style={{ marginRight: '12px', flexShrink: 0, color: 'var(--primary)' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                <svg style={{ marginRight: '12px', flexShrink: 0, color: 'var(--primary)' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
                             )}
                             {(checkState === 'taken' || checkState === 'invalid') && (
-                                <svg style={{ marginRight: '12px', flexShrink: 0, color: '#e74c3c' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                <svg style={{ marginRight: '12px', flexShrink: 0, color: '#e74c3c' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>
                             )}
                         </div>
                         {checkMsg && (

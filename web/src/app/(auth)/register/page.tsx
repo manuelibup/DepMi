@@ -23,7 +23,11 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        let value = e.target.value;
+        if (e.target.name === 'username') {
+            value = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        }
+        setFormData(prev => ({ ...prev, [e.target.name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

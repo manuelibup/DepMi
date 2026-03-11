@@ -9,7 +9,9 @@ import { sendWelcomeEmail } from "@/lib/email";
 const registerSchema = z.object({
     email: z.email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters long"),
-    username: z.string().min(3, "Username must be at least 3 characters"),
+    username: z.string()
+        .min(3, "Username must be at least 3 characters")
+        .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores"),
     displayName: z.string().min(2, "Display Name is required"),
     dateOfBirth: z.string().refine((date) => {
         const dob = new Date(date);

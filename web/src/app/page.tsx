@@ -34,6 +34,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     redirect('/onboarding');
   }
 
+  // Username Repair Gatekeeper: Redirect users with spaces in their username
+  if (session?.user?.username && /\s/.test(session.user.username)) {
+    redirect('/onboarding?repair=1');
+  }
+
   const sp = await searchParams;
   const category = sp.category;
 
