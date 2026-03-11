@@ -36,36 +36,41 @@ export async function POST(req: Request) {
         }
 
         // Termii requires OTP sent via external request for DND support
-        const termiiPayload = {
+        // Try DND channel first (requires NCC-registered Sender ID).
+        // If it fails, retry via generic channel (works without Sender ID approval).
+        const buildPayload = (channel: "dnd" | "generic") => ({
             api_key: process.env.TERMII_API_KEY,
             message_type: "NUMERIC",
             to: phoneNumber,
-            from: process.env.TERMII_SENDER_ID || "DepMi",
-            channel: "dnd", // CRITICAL for Nigeria DND compliance
+            from: process.env.TERMII_SENDER_ID || "N-Alert",
+            channel,
             pin_attempts: 3,
             pin_time_to_live: 10,
             pin_length: 6,
             pin_placeholder: "< 1234 >",
             message_text: "Your DepMi verification code is < 1234 >. Valid for 10 minutes.",
             pin_type: "NUMERIC"
-        };
-
-        const termiiResponse = await fetch("https://api.ng.termii.com/api/sms/otp/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(termiiPayload)
         });
 
-        if (!termiiResponse.ok) {
-            console.error("Termii HTTP Error:", await termiiResponse.text());
-            return NextResponse.json({ message: "Failed to send SMS OTP. Please try again later." }, { status: 502 });
+        let termiiData: { pinId?: string; [key: string]: unknown } | null = null;
+
+        for (const channel of ["dnd", "generic"] as const) {
+            const res = await fetch("https://api.ng.termii.com/api/sms/otp/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(buildPayload(channel))
+            });
+            if (!res.ok) {
+                console.error(`Termii ${channel} HTTP error:`, await res.text());
+                continue;
+            }
+            const data = await res.json() as { pinId?: string; [key: string]: unknown };
+            if (data.pinId) { termiiData = data; break; }
+            console.error(`Termii ${channel} logic error:`, data);
         }
 
-        const termiiData = await termiiResponse.json();
-
-        if (!termiiData.pinId) {
-            console.error("Termii Logic Error:", termiiData);
-            return NextResponse.json({ message: "SMS provider failed to generate OTP." }, { status: 502 });
+        if (!termiiData?.pinId) {
+            return NextResponse.json({ message: "Failed to send SMS OTP. Please try again later." }, { status: 502 });
         }
 
         // Calculate Expiration based on Termii's TTL (10 minutes)

@@ -19,11 +19,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "A valid 6-digit code is required." }, { status: 400 });
         }
 
-        // Fetch the user's latest un-usedEMAIL_RESET token
+        // Fetch the user's latest unused EMAIL_VERIFICATION token
         const otpRecord = await prisma.otpToken.findFirst({
             where: {
                 userId: session.user.id,
-                type: "EMAIL_RESET",
+                type: "EMAIL_VERIFICATION",
                 used: false
             },
             orderBy: { createdAt: "desc" }
@@ -44,11 +44,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Invalid verification code." }, { status: 400 });
         }
 
-        // Success! Mark OTP as used
-        await prisma.otpToken.update({
-            where: { id: otpRecord.id },
-            data: { used: true }
-        });
+        // Success! Mark OTP as used and set emailVerified on user
+        await prisma.$transaction([
+            prisma.otpToken.update({
+                where: { id: otpRecord.id },
+                data: { used: true }
+            }),
+            prisma.user.update({
+                where: { id: session.user.id },
+                data: { emailVerified: true }
+            }),
+        ]);
 
         return NextResponse.json({ message: "Email code verified successfully!" }, { status: 200 });
 

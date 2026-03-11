@@ -112,6 +112,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 timeAgo: new Date(demand.createdAt).toLocaleDateString(),
                 text: demand.text || '',
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
+                budgetMin: demand.budgetMin ? `₦${Number(demand.budgetMin).toLocaleString()}` : null,
                 bids: demand._count.bids,
                 location: demand.location ?? null,
               };

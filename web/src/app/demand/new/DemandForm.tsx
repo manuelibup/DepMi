@@ -23,8 +23,10 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
         text: defaultQuery ? defaultQuery : '',
         category: 'OTHER',
         currency: '₦',
-        budget: '', // Raw unformatted number string for API
-        displayBudget: '', // Formatted string with commas for UI
+        budget: '',           // raw max budget for API
+        displayBudget: '',    // formatted max for UI
+        budgetMin: '',        // raw min budget for API
+        displayBudgetMin: '', // formatted min for UI
         location: '',
         images: [] as string[],
         videoUrl: '',
@@ -53,17 +55,14 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     }, [formData.text]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        if (e.target.name === 'budget') {
-            // Remove any non-numeric characters for the raw value
+        if (e.target.name === 'budget' || e.target.name === 'budgetMin') {
             const rawValue = e.target.value.replace(/\D/g, '');
-            // Format with commas for display
-            const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
-
-            setFormData(prev => ({
-                ...prev,
-                budget: rawValue,
-                displayBudget: formattedValue
-            }));
+            const formatted = rawValue ? Number(rawValue).toLocaleString() : '';
+            if (e.target.name === 'budget') {
+                setFormData(prev => ({ ...prev, budget: rawValue, displayBudget: formatted }));
+            } else {
+                setFormData(prev => ({ ...prev, budgetMin: rawValue, displayBudgetMin: formatted }));
+            }
         } else {
             setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         }
@@ -106,6 +105,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     text: formData.text,
                     category: formData.category,
                     budget: parseFloat(formData.budget),
+                    budgetMin: formData.budgetMin ? parseFloat(formData.budgetMin) : undefined,
                     currency: formData.currency,
                     location: formData.location || undefined,
                     images: formData.images,
@@ -234,7 +234,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
 
             {/* Inline expandable inputs based on active pill */}
             {activeInput === 'budget' && (
-                <div className={styles.inlineInputRow}>
+                <div className={styles.inlineInputRow} style={{ flexWrap: 'wrap', gap: '8px' }}>
                     <select
                         name="currency"
                         value={formData.currency}
@@ -245,13 +245,25 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     </select>
                     <input
                         type="text"
+                        name="budgetMin"
+                        inputMode="numeric"
+                        placeholder="Min (optional)"
+                        value={formData.displayBudgetMin}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        style={{ flex: '1 1 100px' }}
+                        autoFocus
+                    />
+                    <span style={{ alignSelf: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>–</span>
+                    <input
+                        type="text"
                         name="budget"
                         inputMode="numeric"
-                        placeholder="Budget amount"
+                        placeholder="Max budget"
                         value={formData.displayBudget}
                         onChange={handleChange}
                         className={styles.inlineInput}
-                        autoFocus
+                        style={{ flex: '1 1 100px' }}
                     />
                     <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
                 </div>
@@ -296,7 +308,11 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                         onClick={() => setActiveInput(activeInput === 'budget' ? null : 'budget')}
                     >
                         <CreditCard size={16} className={styles.pillIcon} />
-                        {formData.budget ? `${formData.currency}${formData.displayBudget}` : 'Budget'}
+                        {formData.budget
+                            ? formData.budgetMin
+                                ? `${formData.currency}${formData.displayBudgetMin} – ${formData.currency}${formData.displayBudget}`
+                                : `${formData.currency}${formData.displayBudget}`
+                            : 'Budget'}
                     </button>
 
                     <button

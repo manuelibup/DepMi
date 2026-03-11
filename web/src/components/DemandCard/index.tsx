@@ -16,6 +16,7 @@ export interface DemandData {
     timeAgo: string;
     text: string;
     budget: string;
+    budgetMin?: string | null;
     bids: number;
     urgency?: string;
     location?: string | null;
@@ -154,7 +155,9 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                 <div className={styles.budgetBar}>
                     <div className={styles.budgetLeft}>
                         <span className={styles.budgetLabel}>Budget</span>
-                        <strong className={styles.budgetValue}>{data.budget}</strong>
+                        <strong className={styles.budgetValue}>
+                            {data.budgetMin ? `${data.budgetMin} – ${data.budget}` : data.budget}
+                        </strong>
                     </div>
                     <div className={styles.budgetRight}>
                         {data.location && (
