@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
         // Dispatch Email via Resend
         const { error } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || "DepMi <noreply@depmi.com>",
+            from: process.env.RESEND_FROM_EMAIL || "DepMi Security <security@depmi.com>",
             to: email,
             subject: "Your DepMi verification code",
             html: `
