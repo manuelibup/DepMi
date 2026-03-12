@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import BackButton from '@/components/BackButton';
 import BidsCommentsTab from './BidsCommentsTab';
+import DemandDetailActions from './DemandDetailActions';
 import styles from './RequestDetail.module.css';
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         include: {
             user: { select: { displayName: true, username: true, avatarUrl: true } },
             images: { orderBy: { order: 'asc' }, select: { url: true } },
+            _count: { select: { likes: true, comments: true } },
+            ...(userId ? {
+                likes: { where: { userId }, select: { id: true } },
+                saves: { where: { userId }, select: { id: true } },
+            } : {}),
             bids: {
                 orderBy: { createdAt: 'desc' },
                 include: {
@@ -159,6 +165,17 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                         </div>
                     )}
                 </div>
+
+                {/* Social action bar */}
+                <DemandDetailActions
+                    demandId={demand.id}
+                    initialLiked={userId ? (demand.likes?.length ?? 0) > 0 : false}
+                    initialSaved={userId ? (demand.saves?.length ?? 0) > 0 : false}
+                    initialLikeCount={demand._count?.likes ?? 0}
+                    commentCount={demand._count?.comments ?? 0}
+                    viewCount={demand.viewCount ?? 0}
+                    isLoggedIn={!!userId}
+                />
 
                 <div className={styles.divider} />
 

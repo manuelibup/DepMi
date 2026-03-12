@@ -20,12 +20,22 @@ export default function StoreCreatePage() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
-    // Auto-generate slug from name as user types
+    // Auto-generate slug from name as user types (only if not manually edited)
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newName = e.target.value;
-        const autoSlug = newName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        setForm(prev => ({ ...prev, name: newName, slug: autoSlug }));
+        if (!slugManuallyEdited) {
+            const autoSlug = newName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            setForm(prev => ({ ...prev, name: newName, slug: autoSlug }));
+        } else {
+            setForm(prev => ({ ...prev, name: newName }));
+        }
+    };
+
+    const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSlugManuallyEdited(true);
+        setForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') }));
     };
 
     if (status === 'loading') {
@@ -120,7 +130,7 @@ export default function StoreCreatePage() {
                                 id="slug"
                                 type="text"
                                 value={form.slug}
-                                onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })}
+                                onChange={handleSlugChange}
                                 placeholder="vintagevault"
                                 required
                                 style={{
@@ -180,6 +190,8 @@ export default function StoreCreatePage() {
                                 accept="image/*"
                                 maxSizeMB={5}
                                 buttonText="Upload Logo"
+                                cropAspectRatio={1}
+                                cropTitle="Crop Store Logo"
                             />
                         )}
                     </div>

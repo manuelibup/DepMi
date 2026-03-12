@@ -37,9 +37,11 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         currency: product.currency,
         category: product.category as string,
         imageUrl: product.images[0]?.url ?? '',
+        imageUrls: product.images.map(img => img.url),
         videoUrl: product.videoUrl ?? '',
         inStock: product.inStock,
         isPortfolioItem: product.isPortfolioItem,
+        deliveryFee: Number(product.deliveryFee),
     };
 
     return (

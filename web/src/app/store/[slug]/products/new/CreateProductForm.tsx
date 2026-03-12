@@ -100,7 +100,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!form.title.trim()) {
             setErrorMsg('Pleae provide a title for your product.');
             return;
@@ -108,6 +108,10 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         if (!form.price || isNaN(parseFloat(form.price))) {
             setErrorMsg('Please provide a valid price.');
             setActiveInput('price');
+            return;
+        }
+        if (form.imageUrls.length < 3) {
+            setErrorMsg('Please add at least 3 images to showcase your product.');
             return;
         }
 
@@ -156,7 +160,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         }
     };
 
-    const canPost = form.title.trim().length > 0 && form.price !== '' && status !== 'loading';
+    const canPost = form.title.trim().length > 0 && form.price !== '' && form.imageUrls.length >= 3 && status !== 'loading';
 
     return (
         <div className={styles.container}>
@@ -233,8 +237,9 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
-                            multiple
                             buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                            cropAspectRatio={1}
+                            cropTitle="Crop Photo"
                         />
                     )}
 

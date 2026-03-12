@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
-import { X, Tag, FolderOpen, Package, Briefcase } from 'lucide-react';
+import { X, Tag, FolderOpen, Package, Briefcase, Truck } from 'lucide-react';
 import styles from '../../new/CreateProductForm.module.css';
 
 const CATEGORIES = [
@@ -24,6 +24,7 @@ interface ProductData {
     videoUrl: string;
     inStock: boolean;
     isPortfolioItem: boolean;
+    deliveryFee: number;
 }
 
 export default function EditProductForm({ product, storeSlug }: { product: ProductData; storeSlug: string }) {
@@ -44,9 +45,11 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
         videoUrl: product.videoUrl,
         inStock: product.inStock,
         isPortfolioItem: product.isPortfolioItem,
+        deliveryFee: String(product.deliveryFee),
+        displayDeliveryFee: Number(product.deliveryFee).toLocaleString(),
     });
 
-    const [activeInput, setActiveInput] = useState<'price' | 'category' | null>(null);
+    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -61,6 +64,10 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
             const rawValue = e.target.value.replace(/\D/g, '');
             const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
             setForm(prev => ({ ...prev, price: rawValue, displayPrice: formattedValue }));
+        } else if (e.target.name === 'deliveryFee') {
+            const rawValue = e.target.value.replace(/\D/g, '');
+            const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
+            setForm(prev => ({ ...prev, deliveryFee: rawValue, displayDeliveryFee: formattedValue }));
         } else {
             setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
         }
@@ -96,6 +103,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     videoUrl: form.videoUrl || null,
                     inStock: form.inStock,
                     isPortfolioItem: form.isPortfolioItem,
+                    deliveryFee: Number(form.deliveryFee) || 0,
                 }),
             });
 
@@ -194,8 +202,9 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
-                            multiple
                             buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                            cropAspectRatio={1}
+                            cropTitle="Crop Photo"
                         />
                     )}
 
@@ -301,6 +310,23 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                 </div>
             )}
 
+            {activeInput === 'deliveryFee' && (
+                <div className={styles.inlineInputRow}>
+                    <span className={styles.inputPrefix}>₦</span>
+                    <input
+                        type="text"
+                        name="deliveryFee"
+                        inputMode="numeric"
+                        placeholder="Set Delivery Fee"
+                        value={form.displayDeliveryFee}
+                        onChange={handleChange}
+                        className={styles.inlineInput}
+                        autoFocus
+                    />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                </div>
+            )}
+
             {/* Bottom action bar */}
             <div className={styles.actionBar}>
                 <div className={styles.pillsScroll}>
@@ -338,6 +364,15 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     >
                         <Briefcase size={16} className={styles.pillIcon} />
                         {form.isPortfolioItem ? 'Portfolio' : 'For Sale'}
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`${styles.pill} ${form.deliveryFee ? styles.pillActive : ''}`}
+                        onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                    >
+                        <Truck size={16} className={styles.pillIcon} />
+                        {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
                     </button>
                 </div>
             </div>

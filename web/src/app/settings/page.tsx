@@ -277,6 +277,8 @@ export default function SettingsPage() {
                                     accept="image/*"
                                     maxSizeMB={10}
                                     buttonText="Upload Cover"
+                                    cropAspectRatio={3 / 1}
+                                    cropTitle="Crop Cover Photo"
                                 />
                                 {coverUrl && (
                                     <button type="button" onClick={() => setCoverUrl('')} style={{ padding: '8px 14px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>
@@ -305,6 +307,8 @@ export default function SettingsPage() {
                                     accept="image/*"
                                     maxSizeMB={5}
                                     buttonText={avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                                    cropAspectRatio={1}
+                                    cropTitle="Crop Profile Photo"
                                 />
                                 {avatarUrl && (
                                     <button type="button" onClick={() => setAvatarUrl('')} style={{ padding: '8px 16px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>

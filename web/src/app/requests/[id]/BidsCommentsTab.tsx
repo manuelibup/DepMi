@@ -83,7 +83,7 @@ export default function BidsCommentsTab({
     }, [isLoggedIn, router]);
 
     return (
-        <div className={styles.tabSection}>
+        <div className={styles.tabSection} data-comments-section>
             {/* Tab bar */}
             <div className={styles.tabBar}>
                 <button
@@ -215,7 +215,7 @@ export default function BidsCommentsTab({
 
             {/* Discussion tab */}
             {activeTab === 'discussion' && (
-                <div className={styles.tabDiscussionContent}>
+                <div className={styles.tabDiscussionContent} data-comments-section>
                     <CommentSection
                         apiPath={apiPath}
                         initialComments={comments}

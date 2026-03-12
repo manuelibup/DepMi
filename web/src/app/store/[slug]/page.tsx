@@ -71,26 +71,34 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     const { slug } = await params;
     const session = await getServerSession(authOptions);
 
-    const store = await prisma.store.findUnique({
+    const currentUserId = session?.user?.id;
+    const store = await (prisma.store as any).findUnique({
         where: { slug },
         include: {
-            owner: { select: { kycTier: true, username: true, displayName: true } },
+            owner: { select: { kycTier: true, username: true, displayName: true, id: true } },
             _count: { select: { followers: true } },
             products: {
                 orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-                include: { images: true },
+                include: {
+                    images: true,
+                    _count: { select: { likes: true, saves: true, comments: true } },
+                    ...(currentUserId ? {
+                        likes: { where: { userId: currentUserId }, select: { id: true } },
+                        saves: { where: { userId: currentUserId }, select: { id: true } },
+                    } : {}),
+                },
             },
         },
-    });
+    }) as any;
 
     if (!store) notFound();
 
-    const isOwner = session?.user?.id === store.ownerId;
+    const isOwner = currentUserId === store.ownerId;
     const visibleProducts = isOwner
         ? store.products
-        : store.products.filter(p => p.inStock || p.isPortfolioItem);
+        : store.products.filter((p: any) => p.inStock || p.isPortfolioItem);
 
-    const serializedProducts = visibleProducts.map(p => ({
+    const serializedProducts = visibleProducts.map((p: any) => ({
         id: p.id,
         title: p.title,
         price: Number(p.price),
@@ -99,7 +107,13 @@ export default async function StorefrontPage({ params }: StorePageProps) {
         inStock: p.inStock,
         isPortfolioItem: p.isPortfolioItem,
         imageUrl: p.images?.[0]?.url ?? null,
-        currency: p.currency,
+        currency: p.currency ?? '₦',
+        likeCount: p._count?.likes ?? 0,
+        saveCount: p._count?.saves ?? 0,
+        commentCount: p._count?.comments ?? 0,
+        viewCount: p.viewCount ?? 0,
+        isLiked: currentUserId ? (p.likes?.length ?? 0) > 0 : false,
+        isSaved: currentUserId ? (p.saves?.length ?? 0) > 0 : false,
     }));
 
     const tierLabel = TIER_TEXT[store.depTier] ?? TIER_TEXT.SEEDLING;
@@ -232,7 +246,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 products={serializedProducts}
                 storeId={store.id}
                 storeSlug={store.slug}
-                sessionUserId={session?.user?.id}
+                sessionUserId={currentUserId}
                 isOwner={isOwner}
             />
         </main>

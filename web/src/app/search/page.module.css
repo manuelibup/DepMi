@@ -160,9 +160,17 @@
     font-weight: 700;
 }
 
-/* Products Grid */
+/* Unified card feed */
+.feedList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Products Grid (legacy, kept for other uses) */
 .productsGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
+

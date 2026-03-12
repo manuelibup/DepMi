@@ -489,33 +489,41 @@
 .commentCard {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.commentCard:last-child {
+    border-bottom: none;
 }
 
 .commentHeader {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
 .commentAvatar {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: #fff;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .commentMeta {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
 .commentAuthor {
@@ -524,16 +532,22 @@
     color: var(--text-main);
 }
 
+.commentHandle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 .commentTime {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
 }
 
 .commentText {
-    margin: 0 0 0 42px;
+    margin: 2px 0 0 46px;
     font-size: 0.9rem;
     color: var(--text-main);
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 /* Inline product mention chip */
@@ -924,4 +938,83 @@
 .bidMsgBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ── Demand Detail Action Bar ───────────────────────────── */
+
+.detailActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 16px 12px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.detailActionBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.detailActionBtn:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
+}
+
+.detailActionBtnLiked {
+    color: #E0245E;
+}
+
+.detailActionBtnSaved {
+    color: var(--primary);
+}
+
+.detailViewCount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    padding: 6px 10px;
+}
+
+.sharePopup {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 130px;
+    z-index: 50;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.shareOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-main);
+    font-size: 0.83rem;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-align: left;
+}
+
+.shareOption:hover {
+    background: var(--bg-hover);
 }

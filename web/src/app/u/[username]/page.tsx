@@ -71,11 +71,20 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const tierLabel = TIER_LABELS[user.depTier] ?? TIER_LABELS.SEEDLING;
     const userStore = user.stores[0];
 
-    const demands = await prisma.demand.findMany({
+    const currentUserId = session?.user?.id;
+    const demands = await (prisma.demand as any).findMany({
         where: { userId: user.id, isActive: true },
         orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { id: true, text: true, budget: true, createdAt: true, _count: { select: { bids: true } } },
+        take: 10,
+        include: {
+            user: { select: { displayName: true, username: true, avatarUrl: true } },
+            images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
+            _count: { select: { bids: true, comments: true, likes: true } },
+            ...(currentUserId ? {
+                likes: { where: { userId: currentUserId }, select: { id: true } },
+                saves: { where: { userId: currentUserId }, select: { id: true } },
+            } : {}),
+        },
     });
 
     const storeProducts = userStore ? await prisma.product.findMany({
@@ -225,11 +234,31 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {/* ── Tabbed content (Posts / Requests / Replies) ── */}
             <ProfileTabs
                 products={serializedProducts}
-                demands={demands.map(d => ({
-                    ...d,
-                    budget: Number(d.budget),
-                    createdAt: d.createdAt.toISOString(),
-                }))}
+                demands={demands.map((d: any) => {
+                    const iso = d.createdAt.toISOString();
+                    const diff = Date.now() - new Date(iso).getTime();
+                    const m = Math.floor(diff / 60000);
+                    const timeAgo = m < 1 ? 'just now' : m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m / 60)}h` : `${Math.floor(m / 1440)}d`;
+                    return {
+                        id: d.id,
+                        username: d.user.username ?? undefined,
+                        user: d.user.displayName,
+                        initials: d.user.displayName.substring(0, 2).toUpperCase(),
+                        avatarUrl: d.user.avatarUrl ?? null,
+                        timeAgo,
+                        text: d.text,
+                        budget: `₦${Number(d.budget).toLocaleString()}`,
+                        bids: d._count.bids,
+                        location: d.location ?? null,
+                        images: (d.images ?? []).map((img: any) => img.url),
+                        videoUrl: d.videoUrl ?? null,
+                        likeCount: d._count.likes,
+                        commentCount: d._count.comments,
+                        viewCount: d.viewCount ?? 0,
+                        isLiked: currentUserId ? (d.likes?.length ?? 0) > 0 : false,
+                        isSaved: currentUserId ? (d.saves?.length ?? 0) > 0 : false,
+                    };
+                })}
                 replies={replies.map(r => ({
                     ...r,
                     createdAt: r.createdAt.toISOString(),

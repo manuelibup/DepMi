@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './ProfileTabs.module.css';
 import ProfileProductsGrid from './ProfileProductsGrid';
+import DemandCard, { DemandData } from '@/components/DemandCard';
 
 type SerializedProduct = {
     id: string;
@@ -15,13 +16,7 @@ type SerializedProduct = {
     imageUrl: string | null;
 };
 
-type Demand = {
-    id: string;
-    text: string;
-    budget: number;
-    createdAt: string;
-    _count: { bids: number };
-};
+type Demand = DemandData;
 
 type Reply = {
     id: string;
@@ -155,20 +150,9 @@ export default function ProfileTabs({
                 {/* Requests tab */}
                 {activeTab === 'requests' && (
                     demands.length > 0 ? (
-                        <div className={styles.requestList}>
-                            {demands.map(d => (
-                                <Link key={d.id} href={'/requests/' + d.id} className={styles.requestItem}>
-                                    <p className={styles.requestText}>{d.text}</p>
-                                    <div className={styles.requestMeta}>
-                                        <span className={styles.requestBudget}>
-                                            &#x20A6;{Number(d.budget).toLocaleString()}
-                                        </span>
-                                        <span className={styles.requestSub}>
-                                            {d._count.bids} bid{d._count.bids !== 1 ? 's' : ''} &middot;{' '}
-                                            {new Date(d.createdAt).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                </Link>
+                        <div>
+                            {demands.map((d, i) => (
+                                <DemandCard key={d.id} data={d} index={i} />
                             ))}
                         </div>
                     ) : (
@@ -186,20 +170,23 @@ export default function ProfileTabs({
                                     : r.demandId
                                         ? '/requests/' + r.demandId
                                         : '#';
-                                const context = r.product
-                                    ? 'on "' + r.product.title + '"'
+                                const contextLabel = r.product
+                                    ? r.product.title
                                     : r.demand
-                                        ? 'on a request'
-                                        : '';
+                                        ? r.demand.text.slice(0, 40) + (r.demand.text.length > 40 ? '…' : '')
+                                        : 'a post';
                                 return (
-                                    <Link key={r.id} href={href} className={styles.replyItem}>
-                                        <div className={styles.replyMeta}>
-                                            <span className={styles.replyContext}>{context}</span>
-                                            <span className={styles.replySub}>
-                                                {new Date(r.createdAt).toLocaleDateString()}
+                                    <Link key={r.id} href={href} className={styles.replyCard}>
+                                        <div className={styles.replyContextBar}>
+                                            <span className={styles.replyContextLink}>
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                                                Replied to <span>{contextLabel}</span>
                                             </span>
+                                            <span className={styles.replyDate}>{new Date(r.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <p className={styles.replyText}>{r.text}</p>
+                                        <div className={styles.replyBody}>
+                                            <p className={styles.replyText}>{r.text}</p>
+                                        </div>
                                     </Link>
                                 );
                             })}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import CropModal from './CropModal';
 
 export interface CloudinaryUploadResult {
   public_id: string;
@@ -16,6 +17,9 @@ interface CloudinaryUploaderProps {
   maxDurationSeconds?: number;
   buttonText?: string;
   multiple?: boolean;
+  /** When set, image files will be shown in a crop modal before upload */
+  cropAspectRatio?: number;
+  cropTitle?: string;
 }
 
 export default function CloudinaryUploader({
@@ -25,11 +29,15 @@ export default function CloudinaryUploader({
   maxDurationSeconds = 60, // Default to 60s
   buttonText = 'Upload Media',
   multiple = false,
+  cropAspectRatio,
+  cropTitle,
 }: CloudinaryUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const pendingFilesRef = useRef<File[]>([]);
 
   const resetInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -41,6 +49,23 @@ export default function CloudinaryUploader({
 
     setError('');
     setProgress(0);
+
+    // If crop is enabled and the first file is an image, show crop modal
+    if (cropAspectRatio && files[0].type.startsWith('image/')) {
+      const file = files[0];
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        setError(`"${file.name}" exceeds the ${maxSizeMB}MB limit.`);
+        resetInput();
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropSrc(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      resetInput();
+      return;
+    }
 
     for (const file of files) {
       if (file.size > maxSizeMB * 1024 * 1024) {
@@ -65,6 +90,17 @@ export default function CloudinaryUploader({
       await uploadToCloudinary(file);
     }
     resetInput();
+  };
+
+  const handleCropDone = async (blob: Blob) => {
+    setCropSrc(null);
+    const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    await uploadToCloudinary(file);
+  };
+
+  const handleCropCancel = () => {
+    setCropSrc(null);
+    pendingFilesRef.current = [];
   };
 
   const getVideoDuration = (file: File): Promise<number> => {
@@ -176,6 +212,16 @@ export default function CloudinaryUploader({
   };
 
   return (
+    <>
+      {cropSrc && cropAspectRatio && (
+        <CropModal
+          imageSrc={cropSrc}
+          aspectRatio={cropAspectRatio}
+          onDone={handleCropDone}
+          onCancel={handleCropCancel}
+          title={cropTitle}
+        />
+      )}
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <input
         type="file"
@@ -239,5 +285,6 @@ export default function CloudinaryUploader({
         @keyframes spin { 100% { transform: rotate(360deg); } }
       `}} />
     </div>
+    </>
   );
 }

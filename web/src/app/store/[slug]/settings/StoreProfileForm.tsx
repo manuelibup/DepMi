@@ -111,6 +111,8 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
                             accept="image/*"
                             maxSizeMB={5}
                             buttonText={logoUrl ? 'Change Logo' : 'Upload Logo'}
+                            cropAspectRatio={1}
+                            cropTitle="Crop Store Logo"
                         />
                         {logoUrl && (
                             <button type="button" onClick={() => setLogoUrl('')} style={{ padding: '8px 14px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>
@@ -139,6 +141,8 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
                         accept="image/*"
                         maxSizeMB={10}
                         buttonText="Upload Banner"
+                        cropAspectRatio={3 / 1}
+                        cropTitle="Crop Store Banner"
                     />
                     {bannerUrl && (
                         <button type="button" onClick={() => setBannerUrl('')} style={{ padding: '8px 14px', borderRadius: '10px', background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--text-muted)', fontWeight: 500, cursor: 'pointer', fontSize: '0.8rem' }}>

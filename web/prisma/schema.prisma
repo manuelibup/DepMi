@@ -30,6 +30,9 @@ model User {
   state           String?
   bio             String?
   coverUrl        String?
+  adminRole       AdminRole?
+  lastActiveAt    DateTime?
+  isBanned        Boolean          @default(false)
   accounts        Account[]
   comments        Comment[]        @relation("UserComments")
   demands         Demand[]         @relation("UserDemands")
@@ -54,6 +57,11 @@ model User {
   posts           Post[]           @relation("AuthoredPosts")
   postLikes       PostLike[]       @relation("PostLikes")
   postComments    PostComment[]    @relation("PostComments")
+  referralCode    ReferralCode?
+  referralsMade   ReferralTransaction[] @relation("ReferrerTxns")
+  referralReceived ReferralTransaction[] @relation("ReferredTxns")
+
+  @@index([lastActiveAt])
 }
 
 model Account {
@@ -438,6 +446,45 @@ model Waitlist {
   launchEmailSentAt  DateTime?
 }
 
+// ─── Referral System ─────────────────────────────────────────────────────────
+
+model ReferralConfig {
+  id               String   @id @default("singleton")
+  globalEnabled    Boolean  @default(false)
+  rewardPercentage Float    @default(5.0)
+  durationDays     Int      @default(30)
+  updatedAt        DateTime @updatedAt
+}
+
+model ReferralCode {
+  id             String                @id @default(uuid())
+  userId         String                @unique
+  code           String                @unique
+  perUserEnabled Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals      ReferralTransaction[] @relation("ByCode")
+}
+
+model ReferralTransaction {
+  id             String         @id @default(uuid())
+  referralCodeId String
+  referrerId     String
+  referredUserId String
+  orderId        String?
+  rewardAmount   Decimal        @db.Decimal(10, 2)
+  status         ReferralStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  referralCode   ReferralCode   @relation("ByCode", fields: [referralCodeId], references: [id])
+  referrer       User           @relation("ReferrerTxns", fields: [referrerId], references: [id])
+  referred       User           @relation("ReferredTxns", fields: [referredUserId], references: [id])
+
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([status])
+}
+
 model ProductLike {
   id        String   @id @default(uuid())
   userId    String
@@ -678,4 +725,17 @@ enum MessageType {
   IMAGE
   AUDIO
   STICKER
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+}
+
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  PAID
+  FAILED
 }

@@ -39,6 +39,7 @@ const NAV_ITEMS = [
                 <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
         ),
+        ordersBadge: true,
     },
     {
         label: 'Bookmarks',
@@ -90,13 +91,28 @@ export default function DesktopSidebar() {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [unreadNotifs, setUnreadNotifs] = useState(0);
+    const [unreadOrders, setUnreadOrders] = useState(0);
 
     useEffect(() => {
         if (status !== 'authenticated') return;
         fetch('/api/user/stores').then(r => r.json()).then(d => setStores(d.stores ?? [])).catch(() => {});
         fetch('/api/messages/unread-count').then(r => r.json()).then(d => setUnreadMessages(d.count ?? 0)).catch(() => {});
         fetch('/api/notifications/unread-count').then(r => r.json()).then(d => setUnreadNotifs(d.count ?? 0)).catch(() => {});
+        fetch('/api/orders/unread-count').then(r => r.json()).then(d => setUnreadOrders(d.count ?? 0)).catch(() => {});
     }, [status]);
+
+    const handleMessagesClick = useCallback(() => {
+        setUnreadMessages(0);
+    }, []);
+
+    const handleNotificationsClick = useCallback(() => {
+        setUnreadNotifs(0);
+        fetch('/api/notifications/mark-read', { method: 'POST' }).catch(() => {});
+    }, []);
+
+    const handleOrdersClick = useCallback(() => {
+        setUnreadOrders(0);
+    }, []);
 
     const handleCreate = useCallback(() => {
         if (status === 'unauthenticated') {
@@ -120,7 +136,8 @@ export default function DesktopSidebar() {
                     <nav className={styles.nav}>
                         {NAV_ITEMS.map(item => {
                             const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
-                            const badgeCount = item.badge ? unreadMessages : item.notifBadge ? unreadNotifs : 0;
+                            const badgeCount = item.badge ? unreadMessages : item.notifBadge ? unreadNotifs : item.ordersBadge ? unreadOrders : 0;
+                            const clickHandler = item.badge ? handleMessagesClick : item.notifBadge ? handleNotificationsClick : item.ordersBadge ? handleOrdersClick : undefined;
 
                             if (item.label === 'Profile' && status === 'unauthenticated') {
                                 return (
@@ -140,6 +157,7 @@ export default function DesktopSidebar() {
                                     key={item.href}
                                     href={item.href}
                                     className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+                                    onClick={clickHandler}
                                 >
                                     <span className={styles.navIcon}>
                                         {item.icon(!!isActive)}
