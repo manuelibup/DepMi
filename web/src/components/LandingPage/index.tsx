@@ -62,7 +62,7 @@ export default function LandingPage() {
 
                         <div className={styles.alreadyHaveAccount}>
                             <h3>Already have an account?</h3>
-                            <button onClick={() => signIn()} className={styles.createAccountBtn} style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.2)', color: 'var(--primary)' }}>Sign in</button>
+                            <button onClick={() => signIn()} className={styles.signInLink}>Sign in</button>
                         </div>
                     </div>
 

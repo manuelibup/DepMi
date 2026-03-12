@@ -269,7 +269,10 @@ export default function CommentSection({
                                     ) : (
                                         <span className={styles.commentAuthor}>{c.author.displayName}</span>
                                     )}
-                                    <span className={styles.commentTime}>{timeAgo(c.createdAt)}</span>
+                                    {c.author.username && (
+                                        <span className={styles.commentHandle}>@{c.author.username}</span>
+                                    )}
+                                    <span className={styles.commentTime}>· {timeAgo(c.createdAt)}</span>
                                 </div>
                             </div>
                             <p className={styles.commentText}>

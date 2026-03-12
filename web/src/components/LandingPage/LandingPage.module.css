@@ -177,6 +177,7 @@
 
 .alreadyHaveAccount {
     margin-top: 60px;
+    max-width: 320px;
 }
 
 .alreadyHaveAccount h3 {
@@ -187,7 +188,6 @@
 
 .signInLink {
     width: 100%;
-    max-width: 320px;
     display: flex;
     align-items: center;
     justify-content: center;
