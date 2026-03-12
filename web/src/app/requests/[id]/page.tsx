@@ -44,6 +44,9 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
     if (!demand) notFound();
 
+    // Fire-and-forget view count increment (same pattern as product detail)
+    (prisma.demand as any).update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
+
     const isPoster = userId === demand.userId;
 
     // Check if the current user has a store
