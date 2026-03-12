@@ -40,7 +40,7 @@ export default function ClientCheckoutForm({
     const currentDeliveryFee = deliveryMethod === 'PICKUP' ? 0 : initialDeliveryFee;
     const currentSubtotal = itemPrice * quantity;
     const baseTotal = currentSubtotal + currentDeliveryFee;
-    const gatewayFee = Math.min(Math.round(baseTotal * 0.02 * 100) / 100, 2000);
+    const gatewayFee = Math.round(baseTotal * 0.05 * 100) / 100;
     const finalTotal = baseTotal + gatewayFee;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -167,7 +167,7 @@ export default function ClientCheckoutForm({
 
                 <div className={styles.summaryRow}><span>Items ({quantity})</span><span>₦{currentSubtotal.toLocaleString()}</span></div>
                 <div className={styles.summaryRow}><span>Delivery</span><span>₦{currentDeliveryFee.toLocaleString()}</span></div>
-                <div className={styles.summaryRow}><span>Processing fee</span><span>₦{gatewayFee.toLocaleString()}</span></div>
+                <div className={styles.summaryRow}><span>Service &amp; escrow fee (5%)</span><span>₦{gatewayFee.toLocaleString()}</span></div>
 
                 <div className={styles.trustBanner} style={{ marginTop: '16px' }}>
                     <div className={styles.trustIcon}>

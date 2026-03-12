@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 56 — Mar 12, 2026 — Unified Social Feed (Likes, Bookmarks, Views on All Cards)](#session-56--mar-12-2026--unified-social-feed-likes-bookmarks-views-on-all-cards)
 - [Session 55 — Mar 11, 2026 — Username Validation & Repair Flow](#session-55--mar-11-2026--username-validation--repair-flow)
 - [Session 54 — Mar 11, 2026 — Critical Bug Fixes (Signup, Orders, Payouts)](#session-54--mar-11-2026--critical-bug-fixes-signup-orders-payouts)
 - [Session 53 — Mar 11, 2026 — Features, Security Audit & Production Crash Fix](#session-53--mar-11-2026--features-security-audit--production-crash-fix)
@@ -38,6 +39,98 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 56 — Mar 12, 2026 — Unified Social Feed (Likes, Bookmarks, Views on All Cards)
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Goal
+Make DepMi's feed look and behave like a proper social platform — every content type (Product, Post, Demand) has visible social metrics, a unified action bar, and bookmark support.
+
+### Work Done
+
+#### 1. Unified Card Structure (ProductCard, PostCard, DemandCard)
+- All three card types now share an identical action bar: `💬 count | ❤ count | 👁 views | ↗ share | 🔖 bookmark`
+- Circular 36px avatar header with `@handle` on every card
+- Image media bleeds edge-to-edge (negative margin trick) on all cards
+- Counts always visible (even if 0) — not conditional
+
+#### 2. Likes on Demands
+- New Prisma model `DemandLike` (@@unique userId_demandId) added to schema
+- New API route `/api/demands/[id]/like` — POST toggles like, returns `{ liked: bool }`
+- DemandCard renders like button with optimistic UI + rollback on error
+- `likeCount` shown in action bar
+
+#### 3. Bookmark (Save) on Demands
+- New Prisma model `SavedDemand` (@@unique userId_demandId) added to schema
+- New API route `/api/demands/[id]/save` — POST toggles bookmark, returns `{ saved: bool }`
+- DemandCard bookmark button pushed to far right (margin-left: auto), turns primary green when active
+- `isSaved` passed from `page.tsx` using session-filtered include
+
+#### 4. View Counts
+- `viewCount` field on Demand model (schema, default 0)
+- Eye icon shown in action bar on ProductCard and DemandCard when viewCount > 0
+
+#### 5. Removed "X viewing" Overlay Badge
+- Removed the `viewersBadge` div from ProductCard image — replaced by eye icon in action bar
+
+#### 6. /bookmarks Page
+- Server component at `/bookmarks` fetches all SavedProduct + SavedDemand for the current user
+- Displays products and demands in sectioned feeds using the same card components
+- Empty state shown if nothing bookmarked
+
+#### 7. Navigation
+- DesktopSidebar: Bookmarks added between Orders and Messages (bookmark SVG, fills when active)
+- BottomNav: Replaced "Orders" slot with "Bookmarks" (Orders accessible via profile)
+
+### Schema Changes
+```prisma
+model DemandLike {
+  id        String   @id @default(uuid())
+  userId    String
+  demandId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(...)
+  demand    Demand   @relation(...)
+  @@unique([userId, demandId])
+}
+
+model SavedDemand {
+  id        String   @id @default(uuid())
+  userId    String
+  demandId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(...)
+  demand    Demand   @relation(...)
+  @@unique([userId, demandId])
+}
+
+// Added to Demand:
+viewCount  Int           @default(0)
+likes      DemandLike[]
+saves      SavedDemand[]
+```
+
+### Bugs Fixed
+- **PrismaClientValidationError `Unknown field 'likes' on DemandCountOutputType`** — Turbopack was caching stale Prisma client. Fixed by running `npx prisma generate` explicitly after `db push`. Must restart dev server after.
+
+### Files Changed
+- `prisma/schema.prisma`
+- `src/app/page.tsx`
+- `src/app/bookmarks/page.tsx` *(new)*
+- `src/app/bookmarks/page.module.css` *(new)*
+- `src/app/api/demands/[id]/like/route.ts` *(new)*
+- `src/app/api/demands/[id]/save/route.ts` *(new)*
+- `src/components/ProductCard/index.tsx`
+- `src/components/ProductCard/ProductCard.module.css`
+- `src/components/PostCard/index.tsx`
+- `src/components/PostCard/PostCard.module.css`
+- `src/components/DemandCard/index.tsx`
+- `src/components/DemandCard/DemandCard.module.css`
+- `src/components/BottomNav/index.tsx`
+- `src/components/DesktopSidebar/index.tsx`
 
 ---
 

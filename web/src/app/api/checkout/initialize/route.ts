@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
     const totalItemsAmount = itemPrice * quantity
     const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    // Processing fee (2%, capped at ₦2,000) — charged to buyer; covers gateway + margin
-    const gatewayFee = Math.min(Math.round(subtotalAndDelivery * 0.02 * 100) / 100, 2000)
+    // Service & escrow fee (5%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
+    const gatewayFee = Math.round(subtotalAndDelivery * 0.05 * 100) / 100
     const finalAmountToPay = subtotalAndDelivery + gatewayFee
 
     // Create or find existing Order

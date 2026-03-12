@@ -1,88 +1,139 @@
+/* ── Card shell — same as ProductCard / PostCard ── */
 .card {
     background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    padding: 18px;
     border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-sm);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
     animation: fadeInUp 400ms ease-out both;
-    transition: box-shadow var(--transition-base), transform var(--transition-base);
+    cursor: pointer;
+    transition: box-shadow var(--transition-base);
 }
 
 .card:hover {
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
 }
 
-/* Header */
+/* ── Header ── */
 .header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 14px;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 0;
 }
 
-.userInfo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.avatarLink {
+    flex-shrink: 0;
+    display: block;
+    border-radius: 50%;
 }
 
 .avatar {
-    width: 42px;
-    height: 42px;
-    background: #ecfdf5;
-    color: var(--primary);
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: color-mix(in srgb, var(--primary) 15%, var(--bg-elevated));
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatarImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarInitial {
+    font-size: 0.85rem;
     font-weight: 800;
-    font-size: 14px;
+    color: var(--primary);
+    line-height: 1;
 }
 
-.userName {
+.authorMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.authorNameRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.authorName {
+    font-size: 0.875rem;
     font-weight: 700;
-    font-size: 15px;
     color: var(--text-main);
-    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
 }
 
-.meta {
-    font-size: 12px;
+.authorName:hover {
+    text-decoration: underline;
+}
+
+.authorHandle {
+    font-size: 0.78rem;
     color: var(--text-muted);
-    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.authorSub {
+    display: flex;
+    align-items: center;
+}
+
+.metaText {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* DEMAND badge — pushed to right */
 .badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: var(--accent-gold-light);
+    background: var(--accent-gold-light, rgba(184, 134, 11, 0.12));
     color: #B8860B;
-    padding: 5px 10px;
+    padding: 4px 9px;
     border-radius: var(--radius-full);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     flex-shrink: 0;
 }
 
-/* Body */
-.text {
-    font-size: 15px;
+/* ── Body ── */
+.body {
+    font-size: 0.9rem;
     line-height: 1.55;
     color: var(--text-main);
-    margin-bottom: 14px;
+    padding: 0 16px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
-/* Media Preview */
-.mediaContainer {
-    margin: 0 0 16px;
-    border-radius: var(--radius-md);
+/* ── Media — bleed to edges like PostCard ── */
+.mediaWrap {
+    margin: 0 -1px;
     overflow: hidden;
-    position: relative;
-    background: var(--bg-color);
+    background: var(--bg-elevated);
 }
 
 .videoWrapper {
@@ -113,32 +164,16 @@
 .imageGrid {
     display: grid;
     gap: 2px;
-}
-
-.imageGrid[data-count="1"] {
-    grid-template-columns: 1fr;
     aspect-ratio: 16 / 9;
 }
 
-.imageGrid[data-count="2"] {
-    grid-template-columns: 1fr 1fr;
-    aspect-ratio: 16 / 9;
-}
-
-.imageGrid[data-count="3"] {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    aspect-ratio: 16 / 9;
-}
-
-.imageGrid[data-count="3"] .imageItem:first-child {
-    grid-row: span 2;
-}
+.imageGrid[data-count="1"] { grid-template-columns: 1fr; }
+.imageGrid[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.imageGrid[data-count="3"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.imageGrid[data-count="3"] .imageItem:first-child { grid-row: span 2; }
 
 .imageItem {
     position: relative;
-    width: 100%;
-    height: 100%;
     overflow: hidden;
 }
 
@@ -160,36 +195,36 @@
     font-weight: 700;
 }
 
-/* Budget */
-.budgetBar {
+/* ── Budget row ── */
+.budgetRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg-color);
-    padding: 12px 16px;
+    background: var(--bg-elevated);
+    padding: 10px 14px;
     border-radius: var(--radius-md);
-    margin-bottom: 16px;
+    margin: 0 16px;
 }
 
-.budgetLeft {
+.budgetBlock {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .budgetLabel {
-    font-size: 13px;
+    font-size: 0.72rem;
     color: var(--text-muted);
     font-weight: 500;
 }
 
 .budgetValue {
-    font-size: 17px;
+    font-size: 1rem;
     font-weight: 800;
     color: var(--primary);
 }
 
-.budgetRight {
+.budgetMeta {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -202,84 +237,126 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-muted);
-    background: var(--bg-elevated);
+    background: var(--card-bg);
     padding: 3px 8px;
     border-radius: var(--radius-full);
     border: 1px solid var(--card-border);
 }
 
-.urgency {
+.urgencyChip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #E17055;
     background: rgba(225, 112, 85, 0.1);
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: var(--radius-full);
 }
 
-/* Actions — 3 equal-width stat buttons */
+/* ── CTA — part of body, like ProductCard's Buy button ── */
+.cta {
+    padding: 0 16px;
+}
+
+.bidBtn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--primary);
+    color: white;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-glow);
+}
+
+.bidBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--primary-glow);
+}
+
+.bidBtn:active {
+    transform: scale(0.97);
+}
+
+.bidCount {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 1px 8px;
+    border-radius: var(--radius-full);
+}
+
+/* ── Unified action bar — identical to ProductCard & PostCard ── */
 .actions {
     display: flex;
-    gap: 0;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 16px 14px;
     border-top: 1px solid var(--card-border);
-    margin: 4px -18px -18px;
 }
 
 .actionBtn {
-    flex: 1;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 11px 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    background: transparent;
+    gap: 5px;
+    background: none;
     border: none;
-    border-right: 1px solid var(--card-border);
-    transition: background var(--transition-fast), color var(--transition-fast);
     cursor: pointer;
-}
-
-.actionBtn:last-child {
-    border-right: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 6px 8px;
+    border-radius: var(--radius-full);
+    transition: color 0.15s, background 0.15s;
 }
 
 .actionBtn:hover {
-    background: var(--bg-hover);
-    color: var(--text-main);
-}
-
-.actionBtn:active {
+    color: var(--text-secondary);
     background: var(--bg-elevated);
 }
 
-/* Bid button — green tint on hover */
-.actionBtnBid:hover {
-    color: var(--primary);
-    background: rgba(0, 200, 83, 0.07);
+.actionBtnLiked {
+    color: #e0004e;
 }
 
-/* Share copied state */
-.actionBtnCopied {
+.actionBtnLiked:hover {
+    color: #e0004e;
+    background: color-mix(in srgb, #e0004e 10%, transparent);
+}
+
+/* Save / bookmark — pushed to far right */
+.actionBtnSave {
+    margin-left: auto;
+}
+
+.actionBtnSaved {
     color: var(--primary);
 }
 
-.actionCount {
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--bg-elevated);
-    padding: 1px 6px;
-    border-radius: var(--radius-full);
+.actionBtnSaved:hover {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+/* View count — non-interactive metric, like X's impressions */
+.viewCount {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
     color: var(--text-muted);
+    padding: 6px 8px;
 }
 
-/* ── Share sheet ──────────────────────────────────────── */
-
+/* ── Share sheet ── */
 .shareOverlay {
     position: fixed;
     inset: 0;
@@ -312,13 +389,13 @@
     font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-main);
-    margin: 0 0 14px;
+    margin: 0 0 4px;
 }
 
 .sheetSubtitle {
     font-size: 0.82rem;
     color: var(--text-muted);
-    margin: -8px 0 18px;
+    margin: 0 0 18px;
 }
 
 .sheetOptions {
@@ -344,13 +421,8 @@
     transition: opacity var(--transition-fast);
 }
 
-.sheetOption:hover {
-    opacity: 0.8;
-}
-
-.sheetOptionCopied {
-    color: var(--primary);
-}
+.sheetOption:hover { opacity: 0.8; }
+.sheetOptionCopied { color: var(--primary); }
 
 .sheetIcon {
     width: 48px;
@@ -376,26 +448,19 @@
     transition: background var(--transition-fast);
 }
 
-.sheetCancel:hover {
-    background: var(--bg-hover);
+.sheetCancel:hover { background: var(--bg-hover); }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from {
-        transform: translateY(100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }

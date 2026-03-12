@@ -40,9 +40,11 @@ model User {
   ordersAsBuyer   Order[]          @relation("BuyerOrders")
   otpTokens       OtpToken[]
   productLikes    ProductLike[]
+  demandLikes     DemandLike[]
   productWatches  ProductWatch[]
   reviewsLeft     Review[]         @relation("BuyerReviews")
   savedProducts   SavedProduct[]
+  savedDemands    SavedDemand[]
   stores          Store[]          @relation("UserStores")
   storeFollows    StoreFollow[]    @relation("UserStoreFollows")
   followers       UserFollow[]     @relation("UserFollowing")
@@ -212,13 +214,42 @@ model Demand {
   updatedAt  DateTime      @updatedAt
   currency   String        @default("₦")
   videoUrl   String?
+  viewCount  Int           @default(0)
   images     DemandMedia[]
   bids       Bid[]
   comments   Comment[]     @relation("DemandComments")
+  likes      DemandLike[]
+  saves      SavedDemand[]
   user       User          @relation("UserDemands", fields: [userId], references: [id])
   orders     Order[]       @relation("DemandOrders")
 
   @@index([isActive, category])
+  @@index([userId])
+}
+
+model DemandLike {
+  id        String   @id @default(uuid())
+  userId    String
+  demandId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  demand    Demand   @relation(fields: [demandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, demandId])
+  @@index([demandId])
+  @@index([userId])
+}
+
+model SavedDemand {
+  id        String   @id @default(uuid())
+  userId    String
+  demandId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  demand    Demand   @relation(fields: [demandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, demandId])
+  @@index([demandId])
   @@index([userId])
 }
 

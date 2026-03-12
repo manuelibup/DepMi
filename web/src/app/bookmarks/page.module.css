@@ -1,0 +1,40 @@
+.main {
+    min-height: 100dvh;
+    background: var(--bg-color);
+    padding-bottom: 80px;
+}
+
+.content {
+    padding: 16px 0 40px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.pageTitle {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+    padding: 0 16px;
+    margin: 0 0 20px;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.sectionTitle {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 16px;
+    margin: 0 0 12px;
+}
+
+.feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 12px;
+}

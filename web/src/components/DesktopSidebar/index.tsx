@@ -41,6 +41,15 @@ const NAV_ITEMS = [
         ),
     },
     {
+        label: 'Bookmarks',
+        href: '/bookmarks',
+        icon: (active: boolean) => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+        ),
+    },
+    {
         label: 'Messages',
         href: '/messages',
         icon: (active: boolean) => (

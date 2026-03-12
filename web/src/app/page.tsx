@@ -68,8 +68,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     take: 20,
     include: {
       user: { select: { displayName: true, username: true, avatarUrl: true } },
-      _count: { select: { bids: true } },
+      _count: { select: { bids: true, comments: true, likes: true } },
       images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
+      ...(session?.user?.id ? {
+        likes: { where: { userId: session.user.id }, select: { id: true } },
+        saves: { where: { userId: session.user.id }, select: { id: true } }
+      } : {})
     }
   });
 
@@ -121,6 +125,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 budget: `₦${Number(demand.budget).toLocaleString()}`,
                 budgetMin: demand.budgetMin ? `₦${Number(demand.budgetMin).toLocaleString()}` : null,
                 bids: demand._count.bids,
+                commentCount: demand._count.comments,
+                likeCount: demand._count.likes,
+                viewCount: demand.viewCount,
+                isLiked: session?.user?.id ? (demand.likes && demand.likes.length > 0) : false,
+                isSaved: session?.user?.id ? (demand.saves && demand.saves.length > 0) : false,
                 location: demand.location ?? null,
                 images: demand.images.map((img: any) => img.url),
               };

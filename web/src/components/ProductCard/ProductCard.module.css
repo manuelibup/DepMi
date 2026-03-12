@@ -1,97 +1,147 @@
+/* ── Card shell — matches PostCard exactly ── */
 .card {
     background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
     border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-sm);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
     animation: fadeInUp 400ms ease-out both;
-    transition: box-shadow var(--transition-base), transform var(--transition-base);
     cursor: pointer;
+    transition: box-shadow var(--transition-base);
 }
 
 .card:hover {
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
 }
 
-/* Header */
+/* ── Header — same layout as PostCard ── */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-}
-
-.storeInfo {
     display: flex;
     align-items: center;
     gap: 10px;
-    text-decoration: none;
-    color: inherit;
+    padding: 14px 16px 0;
 }
 
-.storeAvatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+.avatarLink {
+    flex-shrink: 0;
+    display: block;
+    border-radius: 50%;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 18px;
-    color: white;
+    flex-shrink: 0;
 }
 
-.storeName {
+.avatarInitial {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+}
+
+.authorMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.authorNameRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.authorName {
+    font-size: 0.875rem;
     font-weight: 700;
-    font-size: 15px;
     color: var(--text-main);
-    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.authorName:hover {
+    text-decoration: underline;
+}
+
+.authorHandle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.authorSub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .depsBadge {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
+    font-size: 0.72rem;
     font-weight: 600;
     color: var(--primary);
-    margin-top: 2px;
 }
 
 .moreBtn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
     border-radius: var(--radius-full);
-    transition: background var(--transition-fast);
+    flex-shrink: 0;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .moreBtn:hover {
     background: var(--bg-color);
+    color: var(--text-main);
 }
 
-/* Image */
+/* ── Image — bleeds to edges like PostCard ── */
 .imageWrap {
     position: relative;
-    width: 100%;
-    aspect-ratio: 440 / 280;
-    background: var(--bg-color);
+    /* Bleed to card edges */
+    margin: 0 -1px; /* -1px to cover border gap */
     overflow: hidden;
+    background: var(--bg-elevated);
 }
 
 .productImage {
+    display: block;
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 480px;
     object-fit: cover;
-    transition: transform 500ms ease;
+    transition: transform 400ms ease;
 }
 
 .card:hover .productImage {
-    transform: scale(1.03);
+    transform: scale(1.02);
+}
+
+.imagePlaceholder {
+    width: 100%;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
 }
 
 .viewersBadge {
@@ -100,19 +150,22 @@
     left: 10px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
     color: white;
     font-size: 11px;
     font-weight: 600;
-    padding: 5px 10px;
+    padding: 4px 9px;
     border-radius: var(--radius-full);
 }
 
-/* Info */
-.info {
-    padding: 14px 16px 4px;
+/* ── Body — title, price, location, CTA ── */
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 16px;
 }
 
 .titleRow {
@@ -120,18 +173,17 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 6px;
 }
 
 .title {
-    font-size: 16px;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-main);
     line-height: 1.35;
 }
 
 .price {
-    font-size: 18px;
+    font-size: 1rem;
     font-weight: 800;
     color: var(--primary);
     white-space: nowrap;
@@ -142,74 +194,36 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 13px;
+    font-size: 0.78rem;
     color: var(--text-muted);
 }
 
-/* Social Row */
-.social {
+/* CTA — inline part of the body, not a separate action bar */
+.cta {
     display: flex;
-    align-items: center;
-    padding: 6px 16px 4px;
-    gap: 2px;
-}
-
-.socialBtn {
-    min-width: 40px;
-    height: 40px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0 6px;
-    color: var(--text-secondary);
-    border-radius: var(--radius-full);
-    transition: color var(--transition-fast), transform var(--transition-spring);
-}
-
-.socialCount {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1;
-}
-
-.socialBtn:hover {
-    color: var(--primary);
-}
-
-.socialBtn:active {
-    transform: scale(0.85);
-}
-
-.saveBtn {
-    margin-left: auto;
-}
-
-/* CTA Actions */
-.actions {
-    display: flex;
-    gap: 10px;
-    padding: 8px 16px 16px;
+    gap: 8px;
+    margin-top: 4px;
 }
 
 .buyBtn {
     flex: 1;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--primary);
     color: white;
-    padding: 13px 16px;
+    padding: 10px 16px;
     border-radius: var(--radius-md);
     font-weight: 700;
-    font-size: 14px;
+    font-size: 0.85rem;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     box-shadow: var(--shadow-glow);
 }
 
 .buyBtn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px var(--primary-glow);
+    box-shadow: 0 6px 20px var(--primary-glow);
 }
 
 .buyBtn:active {
@@ -217,30 +231,90 @@
 }
 
 .chatBtn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--bg-color);
+    background: var(--bg-elevated);
     color: var(--text-secondary);
-    padding: 13px 20px;
+    padding: 10px 16px;
     border-radius: var(--radius-md);
     font-weight: 600;
-    font-size: 14px;
-    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    font-size: 0.85rem;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    border: 1px solid var(--card-border);
 }
 
 .chatBtn:hover {
-    background: var(--bg-elevated);
+    background: var(--bg-hover);
     color: var(--text-main);
 }
 
-.chatBtn:active {
-    transform: scale(0.97);
+/* ── Unified action bar — pixel-identical to PostCard ── */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 16px 14px;
+    border-top: 1px solid var(--card-border);
+    margin-top: 0;
 }
 
-/* ── Share sheet ──────────────────────────────────────── */
+.actionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 6px 8px;
+    border-radius: var(--radius-full);
+    transition: color 0.15s, background 0.15s;
+}
 
+.actionBtn:hover {
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+}
+
+.actionBtnLiked {
+    color: #e0004e;
+}
+
+.actionBtnLiked:hover {
+    color: #e0004e;
+    background: color-mix(in srgb, #e0004e 10%, transparent);
+}
+
+/* View count — non-interactive metric like X's impressions */
+.viewCount {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    padding: 6px 8px;
+}
+
+/* Save button — pushed to far right like bookmark on X/Instagram */
+.actionBtnSave {
+    margin-left: auto;
+}
+
+.actionBtnSaved {
+    color: var(--primary);
+}
+
+.actionBtnSaved:hover {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+/* ── Share sheet ── */
 .shareOverlay {
     position: fixed;
     inset: 0;
@@ -273,13 +347,13 @@
     font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-main);
-    margin: 0 0 14px;
+    margin: 0 0 4px;
 }
 
 .sheetSubtitle {
     font-size: 0.82rem;
     color: var(--text-muted);
-    margin: -8px 0 18px;
+    margin: 0 0 18px;
 }
 
 .sheetOptions {
@@ -305,13 +379,9 @@
     transition: opacity var(--transition-fast);
 }
 
-.sheetOption:hover {
-    opacity: 0.8;
-}
+.sheetOption:hover { opacity: 0.8; }
 
-.sheetOptionCopied {
-    color: var(--primary);
-}
+.sheetOptionCopied { color: var(--primary); }
 
 .sheetIcon {
     width: 48px;
@@ -337,26 +407,19 @@
     transition: background var(--transition-fast);
 }
 
-.sheetCancel:hover {
-    background: var(--bg-hover);
+.sheetCancel:hover { background: var(--bg-hover); }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from {
-        transform: translateY(100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }

@@ -269,22 +269,27 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
 
             {/* Inline expandable inputs */}
             {activeInput === 'price' && (
-                <div className={styles.inlineInputRow}>
-                    <select name="currency" value={form.currency} onChange={handleChange} className={styles.currencySelect}>
-                        {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <input
-                        type="text"
-                        name="price"
-                        inputMode="numeric"
-                        placeholder="Price amount"
-                        value={form.displayPrice}
-                        onChange={handleChange}
-                        className={styles.inlineInput}
-                        autoFocus
-                    />
-                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
-                </div>
+                <>
+                    <div className={styles.inlineInputRow}>
+                        <select name="currency" value={form.currency} onChange={handleChange} className={styles.currencySelect}>
+                            {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <input
+                            type="text"
+                            name="price"
+                            inputMode="numeric"
+                            placeholder="Price amount"
+                            value={form.displayPrice}
+                            onChange={handleChange}
+                            className={styles.inlineInput}
+                            autoFocus
+                        />
+                        <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '4px 16px 0', lineHeight: 1.4 }}>
+                        DepMi charges a 5% success fee on completed sales. Factor this into your price.
+                    </p>
+                </>
             )}
 
             {activeInput === 'category' && (
