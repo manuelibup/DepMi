@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './PostCard.module.css';
 
 export interface PostAuthor {
@@ -131,13 +132,16 @@ function MediaCarousel({ images }: { images: { url: string }[] }) {
 export default function PostCard({ data, sessionUserId }: { data: PostData; sessionUserId?: string }) {
     const [liked, setLiked] = useState(data.isLiked ?? false);
     const [likeCount, setLikeCount] = useState(data.likeCount);
+    const [commentCount, setCommentCount] = useState(data.commentCount);
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<{ id: string; text: string; createdAt: string; author: PostAuthor }[]>([]);
     const [commentText, setCommentText] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [commentsLoaded, setCommentsLoaded] = useState(false);
+    const [sharecopied, setShareCopied] = useState(false);
 
     const authorName = data.author.displayName || data.author.username || 'Store';
+    const authorHandle = data.author.username ? `@${data.author.username}` : null;
     const authorInitial = authorName.charAt(0).toUpperCase();
 
     async function toggleLike() {
@@ -183,10 +187,19 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
                 const c = await res.json();
                 setComments(prev => [...prev, c]);
                 setCommentText('');
+                setCommentCount(n => n + 1);
             }
         } catch { /* ignore */ } finally {
             setCommentLoading(false);
         }
+    }
+
+    function handleShare() {
+        const url = `${window.location.origin}/store/${data.storeSlug}`;
+        navigator.clipboard.writeText(url).then(() => {
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2000);
+        });
     }
 
     return (
@@ -200,16 +213,22 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
 
             {/* Author row */}
             <div className={styles.authorRow}>
-                <div className={styles.avatar}>
-                    {data.author.avatarUrl ? (
-                        <Image src={data.author.avatarUrl} alt={authorName} fill sizes="36px" style={{ objectFit: 'cover' }} />
-                    ) : (
-                        <span className={styles.avatarInitial}>{authorInitial}</span>
-                    )}
-                </div>
+                <Link href={`/store/${data.storeSlug}`} className={styles.avatarLink}>
+                    <div className={styles.avatar}>
+                        {data.author.avatarUrl ? (
+                            <Image src={data.author.avatarUrl} alt={authorName} fill sizes="36px" style={{ objectFit: 'cover' }} />
+                        ) : (
+                            <span className={styles.avatarInitial}>{authorInitial}</span>
+                        )}
+                    </div>
+                </Link>
                 <div className={styles.authorMeta}>
-                    <span className={styles.authorName}>{authorName}</span>
-                    <span className={styles.time}>{timeAgo(data.createdAt)}</span>
+                    <div className={styles.authorNameRow}>
+                        <Link href={`/store/${data.storeSlug}`} className={styles.authorName}>{authorName}</Link>
+                        {authorHandle && <span className={styles.authorHandle}>{authorHandle}</span>}
+                        <span className={styles.authorDot}>·</span>
+                        <span className={styles.time}>{timeAgo(data.createdAt)}</span>
+                    </div>
                 </div>
             </div>
 
@@ -232,14 +251,30 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
                     <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
-                    {likeCount > 0 && <span>{likeCount}</span>}
+                    <span>{likeCount}</span>
                 </button>
 
                 <button type="button" className={styles.actionBtn} onClick={toggleComments}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
-                    {data.commentCount > 0 && <span>{data.commentCount}</span>}
+                    <span>{commentCount}</span>
+                </button>
+
+                <button
+                    type="button"
+                    className={`${styles.actionBtn} ${sharecopied ? styles.actionBtnCopied : ''}`}
+                    onClick={handleShare}
+                    title={sharecopied ? 'Link copied!' : 'Share post'}
+                >
+                    {sharecopied ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                    )}
                 </button>
             </div>
 

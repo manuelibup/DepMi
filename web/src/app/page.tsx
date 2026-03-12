@@ -52,6 +52,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     include: {
       store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
       images: true,
+      _count: { select: { likes: true, saves: true, comments: true } },
       ...(session?.user?.id ? {
         likes: { where: { userId: session.user.id }, select: { id: true } },
         saves: { where: { userId: session.user.id }, select: { id: true } }
@@ -68,6 +69,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     include: {
       user: { select: { displayName: true, username: true, avatarUrl: true } },
       _count: { select: { bids: true } },
+      images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
     }
   });
 
@@ -120,6 +122,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 budgetMin: demand.budgetMin ? `₦${Number(demand.budgetMin).toLocaleString()}` : null,
                 bids: demand._count.bids,
                 location: demand.location ?? null,
+                images: demand.images.map((img: any) => img.url),
               };
               cardContent = <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
             } else {
@@ -144,6 +147,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 id: product.id,
                 ownerId: product.store.ownerId,
                 ownerUsername: product.store.owner.username,
+                likeCount: product._count.likes,
+                saveCount: product._count.saves,
+                commentCount: product._count.comments,
                 ...(session?.user?.id ? {
                   isLiked: product.likes && product.likes.length > 0,
                   isSaved: product.saves && product.saves.length > 0

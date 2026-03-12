@@ -155,14 +155,21 @@
 }
 
 .socialBtn {
-    width: 40px;
+    min-width: 40px;
     height: 40px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
+    padding: 0 6px;
     color: var(--text-secondary);
     border-radius: var(--radius-full);
     transition: color var(--transition-fast), transform var(--transition-spring);
+}
+
+.socialCount {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .socialBtn:hover {

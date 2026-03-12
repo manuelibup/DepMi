@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
     const totalItemsAmount = itemPrice * quantity
     const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    const finalAmountToPay = subtotalAndDelivery
+    // Processing fee (2%, capped at ₦2,000) — charged to buyer; covers gateway + margin
+    const gatewayFee = Math.min(Math.round(subtotalAndDelivery * 0.02 * 100) / 100, 2000)
+    const finalAmountToPay = subtotalAndDelivery + gatewayFee
 
     // Create or find existing Order
     const order = await prisma.$transaction(async (tx) => {
@@ -139,6 +141,7 @@ export async function POST(req: NextRequest) {
       breakdown: {
         subtotal: totalItemsAmount,
         deliveryFee,
+        gatewayFee,
         total: finalAmountToPay,
       },
     })
