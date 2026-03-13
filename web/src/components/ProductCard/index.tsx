@@ -185,10 +185,10 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                 {/* ── Image — bleed to card edges like PostCard ── */}
                 <div className={styles.imageWrap}>
                     {data.inStock === false && (
-                        <div style={{ position: 'absolute', top: 8, left: 8, background: 'var(--error)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>Out of Stock</div>
+                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--error)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>Out of Stock</div>
                     )}
                     {data.inStock !== false && typeof data.stock === 'number' && data.stock > 0 && (
-                        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>{data.stock} Left</div>
+                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>{data.stock} Left</div>
                     )}
                     {data.image ? (
                         /* eslint-disable-next-line @next/next/no-img-element */

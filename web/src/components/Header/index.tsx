@@ -30,7 +30,7 @@ export default function Header() {
                 <span className={styles.logoText}>DepMi</span>
             </Link>
             <div className={styles.headerActions}>
-                <Link href="/u/manuel" className={styles.iconBtn} aria-label="Support">
+                <Link href="/support" className={styles.iconBtn} aria-label="Support">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
