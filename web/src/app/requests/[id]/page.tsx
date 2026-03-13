@@ -155,7 +155,9 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     <h1 className={styles.demandText}>{demand.text}</h1>
                     <div className={styles.budgetRow}>
                         <span className={styles.budgetLabel}>Budget:</span>
-                        <strong className={styles.budgetValue}>₦{Number(demand.budget).toLocaleString()}</strong>
+                        <strong className={styles.budgetValue}>
+                            {demand.budgetMin ? `₦${Number(demand.budgetMin).toLocaleString()} – ₦${Number(demand.budget).toLocaleString()}` : `₦${Number(demand.budget).toLocaleString()}`}
+                        </strong>
                     </div>
                     {demand.location && (
                         <p className={styles.location}>
