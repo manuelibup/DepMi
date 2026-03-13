@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 58 — Mar 13, 2026 — Admin Security, Dashboard KPIs & DNS Fast-Track](#session-58--mar-13-2026--admin-security-dashboard-kpis--dns-fast-track)
 - [Session 57 — Mar 13, 2026 — Social Polish, Photo Crop, Delivery Fee & Notifications](#session-57--mar-13-2026--social-polish-photo-crop-delivery-fee--notifications)
 - [Session 56 — Mar 12, 2026 — Unified Social Feed (Likes, Bookmarks, Views on All Cards)](#session-56--mar-12-2026--unified-social-feed-likes-bookmarks-views-on-all-cards)
 - [Session 55 — Mar 11, 2026 — Username Validation & Repair Flow](#session-55--mar-11-2026--username-validation--repair-flow)
@@ -40,6 +41,33 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 58 — Mar 13, 2026 — Admin Security, Dashboard KPIs & DNS Fast-Track
+**Agent:** Antigravity (Claude)
+**Human:** Manuel
+
+### What Was Built
+**1. DNS Routing Fix:**
+- Verified `216.198.79.1` belongs to Vercel's Anycast network.
+- Determined the timeout error was caused by Namecheap's masking/forwarding, not Vercel. Directed user to change Cloudflare A record directly to `216.198.79.1` to route traffic natively and resolve browser timeouts once and for all.
+
+**2. 3-Layer Admin Security (2FA + 3FA):**
+- **Schema:** Added `totpEnabled`, `totpSecret`, and `adminPinHash` to the `User` model.
+- **Dependency Downgrade:** Installed `otplib` and `qrcode`. Had to downgrade `otplib` from `v13` to `v12.0.1` because `v13` completely rewrote the generator API, dropping the `authenticator` export and crashing the Turbopack build.
+- **UI:** Built a `/secure-admin` gateway. If an admin accesses the dashboard without 2FA and 3FA initialized, they are forced to scan a QR code via Google Authenticator (TOTP) and set a static secondary PIN (`adminPinHash`). Subsequent logins mandate both codes.
+
+**3. Financial Dashboard KPIs:**
+- Updated `/admin/dashboard/page.tsx` with aggregate Prisma queries.
+- **Total Spent (₦):** Sum of `totalAmount` across `DELIVERED`/`COMPLETED` orders.
+- **Product Worth (₦):** Sum of `price * stock` across all active products.
+- Brought into UI via new `KpiCard` elements along with Total, Completed, and Cancelled orders.
+
+**4. Routing Conflict Resolved:**
+- **Issue:** Vercel/Turbopack threw `You cannot have two parallel pages that resolve to the same path`.
+- **Cause:** Duplicate `/admin` folders existed: the legacy `web/src/app/(auth)/admin` and the new `web/src/app/admin`.
+- **Fix:** Deleted the legacy `(auth)/admin` route. The new dashboard inherently encapsulates the invite form that was in the old folder.
 
 ---
 

@@ -23,6 +23,7 @@ export default async function AdminsPage() {
 
     const serialized = admins.map(a => ({
         ...a,
+        adminRole: a.adminRole as NonNullable<typeof a.adminRole>,
         createdAt: a.createdAt.toISOString(),
         lastActiveAt: a.lastActiveAt?.toISOString() ?? null,
     }));

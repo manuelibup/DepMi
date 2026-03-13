@@ -435,4 +435,34 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Guard Check**: `page.tsx` redirects to `/onboarding` only when `!session.user.username`. Since the username is auto-set, the redirect never fires.
 - **The Fix**: Add an `onboardingComplete: boolean` field to the User schema. Set it to `false` on account creation (including Google OAuth). The guard in `page.tsx` changes to `if (!session.user.onboardingComplete) redirect('/onboarding')`. Only set `onboardingComplete = true` after the user explicitly completes the onboarding flow.
 
+---
+
+## 🌐 35. DNS Timeout Errors (Namecheap & Cloudflare Masking)
+
+*This tip was added after resolving persistent browser timeout and redirect loops on a custom domain.*
+
+- **The Issue**: Users report the site occasionally hangs, times out entirely, or gives weird redirect loops, but navigating directly to the `*.vercel.app` URL is lightning fast.
+- **The Cause**: Using domain registrars' built-in "URL Forwarding," "Masking," or "Parked Page" redirects instead of raw DNS records. If Namecheap (or similar) intercepts the request and tries to forward it, it breaks the SSL handshake or introduces massive global latency.
+- **The Fix**: Remove all URL Forwarding rules from the registrar. Ensure the domain's **A Record** directly points to Vercel's Anycast IP (`216.198.79.1`). This routes traffic natively and correctly terminates SSL.
+
+---
+
+## 🚦 36. Next.js "Parallel Pages Resolve to Same Path"
+
+*This tip was added when a duplicate `/admin` route broke the Turbopack build.*
+
+- **The Issue**: Vercel/Turbopack throws `You cannot have two parallel pages that resolve to the same path. Please check /(auth)/admin and /admin.`
+- **The Cause**: In App Router, route groups (folders in parentheses like `(auth)`) do not affect the URL path. Therefore, `app/(auth)/admin/page.tsx` and `app/admin/page.tsx` both try to render at `mydomain.com/admin`. Turbopack strictly forbids this overlap during compilation.
+- **The Fix**: Delete or heavily rename one of the conflicting folders. Ensure unique path segments across the entire `app/` directory.
+
+---
+
+## 🔑 37. Turbopack & otplib v13 "authenticator export not found"
+
+*This tip was added after implementing Google Authenticator 2FA.*
+
+- **The Issue**: Following the `otplib` docs and importing `import { authenticator } from 'otplib'` throws a fatal build error in Turbopack/Next.js: `Export authenticator doesn't exist in target module`.
+- **The Cause**: `otplib` version 13 completely refactored their export structure and dropped the default default exports for class instances in favor of a different structure, which standard Next.js RSC imports fail to resolve properly.
+- **The Fix**: Downgrade the package to `v12.0.1` (`npm install otplib@^12.0.1`). The v12 tree correctly supports the exact exports standard tutorials cite (`authenticator`, `totp`).
+
 
