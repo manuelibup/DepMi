@@ -28,6 +28,7 @@ export interface DemandData {
     isLiked?: boolean;
     isSaved?: boolean;
     saveCount?: number;
+    isActive?: boolean;
 }
 
 interface DemandCardProps {
@@ -158,11 +159,23 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                             <span className={styles.metaText}>Looking for · {data.timeAgo}</span>
                         </div>
                     </div>
-                    <span className={styles.badge}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                        </svg>
-                        Demand
+                    <span
+                        className={styles.badge}
+                        style={data.isActive === false ? { background: '#333', color: '#999', borderColor: '#444' } : {}}
+                    >
+                        {data.isActive === false ? (
+                            <>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                                Closed
+                            </>
+                        ) : (
+                            <>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                                </svg>
+                                Demand
+                            </>
+                        )}
                     </span>
                 </div>
 

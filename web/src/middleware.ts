@@ -13,7 +13,7 @@ const AUTH_REQUIRED = [
     '/messages',
 ];
 
-// Routes exempt from the "must have a username" redirect
+// Routes exempt from the "must complete onboarding" redirect
 // (onboarding itself, auth flows, APIs, and static files are handled by the matcher)
 const USERNAME_EXEMPT = [
     '/onboarding',
@@ -27,9 +27,9 @@ export async function middleware(req: NextRequest) {
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    // 1. Force username setup for logged-in users without a username
+    // 1. Force onboarding for logged-in users who haven't completed setup
     const isExempt = USERNAME_EXEMPT.some(p => pathname.startsWith(p));
-    if (token && !token.username && !isExempt) {
+    if (token && !token.onboardingComplete && !isExempt) {
         return NextResponse.redirect(new URL('/onboarding', req.url));
     }
 

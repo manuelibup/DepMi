@@ -1,0 +1,1 @@
+import { PrismaClient } from "@prisma/client"; const prisma = new PrismaClient(); async function resetDelivery() { await prisma.product.updateMany({ data: { deliveryFee: 0 } }); console.log("Delivery fees reset"); } resetDelivery().catch(console.error).finally(() => prisma.$disconnect());

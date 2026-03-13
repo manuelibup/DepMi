@@ -51,7 +51,8 @@ export async function POST(req: Request) {
             }
         }
 
-        // Create the Store
+        // Create the Store — grant 90-day fee waiver for all new sellers
+        const feeWaiverUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
         const store = await prisma.store.create({
             data: {
                 ownerId: session.user.id,
@@ -60,7 +61,8 @@ export async function POST(req: Request) {
                 description,
                 location,
                 logoUrl,
-                isActive: true
+                isActive: true,
+                feeWaiverUntil,
             }
         });
 

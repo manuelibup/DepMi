@@ -21,6 +21,7 @@ declare module "next-auth" {
             totpEnabled?: boolean;
             twoFaVerified?: boolean;
             adminPinVerified?: boolean;
+            onboardingComplete?: boolean;
         };
     }
 }
@@ -164,6 +165,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.totpEnabled = token.totpEnabled as boolean | undefined;
                 session.user.twoFaVerified = token.twoFaVerified as boolean | undefined;
                 session.user.adminPinVerified = token.adminPinVerified as boolean | undefined;
+                session.user.onboardingComplete = token.onboardingComplete as boolean | undefined;
             }
             return session;
         },
@@ -203,11 +205,12 @@ export const authOptions: NextAuthOptions = {
 
             // Always fetch the latest from DB if we don't have a username or on sign-in
             // This ensures server-side redirects work after onboarding
-            if (token.email && (!token.username || trigger === "signIn")) {
+            if (token.email && (!token.username || !token.onboardingComplete || trigger === "signIn")) {
                 try {
-                    const dbUser = await prisma.user.findUnique({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const dbUser = await (prisma.user as any).findUnique({
                         where: { email: token.email },
-                        select: { id: true, username: true, avatarUrl: true, adminRole: true, totpEnabled: true },
+                        select: { id: true, username: true, avatarUrl: true, adminRole: true, totpEnabled: true, onboardingComplete: true },
                     });
                     if (dbUser) {
                         token.id = dbUser.id;
@@ -215,6 +218,7 @@ export const authOptions: NextAuthOptions = {
                         token.picture = dbUser.avatarUrl ?? null;
                         token.adminRole = dbUser.adminRole ?? null;
                         token.totpEnabled = dbUser.totpEnabled;
+                        token.onboardingComplete = dbUser.onboardingComplete;
                     }
                 } catch (err) {
                     // DB temporarily unreachable — return the token as-is so the

@@ -35,8 +35,10 @@ model User {
   totpSecret      String?
   adminPinHash    String?
   lastActiveAt    DateTime?
-  isBanned        Boolean          @default(false)
-  accounts        Account[]
+  isBanned           Boolean          @default(false)
+  onboardingComplete Boolean          @default(false)
+  interests          String[]
+  accounts           Account[]
   comments        Comment[]        @relation("UserComments")
   demands         Demand[]         @relation("UserDemands")
   depTransactions DepTransaction[] @relation("UserDepTransactions")
@@ -183,6 +185,7 @@ model Store {
   rcNumber            String?
   tin                 String?
   verificationStatus  StoreVerificationStatus @default(UNVERIFIED)
+  feeWaiverUntil      DateTime?
   bids                Bid[]                   @relation("StoreBids")
   depTransactions     DepTransaction[]        @relation("StoreDepTransactions")
   ordersAsSeller      Order[]                 @relation("SellerOrders")
@@ -217,9 +220,10 @@ model Demand {
   text       String
   budget     Decimal       @db.Decimal(10, 2)
   budgetMin  Decimal?      @db.Decimal(10, 2)
-  category   Category      @default(OTHER)
-  location   String?
-  closesAt   DateTime?
+  category      Category      @default(OTHER)
+  categoryOther String?
+  location      String?
+  closesAt      DateTime?
   isActive   Boolean       @default(true)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -300,6 +304,7 @@ model Product {
   description     String?
   price           Decimal        @db.Decimal(10, 2)
   category        Category       @default(OTHER)
+  categoryOther   String?
   viewCount       Int            @default(0)
   inStock         Boolean        @default(true)
   createdAt       DateTime       @default(now())
@@ -703,6 +708,10 @@ enum Category {
   VEHICLES
   SERVICES
   TRANSPORT
+  SPORT
+  HOUSING
+  BOOKS
+  COURSE
   OTHER
 }
 

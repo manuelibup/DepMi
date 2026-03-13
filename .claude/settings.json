@@ -38,7 +38,16 @@
       "Bash(git add web/src/app/u/ web/src/app/store/[slug]/StoreTabBar.tsx web/src/app/store/[slug]/StoreTabBar.module.css web/src/app/store/[slug]/page.tsx)",
       "Bash(npm install react-easy-crop)",
       "Bash(npm install recharts)",
-      "Bash(find \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)\" -type f)"
+      "Bash(find \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)\" -type f)",
+      "Bash(cat \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)/admin/page.tsx\")",
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)/admin/\")",
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)/\")",
+      "Bash(powershell -Command \"Get-ChildItem -Recurse -Directory ''c:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app'' | Where-Object { $_.Name -eq ''admin'' } | Select-Object FullName\")",
+      "Bash(cmd /c \"dir /s /b \"\"c:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\"\" | findstr /i \"\"\\\\admin\"\"\")",
+      "Bash(cmd /c \"dir /s /b \"\"c:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\"\" 2>&1 | findstr admin\")",
+      "Bash(cmd /c dir /s /b \"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\\\\\\(auth\\)\"\" /b /a\")",
+      "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\"\" && dir /b /a\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

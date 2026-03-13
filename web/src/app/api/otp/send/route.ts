@@ -37,9 +37,11 @@ export async function POST(req: NextRequest) {
 
         const code = await generateOtp(session.user.id, type);
 
-        // Send via SMS if phone is verified, otherwise fallback to Email
+        const FROM = process.env.RESEND_FROM_EMAIL || 'DepMi <security@depmi.com>';
+
+        // Try SMS first if phone verified, fall through to email on failure
         if (user.phoneNumber && user.phoneVerified && process.env.TERMII_API_KEY) {
-            await fetch('https://api.ng.termii.com/api/sms/send', {
+            const smsRes = await fetch('https://api.ng.termii.com/api/sms/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -51,30 +53,46 @@ export async function POST(req: NextRequest) {
                     channel: 'generic',
                 }),
             });
-            return NextResponse.json({ success: true, channel: 'SMS' });
-        } else if (user.email) {
-            await resend.emails.send({
-                from: 'DepMi <security@depmi.com>',
+            if (smsRes.ok) {
+                return NextResponse.json({ success: true, channel: 'SMS' });
+            }
+            const smsErr = await smsRes.text().catch(() => 'unknown');
+            console.error('[otp/send] Termii SMS failed:', smsRes.status, smsErr);
+            // Fall through to email
+        }
+
+        if (user.email) {
+            const emailResult = await resend.emails.send({
+                from: FROM,
                 to: user.email,
-                subject: 'Your Verification Code',
+                subject: 'Your DepMi Verification Code',
                 html: `
-                    <div style="font-family:sans-serif;max-width:400px;margin:auto;border:1px solid #eee;border-radius:12px;padding:24px">
-                        <h2 style="margin:0 0 16px">Security Code</h2>
-                        <p>Hi ${user.displayName},</p>
-                        <p>You requested a verification code for a sensitive action on DepMi. Use the code below to proceed:</p>
-                        <div style="background:#f4f4f4;padding:16px;text-align:center;font-size:2rem;font-weight:bold;letter-spacing:8px;border-radius:8px">
-                            ${code}
+                    <div style="font-family:sans-serif;max-width:420px;margin:auto;background:#0a0a0a;border:1px solid #222;border-radius:14px;overflow:hidden">
+                        <div style="background:linear-gradient(135deg,#00C853,#00E676);padding:18px 24px">
+                            <span style="font-size:1.25rem;font-weight:800;color:#000">DepMi</span>
                         </div>
-                        <p style="color:#666;font-size:0.85rem;margin-top:24px">This code expires in 10 minutes. If you didn't request this, please secure your account immediately.</p>
+                        <div style="padding:28px 24px">
+                            <h2 style="margin:0 0 8px;color:#fff;font-size:1.2rem">Security Code</h2>
+                            <p style="color:#aaa;margin:0 0 20px">Hi ${user.displayName}, use the code below to complete your action. Expires in 10 minutes.</p>
+                            <div style="background:#1a1a1a;border:1px solid #333;padding:20px;text-align:center;font-size:2.5rem;font-weight:900;letter-spacing:12px;border-radius:10px;color:#00C853">
+                                ${code}
+                            </div>
+                            <p style="color:#555;font-size:0.8rem;margin-top:20px">If you didn't request this, please secure your account immediately.</p>
+                        </div>
                     </div>
                 `
             });
+            if (emailResult.error) {
+                console.error('[otp/send] Resend error:', emailResult.error);
+                return NextResponse.json({ error: `Email delivery failed: ${emailResult.error.message}` }, { status: 502 });
+            }
             return NextResponse.json({ success: true, channel: 'EMAIL' });
         }
 
-        return NextResponse.json({ error: 'No contact method found' }, { status: 400 });
+        return NextResponse.json({ error: 'No contact method found. Please add an email address to your account.' }, { status: 400 });
     } catch (error) {
         console.error('OTP Send Error:', error);
-        return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 });
+        const msg = error instanceof Error ? error.message : 'Failed to send OTP';
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }

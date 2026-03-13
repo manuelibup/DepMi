@@ -47,7 +47,7 @@ export async function POST(
     where: { id: orderId },
     include: {
       seller: {
-        include: { owner: true }
+        include: { owner: true },
       },
       buyer: { select: { id: true, displayName: true, email: true } },
       items: { include: { product: { select: { title: true } } }, take: 1 }
@@ -72,7 +72,11 @@ export async function POST(
   }
 
   const totalAmount = Number(order.totalAmount)
-  const platformFee = Math.round(totalAmount * 0.05 * 100) / 100
+  // Waive platform fee if the store's fee waiver period is still active
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sellerAny = order.seller as any
+  const feeWaived = sellerAny.feeWaiverUntil && new Date(sellerAny.feeWaiverUntil) > new Date()
+  const platformFee = feeWaived ? 0 : Math.round(totalAmount * 0.05 * 100) / 100
   const sellerAmount = Math.round((totalAmount - platformFee) * 100) / 100
 
   // Check seller has bank details

@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 59 — Mar 13, 2026 — Feature Polish, Product Tracking & Auth Bug Fixes](#session-59--mar-13-2026--feature-polish-product-tracking--auth-bug-fixes)
 - [Session 58 — Mar 13, 2026 — Admin Security, Dashboard KPIs & DNS Fast-Track](#session-58--mar-13-2026--admin-security-dashboard-kpis--dns-fast-track)
 - [Session 57 — Mar 13, 2026 — Social Polish, Photo Crop, Delivery Fee & Notifications](#session-57--mar-13-2026--social-polish-photo-crop-delivery-fee--notifications)
 - [Session 56 — Mar 12, 2026 — Unified Social Feed (Likes, Bookmarks, Views on All Cards)](#session-56--mar-12-2026--unified-social-feed-likes-bookmarks-views-on-all-cards)
@@ -41,6 +42,22 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 59 — Mar 13, 2026 — Feature Polish, Product Tracking & Auth Bug Fixes
+**Agent:** Antigravity (Deepmind)
+**Human:** Manuel
+
+### What Was Done:
+- **Product Enhancements:** Added new categories (`COSMETICS`, `TRANSPORT`, `SPORT`, `HOUSING`, `BOOKS`, `COURSE`) and `categoryOther` support to the database schema. Moved "Amount Left" stock badges to the bottom right of product cards.
+- **Delivery Workflow:** Reset all delivery fees application-wide to `0` and updated the product creation UI text defaults to `0`.
+- **System Administration:** Added a direct Support DM (`/support`) button redirection feature to automatically spawn a pre-filled direct support chat between users and `@manuel`.
+- **Demand Refinements:** Built a "Close" state functionality allowing Demand originators to freeze their request and flag it as "Closed" disabling new bids once fulfilled.
+- **Bug & Type Fixes:** Purged Next.JS `.next` cache and executed pristine production builds (`npm run build`) to rectify IDE TypeScript ghosts. Resolved `otplib` unhandled types errors. Added user `onboardingComplete` states.
+
+### Validations Run
+- `npm run build` completed perfectly, certifying no syntax or static typing inconsistencies exist.
 
 ---
 

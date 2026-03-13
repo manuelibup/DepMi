@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Username is already taken" }, { status: 400 });
         }
 
-        // Update user
+        // Save username + display name (onboardingComplete set in /api/user/complete-onboarding)
         await prisma.user.update({
             where: { id: session.user.id },
             data: {
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             },
         });
 
-        return NextResponse.json({ message: "Onboarding complete" });
+        return NextResponse.json({ message: "Username saved" });
      
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

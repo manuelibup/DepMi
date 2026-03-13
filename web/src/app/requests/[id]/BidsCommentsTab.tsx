@@ -111,12 +111,19 @@ export default function BidsCommentsTab({
             {/* Bids tab */}
             {activeTab === 'bids' && (
                 <div className={styles.tabBidsContent}>
-                    {!isPoster && !hasStore && (
+                    {!isActive && (
+                        <div style={{ padding: '16px', marginBottom: '16px', background: 'var(--bg-elevated)', borderRadius: '12px', color: 'var(--text-secondary)', textAlign: 'center', border: '1px solid var(--card-border)' }}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px', opacity: 0.7 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                            <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-main)' }}>This request is closed</p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>The poster has found what they were looking for. No new bids can be placed.</p>
+                        </div>
+                    )}
+                    {isActive && !isPoster && !hasStore && (
                         <div className={styles.buyerGate}>
                             <BidActionGate isLoggedIn={isLoggedIn} />
                         </div>
                     )}
-                    {!isPoster && hasStore && storeId && (
+                    {isActive && !isPoster && hasStore && storeId && (
                         <div className={styles.vendorFormArea}>
                             <BidForm demandId={demandId} storeId={storeId} products={storeProducts} />
                         </div>
