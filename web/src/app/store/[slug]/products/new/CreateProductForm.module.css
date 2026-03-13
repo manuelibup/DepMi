@@ -2,7 +2,8 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    height: 100dvh; /* mobile-friendly */
+    height: 100dvh;
+    /* mobile-friendly */
     background: var(--bg-color);
     position: relative;
     overflow: hidden;
@@ -171,7 +172,8 @@
     border: 1px solid var(--card-border);
 }
 
-.mediaPreview img, .mediaPreview video {
+.mediaPreview img,
+.mediaPreview video {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -181,7 +183,7 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     color: #fff;
     border: none;
     border-radius: 50%;
@@ -193,6 +195,19 @@
     cursor: pointer;
     font-size: 1rem;
     z-index: 10;
+}
+
+.hintContainer {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid var(--card-border);
+}
+
+.hintContainer p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
 }
 
 /* Inline Inputs */
@@ -207,11 +222,19 @@
 }
 
 @keyframes slideUp {
-    from { transform: translateY(10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-.currencySelect, .categorySelect {
+.currencySelect,
+.categorySelect {
     background: var(--bg-elevated);
     border: 1px solid rgba(0, 200, 83, 0.4);
     color: var(--text-main);
@@ -222,10 +245,12 @@
     transition: all 0.2s ease;
     box-shadow: 0 0 10px rgba(0, 200, 83, 0.05);
     outline: none;
-    appearance: none; /* remove default arrow to look cleaner */
+    appearance: none;
+    /* remove default arrow to look cleaner */
 }
 
-.currencySelect:focus, .categorySelect:focus {
+.currencySelect:focus,
+.categorySelect:focus {
     border-color: var(--primary);
     box-shadow: 0 0 15px rgba(0, 200, 83, 0.15);
 }
@@ -275,7 +300,8 @@
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 4px; /* scrollbar space */
+    padding-bottom: 4px;
+    /* scrollbar space */
 }
 
 .pillsScroll::-webkit-scrollbar {

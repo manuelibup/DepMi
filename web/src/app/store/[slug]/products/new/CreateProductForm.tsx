@@ -42,7 +42,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             try {
                 const parsed = JSON.parse(draft);
                 setForm(prev => ({ ...prev, ...parsed }));
-            } catch (e) {}
+            } catch (e) { }
         }
     }, [storeId]);
 
@@ -60,24 +60,24 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             const rawValue = e.target.value.replace(/\D/g, '');
             // Format with commas for display
             const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
-            
-            setForm(prev => ({ 
-                ...prev, 
+
+            setForm(prev => ({
+                ...prev,
                 price: rawValue,
                 displayPrice: formattedValue
             }));
         } else if (e.target.name === 'stock') {
             const rawValue = e.target.value.replace(/\D/g, '');
-            setForm(prev => ({ 
-                ...prev, 
+            setForm(prev => ({
+                ...prev,
                 stock: rawValue,
                 displayStock: rawValue
             }));
         } else if (e.target.name === 'deliveryFee') {
             const rawValue = e.target.value.replace(/\D/g, '');
             const formattedValue = rawValue ? Number(rawValue).toLocaleString() : '';
-            setForm(prev => ({ 
-                ...prev, 
+            setForm(prev => ({
+                ...prev,
                 deliveryFee: rawValue,
                 displayDeliveryFee: formattedValue
             }));
@@ -153,7 +153,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             localStorage.removeItem(`product_draft_${storeId}`);
             router.push(`/store/${storeSlug}`);
             router.refresh();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setStatus('error');
             setErrorMsg(err.message || 'Failed to create product.');
@@ -168,10 +168,10 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 <button type="button" onClick={handleClose} className={styles.iconBtn} aria-label="Cancel">
                     <X size={24} />
                 </button>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     className={styles.postBtn}
-                    disabled={!canPost}
+                    disabled={status === 'loading'}
                     onClick={handleSubmit}
                 >
                     List Item
@@ -193,7 +193,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     </div>
                 </div>
 
-                <input 
+                <input
                     type="text"
                     name="title"
                     className={styles.titleInput}
@@ -237,7 +237,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
-                            buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                            buttonText={form.imageUrls.length === 0 ? 'Add Photos (Min 3)' : form.imageUrls.length < 3 ? `Add More Photos (${3 - form.imageUrls.length} more needed)` : 'Add More Photos'}
                             cropAspectRatio={1}
                             cropTitle="Crop Photo"
                         />
@@ -265,6 +265,10 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div className={styles.hintContainer}>
+                <p><strong>Required to list:</strong> Title, Price, and at least 3 photos.</p>
             </div>
 
             {/* Inline expandable inputs based on active pill */}
@@ -299,10 +303,10 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
             {activeInput === 'category' && (
                 <div className={styles.inlineInputRow}>
-                    <select 
-                        name="category" 
-                        value={form.category} 
-                        onChange={handleChange} 
+                    <select
+                        name="category"
+                        value={form.category}
+                        onChange={handleChange}
                         className={styles.categorySelect}
                         autoFocus
                     >
@@ -314,8 +318,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
             {activeInput === 'stock' && (
                 <div className={styles.inlineInputRow}>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         name="stock"
                         inputMode="numeric"
                         placeholder="Available quantity"
@@ -331,8 +335,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             {activeInput === 'deliveryFee' && (
                 <div className={styles.inlineInputRow}>
                     <span className={styles.inputPrefix}>₦</span>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         name="deliveryFee"
                         inputMode="numeric"
                         placeholder="Set Delivery Fee"
@@ -348,17 +352,17 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             {/* Bottom action bar */}
             <div className={styles.actionBar}>
                 <div className={styles.pillsScroll}>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`${styles.pill} ${form.price ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'price' ? null : 'price')}
                     >
                         <Tag size={16} className={styles.pillIcon} />
                         {form.price ? `${form.currency}${form.displayPrice}` : 'Price'}
                     </button>
-                    
-                    <button 
-                        type="button" 
+
+                    <button
+                        type="button"
                         className={`${styles.pill} ${form.category !== 'OTHER' ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'category' ? null : 'category')}
                     >
@@ -366,24 +370,24 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                         {form.category === 'OTHER' ? 'Category' : form.category}
                     </button>
 
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`${styles.pill} ${Number(form.stock) > 1 ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'stock' ? null : 'stock')}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
-                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/>
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 12h6" /><path d="M9 16h6" /><path d="M9 8h6" />
                         </svg>
                         {form.stock ? `${form.stock} In Stock` : 'Stock'}
                     </button>
 
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`${styles.pill} ${form.deliveryFee !== '2500' ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
-                            <rect width="16" height="12" x="4" y="9" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5"/><circle cx="12" cy="14" r="2"/>
+                            <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
                         </svg>
                         {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
                     </button>
