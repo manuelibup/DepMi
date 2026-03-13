@@ -9,7 +9,8 @@ import styles from './DemandForm.module.css';
 
 const CATEGORIES = [
     'FASHION', 'GADGETS', 'BEAUTY', 'COSMETICS', 'FOOD',
-    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT', 'OTHER'
+    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT',
+    'SPORT', 'HOUSING', 'BOOKS', 'COURSE', 'OTHER'
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
@@ -17,6 +18,7 @@ export interface DemandInitialData {
     id: string;
     text: string;
     category: string;
+    categoryOther?: string | null;
     currency: string;
     budget: string;
     budgetMin?: string;
@@ -35,6 +37,7 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
     const [formData, setFormData] = useState({
         text: initialData?.text || (defaultQuery ? defaultQuery : ''),
         category: initialData?.category || 'OTHER',
+        categoryOther: initialData?.categoryOther || '',
         currency: initialData?.currency || '₦',
         budget: initialData?.budget || '',           // raw max budget for API
         displayBudget: initialData?.budget ? Number(initialData.budget).toLocaleString() : '',    // formatted max for UI
@@ -120,6 +123,7 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
                 body: JSON.stringify({
                     text: formData.text,
                     category: formData.category,
+                    categoryOther: formData.category === 'OTHER' ? formData.categoryOther || null : null,
                     budget: parseFloat(formData.budget),
                     budgetMin: formData.budgetMin ? parseFloat(formData.budgetMin) : undefined,
                     currency: formData.currency,
@@ -290,17 +294,32 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
             )}
 
             {activeInput === 'category' && (
-                <div className={styles.inlineInputRow}>
-                    <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className={styles.categorySelect}
-                        autoFocus
-                    >
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    <div className={styles.inlineInputRow}>
+                        <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className={styles.categorySelect}
+                            autoFocus
+                        >
+                            {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                        </select>
+                        <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                    </div>
+                    {formData.category === 'OTHER' && (
+                        <div className={styles.inlineInputRow} style={{ borderTop: '1px solid var(--border)' }}>
+                            <input
+                                type="text"
+                                name="categoryOther"
+                                placeholder="Specify category (e.g. Perfume, Pet supplies…)"
+                                value={formData.categoryOther}
+                                onChange={handleChange}
+                                className={styles.inlineInput}
+                                maxLength={40}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -7,8 +7,9 @@ import { X, Tag, FolderOpen, Package, Briefcase, Truck } from 'lucide-react';
 import styles from '../../new/CreateProductForm.module.css';
 
 const CATEGORIES = [
-    'FASHION', 'GADGETS', 'BEAUTY', 'FOOD',
-    'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'
+    'FASHION', 'GADGETS', 'BEAUTY', 'COSMETICS', 'FOOD',
+    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT',
+    'SPORT', 'HOUSING', 'BOOKS', 'COURSE', 'OTHER'
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
@@ -19,6 +20,7 @@ interface ProductData {
     price: number;
     currency: string;
     category: string;
+    categoryOther?: string | null;
     imageUrl: string;
     imageUrls?: string[];
     videoUrl: string;
@@ -41,6 +43,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
         price: rawPrice,
         displayPrice: Number(rawPrice).toLocaleString(),
         category: product.category,
+        categoryOther: product.categoryOther ?? '',
         imageUrls: product.imageUrls ?? (product.imageUrl ? [product.imageUrl] : []),
         videoUrl: product.videoUrl,
         inStock: product.inStock,
@@ -99,6 +102,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     price: Number(form.price),
                     currency: form.currency,
                     category: form.category,
+                    categoryOther: form.category === 'OTHER' ? form.categoryOther || null : null,
                     images: form.imageUrls,
                     videoUrl: form.videoUrl || null,
                     inStock: form.inStock,
@@ -302,11 +306,26 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
             )}
 
             {activeInput === 'category' && (
-                <div className={styles.inlineInputRow}>
-                    <select name="category" value={form.category} onChange={handleChange} className={styles.categorySelect} autoFocus>
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    <div className={styles.inlineInputRow}>
+                        <select name="category" value={form.category} onChange={handleChange} className={styles.categorySelect} autoFocus>
+                            {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                        </select>
+                        <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                    </div>
+                    {form.category === 'OTHER' && (
+                        <div className={styles.inlineInputRow} style={{ borderTop: '1px solid var(--border)' }}>
+                            <input
+                                type="text"
+                                name="categoryOther"
+                                placeholder="Specify category (e.g. Perfume, Pet supplies…)"
+                                value={form.categoryOther}
+                                onChange={handleChange}
+                                className={styles.inlineInput}
+                                maxLength={40}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

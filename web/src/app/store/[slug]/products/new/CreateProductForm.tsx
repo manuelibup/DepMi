@@ -171,14 +171,20 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                 <button type="button" onClick={handleClose} className={styles.iconBtn} aria-label="Cancel">
                     <X size={24} />
                 </button>
-                <button
-                    type="button"
-                    className={styles.postBtn}
-                    disabled={status === 'loading'}
-                    onClick={handleSubmit}
-                >
-                    List Item
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <a href={`/store/${storeSlug}/products/import`} style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+                        Import
+                    </a>
+                    <button
+                        type="button"
+                        className={styles.postBtn}
+                        disabled={status === 'loading'}
+                        onClick={handleSubmit}
+                    >
+                        List Item
+                    </button>
+                </div>
             </div>
 
             {status === 'error' && (

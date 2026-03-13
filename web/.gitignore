@@ -44,6 +44,9 @@ next-env.d.ts
 flutterwave-keys.txt
 env.txt
 
+# DB backups — kept locally, never committed (contain PII)
+/backups/
+
 # temp / debug scripts (may contain hardcoded credentials)
 test-*.js
 test-*.ts
