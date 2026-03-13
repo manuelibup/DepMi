@@ -24,7 +24,8 @@ export default function SignupsChart({ initial }: { initial: Point[] }) {
             .finally(() => setLoading(false));
     }, [period, initial]);
 
-    const label = (d: string) => {
+    const label = (d: any) => {
+        if (!d) return '';
         const date = new Date(d);
         if (period === 'month') return date.toLocaleDateString([], { month: 'short', year: '2-digit' });
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -52,7 +53,7 @@ export default function SignupsChart({ initial }: { initial: Point[] }) {
                         <Tooltip
                             contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
                             labelFormatter={label}
-                            formatter={(v: number) => [v, 'Sign-ups']}
+                            formatter={(v: any) => [v, 'Sign-ups']}
                         />
                         <Line type="monotone" dataKey="count" stroke="#0066FF" strokeWidth={2} dot={false} />
                     </LineChart>

@@ -9,7 +9,8 @@ import styles from './Charts.module.css';
 type Point = { date: string; dau: number };
 
 export default function DauChart({ data }: { data: Point[] }) {
-    const label = (d: string) => {
+    const label = (d: any) => {
+        if (!d) return '';
         const date = new Date(d);
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     };
@@ -27,7 +28,7 @@ export default function DauChart({ data }: { data: Point[] }) {
                     <Tooltip
                         contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
                         labelFormatter={label}
-                        formatter={(v: number) => [v, 'Active Users']}
+                        formatter={(v: any) => [v, 'Active Users']}
                     />
                     <Bar dataKey="dau" fill="#0066FF" radius={[4, 4, 0, 0]} />
                 </BarChart>
