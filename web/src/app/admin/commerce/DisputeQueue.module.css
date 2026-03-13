@@ -1,0 +1,70 @@
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.empty {
+    color: var(--text-muted, #555);
+    font-size: 0.9rem;
+    padding: 16px 0;
+}
+
+.row {
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 240px;
+}
+
+.orderId { font-size: 0.75rem; font-weight: 700; color: var(--text-muted, #666); font-family: monospace; }
+.product { font-size: 0.85rem; color: var(--text-main, #fff); flex: 1; }
+.amount { font-size: 0.9rem; font-weight: 700; color: #22c55e; }
+.age { font-size: 0.75rem; color: var(--text-muted, #666); }
+
+.parties {
+    display: flex;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: var(--text-secondary, #888);
+}
+
+.parties strong { color: var(--text-main, #fff); }
+
+.actions { display: flex; align-items: center; }
+
+.resolveBar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnResolve { background: rgba(0,102,255,0.15); color: #0066FF; }
+.btnBuyer { background: rgba(34,197,94,0.15); color: #22c55e; }
+.btnVendor { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.btnRefund { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btnCancel { background: none; color: var(--text-muted, #666); font-size: 0.8rem; cursor: pointer; border: none; padding: 6px 8px; }

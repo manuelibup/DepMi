@@ -1,0 +1,64 @@
+.wrap { display: flex; flex-direction: column; gap: 24px; }
+
+.addCard, .listCard {
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 16px; padding: 24px;
+}
+
+.cardTitle { font-size: 1rem; font-weight: 700; color: var(--text-main, #fff); margin: 0 0 4px; }
+.hint { font-size: 0.82rem; color: var(--text-muted, #666); margin: 0 0 14px; }
+
+.addRow { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.input, .select {
+    padding: 9px 12px; border-radius: 9px;
+    border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+    background: rgba(255,255,255,0.04); color: var(--text-main, #fff);
+    font-size: 0.88rem; outline: none;
+}
+.input { flex: 1; min-width: 200px; }
+.input:focus, .select:focus { border-color: var(--primary, #0066FF); }
+
+.addBtn {
+    padding: 9px 18px; border-radius: 9px; font-size: 0.88rem; font-weight: 700;
+    background: var(--primary, #0066FF); color: #fff; border: none; cursor: pointer;
+}
+.addBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error { font-size: 0.82rem; color: #ef4444; margin: 8px 0 0; }
+
+.listHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+
+.search {
+    padding: 6px 12px; border-radius: 8px; font-size: 0.82rem;
+    border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+    background: rgba(255,255,255,0.04); color: var(--text-main, #fff); outline: none;
+    width: 160px;
+}
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.table th {
+    text-align: left; padding: 8px 10px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--text-muted, #666); border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.table td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+
+.name { display: block; font-weight: 600; color: var(--text-main, #fff); font-size: 0.88rem; }
+.email { display: block; font-size: 0.75rem; color: var(--text-muted, #666); }
+.muted { color: var(--text-muted, #666); font-size: 0.82rem; }
+
+.you { font-size: 0.82rem; color: var(--accent-gold, #FFD600); font-weight: 700; }
+
+.roleSelect {
+    padding: 4px 8px; border-radius: 7px; font-size: 0.8rem;
+    border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+    background: rgba(255,255,255,0.06); color: var(--text-main, #fff); outline: none;
+}
+
+.removeBtn {
+    padding: 4px 12px; border-radius: 7px; font-size: 0.75rem; font-weight: 600;
+    background: rgba(239,68,68,0.12); color: #ef4444; border: none; cursor: pointer;
+}
+.removeBtn:disabled { opacity: 0.4; }

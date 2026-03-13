@@ -19,6 +19,7 @@ import { OtpType } from '@prisma/client'
  * 7. Notify seller of payment
  */
 import { verifyOtp } from '@/lib/otp'
+import { qualifyReferral } from '@/lib/referral'
 
 export async function POST(
   req: NextRequest,
@@ -190,6 +191,9 @@ export async function POST(
       });
     }
   })
+
+  // Qualify referral for this buyer (non-blocking)
+  void qualifyReferral(order.buyerId, orderId, totalAmount).catch(() => {});
 
   return NextResponse.json({ ok: true, payoutReference: payoutResult.reference })
 }

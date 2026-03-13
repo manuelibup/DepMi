@@ -1,0 +1,105 @@
+.page { display: flex; flex-direction: column; gap: 28px; }
+
+.back { font-size: 0.85rem; color: var(--text-muted, #666); text-decoration: none; }
+.back:hover { color: var(--text-secondary, #aaa); }
+
+.header {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 16px;
+    padding: 24px;
+    flex-wrap: wrap;
+}
+
+.avatarWrap { position: relative; flex-shrink: 0; }
+
+.avatar, .avatarFallback {
+    width: 72px; height: 72px; border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatarFallback {
+    background: var(--primary, #0066FF);
+    color: #fff; font-size: 1.2rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.bannedBadge {
+    position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    background: #ef4444; color: #fff; font-size: 0.6rem; font-weight: 800;
+    padding: 1px 6px; border-radius: 999px; white-space: nowrap;
+}
+
+.identity { flex: 1; min-width: 200px; }
+.name { font-size: 1.3rem; font-weight: 800; color: var(--text-main, #fff); margin: 0 0 4px; }
+.handle { font-size: 0.85rem; color: var(--text-muted, #666); margin: 0 0 8px; }
+.bio { font-size: 0.85rem; color: var(--text-secondary, #aaa); margin: 0 0 8px; }
+
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+    font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--text-secondary, #aaa);
+}
+.tagAdmin { background: rgba(255,214,0,0.15); color: #FFD600; }
+.tagDanger { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+.actions { display: flex; align-items: flex-start; }
+
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.stat {
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statVal { font-size: 1.1rem; font-weight: 800; color: var(--text-main, #fff); }
+.statLabel { font-size: 0.7rem; color: var(--text-muted, #666); font-weight: 600; text-transform: uppercase; }
+
+.section {
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.sectionTitle { font-size: 0.95rem; font-weight: 700; color: var(--text-main, #fff); margin: 0 0 14px; }
+
+.storeRow {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.85rem;
+}
+
+.storeName { font-weight: 600; color: var(--primary, #0066FF); text-decoration: none; }
+.statMini { font-size: 0.78rem; color: var(--text-muted, #666); }
+
+.table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+}
+
+.table th {
+    text-align: left; padding: 8px 10px;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+    color: var(--text-muted, #666); border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.table td {
+    padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-secondary, #aaa);
+}
+
+.mono { font-family: monospace; font-size: 0.8rem; }
+.empty { font-size: 0.85rem; color: var(--text-muted, #666); }

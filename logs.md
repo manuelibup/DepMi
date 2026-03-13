@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 57 — Mar 13, 2026 — Social Polish, Photo Crop, Delivery Fee & Notifications](#session-57--mar-13-2026--social-polish-photo-crop-delivery-fee--notifications)
 - [Session 56 — Mar 12, 2026 — Unified Social Feed (Likes, Bookmarks, Views on All Cards)](#session-56--mar-12-2026--unified-social-feed-likes-bookmarks-views-on-all-cards)
 - [Session 55 — Mar 11, 2026 — Username Validation & Repair Flow](#session-55--mar-11-2026--username-validation--repair-flow)
 - [Session 54 — Mar 11, 2026 — Critical Bug Fixes (Signup, Orders, Payouts)](#session-54--mar-11-2026--critical-bug-fixes-signup-orders-payouts)
@@ -39,6 +40,73 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 57 — Mar 13, 2026 — Social Polish, Photo Crop, Delivery Fee & Notifications
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+
+### What Was Built
+
+**1. Unified Card Structure**
+- Profile Requests tab now renders full `DemandCard` components (with likes/saves/bids counts) instead of a plain link list
+- Profile Replies tab redesigned with card UI: "↩ Replied to [Title]" context bar + reply text preview
+- Store Products tab converted from full-width ProductCard scroll to a **2-column CSS grid** with compact cards (image, stats, edit chip for owner)
+
+**2. Request Detail Social Actions (`DemandDetailActions.tsx`)**
+- New client component on `/requests/[id]` showing ♥ like, 💬 comment-scroll, 🔖 save, 👁 view count, share with copy-link popup
+- POST-toggle pattern matching DemandCard; scroll-to-comments uses `data-comments-section` attribute
+
+**3. Desktop Sidebar — Live Notification Badges**
+- Added `unreadOrders` state fetched from new `GET /api/orders/unread-count` (PENDING seller orders)
+- All 3 badges (Messages, Notifications, Orders) now clear on click; Notifications also calls `POST /api/notifications/mark-read`
+- New API routes: `api/notifications/mark-read/route.ts`, `api/orders/unread-count/route.ts`
+
+**4. Product Edit — Delivery Fee Field**
+- `EditProductForm.tsx` gained `deliveryFee` pill + inline ₦ input (same UX as CreateProductForm)
+- `api/products/[id]/route.ts` PATCH now handles `deliveryFee`
+- Edit page passes all `imageUrls` array (not just first image) to EditProductForm
+
+**5. Store Create — Slug Auto-Sync Fix**
+- Added `slugManuallyEdited` state; slug no longer overwrites after user manually types a handle
+
+**6. Min 3 Images Validation**
+- `CreateProductForm.tsx` blocks submit if fewer than 3 images, with clear error message
+- `canPost` also requires `form.imageUrls.length >= 3`
+
+**7. Twitter-Style Photo Crop (`react-easy-crop` v5.5.6)**
+- New `CropModal.tsx`: full-screen dark UI with zoom slider, rotate left/right, flip horizontal
+- New `lib/cropImage.ts`: canvas utility supporting rotation + flip in final output
+- `CloudinaryUploader.tsx` extended with optional `cropAspectRatio` + `cropTitle` props — intercepts image files and shows crop modal before Cloudinary upload
+- Wired: profile cover (3:1), profile avatar (1:1), store logo (1:1), store banner (3:1), product images (1:1)
+
+### Key Files Changed
+- `web/src/app/u/[username]/ProfileTabs.tsx` + `ProfileTabs.module.css`
+- `web/src/app/u/[username]/page.tsx` (demand query with social counts)
+- `web/src/app/store/[slug]/StoreTabBar.tsx` + `StoreTabBar.module.css`
+- `web/src/app/store/[slug]/page.tsx`
+- `web/src/app/requests/[id]/page.tsx` + new `DemandDetailActions.tsx`
+- `web/src/app/requests/[id]/BidsCommentsTab.tsx` (data-comments-section attr)
+- `web/src/components/DesktopSidebar/index.tsx`
+- `web/src/app/store/[slug]/products/[id]/edit/EditProductForm.tsx` + `page.tsx`
+- `web/src/app/store/[slug]/products/new/CreateProductForm.tsx`
+- `web/src/app/store/[slug]/settings/StoreProfileForm.tsx`
+- `web/src/app/store/create/page.tsx`
+- `web/src/app/settings/page.tsx`
+- `web/src/components/CloudinaryUploader.tsx`
+- New: `web/src/components/CropModal.tsx`
+- New: `web/src/lib/cropImage.ts`
+- New: `web/src/app/api/notifications/mark-read/route.ts`
+- New: `web/src/app/api/orders/unread-count/route.ts`
+
+### Pending / Next Session
+- **Endless feed**: Home feed is capped at 20 products + 20 demands. Need cursor-based pagination + IntersectionObserver infinite scroll
+- **Google OAuth onboarding bug**: Google sign-in bypasses `/onboarding` — auto-generates username from Google name, so `session.user.username` is truthy and the redirect guard fires too late. Fix: check for a specific `onboardingComplete` flag or force Google OAuth users through username selection
+- **Username update reverts**: Settings page saves to DB but session JWT doesn't refresh; users see old username until manual refresh. Fix: call `updateSession()` more aggressively and possibly invalidate the JWT
+- **Full onboarding flow**: Username → follow 10 accounts → select interests
+- **Global delivery fee settings**: Schema migration needed (`defaultDeliveryFeeIntrastate`/`defaultDeliveryFeeInterstate` on Store)
+- **Extended categories**: TRANSPORT, SPORT, HOUSING, BOOKS, COURSE + free-text "Other" specifier
+- **Course selling / digital products**: Buyer pays → immediate access → 7-day dispute window → auto-release
 
 ---
 

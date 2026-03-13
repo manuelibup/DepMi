@@ -1,0 +1,2 @@
+.page { display: flex; flex-direction: column; gap: 24px; }
+.pageTitle { font-size: 1.5rem; font-weight: 800; color: var(--text-main, #fff); margin: 0; }

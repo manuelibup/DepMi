@@ -36,7 +36,9 @@
       "Bash(git add web/src/components/LandingPage/LandingPage.module.css)",
       "Bash(git add web/src/app/api/auth/send-email-otp/route.ts web/src/lib/email.ts)",
       "Bash(git add web/src/app/u/ web/src/app/store/[slug]/StoreTabBar.tsx web/src/app/store/[slug]/StoreTabBar.module.css web/src/app/store/[slug]/page.tsx)",
-      "Bash(npm install react-easy-crop)"
+      "Bash(npm install react-easy-crop)",
+      "Bash(npm install recharts)",
+      "Bash(find \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(auth\\)\" -type f)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

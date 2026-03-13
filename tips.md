@@ -397,11 +397,42 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Issue**: A field exists in `schema.prisma` and you've run `npx prisma generate`, but TypeScript still insists the property doesn't exist on the model type. This often happens in environments where the Prisma client cannot regenerate properly (e.g., file locks on Windows with a running dev server).
 - **The Pragmatic Fix**: If you're blocked and generation fails with `EPERM`, cast the prisma model to `any` for that specific call:
   ```typescript
-  (prisma.demand as any).update({ 
-      where: { id }, 
-      data: { viewCount: { increment: 1 } } 
+  (prisma.demand as any).update({
+      where: { id },
+      data: { viewCount: { increment: 1 } }
   });
   ```
 - **The Long-Term Fix**: Stop the dev server, ensure no `node.exe` is holding the `.prisma` folder, and run `npx prisma generate` again. Restart your IDE to refresh the types.
+
+---
+
+## 🖼️ 32. react-easy-crop: Flip Preview & Non-Standard Props
+
+*Added after implementing the Twitter-style crop modal (Session 57).*
+
+- **The Trap**: `react-easy-crop`'s `<Cropper>` does NOT accept a `transform` prop. Passing it is silently ignored — it will NOT apply a flip transform to the preview.
+- **The Fix for Flip Preview**: Wrap `<Cropper>` in a `<div style={{ transform: 'scaleX(-1)' }}>` to mirror the preview visually. The actual flip is applied in the `getCroppedImg` canvas function via `ctx.scale(-1, 1)`.
+- **Safe Area for Rotation**: When implementing `getCroppedImg`, you must draw to a larger "safe area" canvas (2× the max dimension × √2) before cropping, otherwise rotating near 45° will clip the image corners.
+- **Removing `multiple` with Crop**: When `cropAspectRatio` is set on `CloudinaryUploader`, remove the `multiple` prop — the crop modal only handles one file at a time. Users add photos one by one, which is the correct UX for per-photo cropping.
+
+---
+
+## 🔔 33. NextAuth Session — Username Changes Don't Propagate Automatically
+
+*Observed in production: users change username in Settings, it appears to revert on refresh.*
+
+- **The Cause**: NextAuth uses a JWT strategy. The `session.user.username` comes from the JWT token, not the DB. Calling `updateSession()` after a PATCH to `/api/user/update` should refresh the JWT, but there's a race condition — the `update()` call from `next-auth/react` triggers a full JWT re-sign, which doesn't always receive the freshly written DB value if Neon's connection is under load.
+- **The Symptom**: Username appears to revert, but a hard page refresh (F5) or clearing the session cookie and re-logging in shows the correct value.
+- **The Fix Strategy**: After saving, force a `router.refresh()` + `await update()` in sequence, and show a "Saved — please refresh if you don't see the change" notice. Long-term: store username in a separate `x-depmi-username` cookie that is not part of the JWT so it can be invalidated independently.
+
+---
+
+## 🧭 34. Google OAuth — Onboarding Bypass
+
+*Observed: Google sign-in users skip the `/onboarding` username page entirely.*
+
+- **The Cause**: The NextAuth `signIn` callback creates a user record using the Google `name` field as `displayName`, and auto-generates a username slug from the email (or name). This means `session.user.username` is already truthy before the user has consciously set one.
+- **The Guard Check**: `page.tsx` redirects to `/onboarding` only when `!session.user.username`. Since the username is auto-set, the redirect never fires.
+- **The Fix**: Add an `onboardingComplete: boolean` field to the User schema. Set it to `false` on account creation (including Google OAuth). The guard in `page.tsx` changes to `if (!session.user.onboardingComplete) redirect('/onboarding')`. Only set `onboardingComplete = true` after the user explicitly completes the onboarding flow.
 
 

@@ -1,0 +1,83 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+.search {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+    background: rgba(255,255,255,0.04);
+    color: var(--text-main, #fff);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.search:focus { border-color: var(--primary, #0066FF); }
+
+.meta { font-size: 0.8rem; color: var(--text-muted, #666); margin: 0; }
+
+.tableWrap { overflow-x: auto; }
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted, #666);
+    border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.08));
+}
+
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-secondary, #aaa);
+    vertical-align: middle;
+}
+
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.banned td { opacity: 0.5; }
+
+.userCell { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+
+.avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary, #0066FF);
+    color: #fff; font-size: 0.7rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0;
+}
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.name { display: block; font-weight: 600; color: var(--text-main, #fff); font-size: 0.85rem; }
+.handle { display: block; font-size: 0.75rem; color: var(--text-muted, #666); }
+
+.tag {
+    font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 999px; background: rgba(255,255,255,0.06);
+    color: var(--text-secondary, #aaa);
+}
+
+.banBtn { padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; }
+.ban { background: rgba(239,68,68,0.15); color: #ef4444; }
+.unban { background: rgba(34,197,94,0.15); color: #22c55e; }
+
+.pagination {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.82rem; color: var(--text-muted, #666);
+}
+
+.pagination button {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--card-border, rgba(255,255,255,0.1));
+    background: none; color: var(--text-secondary, #aaa); cursor: pointer; font-size: 0.82rem;
+}
+
+.pagination button:disabled { opacity: 0.3; cursor: not-allowed; }

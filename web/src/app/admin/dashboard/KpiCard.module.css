@@ -1,0 +1,46 @@
+.card {
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.iconWrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main, #fff);
+    line-height: 1.1;
+}
+
+.delta {
+    font-size: 0.78rem;
+    color: #22c55e;
+    font-weight: 600;
+}

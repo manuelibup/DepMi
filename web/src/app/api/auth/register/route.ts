@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { seedDefaultFollows } from "@/lib/auto-follow";
 import { sendWelcomeEmail } from "@/lib/email";
+import { captureReferral } from "@/lib/referral";
 
 const registerSchema = z.object({
     email: z.email("Invalid email address"),
@@ -23,7 +24,9 @@ const registerSchema = z.object({
     }, { message: "You must be at least 13 years old" }),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    const ref = req.nextUrl.searchParams.get('ref');
+
     try {
         const body = await req.json();
         const parseResult = registerSchema.safeParse(body);
@@ -57,6 +60,7 @@ export async function POST(req: Request) {
         // Seed default follows + welcome email (non-blocking)
         void seedDefaultFollows(newUser.id);
         void sendWelcomeEmail(email, displayName);
+        if (ref) void captureReferral(newUser.id, ref).catch(() => {});
 
         // Don't return full user object for security
         return NextResponse.json(
