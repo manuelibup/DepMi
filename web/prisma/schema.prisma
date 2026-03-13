@@ -31,6 +31,9 @@ model User {
   bio             String?
   coverUrl        String?
   adminRole       AdminRole?
+  totpEnabled     Boolean          @default(false)
+  totpSecret      String?
+  adminPinHash    String?
   lastActiveAt    DateTime?
   isBanned        Boolean          @default(false)
   accounts        Account[]

@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { AuthProvider, Account as PrismaAccount } from "@prisma/client";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
+import { authenticator } from 'otplib';
 import { seedDefaultFollows } from "./auto-follow";
 import { sendWelcomeEmail } from "./email";
 
@@ -17,6 +18,9 @@ declare module "next-auth" {
             email?: string | null;
             image?: string | null;
             adminRole?: string | null;
+            totpEnabled?: boolean;
+            twoFaVerified?: boolean;
+            adminPinVerified?: boolean;
         };
     }
 }
@@ -157,6 +161,9 @@ export const authOptions: NextAuthOptions = {
                 session.user.username = token.username as string | undefined;
                 session.user.image = (token.picture as string | null) ?? null;
                 session.user.adminRole = (token.adminRole as string | null) ?? null;
+                session.user.totpEnabled = token.totpEnabled as boolean | undefined;
+                session.user.twoFaVerified = token.twoFaVerified as boolean | undefined;
+                session.user.adminPinVerified = token.adminPinVerified as boolean | undefined;
             }
             return session;
         },
@@ -172,6 +179,26 @@ export const authOptions: NextAuthOptions = {
                 if (session.username) token.username = session.username;
                 if (session.name) token.name = session.name;
                 if (session.picture) token.picture = session.picture;
+
+                if (session.twoFaCode) {
+                    const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+                    if (dbUser && (dbUser as any).totpSecret) {
+                        const isValid = authenticator.verify({ token: session.twoFaCode, secret: (dbUser as any).totpSecret });
+                        if (isValid) {
+                            token.twoFaVerified = true;
+                        }
+                    }
+                }
+
+                if (session.adminPin) {
+                    const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+                    if (dbUser && (dbUser as any).adminPinHash) {
+                        const isPinValid = await bcrypt.compare(session.adminPin, (dbUser as any).adminPinHash);
+                        if (isPinValid) {
+                            token.adminPinVerified = true;
+                        }
+                    }
+                }
             }
 
             // Always fetch the latest from DB if we don't have a username or on sign-in
@@ -180,13 +207,14 @@ export const authOptions: NextAuthOptions = {
                 try {
                     const dbUser = await prisma.user.findUnique({
                         where: { email: token.email },
-                        select: { id: true, username: true, avatarUrl: true, adminRole: true },
+                        select: { id: true, username: true, avatarUrl: true, adminRole: true, totpEnabled: true },
                     });
                     if (dbUser) {
                         token.id = dbUser.id;
                         token.username = dbUser.username;
                         token.picture = dbUser.avatarUrl ?? null;
                         token.adminRole = dbUser.adminRole ?? null;
+                        token.totpEnabled = dbUser.totpEnabled;
                     }
                 } catch (err) {
                     // DB temporarily unreachable — return the token as-is so the
