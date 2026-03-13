@@ -45,43 +45,10 @@ export default function LoginPage() {
             <div className={styles.form}>
                 {error && <div className={styles.alertError}>{error}</div>}
 
-                <form onSubmit={handleSubmit} className={styles.inputGroup}>
-                    <InputField
-                        label="Email"
-                        type="email"
-                        id="email"
-                        placeholder="hello@depmi.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                    <InputField
-                        label="Password"
-                        type="password"
-                        id="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        style={{ marginTop: 12 }}
-                    />
-                    <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                        {isLoading ? 'Signing in...' : 'Sign in'}
-                    </button>
-                </form>
-
-                <div className={styles.divider}>or</div>
-
                 <SocialLoginButton
                     provider="google"
                     onClick={() => signIn('google', { callbackUrl: '/' })}
                 />
-                {/* We can re-enable WhatsApp later 
-        <SocialLoginButton
-          provider="whatsapp"
-          onClick={() => console.log('WhatsApp auth coming soon')}
-        />
-        */}
             </div>
 
             <div className={styles.footer}>

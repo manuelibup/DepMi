@@ -88,68 +88,6 @@ export default function RegisterPage() {
             <div className={styles.form}>
                 {error && <div className={styles.alertError}>{error}</div>}
 
-                <form onSubmit={handleSubmit} className={styles.inputGroup}>
-                    <InputField
-                        label="Display Name"
-                        name="displayName"
-                        type="text"
-                        placeholder="John Doe"
-                        value={formData.displayName}
-                        onChange={handleChange}
-                        required
-                    />
-
-                    <InputField
-                        label="Username"
-                        name="username"
-                        type="text"
-                        placeholder="johndoe123"
-                        value={formData.username}
-                        onChange={handleChange}
-                        required
-                        style={{ marginTop: 12 }}
-                    />
-
-                    <InputField
-                        label="Date of Birth"
-                        name="dateOfBirth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        required
-                        style={{ marginTop: 12 }}
-                    />
-
-                    <InputField
-                        label="Email Address"
-                        name="email"
-                        type="email"
-                        placeholder="hello@depmi.com"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        style={{ marginTop: 12 }}
-                    />
-
-                    <InputField
-                        label="Password"
-                        name="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        minLength={8}
-                        style={{ marginTop: 12 }}
-                    />
-
-                    <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                        {isLoading ? 'Creating account...' : 'Create Account'}
-                    </button>
-                </form>
-
-                <div className={styles.divider}>or</div>
-
                 <SocialLoginButton
                     provider="google"
                     onClick={() => signIn('google', { callbackUrl: '/' })}

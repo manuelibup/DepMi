@@ -43,7 +43,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     if (!product) notFound();
 
-    prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
+    prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
 
     const serializedComments = product.comments.map(c => ({
         id: c.id,
@@ -143,7 +143,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                                 <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)', fontSize: '0.95rem' }}>{product.store.name}</p>
                                 <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                                     {product.store.reviewCount > 0
-                                        ? <><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', marginBottom: '1px' }} width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>{Number(product.store.rating).toFixed(1)} &middot; </>
+                                        ? <><svg style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', marginBottom: '1px' }} width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" strokeWidth="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" /></svg>{Number(product.store.rating).toFixed(1)} &middot; </>
                                         : null
                                     }
                                     {product.store.depCount} Deps &middot; {product.store.depTier}
@@ -192,7 +192,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     <CommentSection
                         apiPath={'/api/products/' + product.id + '/comments'}
                         initialComments={serializedComments}
-                        canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
+                        canComment={!!userId}
                         isLoggedIn={!!userId}
                     />
                 </div>

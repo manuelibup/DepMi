@@ -18,10 +18,6 @@ export default function LandingPage() {
                         <Image src="/depmi-logo.svg" alt="DepMi Logo" width={32} height={32} />
                         <span>DepMi</span>
                     </div>
-                    <div className={styles.navActions}>
-                        <button onClick={() => signIn()} className={styles.loginBtn}>Log in</button>
-                        <Link href="/register" className={styles.signupBtn}>Sign up</Link>
-                    </div>
                 </div>
             </header>
 
@@ -44,25 +40,12 @@ export default function LandingPage() {
                                 className={styles.googleBtn}
                             >
                                 <Image src="/google-icon.svg" alt="Google" width={20} height={20} />
-                                Sign up with Google
+                                Continue with Google
                             </button>
-
-                            <div className={styles.divider}>
-                                <span>or</span>
-                            </div>
-
-                            <Link href="/register" className={styles.createAccountBtn}>
-                                Create account
-                            </Link>
 
                             <p className={styles.terms}>
                                 By signing up, you agree to the <Link href="/terms">Terms of Service</Link> and <Link href="/privacy">Privacy Policy</Link>.
                             </p>
-                        </div>
-
-                        <div className={styles.alreadyHaveAccount}>
-                            <h3>Already have an account?</h3>
-                            <button onClick={() => signIn()} className={styles.signInLink}>Sign in</button>
                         </div>
                     </div>
 

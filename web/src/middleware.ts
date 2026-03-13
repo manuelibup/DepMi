@@ -42,6 +42,11 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, req.url));
     }
 
+    // 3. Admin routes require an adminRole in the token
+    if (pathname.startsWith('/admin') && token && !token.adminRole) {
+        return NextResponse.redirect(new URL('/', req.url));
+    }
+
     return NextResponse.next();
 }
 

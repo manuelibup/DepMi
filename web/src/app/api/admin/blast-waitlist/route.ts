@@ -8,18 +8,21 @@
  * lists safely within Vercel's function timeout.
  */
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/admin';
 import { sendWaitlistLaunchEmail } from '@/lib/email';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function POST(req: Request) {
-    const body = await req.json().catch(() => ({}));
-    const { secret, limit = 200 } = body as { secret?: string; limit?: number };
+    const session = await getServerSession(authOptions);
+    const check = requireAdmin(session, 'SUPER_ADMIN');
+    if (!check.ok) return NextResponse.json({ message: check.error }, { status: check.status });
 
-    if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
+    const body = await req.json().catch(() => ({}));
+    const { limit = 200 } = body as { limit?: number };
 
     // Only fetch entries that have NOT been blasted yet
     const entries = await prisma.waitlist.findMany({

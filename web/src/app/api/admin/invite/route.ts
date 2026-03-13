@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/admin';
 import { v4 as uuidv4 } from 'uuid';
-
-const ADMIN_EMAILS = [process.env.ADMIN_EMAIL || 'admin@depmi.com'];
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email || !ADMIN_EMAILS.includes(session.user.email)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const check = requireAdmin(session, 'ADMIN');
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
     try {
         const { email } = await req.json();

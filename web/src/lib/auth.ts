@@ -16,6 +16,7 @@ declare module "next-auth" {
             name?: string | null;
             email?: string | null;
             image?: string | null;
+            adminRole?: string | null;
         };
     }
 }
@@ -155,6 +156,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.id = token.id as string;
                 session.user.username = token.username as string | undefined;
                 session.user.image = (token.picture as string | null) ?? null;
+                session.user.adminRole = (token.adminRole as string | null) ?? null;
             }
             return session;
         },
@@ -178,12 +180,13 @@ export const authOptions: NextAuthOptions = {
                 try {
                     const dbUser = await prisma.user.findUnique({
                         where: { email: token.email },
-                        select: { id: true, username: true, avatarUrl: true },
+                        select: { id: true, username: true, avatarUrl: true, adminRole: true },
                     });
                     if (dbUser) {
                         token.id = dbUser.id;
                         token.username = dbUser.username;
                         token.picture = dbUser.avatarUrl ?? null;
+                        token.adminRole = dbUser.adminRole ?? null;
                     }
                 } catch (err) {
                     // DB temporarily unreachable — return the token as-is so the

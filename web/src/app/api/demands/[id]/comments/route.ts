@@ -15,7 +15,7 @@ export async function POST(
 
     const { id: demandId } = await params;
 
-    // KYC gate — must be at least TIER_0 (phone/social verified) to comment
+    /* Temporary bypass: Let UNVERIFIED users comment
     const commenter = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { kycTier: true }
@@ -26,6 +26,7 @@ export async function POST(
             code: 'KYC_REQUIRED',
         }, { status: 403 });
     }
+    */
 
     const body = await req.json();
     const text = (body.text ?? '').trim();
@@ -66,7 +67,7 @@ export async function POST(
                 body: `${comment.author.displayName}: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
                 link: `/requests/${demandId}`,
             }
-        }).catch(() => {}); // fire-and-forget
+        }).catch(() => { }); // fire-and-forget
     }
 
     // If the commenter IS the poster, notify all unique bidders (store owners)
@@ -86,7 +87,7 @@ export async function POST(
                     link: `/requests/${demandId}#discussion`,
                 })),
                 skipDuplicates: true,
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }
 
@@ -111,7 +112,7 @@ export async function POST(
         if (notifyData.length > 0) {
             await prisma.notification.createMany({
                 data: notifyData
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }
 

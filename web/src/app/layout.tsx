@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/Providers";
 import NavigationWrapper from "@/components/NavigationWrapper";
+import ActivityPing from "@/components/ActivityPing";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -101,6 +102,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
+          <ActivityPing />
           <NavigationWrapper>
             {children}
           </NavigationWrapper>

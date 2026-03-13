@@ -15,7 +15,7 @@ export async function POST(
 
     const { id: productId } = await params;
 
-    // KYC gate — must be at least TIER_0 to comment
+    /* Temporary bypass: Let UNVERIFIED users comment
     const commenter = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { kycTier: true }
@@ -26,6 +26,7 @@ export async function POST(
             code: 'KYC_REQUIRED',
         }, { status: 403 });
     }
+    */
 
     const body = await req.json();
     const text = (body.text ?? '').trim();
@@ -67,7 +68,7 @@ export async function POST(
                 body: `${comment.author.displayName}: ${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
                 link: `/p/${productId}`,
             }
-        }).catch(() => {}); // fire-and-forget
+        }).catch(() => { }); // fire-and-forget
     }
 
     // Extract @mentions and notify users
@@ -91,7 +92,7 @@ export async function POST(
         if (notifyData.length > 0) {
             await prisma.notification.createMany({
                 data: notifyData
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }
 
@@ -112,14 +113,14 @@ export async function POST(
                 body: `Your product '${p.title}' was mentioned in a comment.`,
                 link: `/p/${productId}`,
             }));
-            
+
         // Filter out duplicate owners if multiple products from the same owner were linked
         const uniqueNotifyData = notifyData.filter((v, i, a) => a.findIndex(t => (t.userId === v.userId)) === i);
 
         if (uniqueNotifyData.length > 0) {
             await prisma.notification.createMany({
                 data: uniqueNotifyData
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }
 

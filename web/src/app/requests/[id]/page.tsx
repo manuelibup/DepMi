@@ -188,7 +188,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     hasStore={hasStore}
                     storeId={selectedStoreId}
                     storeProducts={storeProducts}
-                    canComment={userId ? userKycTier !== 'UNVERIFIED' : false}
+                    canComment={!!userId}
                     isLoggedIn={!!userId}
                     sessionUserId={userId ?? undefined}
                     apiPath={`/api/demands/${demand.id}/comments`}

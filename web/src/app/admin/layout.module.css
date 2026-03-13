@@ -1,0 +1,105 @@
+.shell {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg-color, #0a0a0a);
+}
+
+.sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border-right: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 20px 0;
+}
+
+.sidebarHeader {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    margin-bottom: 8px;
+}
+
+.logo {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--primary, #0066FF);
+    letter-spacing: -0.5px;
+}
+
+.roleBadge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 214, 0, 0.15);
+    color: var(--accent-gold, #FFD600);
+}
+
+.nav {
+    flex: 1;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary, #888);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.navItem:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-main, #fff);
+}
+
+.backLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 12px 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted, #555);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.backLink:hover {
+    color: var(--text-secondary, #888);
+}
+
+.content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    max-width: 1200px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .content {
+        padding: 16px;
+    }
+}
