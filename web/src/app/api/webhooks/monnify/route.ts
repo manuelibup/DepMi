@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({
         where: { id: orderId },
-        include: { 
+        include: {
           seller: { include: { owner: true } },
           buyer: true,
           items: { include: { product: true }, take: 1 }
@@ -88,6 +88,22 @@ export async function POST(req: NextRequest) {
           platformFeeNgn,
         },
       })
+
+      // Decrement product stock
+      for (const item of order.items) {
+        if (!item.product) continue;
+
+        const currentStock = item.product.stock || 1;
+        const newStock = Math.max(0, currentStock - item.quantity);
+
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: newStock,
+            inStock: newStock > 0
+          }
+        });
+      }
 
       // Notify seller
       await tx.notification.create({

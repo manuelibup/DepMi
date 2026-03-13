@@ -27,6 +27,8 @@ export interface ProductData {
     likeCount?: number;
     saveCount?: number;
     commentCount?: number;
+    stock?: number;
+    inStock?: boolean;
 }
 
 interface ProductCardProps {
@@ -178,19 +180,16 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                             </span>
                         </div>
                     </div>
-                    <button
-                        className={styles.moreBtn}
-                        aria-label="More options"
-                        onClick={e => { e.stopPropagation(); }}
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-                        </svg>
-                    </button>
                 </div>
 
                 {/* ── Image — bleed to card edges like PostCard ── */}
                 <div className={styles.imageWrap}>
+                    {data.inStock === false && (
+                        <div style={{ position: 'absolute', top: 8, left: 8, background: 'var(--error)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>Out of Stock</div>
+                    )}
+                    {data.inStock !== false && typeof data.stock === 'number' && data.stock > 0 && (
+                        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>{data.stock} Left</div>
+                    )}
                     {data.image ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img

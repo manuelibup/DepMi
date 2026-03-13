@@ -82,6 +82,22 @@ export async function POST(req: NextRequest) {
                 },
             })
 
+            // Decrement product stock
+            for (const item of order.items) {
+                if (!item.product) continue;
+
+                const currentStock = item.product.stock || 1;
+                const newStock = Math.max(0, currentStock - item.quantity);
+
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: {
+                        stock: newStock,
+                        inStock: newStock > 0
+                    }
+                });
+            }
+
             await tx.notification.create({
                 data: {
                     userId: order.seller.ownerId,

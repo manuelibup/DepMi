@@ -159,6 +159,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 likeCount: product._count.likes,
                 saveCount: product._count.saves,
                 commentCount: product._count.comments,
+                stock: product.stock,
+                inStock: product.inStock,
                 ...(session?.user?.id ? {
                   isLiked: product.likes && product.likes.length > 0,
                   isSaved: product.saves && product.saves.length > 0

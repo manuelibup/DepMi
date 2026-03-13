@@ -7,8 +7,8 @@ import { X, Tag, FolderOpen } from 'lucide-react';
 import styles from './CreateProductForm.module.css';
 
 const CATEGORIES = [
-    'FASHION', 'GADGETS', 'BEAUTY', 'FOOD',
-    'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'
+    'FASHION', 'GADGETS', 'BEAUTY', 'COSMETICS', 'FOOD',
+    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT', 'OTHER'
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
@@ -28,8 +28,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         videoUrl: '',
         stock: '1',
         displayStock: '1',
-        deliveryFee: '2500',
-        displayDeliveryFee: '2,500',
+        deliveryFee: '0',
+        displayDeliveryFee: '0',
     });
 
     const [activeInput, setActiveInput] = useState<'price' | 'category' | 'stock' | 'deliveryFee' | null>(null);
@@ -268,7 +268,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             </div>
 
             <div className={styles.hintContainer}>
-                <p><strong>Required to list:</strong> Title, Price, and at least 3 photos.</p>
+                <p><strong>Required to list:</strong> Title, Price, Category, Amount Available, and at least 3 photos.</p>
             </div>
 
             {/* Inline expandable inputs based on active pill */}
@@ -383,13 +383,13 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
                     <button
                         type="button"
-                        className={`${styles.pill} ${form.deliveryFee !== '2500' ? styles.pillActive : ''}`}
+                        className={`${styles.pill} ${form.deliveryFee !== '0' ? styles.pillActive : ''}`}
                         onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
                             <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
                         </svg>
-                        {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                        {form.deliveryFee && form.deliveryFee !== '0' ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
                     </button>
                 </div>
             </div>

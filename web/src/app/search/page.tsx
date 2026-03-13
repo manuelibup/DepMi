@@ -162,7 +162,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                                     <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{person.username} · {person.depCount} Deps</p>
                                 </div>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
-                                    <path d="m9 18 6-6-6-6"/>
+                                    <path d="m9 18 6-6-6-6" />
                                 </svg>
                             </Link>
                         ))}
@@ -243,6 +243,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                                     likeCount: p._count.likes,
                                     saveCount: p._count.saves,
                                     commentCount: p._count.comments,
+                                    stock: p.stock,
+                                    inStock: p.inStock,
                                     ...(userId ? {
                                         isLiked: p.likes && p.likes.length > 0,
                                         isSaved: p.saves && p.saves.length > 0,

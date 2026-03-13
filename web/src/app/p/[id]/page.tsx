@@ -172,7 +172,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             </div>
                             <div style={{ flex: 1, padding: '12px', borderRadius: '10px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'center' }}>
                                 <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: product.inStock ? 'var(--primary)' : 'var(--error)' }}>
-                                    {product.inStock ? 'In Stock' : 'Out of Stock'}
+                                    {product.inStock ? (product.stock > 0 ? `${product.stock} In Stock` : 'In Stock') : 'Out of Stock'}
                                 </p>
                                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)' }}>Availability</p>
                             </div>

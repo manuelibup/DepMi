@@ -8,11 +8,24 @@ import { X, CreditCard, FolderOpen, MapPin, Camera, Video } from 'lucide-react';
 import styles from './DemandForm.module.css';
 
 const CATEGORIES = [
-    'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'
+    'FASHION', 'GADGETS', 'BEAUTY', 'COSMETICS', 'FOOD',
+    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT', 'OTHER'
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
-export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
+export interface DemandInitialData {
+    id: string;
+    text: string;
+    category: string;
+    currency: string;
+    budget: string;
+    budgetMin?: string;
+    location?: string;
+    images: string[];
+    videoUrl?: string;
+}
+
+export default function DemandForm({ defaultQuery, initialData }: { defaultQuery: string, initialData?: DemandInitialData }) {
     const router = useRouter();
     const { data: session } = useSession();
 
@@ -20,16 +33,16 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
     const [errorMsg, setErrorMsg] = useState('');
 
     const [formData, setFormData] = useState({
-        text: defaultQuery ? defaultQuery : '',
-        category: 'OTHER',
-        currency: '₦',
-        budget: '',           // raw max budget for API
-        displayBudget: '',    // formatted max for UI
-        budgetMin: '',        // raw min budget for API
-        displayBudgetMin: '', // formatted min for UI
-        location: '',
-        images: [] as string[],
-        videoUrl: '',
+        text: initialData?.text || (defaultQuery ? defaultQuery : ''),
+        category: initialData?.category || 'OTHER',
+        currency: initialData?.currency || '₦',
+        budget: initialData?.budget || '',           // raw max budget for API
+        displayBudget: initialData?.budget ? Number(initialData.budget).toLocaleString() : '',    // formatted max for UI
+        budgetMin: initialData?.budgetMin || '',        // raw min budget for API
+        displayBudgetMin: initialData?.budgetMin ? Number(initialData.budgetMin).toLocaleString() : '', // formatted min for UI
+        location: initialData?.location || '',
+        images: initialData?.images || ([] as string[]),
+        videoUrl: initialData?.videoUrl || '',
     });
 
     const [activeInput, setActiveInput] = useState<'budget' | 'category' | 'location' | 'media' | null>(null);
@@ -98,8 +111,11 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
         setErrorMsg('');
 
         try {
-            const res = await fetch('/api/demands/create', {
-                method: 'POST',
+            const url = initialData ? `/api/requests/${initialData.id}` : '/api/demands/create';
+            const method = initialData ? 'PATCH' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: formData.text,
@@ -122,8 +138,12 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
             setStatus('success');
             localStorage.removeItem('demand_draft');
 
-            // Redirect to Requests feed
-            router.push('/requests');
+            // Redirect to Requests feed or specific request
+            if (initialData) {
+                router.push(`/requests/${initialData.id}`);
+            } else {
+                router.push('/requests');
+            }
             router.refresh();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
@@ -148,7 +168,7 @@ export default function DemandForm({ defaultQuery }: { defaultQuery: string }) {
                     disabled={!canPost}
                     onClick={handleSubmit}
                 >
-                    Post
+                    {initialData ? 'Save Changes' : 'Post'}
                 </button>
             </div>
 

@@ -79,6 +79,8 @@ export default async function BookmarksPage() {
             commentCount: p._count.comments,
             isLiked: p.likes && p.likes.length > 0,
             isSaved: true,
+            stock: p.stock,
+            inStock: p.inStock,
         };
     }).filter(Boolean);
 
