@@ -191,3 +191,148 @@
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+/* ── Step indicator ── */
+.stepIndicator {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: -8px;
+}
+
+.stepDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.stepDotActive {
+    width: 24px;
+    border-radius: 4px;
+    background: var(--primary);
+}
+
+.stepDotDone {
+    background: var(--primary);
+    opacity: 0.4;
+}
+
+/* ── Follow users grid (step 2) ── */
+.userGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.userGrid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.userGrid::-webkit-scrollbar-thumb {
+    background: var(--card-border);
+    border-radius: 4px;
+}
+
+.userCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-color);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s;
+}
+
+.userCardAvatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.userCardInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.userCardName {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.userCardHandle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.followBtn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--primary);
+    background: transparent;
+    color: var(--primary);
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.followBtnActive {
+    background: var(--primary);
+    color: #000;
+}
+
+/* ── Interest chips (step 3) ── */
+.interestGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.interestChip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 24px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--card-border);
+    background: var(--bg-color);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.interestChip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.interestChipSelected {
+    border-color: var(--primary);
+    background: rgba(0, 200, 83, 0.1);
+    color: var(--primary);
+    font-weight: 600;
+}

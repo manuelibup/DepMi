@@ -8,7 +8,8 @@ import styles from './CreateProductForm.module.css';
 
 const CATEGORIES = [
     'FASHION', 'GADGETS', 'BEAUTY', 'COSMETICS', 'FOOD',
-    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT', 'OTHER'
+    'FURNITURE', 'VEHICLES', 'SERVICES', 'TRANSPORT',
+    'SPORT', 'HOUSING', 'BOOKS', 'COURSE', 'OTHER'
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
@@ -24,6 +25,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         price: '', // Raw unformatted number string for API
         displayPrice: '', // Formatted string with commas for UI
         category: 'OTHER',
+        categoryOther: '',
         imageUrls: [] as string[],
         videoUrl: '',
         stock: '1',
@@ -125,6 +127,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             price: Number(form.price),
             currency: form.currency,
             category: form.category,
+            categoryOther: form.category === 'OTHER' ? form.categoryOther || null : null,
             images: form.imageUrls,
             videoUrl: form.videoUrl || null,
             stock: Number(form.stock) || 1,
@@ -302,17 +305,32 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             )}
 
             {activeInput === 'category' && (
-                <div className={styles.inlineInputRow}>
-                    <select
-                        name="category"
-                        value={form.category}
-                        onChange={handleChange}
-                        className={styles.categorySelect}
-                        autoFocus
-                    >
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    <div className={styles.inlineInputRow}>
+                        <select
+                            name="category"
+                            value={form.category}
+                            onChange={handleChange}
+                            className={styles.categorySelect}
+                            autoFocus
+                        >
+                            {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                        </select>
+                        <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                    </div>
+                    {form.category === 'OTHER' && (
+                        <div className={styles.inlineInputRow} style={{ borderTop: '1px solid var(--border)' }}>
+                            <input
+                                type="text"
+                                name="categoryOther"
+                                placeholder="Specify category (e.g. Perfume, Pet supplies…)"
+                                value={form.categoryOther}
+                                onChange={handleChange}
+                                className={styles.inlineInput}
+                                maxLength={40}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

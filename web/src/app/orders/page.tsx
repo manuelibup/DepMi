@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -53,6 +53,8 @@ export default async function OrdersPage() {
         total: Number(o.totalAmount),
         createdAt: o.createdAt.toISOString(),
         paystackRef: o.paystackRef || null,
+        trackingNo: o.trackingNo || undefined,
+        deliveryMethod: o.deliveryMethod || undefined,
         product: o.items?.[0]?.product ? {
             id: o.items[0].product.id,
             title: o.items[0].product.title,
@@ -71,6 +73,7 @@ export default async function OrdersPage() {
                 <OrdersDashboard
                     hasStore={!!store}
                     storeName={store?.name}
+                    storeSlug={store?.slug}
                     purchases={serialise(purchases)}
                     sales={serialise(sales)}
                 />

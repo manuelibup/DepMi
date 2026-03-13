@@ -181,6 +181,7 @@ export const authOptions: NextAuthOptions = {
                 if (session.username) token.username = session.username;
                 if (session.name) token.name = session.name;
                 if (session.picture) token.picture = session.picture;
+                if (session.onboardingComplete) token.onboardingComplete = true;
 
                 if (session.twoFaCode) {
                     const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });

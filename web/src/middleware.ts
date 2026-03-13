@@ -27,9 +27,11 @@ export async function middleware(req: NextRequest) {
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    // 1. Force onboarding for logged-in users who haven't completed setup
+    // 1. Force onboarding for logged-in users who haven't completed setup.
+    // Dual check: onboardingComplete (new) OR username (legacy fallback for existing users
+    // before the onboardingComplete column existed). Remove !token.username after backfill.
     const isExempt = USERNAME_EXEMPT.some(p => pathname.startsWith(p));
-    if (token && !token.onboardingComplete && !isExempt) {
+    if (token && !token.onboardingComplete && !token.username && !isExempt) {
         return NextResponse.redirect(new URL('/onboarding', req.url));
     }
 
