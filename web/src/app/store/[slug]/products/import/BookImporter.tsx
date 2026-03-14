@@ -21,7 +21,7 @@ interface BookEntry {
 }
 
 const CATEGORIES = [
-    'OTHER', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES',
+    'BOOKS', 'OTHER', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'COURSE',
 ];
 
 let _id = 0;
@@ -89,7 +89,7 @@ export default function BookImporter({ storeId, storeName, storeSlug }: {
                             ? d.description.slice(0, 500)
                             : `By ${d.author || 'Unknown'}${d.publisher ? ` · ${d.publisher}` : ''}${d.publishDate ? ` (${d.publishDate})` : ''}`,
                         coverUrl: d.coverUrl || '',
-                        category: 'OTHER',
+                        category: 'BOOKS',
                     }));
                 } else {
                     // Not found — add a stub so the user can still fill it in
@@ -151,7 +151,7 @@ export default function BookImporter({ storeId, storeName, storeSlug }: {
         }
     };
 
-    // ─── Batch import ──────────────────────────────────────────────────────────
+    // ─── Batch import via /api/catalog/import (bulk endpoint) ──────────────────
     const handleImport = async () => {
         const toImport = entries.filter(e => e.selected && e.status !== 'done');
         if (!toImport.length) return;
@@ -159,38 +159,47 @@ export default function BookImporter({ storeId, storeName, storeSlug }: {
         setImporting(true);
         setImportProgress({ done: 0, total: toImport.length });
 
-        for (let i = 0; i < toImport.length; i++) {
-            const entry = toImport[i];
-            updateEntry(entry.id, { status: 'importing' });
-            try {
-                const res = await fetch('/api/products/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        storeId,
-                        title: entry.title.trim() || 'Untitled Book',
-                        description: entry.description || '',
-                        price: Number(entry.price) || 1,
-                        stock: Number(entry.stock) || 1,
-                        category: entry.category || 'OTHER',
-                        currency: '₦',
-                        deliveryFee: 0,
-                        images: entry.coverUrl ? [entry.coverUrl] : [],
-                    }),
-                });
-                if (res.ok) {
-                    updateEntry(entry.id, { status: 'done' });
-                } else {
-                    const d = await res.json();
-                    updateEntry(entry.id, { status: 'error', errorMsg: d.message || 'Failed' });
-                }
-            } catch {
-                updateEntry(entry.id, { status: 'error', errorMsg: 'Network error' });
-            }
-            setImportProgress({ done: i + 1, total: toImport.length });
-        }
+        // Mark all as importing
+        toImport.forEach(e => updateEntry(e.id, { status: 'importing' }));
 
-        setImporting(false);
+        try {
+            const payload = toImport.map(e => ({
+                title: e.title.trim() || 'Untitled Book',
+                description: e.description || '',
+                price: Number(e.price) || 1,
+                stock: Number(e.stock) || 1,
+                category: e.category || 'BOOKS',
+                imageUrl: e.coverUrl || '',
+            }));
+
+            const res = await fetch('/api/catalog/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeSlug, products: payload }),
+            });
+            const d = await res.json();
+
+            if (res.ok) {
+                toImport.forEach(e => updateEntry(e.id, { status: 'done' }));
+                setImportProgress({ done: toImport.length, total: toImport.length });
+            } else {
+                // Partial validation errors come back as d.errors array with row indices
+                const errorRows: number[] = (d.errors || []).map((e: { row: number }) => e.row);
+                toImport.forEach((e, i) => {
+                    if (errorRows.includes(i + 1)) {
+                        const rowErr = d.errors?.find((er: { row: number; issues: string }) => er.row === i + 1);
+                        updateEntry(e.id, { status: 'error', errorMsg: rowErr?.issues || 'Validation failed' });
+                    } else {
+                        updateEntry(e.id, { status: 'done' });
+                    }
+                });
+                setImportProgress({ done: toImport.length - errorRows.length, total: toImport.length });
+            }
+        } catch {
+            toImport.forEach(e => updateEntry(e.id, { status: 'error', errorMsg: 'Network error' }));
+        } finally {
+            setImporting(false);
+        }
     };
 
     const selectedCount = entries.filter(e => e.selected && e.status !== 'done').length;

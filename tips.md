@@ -466,3 +466,17 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Fix**: Downgrade the package to `v12.0.1` (`npm install otplib@^12.0.1`). The v12 tree correctly supports the exact exports standard tutorials cite (`authenticator`, `totp`).
 
 
+
+---
+
+## 📧 38. Resend "From Domain Not Verified" — Silent Failures
+
+*This tip was added after diagnosing OTP emails silently failing in production.*
+
+- **The Issue**: OTP emails return a success-looking response in the catch block but never arrive. Console logs are silent. Users see a generic "Failed to send OTP" error.
+- **The Root Cause**: Resend returns a 422 error when the `from` address uses an unverified domain (e.g. `security@depmi.com`). If your code does `await resend.emails.send(...)` without checking `emailResult.error`, the rejection is swallowed.
+- **The Fix**:
+  1. Check `emailResult.error` after every `resend.emails.send()` call and surface the actual message.
+  2. Use `process.env.RESEND_FROM_EMAIL` instead of hardcoding the sender address — makes it easy to swap to `onboarding@resend.dev` for testing before domain verification.
+  3. Verify your domain in the Resend dashboard by adding DNS TXT + MX records. Until then, use `onboarding@resend.dev` as the `from` address in dev/staging.
+- **Bonus**: Termii SMS responses were also not being checked. Always check HTTP response status for third-party delivery APIs — they return 4xx on failure but the call itself doesn't throw.

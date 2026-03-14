@@ -211,6 +211,14 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
     - **Notification System (10 event types):** BID_RECEIVED, BID_ACCEPTED, ORDER_PLACED, ORDER_CONFIRMED, ORDER_SHIPPED, ORDER_DELIVERED, PAYMENT_RELEASED, DISPUTE_OPENED, DISPUTE_RESOLVED, PRODUCT_AVAILABLE (ProductWatch).
     - **Launch Pilot** with first 20 vendors.
 
+### **Phase 3+ Extensions (Sessions 52–58)** ✅ *Complete.*
+*   **Admin Dashboard** (`/admin/*`): Role-based access control via `adminRole` JWT field. Roles: `SUPER_ADMIN`, `ADMIN`, `MODERATOR`. Features: metrics overview, DAU chart (via `ActivityPing` + `lastActiveAt`), signups chart, commerce KPIs, GMV, escrow balance (DB-aggregate), dispute queue with inline resolution, user/store management (ban/verify/suspend), referral system (global + per-user toggle, reward %, duration), admin management.
+*   **Referral System**: `ReferralConfig` (singleton), `ReferralCode`, `ReferralTransaction` models. Code captured at registration (`?ref=CODE`), qualified on first completed order, payout stub wired to Flutterwave (Phase 4).
+*   **Seller Fee Waiver**: `Store.feeWaiverUntil DateTime?`. New stores get 90 days at 0% platform fee automatically. Order confirm route checks waiver before applying 5% fee.
+*   **Orders UI Redesign**: Two-panel layout at ≥900px (order list + detail with timeline). Mobile: tap-to-detail with back button. Filter chips by status group.
+*   **Bookstore Importer** (`/store/[slug]/products/import`): ISBN lookup (Open Library + Google Books), AI catalog parse (Claude Haiku via `/api/catalog/ai-parse`), bulk create via `/api/catalog/import`. Merges and supersedes the older `/store/[slug]/ai-import` and `/store/[slug]/import` pages.
+*   **DAU Tracking**: `ActivityPing` client component fires on mount → `POST /api/activity/ping` → updates `User.lastActiveAt` (rate-limited to once/hour).
+
 ### **Phase 4: Social Connectivity (Week 7)** ✅ *Complete.*
 *   **W7: Interactions & Retention:** Establish the social feedback loops that drive daily active usage (DAU).
     - **Direct Messaging (DMs):** Real-time buyer-to-vendor communication (`/messages`). Polling-based or WebSocket chat interface with optimistic UI updates.
@@ -225,7 +233,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), and shipping fields (`address`, `city`, `state`) to reduce checkout friction.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
-- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
+- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
 - **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category`, `inStock`, `isPortfolioItem`, `videoUrl`, `viewCount`, and `slug` (String? @unique — URL-safe identifier e.g. `dell-xps-15-techstore`, auto-generated from title + store name on create, nullable for backward compat with existing UUID routes).
 - **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.
@@ -462,7 +470,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), and shipping fields (`address`, `city`, `state`) to reduce checkout friction.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
-- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float) and `reviewCount` (Int).
+- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
 - **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category`, `inStock`, `isPortfolioItem`, `videoUrl`, `viewCount`, and `slug` (String? @unique — URL-safe identifier e.g. `dell-xps-15-techstore`, auto-generated from title + store name on create, nullable for backward compat with existing UUID routes).
 - **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.

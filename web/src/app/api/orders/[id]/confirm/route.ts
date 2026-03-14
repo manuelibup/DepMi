@@ -73,9 +73,7 @@ export async function POST(
 
   const totalAmount = Number(order.totalAmount)
   // Waive platform fee if the store's fee waiver period is still active
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sellerAny = order.seller as any
-  const feeWaived = sellerAny.feeWaiverUntil && new Date(sellerAny.feeWaiverUntil) > new Date()
+  const feeWaived = order.seller.feeWaiverUntil && order.seller.feeWaiverUntil > new Date()
   const platformFee = feeWaived ? 0 : Math.round(totalAmount * 0.05 * 100) / 100
   const sellerAmount = Math.round((totalAmount - platformFee) * 100) / 100
 

@@ -8,6 +8,7 @@ import KpiCard from './KpiCard';
 import SignupsChart from './SignupsChart';
 import DauChart from './DauChart';
 import InviteForm from './InviteForm';
+import BulkFollowForm from './BulkFollowForm';
 import styles from './page.module.css';
 
 function fmt(n: number) {
@@ -119,6 +120,11 @@ export default async function AdminDashboard() {
             <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>Vendor Invites</h2>
                 <InviteForm />
+            </div>
+
+            <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Auto Bulk Follows</h2>
+                <BulkFollowForm />
             </div>
         </div>
     );

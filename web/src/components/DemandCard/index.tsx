@@ -273,12 +273,12 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                         <span>{likeCount}</span>
                     </button>
 
-                    {(data.viewCount ?? 0) > 0 && (
+                    {(data.viewCount ?? 0) >= 0 && (
                         <span className={styles.viewCount}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
                             </svg>
-                            {data.viewCount}
+                            {data.viewCount ?? 0}
                         </span>
                     )}
 

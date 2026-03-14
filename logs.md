@@ -2362,3 +2362,59 @@ Full Flutterwave payment integration is live (checkout → payment → webhook �
 
 ### Outcome:
 Full database connectivity is restored. The platform is ready for continued development of the storefront and listing flows.
+
+---
+
+## Session 58 — Mar 14, 2026 — Admin Dashboard, Fee Waiver, Orders UI Redesign & Bookstore Importer
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Context
+Continuing from a prior context-window that built the full admin dashboard (Sessions 52-57 not recorded here). This session addressed 5 new feature requests + resolved pending issues.
+
+### What was done
+
+#### Resend/OTP Fix
+- **Diagnosed Resend failures**: Root cause — `security@depmi.com` was hardcoded in `/api/otp/send/route.ts`, ignoring `RESEND_FROM_EMAIL` env var. If `depmi.com` isn't DNS-verified in Resend dashboard, all emails fail silently.
+- **Fixed OTP route**: Now uses `process.env.RESEND_FROM_EMAIL` as sender; Termii SMS response is checked (falls through to email on SMS failure instead of returning success); Resend error message is now surfaced in the API response (was swallowed as generic 500).
+- **Action required**: Verify `depmi.com` domain in Resend dashboard. Temporarily use `RESEND_FROM_EMAIL=onboarding@resend.dev` in `.env.local` for testing until DNS is verified.
+
+#### 3-Month Seller Fee Waiver
+- **Schema**: Added `feeWaiverUntil DateTime?` to `Store` model in `schema.prisma`. `prisma db push` + `prisma generate` applied successfully.
+- **Store creation** (`/api/store/create/route.ts`): New stores automatically get `feeWaiverUntil = now + 90 days`.
+- **Order confirm** (`/api/orders/[id]/confirm/route.ts`): Checks `seller.feeWaiverUntil > now` — if active, sets `platformFee = 0` instead of the standard 5%.
+
+#### Orders UI Redesign
+- **Rewrote** `web/src/app/orders/OrdersDashboard.tsx` (was single-column card list, now two-panel):
+  - **PC (≥900px)**: Fixed 380px left panel (compact order rows with status badge) + right detail panel with status timeline, product card, info grid, actions
+  - **Mobile**: Same list; tapping an order slides to full-screen detail with back button
+  - Added filter chips: All / Active / Pending / Completed / Issues
+  - Sales tab shows earnings strip (total earned + in escrow) inline
+- **Rewrote** `web/src/app/orders/page.module.css` — new layout system
+- **Updated** `web/src/app/orders/page.tsx` — passes `storeSlug`, serialises `trackingNo`/`deliveryMethod`
+
+#### AI Bookstore Importer
+- **New page** at `/store/[slug]/products/import` (server-side auth-gated):
+  - **ISBN mode**: Paste ISBNs (one per line) → hits `/api/books/isbn/[isbn]` (Open Library + Google Books) → fills cover, title, author, description; defaults category to `BOOKS`
+  - **AI Catalog mode**: Upload image OR paste text → hits `/api/catalog/ai-parse` (Claude Haiku) → extracts products
+  - Preview table: editable price, stock, category per book
+  - Batch import via `/api/catalog/import` (bulk endpoint, single request)
+  - "Import" shortcut link added to the single-product creation form header
+- **Note**: Existing `/store/[slug]/ai-import` and `/store/[slug]/import` (CSV) pages remain unchanged — new page merges both with ISBN-specific enhancements.
+
+### Schema changes
+- `Store.feeWaiverUntil DateTime?` — added, pushed, generated
+
+### Validations
+- ✅ `npx prisma db push` — "already in sync" (field added in prior `db push`)
+- ✅ `npx prisma generate` — client regenerated (exit 0)
+- ✅ `npx tsc --noEmit` — 0 errors
+
+### Known issues / next actions
+- **Build error** (Turbopack stale cache): `You cannot have two parallel pages that resolve to the same path: /(auth)/admin and /admin`. Fix: stop dev server → `npx prisma generate` → restart. No actual `(auth)/admin` directory exists — purely a Turbopack cache ghost.
+- **Resend domain**: Must verify `depmi.com` in Resend dashboard for email OTPs to work in production.
+- **Existing stores**: `feeWaiverUntil` is NULL for stores created before this session. Can backfill via admin SQL or Prisma Studio if needed.
+- **Google OAuth onboarding bypass** (known since Session 57): Still pending fix.
+
+### Outcome
+Fee waiver live for new sellers. Orders page redesigned with proper PC layout. Bookstore importer ready for Dara. OTP delivery now fails with actionable error messages instead of silent 500s.
