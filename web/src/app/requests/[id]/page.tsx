@@ -9,6 +9,7 @@ import BackButton from '@/components/BackButton';
 import BidsCommentsTab from './BidsCommentsTab';
 import DemandDetailActions from './DemandDetailActions';
 import CloseDemandButton from './CloseDemandButton';
+import ViewTracker from '@/components/ViewTracker';
 import styles from './RequestDetail.module.css';
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,7 +53,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     if (!demand) notFound();
 
     // Fire-and-forget view count increment (same pattern as product detail)
-    (prisma.demand as any).update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
+    // (prisma.demand as any).update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
 
     const isPoster = userId === demand.userId;
 
@@ -105,6 +106,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
     return (
         <main className={styles.container}>
+            <ViewTracker demandId={demand.id} />
             {/* Minimal back-button header — no global nav so bid/comment buttons aren't obscured */}
             <div className={styles.backHeader}>
                 <BackButton className={styles.backBtn} />

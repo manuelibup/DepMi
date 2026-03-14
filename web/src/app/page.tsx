@@ -4,20 +4,19 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
-import Link from 'next/link';
 
-import waitlistStyles from './page.module.css'; // assuming styles is named this way
 import WaitlistHome from '@/components/WaitlistHome';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import StoriesBar from '@/components/StoriesBar';
-import DemandCard from '@/components/DemandCard';
-import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
-import SuggestedProfiles from '@/components/SuggestedProfiles';
-
 import LandingPage from '@/components/LandingPage';
+import FeedInfiniteScroll from '@/components/FeedInfiniteScroll';
+import type { FeedItem } from '@/components/FeedInfiniteScroll';
+
+const STORE_COLORS = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+const INITIAL_TAKE = 10;
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
@@ -34,64 +33,133 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     redirect('/onboarding');
   }
 
-  // Username Repair Gatekeeper: Redirect users with spaces in their username
+  // Username Repair Gatekeeper
   if (session?.user?.username && /\s/.test(session.user.username)) {
     redirect('/onboarding?repair=1');
   }
 
   const sp = await searchParams;
   const category = sp.category;
+  const userId = session.user.id;
 
-
-  // Fetch real products
-  const products = await prisma.product.findMany({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    where: { stock: { gt: 0 }, ...(category ? { category: category as any } : {}) },
-    orderBy: { createdAt: 'desc' },
-    take: 20,
-    include: {
-      store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
-      images: true,
-      _count: { select: { likes: true, saves: true, comments: true } },
-      ...(session?.user?.id ? {
-        likes: { where: { userId: session.user.id }, select: { id: true } },
-        saves: { where: { userId: session.user.id }, select: { id: true } }
-      } : {})
-    }
-  });
-
-  // Fetch real demands
-  const demands = await prisma.demand.findMany({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    where: { isActive: true, ...(category ? { category: category as any } : {}) },
-    orderBy: { createdAt: 'desc' },
-    take: 20,
-    include: {
-      user: { select: { displayName: true, username: true, avatarUrl: true } },
-      _count: { select: { bids: true, comments: true, likes: true } },
-      images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
-      ...(session?.user?.id ? {
-        likes: { where: { userId: session.user.id }, select: { id: true } },
-        saves: { where: { userId: session.user.id }, select: { id: true } }
-      } : {})
-    }
-  });
-
-  // Fetch top active stores for stories bar & suggested profiles
-  const topStores = await prisma.store.findMany({
-    where: { isActive: true },
-    orderBy: { depCount: 'desc' },
-    take: 8,
-    select: { id: true, name: true, slug: true, logoUrl: true, depCount: true }
-  });
-
-  // Interleave them mathematically (e.g. 1 demand, 1 product, 1 demand, 1 product)
-  const feed = [];
-  const maxLength = Math.max(demands.length, products.length);
-  for (let i = 0; i < maxLength; i++) {
-    if (demands[i]) feed.push({ type: 'demand', data: demands[i] });
-    if (products[i]) feed.push({ type: 'product', data: products[i] });
+  const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
+  const demandWhere: Record<string, unknown> = { isActive: true };
+  if (category) {
+    productWhere.category = category as string;
+    demandWhere.category = category as string;
   }
+
+  const [rawProducts, rawDemands, topStores] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (prisma.product as any).findMany({
+      where: productWhere,
+      orderBy: { createdAt: 'desc' },
+      take: INITIAL_TAKE,
+      include: {
+        store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
+        images: true,
+        _count: { select: { likes: true, saves: true, comments: true } },
+        ...(userId ? {
+          likes: { where: { userId }, select: { id: true } },
+          saves: { where: { userId }, select: { id: true } },
+        } : {}),
+      },
+    }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (prisma.demand as any).findMany({
+      where: demandWhere,
+      orderBy: { createdAt: 'desc' },
+      take: INITIAL_TAKE,
+      include: {
+        user: { select: { displayName: true, username: true, avatarUrl: true } },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        _count: { select: { bids: true, comments: true, likes: true } as any },
+        images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
+        ...(userId ? {
+          likes: { where: { userId }, select: { id: true } },
+          saves: { where: { userId }, select: { id: true } },
+        } : {}),
+      },
+    }),
+    prisma.store.findMany({
+      where: { isActive: true },
+      orderBy: { depCount: 'desc' },
+      take: 8,
+      select: { id: true, name: true, slug: true, logoUrl: true, depCount: true },
+    }),
+  ]);
+
+  // Serialize products → FeedItem[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const products: FeedItem[] = rawProducts.map((p: any) => ({
+    type: 'product' as const,
+    createdAt: p.createdAt.toISOString(),
+    data: {
+      id: p.id,
+      store: p.store.name,
+      storeSlug: p.store.slug,
+      storeInitial: p.store.name.charAt(0).toUpperCase(),
+      storeColor: STORE_COLORS[p.store.name.length % STORE_COLORS.length],
+      deps: p.store.depCount,
+      depTier: p.store.depTier.toLowerCase(),
+      title: p.title,
+      price: `₦${Number(p.price).toLocaleString()}`,
+      location: 'Nationwide',
+      image: p.images?.[0]?.url ?? '',
+      viewers: p.viewCount,
+      ownerId: p.store.ownerId,
+      ownerUsername: p.store.owner.username,
+      likeCount: p._count.likes,
+      saveCount: p._count.saves,
+      commentCount: p._count.comments,
+      stock: p.stock,
+      inStock: p.inStock,
+      isLiked: userId ? (p.likes?.length > 0) : false,
+      isSaved: userId ? (p.saves?.length > 0) : false,
+    },
+  }));
+
+  // Serialize demands → FeedItem[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const demands: FeedItem[] = rawDemands.map((d: any) => ({
+    type: 'demand' as const,
+    createdAt: d.createdAt.toISOString(),
+    data: {
+      id: d.id,
+      username: d.user.username ?? undefined,
+      user: d.user.displayName,
+      initials: (d.user.displayName || d.user.username || '??').substring(0, 2).toUpperCase(),
+      avatarUrl: d.user.avatarUrl ?? null,
+      timeAgo: new Date(d.createdAt).toLocaleDateString(),
+      text: d.text || '',
+      budget: `₦${Number(d.budget).toLocaleString()}`,
+      budgetMin: d.budgetMin ? `₦${Number(d.budgetMin).toLocaleString()}` : null,
+      bids: d._count.bids,
+      commentCount: d._count.comments,
+      likeCount: d._count.likes,
+      viewCount: d.viewCount,
+      isLiked: userId ? (d.likes?.length > 0) : false,
+      isSaved: userId ? (d.saves?.length > 0) : false,
+      location: d.location ?? null,
+      images: d.images.map((img: { url: string }) => img.url),
+    },
+  }));
+
+  // Interleave (1 demand, 1 product pattern matching existing behavior)
+  const initialItems: FeedItem[] = [];
+  const maxLen = Math.max(products.length, demands.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (demands[i]) initialItems.push(demands[i]);
+    if (products[i]) initialItems.push(products[i]);
+  }
+
+  // Cursors for the client to request the next page
+  const initialProductCursor = rawProducts.length === INITIAL_TAKE
+    ? rawProducts[rawProducts.length - 1].createdAt.toISOString()
+    : null;
+  const initialDemandCursor = rawDemands.length === INITIAL_TAKE
+    ? rawDemands[rawDemands.length - 1].createdAt.toISOString()
+    : null;
 
   return (
     <main className={styles.main}>
@@ -100,7 +168,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       <StoriesBar stores={topStores} />
 
       <div className={styles.feed}>
-        {feed.length === 0 ? (
+        {initialItems.length === 0 ? (
           <EmptyState
             title="No activity yet"
             description="Be the first to list a product or request an item!"
@@ -108,83 +176,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             actionHref="/demand/new"
           />
         ) : (
-          feed.map((item, index) => {
-            let cardContent = null;
-
-            if (item.type === 'demand') {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const demand = item.data as any;
-              const dData = {
-                id: demand.id,
-                username: demand.user.username ?? undefined,
-                user: demand.user.displayName,
-                initials: (demand.user.displayName || demand.user.username || '??').substring(0, 2).toUpperCase(),
-                avatarUrl: demand.user.avatarUrl ?? null,
-                timeAgo: new Date(demand.createdAt).toLocaleDateString(),
-                text: demand.text || '',
-                budget: `₦${Number(demand.budget).toLocaleString()}`,
-                budgetMin: demand.budgetMin ? `₦${Number(demand.budgetMin).toLocaleString()}` : null,
-                bids: demand._count.bids,
-                commentCount: demand._count.comments,
-                likeCount: demand._count.likes,
-                viewCount: demand.viewCount,
-                isLiked: session?.user?.id ? (demand.likes && demand.likes.length > 0) : false,
-                isSaved: session?.user?.id ? (demand.saves && demand.saves.length > 0) : false,
-                location: demand.location ?? null,
-                images: demand.images.map((img: any) => img.url),
-              };
-              cardContent = <DemandCard key={`d-${demand.id}`} data={dData} index={index} />;
-            } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const product = item.data as any;
-              // Generate deterministic color based on store name
-              const colors = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
-              const colorIndex = product.store.name.length % colors.length;
-
-              const pData = {
-                store: product.store.name,
-                storeSlug: product.store.slug,
-                storeInitial: product.store.name.charAt(0).toUpperCase(),
-                storeColor: colors[colorIndex],
-                deps: product.store.depCount,
-                depTier: product.store.depTier.toLowerCase(),
-                title: product.title,
-                price: `₦${Number(product.price).toLocaleString()}`,
-                location: 'Nationwide',
-                image: product.images && product.images.length > 0 ? product.images[0].url : '',
-                viewers: product.viewCount,
-                id: product.id,
-                ownerId: product.store.ownerId,
-                ownerUsername: product.store.owner.username,
-                likeCount: product._count.likes,
-                saveCount: product._count.saves,
-                commentCount: product._count.comments,
-                stock: product.stock,
-                inStock: product.inStock,
-                ...(session?.user?.id ? {
-                  isLiked: product.likes && product.likes.length > 0,
-                  isSaved: product.saves && product.saves.length > 0
-                } : {})
-              };
-              cardContent = (
-                <div key={`p-${product.id}`} style={{ display: 'block' }}>
-                  <ProductCard data={pData} index={index} />
-                </div>
-              );
-            }
-
-            // Inject SuggestedProfiles after the 3rd feed item (index 2)
-            if (index === 2 && topStores.length > 0) {
-              return (
-                <React.Fragment key={`feed-item-${index}`}>
-                  {cardContent}
-                  <SuggestedProfiles stores={topStores} />
-                </React.Fragment>
-              );
-            }
-
-            return cardContent;
-          })
+          <FeedInfiniteScroll
+            initialItems={initialItems}
+            initialProductCursor={initialProductCursor}
+            initialDemandCursor={initialDemandCursor}
+            category={category}
+            topStores={topStores}
+          />
         )}
       </div>
 

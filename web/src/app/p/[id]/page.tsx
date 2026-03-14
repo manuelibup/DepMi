@@ -13,6 +13,7 @@ import { authOptions } from '@/lib/auth';
 import CommentSection from '@/app/requests/[id]/CommentSection';
 import ProductReviews from './ProductReviews';
 import BackButton from '@/components/BackButton';
+import ViewTracker from '@/components/ViewTracker';
 import styles from './page.module.css';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,7 +44,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     if (!product) notFound();
 
-    prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
+    // prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
 
     const serializedComments = product.comments.map(c => ({
         id: c.id,
@@ -57,6 +58,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     return (
         <main className={styles.page}>
             <Header />
+            <ViewTracker productId={product.id} />
 
             <div className={styles.wrapper}>
                 <div className={styles.twoCol}>

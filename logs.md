@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 60 — Mar 14, 2026 — Infinite Scroll Feed, Onboarding Flow & DB Backup System](#session-60--mar-14-2026--infinite-scroll-feed-onboarding-flow--db-backup-system)
 - [Session 59 — Mar 13, 2026 — Feature Polish, Product Tracking & Auth Bug Fixes](#session-59--mar-13-2026--feature-polish-product-tracking--auth-bug-fixes)
 - [Session 58 — Mar 13, 2026 — Admin Security, Dashboard KPIs & DNS Fast-Track](#session-58--mar-13-2026--admin-security-dashboard-kpis--dns-fast-track)
 - [Session 57 — Mar 13, 2026 — Social Polish, Photo Crop, Delivery Fee & Notifications](#session-57--mar-13-2026--social-polish-photo-crop-delivery-fee--notifications)
@@ -42,6 +43,47 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 60 — Mar 14, 2026 — Infinite Scroll Feed, Onboarding Flow & DB Backup System
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Context
+Continuation session (context compression resumed). Previous session had already pushed: multi-step onboarding flow, Google OAuth bypass fix (`onboardingComplete` flag), new categories (SPORT, HOUSING, BOOKS, COURSE + `categoryOther` free-text), Twitter-style photo crop modal, and product/demand category form updates.
+
+### What Was Built
+
+#### 1. Infinite Scroll Feed
+- **`/api/feed`** — New cursor-based pagination endpoint. Accepts `productCursor` + `demandCursor` (ISO timestamps), `category` filter, and `take` (max 20). Returns interleaved product + demand items serialised to plain objects, plus next cursors.
+- **`FeedInfiniteScroll` client component** — Takes SSR-rendered initial items + cursors from the server component. Uses `IntersectionObserver` with a 300px lookahead sentinel div. Fetches next page silently; shows inline spinner during load; shows "You're all caught up ✓" when both cursors are exhausted. Re-syncs from props when category filter changes.
+- **`page.tsx` refactor** — Home page stays a server component for initial SSR (first 10+10 items). Passes serialised `FeedItem[]` + cursors to `FeedInfiniteScroll`. `SuggestedProfiles` injection after index 2 preserved inside the client component.
+- **Prisma `$extends` workaround** — `_count: { select: { likes: true } } as any` required for Demand queries; the encryption extension narrows `DemandCountOutputTypeSelect` and drops relation fields.
+
+#### 2. DB Backup System
+- **`web/scripts/backup-db.js`** — Node.js backup script using `pg` package. Dumps all 32 tables to timestamped JSON files under `web/backups/<timestamp>/`. Includes a `_manifest.json` with row counts per table.
+- **`npm run db:push`** — New `package.json` script that runs backup THEN `prisma db push`. Enforced in `CLAUDE.md` — direct `prisma db push` is now forbidden.
+- **`npm run backup`** — Standalone backup shortcut.
+- **`CLAUDE.md`** — Created at project root with mandatory rules: always use `npm run db:push`, never commit `.env.local`, permission required before writing code.
+- **`web/.gitignore`** — Added `/backups/` (contain PII, must stay local).
+- First backup captured: 110 users, 37 stores, 53 products, 10 demands at time of creation.
+
+### Schema Changes
+- `ProductView` and `DemandView` models (view tracking, added by Antigravity in Session 59) — committed to git this session (were live in DB but uncommitted).
+
+### Validations
+- ✅ `npm run db:push` — "already in sync" (schema already live)
+- ✅ `npm run backup` — 148 users, 38 stores, 66 products, 12 demands backed up successfully
+- ✅ Prisma generate — client regenerated
+
+### Known Issues / Next Actions
+- **Username revert bug** — Settings username change appears to revert until hard refresh (JWT race condition). Fix pending.
+- **Course/digital product selling** — Selar-style digital storefront with 48h escrow window. Not yet started.
+- **Middleware dual check** — `!token.onboardingComplete && !token.username` is a safe transitional guard. Can be simplified to `!token.onboardingComplete` once confirmed all existing users have the flag set (110 users backfilled Mar 14, but JWT tokens may not have refreshed yet for all).
+
+### Outcome
+Home feed is now unlimited — users scroll through all products and demands without hitting a hard cap. DB backup system is in place so no future schema push can accidentally destroy live data.
 
 ---
 

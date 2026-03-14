@@ -469,6 +469,36 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 
 ---
 
+## 🔄 39. Cursor-Based Pagination for Interleaved Feeds
+
+*Added after implementing infinite scroll for the DepMi home feed.*
+
+- **The Pattern**: The home feed interleaves products and demands. Use dual cursors (`productCursor` + `demandCursor`), both as `createdAt` ISO timestamps. Each page fetches `WHERE createdAt < cursor ORDER BY createdAt DESC LIMIT N`. Return both next cursors (or `null` if exhausted). `hasMore = productCursor !== null || demandCursor !== null`.
+- **IntersectionObserver**: Set `rootMargin: '300px'` to start loading before the user reaches the bottom. Always disconnect the previous observer before creating a new one in the `useEffect` cleanup.
+- **SSR + Client Hybrid**: Keep the page as a server component for initial render (fast first paint + SEO). Pass serialised items + cursors to a `'use client'` child component for subsequent fetches. Avoids a loading spinner on first load.
+- **Prisma Decimal**: Serialise price/budget with `Number(p.price)` before passing to client — `Decimal` objects are not JSON-safe.
+
+---
+
+## 🗄️ 40. Prisma `$extends` Breaks `_count.select` TypeScript Types
+
+*Added after encountering TypeScript errors after the encryption extension was added.*
+
+- **The Issue**: After adding a `$extends` client with `result` computed fields, TypeScript narrows `DemandCountOutputTypeSelect` and drops relation fields like `likes`. Error: `"'likes' does not exist in type 'DemandCountOutputTypeSelect'"`.
+- **The Fix**: `(prisma.demand as any).findMany(...)` for the outer call, and `_count: { select: { ..., likes: true } as any }` for the count select. Established pattern in this codebase.
+
+---
+
+## 🔒 41. Always Backup DB Before Schema Push
+
+*Added after an accidental migration redirected all existing users to /onboarding.*
+
+- **The Rule**: Never run `npx prisma db push` directly. Use `npm run db:push` (backs up first automatically).
+- **The Backfill Pattern**: When adding a new Boolean flag with `@default(false)`, immediately backfill rows that should be `true`. Example: `prisma.user.updateMany({ where: { username: { not: null } }, data: { onboardingComplete: true } })`.
+- **The Dual-Guard Pattern**: While rolling out a new flag-based redirect, use both old and new conditions in middleware (e.g. `!token.onboardingComplete && !token.username`). Remove the legacy check only after all JWTs have rotated (NextAuth default `updateAge` is 24h).
+
+---
+
 ## 📧 38. Resend "From Domain Not Verified" — Silent Failures
 
 *This tip was added after diagnosing OTP emails silently failing in production.*

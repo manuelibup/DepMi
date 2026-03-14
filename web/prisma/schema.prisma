@@ -57,6 +57,8 @@ model User {
   storeFollows    StoreFollow[]    @relation("UserStoreFollows")
   followers       UserFollow[]     @relation("UserFollowing")
   following       UserFollow[]     @relation("UserFollowers")
+  productViews    ProductView[]
+  demandViews     DemandView[]
   storeInvite     StoreInvite?
   conversations   Conversation[]   @relation("ConversationParticipants")
   posts           Post[]           @relation("AuthoredPosts")
@@ -235,6 +237,7 @@ model Demand {
   comments   Comment[]     @relation("DemandComments")
   likes      DemandLike[]
   saves      SavedDemand[]
+  views      DemandView[]
   user       User          @relation("UserDemands", fields: [userId], references: [id])
   orders     Order[]       @relation("DemandOrders")
 
@@ -320,11 +323,12 @@ model Product {
   comments        Comment[]      @relation("ProductComments")
   orderItems      OrderItem[]
   reviews         Review[]       @relation("ProductReviews")
+  likes           ProductLike[]
+  saves           SavedProduct[]
+  views           ProductView[]
   store           Store          @relation("StoreProducts", fields: [storeId], references: [id])
   images          ProductImage[]
-  likes           ProductLike[]
   productWatches  ProductWatch[]
-  saves           SavedProduct[]
 
   @@index([category, inStock])
   @@index([storeId])
@@ -751,4 +755,31 @@ enum ReferralStatus {
   QUALIFIED
   PAID
   FAILED
+}
+model ProductView {
+  id         String   @id @default(uuid())
+  productId  String
+  userId     String?
+  identifier String // IP hash or similar
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([identifier])
+  @@index([createdAt])
+}
+
+model DemandView {
+  id         String   @id @default(uuid())
+  demandId   String
+  userId     String?
+  identifier String // IP hash or similar
+  createdAt  DateTime @default(now())
+  demand     Demand   @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([demandId])
+  @@index([identifier])
+  @@index([createdAt])
 }
