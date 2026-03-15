@@ -27,7 +27,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    return <LandingPage />;
+    const [userCount, storeCount, listingCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.store.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { inStock: true } }),
+    ]);
+    return <LandingPage stats={{ users: userCount, stores: storeCount, listings: listingCount }} />;
   }
 
   if (session?.user && !session.user.username) {

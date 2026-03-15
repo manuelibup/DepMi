@@ -7,8 +7,9 @@
     flex-direction: column;
 }
 
+/* ── Header ── */
 .header {
-    padding: 24px 40px;
+    padding: 20px 40px;
     z-index: 100;
     position: sticky;
     top: 0;
@@ -33,54 +34,41 @@
 .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 24px;
+    gap: 10px;
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
 }
 
-.navActions {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-.loginBtn {
-    background: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+.navSignIn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
     padding: 8px 20px;
     border-radius: 999px;
+    font-size: 0.875rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.loginBtn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: white;
+.navSignIn:hover {
+    background: rgba(255,255,255,0.14);
 }
 
-.signupBtn {
-    background: white;
-    color: #0A0F1D;
-    padding: 8px 24px;
-    border-radius: 999px;
-    font-weight: 700;
-    transition: transform 0.2s ease;
-}
-
-.signupBtn:hover {
-    transform: scale(1.05);
-}
-
+/* ── Main ── */
 .main {
     flex: 1;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 60px 40px;
+    padding: 60px 40px 80px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
 }
 
+/* ── Hero ── */
 .heroSection {
     display: grid;
     grid-template-columns: 1.2fr 1fr;
@@ -88,9 +76,25 @@
     align-items: center;
 }
 
+.heroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 200, 83, 0.12);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    color: #00C853;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+}
+
 .title {
-    font-size: 84px;
-    line-height: 1.05;
+    font-size: 80px;
+    line-height: 1.03;
     font-weight: 900;
     margin-bottom: 24px;
     letter-spacing: -2px;
@@ -98,11 +102,11 @@
 }
 
 .subtitle {
-    font-size: 20px;
+    font-size: 18px;
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 48px;
-    max-width: 480px;
-    line-height: 1.5;
+    margin-bottom: 40px;
+    max-width: 460px;
+    line-height: 1.6;
 }
 
 .authBox {
@@ -119,92 +123,35 @@
     color: #111;
     padding: 14px;
     border-radius: 999px;
+    font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 12px;
-    transition: transform 0.2s ease;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .googleBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 16px 0;
-    color: rgba(255, 255, 255, 0.2);
-}
-
-.divider::before,
-.divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.createAccountBtn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--primary);
-    color: white;
-    padding: 14px;
-    border-radius: 999px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    transition: all 0.2s ease;
-}
-
-.createAccountBtn:hover {
-    filter: brightness(1.1);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 102, 255, 0.4);
+    box-shadow: 0 6px 24px rgba(255,255,255,0.15);
 }
 
 .terms {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.5;
 }
 
 .terms a {
-    color: var(--primary);
+    color: #00C853;
+    text-decoration: none;
 }
 
-.alreadyHaveAccount {
-    margin-top: 60px;
-    max-width: 320px;
+.terms a:hover {
+    text-decoration: underline;
 }
 
-.alreadyHaveAccount h3 {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 20px;
-}
-
-.signInLink {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--primary);
-    padding: 14px;
-    border-radius: 999px;
-    font-weight: 700;
-    transition: all 0.2s ease;
-}
-
-.signInLink:hover {
-    background: rgba(0, 102, 255, 0.05);
-    border-color: var(--primary);
-}
-
-/* Phone Mockup */
+/* Phone mockup */
 .heroVisual {
     position: relative;
     display: flex;
@@ -212,26 +159,26 @@
 }
 
 .phoneMockup {
-    width: 320px;
-    height: 640px;
+    width: 300px;
+    height: 620px;
     background: #000;
     border: 8px solid #222;
     border-radius: 44px;
     overflow: hidden;
     position: relative;
     z-index: 2;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
 }
 
 .phoneScreen {
     height: 100%;
-    background: #000000;
+    background: #000;
     display: flex;
     flex-direction: column;
 }
 
 .mockHeader {
-    padding: 24px 16px 12px;
+    padding: 20px 16px 10px;
 }
 
 .mockSearch {
@@ -247,8 +194,6 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    border-radius: 4px;
-    /* Matches phone screen rounding roughly */
 }
 
 .glow {
@@ -256,15 +201,361 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 500px;
-    height: 500px;
-    background: var(--primary-glow);
-    filter: blur(40px);
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba(0,200,83,0.18) 0%, transparent 70%);
+    filter: blur(30px);
     z-index: 1;
+    pointer-events: none;
 }
 
+/* ── Stats bar ── */
+.statsBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 32px 40px;
+}
+
+.statItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.statNumber {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #00C853;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.statDivider {
+    width: 1px;
+    height: 48px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 8px;
+}
+
+/* ── Section shared ── */
+.section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+}
+
+.sectionEyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #00C853;
+    margin-bottom: 12px;
+}
+
+.sectionTitle {
+    font-size: 2.4rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    margin-bottom: 48px;
+}
+
+/* ── How it works ── */
+.stepsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
+.stepCard {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 16px;
+    transition: border-color 0.2s;
+}
+
+.stepCard:hover {
+    border-color: rgba(0,200,83,0.3);
+}
+
+.stepNumber {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #00C853;
+    background: rgba(0,200,83,0.12);
+    border: 1px solid rgba(0,200,83,0.25);
+    border-radius: 999px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stepIcon {
+    color: rgba(255,255,255,0.7);
+}
+
+.stepTitle {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.stepDesc {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── For Buyers / For Sellers ── */
+.splitSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.splitCard {
+    border-radius: 24px;
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.splitCardBuyer {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.splitCardSeller {
+    background: rgba(0,200,83,0.06);
+    border: 1px solid rgba(0,200,83,0.2);
+}
+
+.splitIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(0,200,83,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00C853;
+}
+
+.splitTitle {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0;
+}
+
+.splitList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.splitList li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.4;
+}
+
+.splitList li svg {
+    flex-shrink: 0;
+}
+
+.splitCta {
+    background: #00C853;
+    color: #000;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: filter 0.2s, transform 0.2s;
+}
+
+.splitCta:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* ── Escrow section ── */
+.escrowSection {
+    background: rgba(0,200,83,0.06);
+    border: 1px solid rgba(0,200,83,0.2);
+    border-radius: 28px;
+    padding: 64px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+}
+
+.escrowIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 999px;
+    background: rgba(0,200,83,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.escrowTitle {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: #fff;
+    max-width: 560px;
+    margin: 0;
+}
+
+.escrowDesc {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.55);
+    max-width: 600px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.escrowSteps {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.escrowStep {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+}
+
+.escrowStepDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #00C853;
+    flex-shrink: 0;
+}
+
+.escrowArrow {
+    color: rgba(0,200,83,0.6);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* ── Categories ── */
+.categoriesGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 700px;
+}
+
+.categoryChip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
+    cursor: default;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.categoryChip:hover {
+    border-color: rgba(0,200,83,0.4);
+    color: #fff;
+}
+
+.categoryEmoji {
+    font-size: 1.1rem;
+}
+
+/* ── Bottom CTA ── */
+.bottomCta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    padding: 20px 0 0;
+}
+
+.bottomCtaTitle {
+    font-size: 2.4rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    margin: 0;
+}
+
+.bottomCtaDesc {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    margin: 0 0 8px;
+}
+
+/* ── Footer ── */
 .footer {
-    padding: 40px;
+    padding: 32px 40px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -276,18 +567,25 @@
     gap: 20px;
     justify-content: center;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.footerLinks a {
+    color: rgba(255,255,255,0.35);
+    text-decoration: none;
+    transition: color 0.15s;
 }
 
 .footerLinks a:hover {
-    text-decoration: underline;
+    color: rgba(255,255,255,0.7);
 }
 
+/* ── Responsive ── */
 @media (max-width: 960px) {
     .heroSection {
         grid-template-columns: 1fr;
         text-align: center;
-        gap: 60px;
+        gap: 48px;
     }
 
     .heroContent {
@@ -296,31 +594,85 @@
         align-items: center;
     }
 
-    .title {
-        font-size: 64px;
-        letter-spacing: -2px;
-    }
-
     .subtitle {
         margin-left: auto;
         margin-right: auto;
     }
 
-    .alreadyHaveAccount {
-        width: 100%;
+    .title {
+        font-size: 60px;
+        letter-spacing: -2px;
+    }
+
+    .stepsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .splitSection {
+        grid-template-columns: 1fr;
+    }
+
+    .escrowSection {
+        padding: 48px 32px;
+    }
+
+    .escrowSteps {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .escrowArrow {
+        transform: rotate(90deg);
+        align-self: center;
     }
 }
 
-@media (max-width: 480px) {
-    .title {
-        font-size: 48px;
+@media (max-width: 640px) {
+    .main {
+        padding: 40px 20px 60px;
+        gap: 72px;
     }
 
     .header {
-        padding: 20px;
+        padding: 16px 20px;
     }
 
-    .main {
-        padding: 40px 20px;
+    .title {
+        font-size: 44px;
+        letter-spacing: -1.5px;
+    }
+
+    .statsBar {
+        padding: 24px 16px;
+        border-radius: 16px;
+    }
+
+    .statNumber {
+        font-size: 1.8rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.8rem;
+    }
+
+    .escrowSection {
+        padding: 36px 20px;
+        border-radius: 20px;
+    }
+
+    .escrowTitle {
+        font-size: 1.5rem;
+    }
+
+    .splitCard {
+        padding: 28px 24px;
+    }
+
+    .bottomCtaTitle {
+        font-size: 1.8rem;
+    }
+
+    .footer {
+        padding: 24px 20px;
     }
 }
