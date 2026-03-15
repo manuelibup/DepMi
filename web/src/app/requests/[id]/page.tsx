@@ -11,26 +11,26 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const demand = await (prisma.demand as any).findUnique({
         where: { id },
         select: {
-            title: true,
-            description: true,
+            text: true,
             images: { take: 1, orderBy: { order: 'asc' }, select: { url: true } },
             user: { select: { displayName: true } },
         },
     });
     if (!demand) return {};
     const image = demand.images?.[0]?.url;
-    const desc = demand.description || `${demand.user.displayName} is looking for ${demand.title} on DepMi`;
+    const title = demand.text.length > 60 ? demand.text.slice(0, 57) + '…' : demand.text;
+    const desc = `${demand.user.displayName} is looking for this on DepMi`;
     return {
-        title: `${demand.title} · DepMi`,
+        title: `${title} · DepMi`,
         description: desc,
         openGraph: {
-            title: demand.title,
+            title,
             description: desc,
-            images: image ? [{ url: image, alt: demand.title }] : undefined,
+            images: image ? [{ url: image, alt: title }] : undefined,
         },
         twitter: {
             card: 'summary_large_image',
-            title: demand.title,
+            title,
             description: desc,
             images: image ? [image] : undefined,
         },
