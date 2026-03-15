@@ -9,9 +9,6 @@
 .searchHeader {
     padding: 24px 20px 16px;
     background: var(--bg-color);
-    position: sticky;
-    top: 60px; /* Below mobile header */
-    z-index: 10;
     border-bottom: 1px solid var(--card-border);
 }
 
@@ -23,7 +20,9 @@
     }
 
     .searchHeader {
+        position: sticky;
         top: 0;
+        z-index: 10;
         padding: 36px 32px 20px;
     }
 
