@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import DemandCard from '@/components/DemandCard';
+import DemandCardGrid from '@/components/DemandCardGrid';
 import ProductCard from '@/components/ProductCard';
 import ProductCardGrid from '@/components/ProductCardGrid';
 import SuggestedProfiles from '@/components/SuggestedProfiles';
@@ -186,8 +187,10 @@ export default function FeedInfiniteScroll({
                     let card: React.ReactNode;
 
                     if (item.type === 'demand') {
-                        card = (
-                            <div key={`d-${item.data.id}-${index}`} style={fullWidth}>
+                        card = isGrid ? (
+                            <DemandCardGrid key={`dg-${item.data.id}-${index}`} data={item.data} index={index} />
+                        ) : (
+                            <div key={`d-${item.data.id}-${index}`}>
                                 <DemandCard data={item.data} index={index} />
                             </div>
                         );
