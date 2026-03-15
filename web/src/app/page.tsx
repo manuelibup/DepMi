@@ -14,6 +14,7 @@ import EmptyState from '@/components/EmptyState';
 import LandingPage from '@/components/LandingPage';
 import FeedInfiniteScroll from '@/components/FeedInfiniteScroll';
 import type { FeedItem } from '@/components/FeedInfiniteScroll';
+import RightSidebar from '@/components/RightSidebar';
 
 const STORE_COLORS = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
 const INITIAL_TAKE = 10;
@@ -167,23 +168,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       <FilterBar />
       <StoriesBar stores={topStores} />
 
-      <div className={styles.feed}>
-        {initialItems.length === 0 ? (
-          <EmptyState
-            title="No activity yet"
-            description="Be the first to list a product or request an item!"
-            actionLabel="Post a Request"
-            actionHref="/demand/new"
-          />
-        ) : (
-          <FeedInfiniteScroll
-            initialItems={initialItems}
-            initialProductCursor={initialProductCursor}
-            initialDemandCursor={initialDemandCursor}
-            category={category}
-            topStores={topStores}
-          />
-        )}
+      <div className={styles.pageLayout}>
+        <div className={styles.feedCol}>
+          <div className={styles.feed}>
+            {initialItems.length === 0 ? (
+              <EmptyState
+                title="No activity yet"
+                description="Be the first to list a product or request an item!"
+                actionLabel="Post a Request"
+                actionHref="/demand/new"
+              />
+            ) : (
+              <FeedInfiniteScroll
+                initialItems={initialItems}
+                initialProductCursor={initialProductCursor}
+                initialDemandCursor={initialDemandCursor}
+                category={category}
+                topStores={topStores}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className={styles.sidebarCol}>
+          <RightSidebar />
+        </div>
       </div>
 
       <BottomNav />

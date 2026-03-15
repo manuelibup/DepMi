@@ -1,11 +1,13 @@
 /* Feed page layout */
 .main {
-  max-width: 480px;
-  margin: 0 auto;
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg-color);
   position: relative;
+}
+
+.feedCol {
+  max-width: 480px;
   display: flex;
   flex-direction: column;
 }
@@ -17,14 +19,36 @@
   gap: 16px;
 }
 
-/* Desktop: wider content, top padding replaces hidden header */
-@media (min-width: 640px) {
-  .main {
-    max-width: 680px;
-    margin: 0;
-  }
+.sidebarCol {
+  display: none;
+}
 
+/* Desktop: 2-col layout (feed + right sidebar) */
+@media (min-width: 640px) {
+  .feedCol {
+    max-width: 600px;
+  }
   .feed {
     padding-bottom: 40px;
+  }
+}
+
+@media (min-width: 1140px) {
+  .pageLayout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 0 24px 0 0;
+  }
+
+  .feedCol {
+    flex: 1;
+    min-width: 0;
+    max-width: 600px;
+  }
+
+  .sidebarCol {
+    display: block;
+    padding-top: 8px;
   }
 }
