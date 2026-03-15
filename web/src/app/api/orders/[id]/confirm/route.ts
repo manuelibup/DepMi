@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { initiatePayout } from '@/lib/flutterwave'
 import { OtpType } from '@prisma/client'
+import { sendPushToUser } from '@/lib/webpush'
 
 /**
  * POST /api/orders/[id]/confirm
@@ -193,6 +194,14 @@ export async function POST(
       });
     }
   })
+
+  // Push to seller (non-blocking)
+  sendPushToUser(order.seller.ownerId, {
+    title: 'Payment Released 🎉',
+    body: `₦${sellerAmount.toLocaleString()} for Order #${orderId.slice(-6).toUpperCase()} is on its way to your bank`,
+    url: '/orders',
+    tag: `order-paid-${orderId}`,
+  }).catch(() => {});
 
   // Qualify referral for this buyer (non-blocking)
   void qualifyReferral(order.buyerId, orderId, totalAmount).catch(() => {});

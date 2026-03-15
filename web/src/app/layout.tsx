@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/Providers";
 import NavigationWrapper from "@/components/NavigationWrapper";
 import ActivityPing from "@/components/ActivityPing";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import PushPrompt from "@/components/PushPrompt";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/depmi-logo.svg',
   },
+  manifest: '/manifest.json',
   alternates: {
     canonical: '/',
   },
@@ -102,7 +105,9 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
+          <ServiceWorkerRegistrar />
           <ActivityPing />
+          <PushPrompt />
           <NavigationWrapper>
             {children}
           </NavigationWrapper>

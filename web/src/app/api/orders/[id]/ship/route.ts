@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NotificationType } from '@prisma/client';
+import { sendPushToUser } from '@/lib/webpush';
 
 export async function POST(
     _req: Request,
@@ -47,6 +48,14 @@ export async function POST(
                 },
             }),
         ]);
+
+        // Push to buyer
+        sendPushToUser(order.buyerId, {
+            title: 'Your Order Has Been Shipped!',
+            body: `${order.seller.name} shipped your order${bodyData.trackingNo ? ` · Tracking: ${bodyData.trackingNo}` : ''}`,
+            url: '/orders',
+            tag: `order-shipped-${orderId}`,
+        }).catch(() => {});
 
         // Send Email
         if (order.buyer.email) {

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { NotificationType } from '@prisma/client';
+import { sendPushToUser } from '@/lib/webpush';
 
 const bidSchema = z.object({
     demandId: z.string().uuid(),
@@ -75,6 +76,14 @@ export async function POST(req: Request) {
                 }
             })
         ]);
+
+        // Fire push notification (non-blocking)
+        sendPushToUser(demand.userId, {
+            title: 'New Bid on Your Request',
+            body: `${store.name} offered ₦${amount.toLocaleString()} on your request`,
+            url: `/requests/${demandId}`,
+            tag: `bid-${demandId}`,
+        }).catch(() => {});
 
         return NextResponse.json({ message: 'Bid successfully placed', bid }, { status: 201 });
 

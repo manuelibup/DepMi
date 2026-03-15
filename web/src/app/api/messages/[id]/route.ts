@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendPushToUser } from '@/lib/webpush';
 
 export async function GET(
     req: NextRequest,
@@ -101,6 +102,18 @@ export async function POST(
             lastMessageAt: message.createdAt,
             lastMessagePreview: preview.length > 50 ? preview.substring(0, 50) + '...' : preview
         }
+    });
+
+    // Push notification to the other participant (non-blocking)
+    const sender = await prisma.user.findUnique({ where: { id: session.user.id }, select: { displayName: true } });
+    const recipientIds = conv.participants.map(p => p.id).filter(pid => pid !== session.user.id);
+    recipientIds.forEach(rid => {
+        sendPushToUser(rid, {
+            title: sender?.displayName || 'New Message',
+            body: preview || 'Sent you a message',
+            url: `/messages`,
+            tag: `msg-${id}`,
+        }).catch(() => {});
     });
 
     return NextResponse.json(message, { status: 201 });

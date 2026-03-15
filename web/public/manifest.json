@@ -1,0 +1,38 @@
+{
+  "name": "DepMi — Buy Here. Build Here. Grow Here.",
+  "short_name": "DepMi",
+  "description": "The social commerce platform for African entrepreneurs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#00C853",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/depmi-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/depmi-logo-text-dark.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["shopping", "business"],
+  "lang": "en",
+  "dir": "ltr"
+}
