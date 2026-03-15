@@ -15,6 +15,7 @@ export type FeedItem =
     | { type: 'demand'; createdAt: string; data: DemandData };
 
 type ViewMode = 'list' | 'grid';
+type SortMode = 'new' | 'popular';
 
 interface TopStore {
     id: string;
@@ -47,6 +48,7 @@ export default function FeedInfiniteScroll({
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(initialProductCursor !== null || initialDemandCursor !== null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [sortMode, setSortMode] = useState<SortMode>('new');
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -116,16 +118,51 @@ export default function FeedInfiniteScroll({
 
     const isGrid = viewMode === 'grid';
 
+    const sortedItems = sortMode === 'popular'
+        ? [...items].sort((a, b) => {
+            const viewsA = a.type === 'demand' ? (a.data.viewCount ?? 0) : (a.data.viewers ?? 0);
+            const viewsB = b.type === 'demand' ? (b.data.viewCount ?? 0) : (b.data.viewers ?? 0);
+            const scoreA = (a.data.likeCount ?? 0) + viewsA;
+            const scoreB = (b.data.likeCount ?? 0) + viewsB;
+            return scoreB - scoreA;
+        })
+        : items;
+
     return (
         <>
-            {/* View toggle */}
+            {/* Toolbar: sort pills (left) + view toggle (right) */}
             <div style={{
                 display: 'flex',
-                justifyContent: 'flex-end',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: 4,
+                gap: 8,
                 marginBottom: 4,
             }}>
+                {/* Sort pills */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                    {(['new', 'popular'] as SortMode[]).map(mode => (
+                        <button
+                            key={mode}
+                            onClick={() => setSortMode(mode)}
+                            style={{
+                                padding: '5px 12px',
+                                borderRadius: 20,
+                                border: '1px solid',
+                                borderColor: sortMode === mode ? 'var(--primary)' : 'var(--card-border)',
+                                background: sortMode === mode ? 'rgba(0,200,83,0.12)' : 'transparent',
+                                color: sortMode === mode ? 'var(--primary)' : 'var(--text-muted)',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                            }}
+                        >
+                            {mode === 'new' ? 'Newest' : 'Popular'}
+                        </button>
+                    ))}
+                </div>
+                {/* View toggle buttons */}
+                <div style={{ display: 'flex', gap: 4 }}>
                 <button
                     onClick={() => setView('list')}
                     aria-label="List view"
@@ -169,6 +206,8 @@ export default function FeedInfiniteScroll({
                         <rect x="14" y="14" width="7" height="7" rx="1" />
                     </svg>
                 </button>
+                {/* end view toggle */}
+                </div>
             </div>
 
             {/* Feed */}
@@ -181,7 +220,7 @@ export default function FeedInfiniteScroll({
                 flexDirection: 'column',
                 gap: '16px',
             }}>
-                {items.map((item, index) => {
+                {sortedItems.map((item, index) => {
                     const fullWidth = isGrid ? { gridColumn: '1 / -1' } : {};
 
                     let card: React.ReactNode;
