@@ -36,8 +36,9 @@ model User {
   adminPinHash    String?
   lastActiveAt    DateTime?
   isBanned           Boolean          @default(false)
-  onboardingComplete Boolean          @default(false)
-  interests          String[]
+  onboardingComplete        Boolean          @default(false)
+  interests                 String[]
+  notifDemandCategories     String[]
   accounts           Account[]
   comments        Comment[]        @relation("UserComments")
   demands         Demand[]         @relation("UserDemands")
@@ -735,6 +736,8 @@ enum NotificationType {
   COMMENT_RECEIVED
   MENTION
   NEW_PRODUCT_FROM_STORE
+  NEW_DEMAND
+  ANNOUNCEMENT
 }
 
 enum MessageType {

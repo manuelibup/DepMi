@@ -2,6 +2,7 @@ import React from 'react';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
+import NotifPrefsForm from '@/components/NotifPrefsForm';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -56,6 +57,22 @@ function getIconForType(type: NotificationType) {
                     <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
             );
+        case 'NEW_DEMAND':
+            return (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                    <line x1="11" y1="8" x2="11" y2="14" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+            );
+        case 'ANNOUNCEMENT':
+            return (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3z" />
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                </svg>
+            );
         case 'COMMENT_RECEIVED':
             return (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,26 +97,46 @@ export default async function NotificationsPage() {
         redirect('/login?callbackUrl=/notifications');
     }
 
-    const notifications = await prisma.notification.findMany({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-    });
+    const userId = session.user.id;
+
+    const [notifications, userData] = await Promise.all([
+        prisma.notification.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 50,
+        }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (prisma.user as any).findUnique({
+            where: { id: userId },
+            select: {
+                notifDemandCategories: true,
+                stores: { select: { id: true }, take: 1 },
+            },
+        }),
+    ]);
 
     if (notifications.some(n => !n.isRead)) {
         await prisma.notification.updateMany({
-            where: { userId: session.user.id, isRead: false },
-            data: { isRead: true }
+            where: { userId, isRead: false },
+            data: { isRead: true },
         });
     }
+
+    const ownsStore = (userData?.stores?.length ?? 0) > 0;
+    const notifDemandCategories: string[] = userData?.notifDemandCategories ?? [];
+
+    // Announcements float to the top
+    const announcements = notifications.filter(n => n.type === 'ANNOUNCEMENT');
+    const regular = notifications.filter(n => n.type !== 'ANNOUNCEMENT');
+    const ordered = [...announcements, ...regular];
 
     return (
         <main className={styles.container}>
             <Header />
             <div className={styles.content}>
                 <h1 className={styles.pageTitle}>Notifications</h1>
-                
-                {notifications.length === 0 ? (
+
+                {ordered.length === 0 ? (
                     <div style={{ paddingTop: '20px' }}>
                         <EmptyState
                             title="No new notifications"
@@ -108,8 +145,12 @@ export default async function NotificationsPage() {
                     </div>
                 ) : (
                     <div className={styles.list}>
-                        {notifications.map(n => (
-                            <Link key={n.id} href={n.link || '#'} className={`${styles.card} ${n.isRead ? '' : styles.unread}`}>
+                        {ordered.map(n => (
+                            <Link
+                                key={n.id}
+                                href={n.link || '#'}
+                                className={`${styles.card} ${n.isRead ? '' : styles.unread} ${n.type === 'ANNOUNCEMENT' ? styles.announcement ?? '' : ''}`}
+                            >
                                 <div className={styles.iconBox}>
                                     {getIconForType(n.type)}
                                 </div>
@@ -121,6 +162,10 @@ export default async function NotificationsPage() {
                             </Link>
                         ))}
                     </div>
+                )}
+
+                {ownsStore && (
+                    <NotifPrefsForm initial={notifDemandCategories} />
                 )}
             </div>
             <BottomNav />

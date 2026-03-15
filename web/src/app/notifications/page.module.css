@@ -44,6 +44,16 @@
     border-color: rgba(9, 132, 227, 0.2);
 }
 
+.card.announcement {
+    background: rgba(0, 200, 83, 0.04);
+    border-color: rgba(0, 200, 83, 0.25);
+}
+
+.card.announcement .iconBox {
+    background: rgba(0, 200, 83, 0.1);
+    color: #00C853;
+}
+
 .iconBox {
     width: 44px;
     height: 44px;

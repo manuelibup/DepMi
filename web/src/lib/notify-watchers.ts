@@ -205,6 +205,60 @@ export async function notifyRestockWatchers({
 }
 
 /**
+ * Called when a new demand is created. Notifies all active store owners.
+ * Filters by each owner's notifDemandCategories preference (empty = all categories).
+ */
+export async function notifyStoreOwnersOfDemand({
+    demandId,
+    demandText,
+    category,
+    budget,
+}: {
+    demandId: string;
+    demandText: string;
+    category: string;
+    budget: number;
+}) {
+    const stores = await prisma.store.findMany({
+        where: { isActive: true },
+        select: {
+            ownerId: true,
+            owner: { select: { id: true, notifDemandCategories: true } },
+        },
+    });
+
+    // Deduplicate owners, filter by their category preferences
+    const seen = new Set<string>();
+    const eligible: string[] = [];
+    for (const s of stores) {
+        if (seen.has(s.ownerId)) continue;
+        seen.add(s.ownerId);
+        const prefs = (s.owner as { notifDemandCategories: string[] }).notifDemandCategories;
+        if (prefs.length === 0 || prefs.includes(category)) {
+            eligible.push(s.ownerId);
+        }
+    }
+
+    if (eligible.length === 0) return;
+
+    const shortText = demandText.length > 80 ? demandText.slice(0, 77) + '…' : demandText;
+    const categoryLabel = category.charAt(0) + category.slice(1).toLowerCase();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (prisma.notification as any).createMany({
+        data: eligible.map((ownerId) => ({
+            userId: ownerId,
+            type: 'NEW_DEMAND',
+            title: `New ${categoryLabel} request`,
+            body: `${shortText} — Budget: ₦${Number(budget).toLocaleString()}`,
+            link: `/demand/${demandId}`,
+            isRead: false,
+        })),
+        skipDuplicates: true,
+    });
+}
+
+/**
  * Called when an order status changes (PAID, SHIPPED, DELIVERED, COMPLETED).
  * Sends an email to the relevant party (buyer or seller).
  */

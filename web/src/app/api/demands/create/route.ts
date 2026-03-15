@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
+import { notifyStoreOwnersOfDemand } from '@/lib/notify-watchers';
 
 const demandSchema = z.object({
     text: z.string().min(10, "Request must be at least 10 characters").max(500, "Request is too long"),
@@ -64,6 +65,14 @@ export async function POST(req: Request) {
                 images: true
             }
         });
+
+        // Fire-and-forget: notify store owners of new demand
+        notifyStoreOwnersOfDemand({
+            demandId: demand.id,
+            demandText: text,
+            category: category as string,
+            budget: Number(budget),
+        }).catch((err) => console.error('Demand notification error:', err));
 
         return NextResponse.json({ message: 'Demand successfully posted', demand }, { status: 201 });
 
