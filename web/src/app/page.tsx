@@ -27,12 +27,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    const [userCount, storeCount, listingCount] = await Promise.all([
-      prisma.user.count(),
-      prisma.store.count({ where: { isActive: true } }),
-      prisma.product.count({ where: { inStock: true } }),
-    ]);
-    return <LandingPage stats={{ users: userCount, stores: storeCount, listings: listingCount }} />;
+    let stats = { users: 0, stores: 0, listings: 0 };
+    try {
+      const [userCount, storeCount, listingCount] = await Promise.all([
+        prisma.user.count(),
+        prisma.store.count({ where: { isActive: true } }),
+        prisma.product.count({ where: { inStock: true } }),
+      ]);
+      stats = { users: userCount, stores: storeCount, listings: listingCount };
+    } catch { /* DB unavailable — show landing page with zero stats */ }
+    return <LandingPage stats={stats} />;
   }
 
   if (session?.user && !session.user.username) {
