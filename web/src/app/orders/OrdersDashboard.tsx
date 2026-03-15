@@ -120,7 +120,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
 }) {
     const [localStatus, setLocalStatus] = useState(order.status);
     const [loading, setLoading] = useState(false);
-    const [modal, setModal] = useState<'ship' | 'dispute' | 'otp' | 'review' | null>(null);
+    const [modal, setModal] = useState<'ship' | 'dispute' | 'otp' | 'review' | 'cancel' | null>(null);
     const [otpSent, setOtpSent] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [disputeReason, setDisputeReason] = useState('');
@@ -209,12 +209,12 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
     };
 
     const handleCancel = async () => {
-        if (!confirm('Cancel this order?')) return;
         setLoading(true);
         try {
             const res = await fetch(`/api/orders/${order.id}/cancel`, { method: 'POST' });
-            if (res.ok) push('CANCELLED');
-            else { const d = await res.json(); alert(d.error || 'Failed.'); }
+            const d = await res.json();
+            if (res.ok) { push(d.message?.includes('refund') ? 'REFUNDED' : 'CANCELLED'); setModal(null); }
+            else alert(d.error || 'Failed.');
         } finally { setLoading(false); }
     };
 
@@ -324,7 +324,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                             <button className={`${styles.btn} ${styles.btnGhost}`} onClick={handleVerify} disabled={loading}>
                                 {loading ? 'Checking…' : 'Verify Payment'}
                             </button>
-                            <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleCancel} disabled={loading} style={{ width: '100%' }}>
+                            <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setModal('cancel')} disabled={loading} style={{ width: '100%' }}>
                                 Cancel Order
                             </button>
                         </>)}
@@ -380,11 +380,18 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                 )}
 
                 {/* Seller actions */}
-                {role === 'seller' && localStatus === 'CONFIRMED' && (
+                {role === 'seller' && (
                     <div className={styles.actionZone}>
-                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setModal('ship')} disabled={loading}>
-                            Mark as Shipped
-                        </button>
+                        {localStatus === 'CONFIRMED' && (
+                            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setModal('ship')} disabled={loading}>
+                                Mark as Shipped
+                            </button>
+                        )}
+                        {['PENDING', 'CONFIRMED'].includes(localStatus) && (
+                            <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setModal('cancel')} disabled={loading} style={{ width: '100%' }}>
+                                Cancel Order
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -448,6 +455,28 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                                 Didn&apos;t receive it? Resend
                             </button>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {modal === 'cancel' && (
+                <div className={styles.overlay} onClick={() => setModal(null)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            Cancel this order?
+                        </h3>
+                        <p className={styles.modalDesc}>
+                            {role === 'seller' && localStatus === 'CONFIRMED'
+                                ? 'Payment is already held in escrow. Cancelling will queue a refund to the buyer.'
+                                : 'This will cancel the order. This action cannot be undone.'}
+                        </p>
+                        <div className={styles.modalActions}>
+                            <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setModal(null)} disabled={loading}>Keep Order</button>
+                            <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleCancel} disabled={loading}>
+                                {loading ? 'Cancelling…' : 'Yes, Cancel'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
