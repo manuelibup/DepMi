@@ -45,7 +45,6 @@ export default async function AdminDashboard() {
                 SELECT DATE_TRUNC('day', "lastActiveAt") AS date, COUNT(*) AS dau
                 FROM "User"
                 WHERE "lastActiveAt" IS NOT NULL
-                  AND "lastActiveAt" >= NOW() - INTERVAL '30 days'
                 GROUP BY date ORDER BY date ASC
             `),
             prisma.order.aggregate({
@@ -72,6 +71,10 @@ export default async function AdminDashboard() {
         date: r.date.toISOString().split('T')[0],
         dau: Number(r.dau),
     }));
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayDau = dau.find(d => d.date === todayStr)?.dau ?? 0;
+    const peakDau = dau.length > 0 ? Math.max(...dau.map(d => d.dau)) : 0;
 
     return (
         <div className={styles.page}>
@@ -116,6 +119,12 @@ export default async function AdminDashboard() {
                 <KpiCard label="Cancelled Orders" value={fmt(ordersCancelled)}
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>}
                     color="#fb7185" />
+                <KpiCard label="Today's DAU" value={fmt(todayDau)}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
+                    color="#00C853" />
+                <KpiCard label="Peak DAU" value={fmt(peakDau)}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>}
+                    color="#f59e0b" />
             </div>
 
             <div className={styles.chartsGrid}>

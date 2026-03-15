@@ -13,7 +13,6 @@ export async function GET() {
         SELECT DATE_TRUNC('day', "lastActiveAt") AS date, COUNT(*) AS dau
         FROM "User"
         WHERE "lastActiveAt" IS NOT NULL
-          AND "lastActiveAt" >= NOW() - INTERVAL '30 days'
         GROUP BY date
         ORDER BY date ASC
     `);

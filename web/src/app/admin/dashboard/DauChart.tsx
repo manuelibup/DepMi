@@ -18,7 +18,7 @@ export default function DauChart({ data }: { data: Point[] }) {
     return (
         <div className={styles.chartCard}>
             <div className={styles.chartHeader}>
-                <h3 className={styles.chartTitle}>Daily Active Users (last 30 days)</h3>
+                <h3 className={styles.chartTitle}>Daily Active Users (all time)</h3>
             </div>
             <div className={styles.scrollWrapper}>
                 <div className={styles.scrollContent} style={{ minWidth: data.length > 7 ? `${data.length * 40}px` : '100%' }}>
