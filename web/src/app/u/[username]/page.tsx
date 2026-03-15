@@ -1,6 +1,33 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+    const { username } = await params;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = await (prisma.user as any).findFirst({
+        where: { username: { equals: username, mode: 'insensitive' } },
+        select: { displayName: true, username: true, bio: true, avatarUrl: true },
+    });
+    if (!user) return {};
+    const desc = user.bio || `Follow ${user.displayName} on DepMi`;
+    return {
+        title: `${user.displayName} (@${user.username}) · DepMi`,
+        description: desc,
+        openGraph: {
+            title: `${user.displayName} (@${user.username})`,
+            description: desc,
+            images: user.avatarUrl ? [{ url: user.avatarUrl, alt: user.displayName }] : undefined,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${user.displayName} (@${user.username})`,
+            description: desc,
+            images: user.avatarUrl ? [user.avatarUrl] : undefined,
+        },
+    };
+}
 import styles from './page.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
