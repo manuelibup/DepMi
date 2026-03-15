@@ -38,7 +38,8 @@
     display: flex;
     align-items: flex-start;
     gap: 24px;
-    padding: 0 24px 0 0;
+    max-width: 1040px;
+    padding: 0;
   }
 
   .feedCol {
@@ -50,5 +51,6 @@
   .sidebarCol {
     display: block;
     padding-top: 8px;
+    flex-shrink: 0;
   }
 }

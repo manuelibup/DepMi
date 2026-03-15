@@ -23,6 +23,16 @@ async function getOpenDemands() {
     });
 }
 
+async function getPlatformStats() {
+    const [users, stores, products] = await Promise.all([
+        prisma.user.count(),
+        prisma.store.count({ where: { isActive: true } }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (prisma.product as any).count({ where: { stock: { gt: 0 } } }),
+    ]);
+    return { users, stores, products };
+}
+
 async function getSuggestedStores() {
     return prisma.store.findMany({
         where: { isActive: true },
@@ -41,10 +51,29 @@ const TIER_COLOR: Record<string, string> = {
 };
 
 export default async function RightSidebar() {
-    const [demands, stores] = await Promise.all([getOpenDemands(), getSuggestedStores()]);
+    const [demands, stores, stats] = await Promise.all([getOpenDemands(), getSuggestedStores(), getPlatformStats()]);
 
     return (
         <aside className={styles.sidebar}>
+            {/* Platform Stats */}
+            <section className={styles.section}>
+                <h2 className={styles.sectionTitle} style={{ marginBottom: 12 }}>DepMi Today</h2>
+                <div className={styles.statsGrid}>
+                    <div className={styles.statBox}>
+                        <span className={styles.statValue}>{stats.users.toLocaleString()}</span>
+                        <span className={styles.statLabel}>Members</span>
+                    </div>
+                    <div className={styles.statBox}>
+                        <span className={styles.statValue}>{stats.stores.toLocaleString()}</span>
+                        <span className={styles.statLabel}>Stores</span>
+                    </div>
+                    <div className={styles.statBox}>
+                        <span className={styles.statValue}>{stats.products.toLocaleString()}</span>
+                        <span className={styles.statLabel}>Listings</span>
+                    </div>
+                </div>
+            </section>
+
             {/* Open Demands */}
             <section className={styles.section}>
                 <div className={styles.sectionHeader}>
