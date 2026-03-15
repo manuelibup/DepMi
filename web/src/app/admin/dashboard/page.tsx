@@ -32,7 +32,7 @@ export default async function AdminDashboard() {
             prisma.user.count(),
             prisma.store.count(),
             prisma.product.count(),
-            prisma.post.count(),
+            (prisma as any).post.count(),
             prisma.demand.count(),
             prisma.order.count({ where: { status: { in: ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] } } }),
             prisma.order.count({ where: { status: 'DISPUTED' } }),
@@ -61,11 +61,14 @@ export default async function AdminDashboard() {
     const totalSpent = Number(totalSpentRaw._sum.totalAmount || 0);
     const productWorth = Number(productWorthRaw[0]?.total || 0);
 
+    const totalSignups30d = signupRows.reduce((acc: number, r: any) => acc + Number(r.count), 0);
+    const avgDailySignups = signupRows.length > 0 ? (totalSignups30d / signupRows.length).toFixed(1) : '0';
+
     const signups = signupRows
-        .map(r => ({ date: r.date.toISOString().split('T')[0], count: Number(r.count) }))
+        .map((r: any) => ({ date: r.date.toISOString().split('T')[0], count: Number(r.count) }))
         .reverse();
 
-    const dau = dauRows.map(r => ({
+    const dau = dauRows.map((r: any) => ({
         date: r.date.toISOString().split('T')[0],
         dau: Number(r.dau),
     }));
@@ -75,9 +78,12 @@ export default async function AdminDashboard() {
             <h1 className={styles.pageTitle}>Overview</h1>
 
             <div className={styles.kpiGrid}>
-                <KpiCard label="Total Users" value={fmt(users)}
+                <KpiCard label="Total Users" value={fmt(users)} href="/admin/users"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>} />
-                <KpiCard label="Stores" value={fmt(stores)}
+                <KpiCard label="Avg Daily Signups" value={avgDailySignups}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></svg>}
+                    color="#14b8a6" />
+                <KpiCard label="Stores" value={fmt(stores)} href="/admin/stores"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>}
                     color="#22c55e" />
                 <KpiCard label="Products" value={fmt(products)}
@@ -89,13 +95,13 @@ export default async function AdminDashboard() {
                 <KpiCard label="Demands" value={fmt(demands)}
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>}
                     color="#06b6d4" />
-                <KpiCard label="Active Orders" value={fmt(activeOrders)}
+                <KpiCard label="Active Orders" value={fmt(activeOrders)} href="/admin/orders"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>}
                     color="#0066FF" />
-                <KpiCard label="Disputed Orders" value={disputedOrders}
+                <KpiCard label="Disputed Orders" value={disputedOrders} href="/admin/orders?status=DISPUTED"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>}
                     color="#ef4444" />
-                <KpiCard label="Total Spent (₦)" value={fmt(totalSpent)}
+                <KpiCard label="Total Spent (₦)" value={fmt(totalSpent)} href="/admin/commerce"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>}
                     color="#10b981" />
                 <KpiCard label="Product Worth (₦)" value={fmt(productWorth)}

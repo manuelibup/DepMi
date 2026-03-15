@@ -1,0 +1,175 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
+.filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filterLink {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #999;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.filterLink:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.filterLink.active {
+    background: var(--primary, #0066FF);
+    border-color: var(--primary, #0066FF);
+    color: #fff;
+}
+
+.tableWrap {
+    background: var(--card-bg, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+    border-radius: 16px;
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.table th {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px 16px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.table td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #ccc;
+    vertical-align: top;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.mono {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.entity {
+    display: flex;
+    flex-direction: column;
+}
+
+.name {
+    color: #fff;
+    font-weight: 600;
+}
+
+.email,
+.slug {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.statusBadge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    color: #999;
+}
+
+.statusBadge.pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.statusBadge.confirmed {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.statusBadge.shipped {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+}
+
+.statusBadge.delivered {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.statusBadge.completed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.statusBadge.cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.statusBadge.disputed {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.date {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.items {
+    max-width: 250px;
+}
+
+.itemSnippet {
+    font-size: 0.8rem;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}

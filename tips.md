@@ -499,6 +499,17 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 
 ---
 
+## 📈 42. Robust View Tracking with IP/UA/User Hashing
+
+*Added after fixing the "refresh glitch" in product view counts.*- **The Issue**: Incrementing views on every page load leads to inflated metrics and is easily gamed by refreshes.
+- **The Fix**: 
+  1. Use a client-side "fire and forget" component (`ViewTracker`) that waits 2s before pinging an API. 
+  2. The API creates a sha256 hash of `IP + UserAgent + UserId (or 'guest')`.
+  3. Check a `View` table for that hash + target ID within the last 24h. Only increment `viewCount` if no record exists.
+- **Performance**: Use Prisma `$transaction` to create the view record and increment the main count atomically.
+
+---
+
 ## 📧 38. Resend "From Domain Not Verified" — Silent Failures
 
 *This tip was added after diagnosing OTP emails silently failing in production.*

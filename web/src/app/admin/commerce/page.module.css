@@ -1,5 +1,15 @@
-.page { display: flex; flex-direction: column; gap: 32px; }
-.pageTitle { font-size: 1.5rem; font-weight: 800; color: var(--text-main, #fff); margin: 0; }
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.pageTitle {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main, #fff);
+    margin: 0;
+}
 
 .kpiGrid {
     display: grid;
@@ -8,8 +18,8 @@
 }
 
 .section {
-    background: var(--card-bg, rgba(255,255,255,0.04));
-    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    background: var(--card-bg, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
     border-radius: 16px;
     padding: 24px;
 }
@@ -28,12 +38,22 @@
 }
 
 .statusCell {
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 12px 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.statusCell:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    cursor: pointer;
 }
 
 .statusLabel {

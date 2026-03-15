@@ -1,4 +1,4 @@
-import React from 'react';
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/admin';
@@ -57,16 +57,16 @@ export default async function CommercePage() {
 
             <div className={styles.kpiGrid}>
                 <KpiCard label="Total GMV" value={fmtNgn(gmv)}
-                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
                     color="#22c55e" />
                 <KpiCard label="Escrow (In Transit)" value={fmtNgn(escrowBalance)}
-                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
                     color="#f59e0b" />
                 <KpiCard label="Platform Fees Earned" value={fmtNgn(platformFees)}
-                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>}
                     color="#0066FF" />
                 <KpiCard label="Active Disputes" value={statusMap['DISPUTED'] ?? 0}
-                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>}
+                    icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /></svg>}
                     color="#ef4444" />
             </div>
 
@@ -74,10 +74,10 @@ export default async function CommercePage() {
                 <h2 className={styles.sectionTitle}>Orders by Status</h2>
                 <div className={styles.statusGrid}>
                     {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                        <div key={status} className={styles.statusCell}>
+                        <Link key={status} href={`/admin/orders?status=${status}`} className={styles.statusCell}>
                             <span className={styles.statusLabel}>{label}</span>
                             <span className={styles.statusCount}>{statusMap[status] ?? 0}</span>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

@@ -49,7 +49,8 @@
       "Bash(cmd /c \"dir \"\"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\\\\\\(auth\\)\"\" /b /a\")",
       "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\"\" && dir /b /a\")",
       "Bash(xargs grep -l \"Category\\\\|category\")",
-      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/orders/OrdersDashboard.tsx\")"
+      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/orders/OrdersDashboard.tsx\")",
+      "Bash(npm run db:push)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

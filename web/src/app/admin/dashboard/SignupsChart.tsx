@@ -44,20 +44,22 @@ export default function SignupsChart({ initial }: { initial: Point[] }) {
                     ))}
                 </div>
             </div>
-            <div style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="date" tickFormatter={label} tick={{ fontSize: 11, fill: '#666' }} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: '#666' }} tickLine={false} axisLine={false} />
-                        <Tooltip
-                            contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
-                            labelFormatter={label}
-                            formatter={(v: any) => [v, 'Sign-ups']}
-                        />
-                        <Line type="monotone" dataKey="count" stroke="#0066FF" strokeWidth={2} dot={false} />
-                    </LineChart>
-                </ResponsiveContainer>
+            <div className={styles.scrollWrapper} style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                <div className={styles.scrollContent} style={{ minWidth: data.length > 7 ? `${data.length * 40}px` : '100%' }}>
+                    <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                            <XAxis dataKey="date" tickFormatter={label} tick={{ fontSize: 11, fill: '#666' }} tickLine={false} />
+                            <YAxis tick={{ fontSize: 11, fill: '#666' }} tickLine={false} axisLine={false} />
+                            <Tooltip
+                                contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }}
+                                labelFormatter={label}
+                                formatter={(v: any) => [v, 'Sign-ups']}
+                            />
+                            <Line type="monotone" dataKey="count" stroke="#0066FF" strokeWidth={2} dot={false} />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );

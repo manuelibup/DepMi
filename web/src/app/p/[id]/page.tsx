@@ -1,6 +1,41 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params;
+    const product = await prisma.product.findFirst({
+        where: { OR: [{ slug: id }, { id }] },
+        select: {
+            title: true,
+            description: true,
+            price: true,
+            currency: true,
+            images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+            store: { select: { name: true } },
+        },
+    });
+    if (!product) return {};
+    const price = `${product.currency || '₦'}${Number(product.price).toLocaleString()}`;
+    const image = product.images[0]?.url;
+    const desc = product.description || `Buy ${product.title} from ${product.store.name} on DepMi`;
+    return {
+        title: `${product.title} — ${price} · DepMi`,
+        description: desc,
+        openGraph: {
+            title: `${product.title} — ${price}`,
+            description: desc,
+            images: image ? [{ url: image, alt: product.title }] : undefined,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${product.title} — ${price}`,
+            description: desc,
+            images: image ? [image] : undefined,
+        },
+    };
+}
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';

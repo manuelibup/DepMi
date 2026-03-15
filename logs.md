@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 61 — Mar 15, 2026 — Unique View Tracking & Admin Dashboard Overhaul](#session-61--mar-15-2026--unique-view-tracking--admin-dashboard-overhaul)
 - [Session 60 — Mar 14, 2026 — Infinite Scroll Feed, Onboarding Flow & DB Backup System](#session-60--mar-14-2026--infinite-scroll-feed-onboarding-flow--db-backup-system)
 - [Session 59 — Mar 13, 2026 — Feature Polish, Product Tracking & Auth Bug Fixes](#session-59--mar-13-2026--feature-polish-product-tracking--auth-bug-fixes)
 - [Session 58 — Mar 13, 2026 — Admin Security, Dashboard KPIs & DNS Fast-Track](#session-58--mar-13-2026--admin-security-dashboard-kpis--dns-fast-track)

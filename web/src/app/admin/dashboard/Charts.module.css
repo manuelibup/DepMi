@@ -1,6 +1,6 @@
 .chartCard {
-    background: var(--card-bg, rgba(255,255,255,0.04));
-    border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+    background: var(--card-bg, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
     border-radius: 16px;
     padding: 20px;
 }
@@ -24,7 +24,7 @@
 .tabs {
     display: flex;
     gap: 4px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     padding: 3px;
 }
@@ -44,4 +44,33 @@
 .tabActive {
     background: var(--primary, #0066FF);
     color: #fff;
+}
+
+.scrollWrapper {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 12px;
+}
+
+/* Custom scrollbar for premium feel */
+.scrollWrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.scrollWrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+}
+
+.scrollWrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.scrollWrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.scrollContent {
+    min-width: 600px;
 }

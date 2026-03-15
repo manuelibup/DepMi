@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import styles from './page.module.css';
@@ -6,6 +7,31 @@ import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import StoreBackButton from './StoreBackButton';
 import { authOptions } from '@/lib/auth';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const store = await prisma.store.findUnique({
+        where: { slug },
+        select: { name: true, description: true, logoUrl: true },
+    });
+    if (!store) return {};
+    const desc = store.description || `Shop ${store.name} on DepMi`;
+    return {
+        title: `${store.name} · DepMi`,
+        description: desc,
+        openGraph: {
+            title: `${store.name} · DepMi`,
+            description: desc,
+            images: store.logoUrl ? [{ url: store.logoUrl, alt: store.name }] : undefined,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${store.name} · DepMi`,
+            description: desc,
+            images: store.logoUrl ? [store.logoUrl] : undefined,
+        },
+    };
+}
 import FollowButton from '@/components/FollowButton';
 import StoreTabBar from './StoreTabBar';
 
