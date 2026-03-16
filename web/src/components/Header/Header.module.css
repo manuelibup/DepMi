@@ -143,7 +143,13 @@
     border: 2px solid var(--card-bg);
 }
 
-/* Hamburger button */
+/* Hamburger button — mobile only */
+@media (min-width: 768px) {
+    .hamburger {
+        display: none;
+    }
+}
+
 .hamburger {
     width: 40px;
     height: 40px;

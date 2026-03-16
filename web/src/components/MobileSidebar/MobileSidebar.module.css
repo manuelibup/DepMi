@@ -23,7 +23,7 @@
     bottom: 0;
     width: 300px;
     max-width: 85vw;
-    background: var(--bg-main);
+    background: var(--bg-color, #0f1116);
     border-right: 1px solid var(--card-border);
     z-index: 201;
     display: flex;
