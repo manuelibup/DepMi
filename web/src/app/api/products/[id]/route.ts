@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { notifyRestockWatchers } from '@/lib/notify-watchers';
 
 export async function GET(
     _req: Request,
@@ -34,7 +35,7 @@ export async function PATCH(
 
     const product = await prisma.product.findUnique({
         where: { id },
-        include: { store: { select: { ownerId: true } } },
+        select: { inStock: true, title: true, slug: true, store: { select: { ownerId: true, name: true } } },
     });
 
     if (!product) {
@@ -47,6 +48,8 @@ export async function PATCH(
 
     const body = await req.json();
     const { title, description, price, currency, category, images, imageUrl, videoUrl, inStock, isPortfolioItem, deliveryFee } = body;
+
+    const wasOutOfStock = product.inStock === false;
 
     const updated = await prisma.product.update({
         where: { id },
@@ -77,6 +80,16 @@ export async function PATCH(
                 data: imageList.map((url: string, order: number) => ({ productId: id, url, order })),
             });
         }
+    }
+
+    // Fire restock notifications non-blocking when inStock flips false → true
+    if (inStock === true && wasOutOfStock) {
+        notifyRestockWatchers({
+            productId: id,
+            productTitle: product.title,
+            productSlug: product.slug ?? id,
+            storeName: product.store.name,
+        }).catch(() => {});
     }
 
     return NextResponse.json({ product: updated });

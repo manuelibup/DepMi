@@ -50,7 +50,30 @@
       "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\web5Manuel\\\\OneDrive\\\\Documents\\\\DepMi\\\\web\\\\src\\\\app\"\" && dir /b /a\")",
       "Bash(xargs grep -l \"Category\\\\|category\")",
       "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/orders/OrdersDashboard.tsx\")",
-      "Bash(npm run db:push)"
+      "Bash(npm run db:push)",
+      "Bash(git add web/src/app/p/[id]/page.tsx web/src/app/store/[slug]/page.tsx web/src/app/u/[username]/page.tsx web/src/app/requests/[id]/page.tsx)",
+      "Bash(ls /c/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/api/orders/[id]/)",
+      "Bash(xargs grep -l \"demand\\\\|Demand\")",
+      "Bash(git add web/src/components/RightSidebar.tsx web/src/components/RightSidebar.module.css web/src/app/page.module.css)",
+      "Bash(git add web/src/app/requests/Requests.module.css)",
+      "Bash(ls -la c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/api/demands/*/bids/)",
+      "Bash(ls -la c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/api/messages/[id]/)",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(npm install web-push)",
+      "Bash(npm install -D @types/web-push)",
+      "Bash(npx web-push generate-vapid-keys)",
+      "Bash(sed -i 's/\\\\[Your Full Legal Name\\\\]/___________________________/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/\\\\[Full Legal Name\\\\]/___________________________/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/<strong>\\\\[X\\\\] hours per week<\\\\/strong>/<strong>_______ hours per week<\\\\/strong>/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/<strong>\\\\[X\\\\]%<\\\\/strong>/<strong>_______%<\\\\/strong>/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/\\\\[X\\\\]% means \\\\[X\\\\]%/_______% means _______% /g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/\\\\[Name of venture or &ldquo;personal project&rdquo;\\\\]/___________________________/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/\\\\[Your WhatsApp Number\\\\]/___________________________/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i 's/\\\\[Your Gmail Address\\\\]/___________________________/g' DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i \"s/\\\\[Lead Engineer&rsquo;s WhatsApp Number\\\\]/___________________________/g\" DepMi_LeadEngineer_Agreement.html)",
+      "Bash(sed -i \"s/\\\\[Lead Engineer&rsquo;s Gmail Address\\\\]/___________________________/g\" DepMi_LeadEngineer_Agreement.html)",
+      "Bash(cat \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/about/page.tsx\")",
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",
@@ -59,7 +82,8 @@
       "C:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\posts\\[id]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\u\\[username]",
-      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]\\products"
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]\\products",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]"
     ]
   }
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './StoreTabBar.module.css';
 import StoreFeed from './StoreFeed';
 import EmptyState from '@/components/EmptyState';
+import SellerChecklist from './SellerChecklist';
 
 export type SerializedStoreProduct = {
     id: string;
@@ -71,14 +72,14 @@ export default function StoreTabBar({
             {activeTab === 'products' && (
                 <div className={styles.productsSection}>
                     {products.length === 0 ? (
-                        <EmptyState
-                            title="No products listed yet"
-                            description={isOwner
-                                ? "Your store is ready — add your first product to start selling."
-                                : "This store hasn't added any products yet. Check back soon!"}
-                            actionLabel={isOwner ? "Add Your First Product" : undefined}
-                            actionHref={isOwner ? `/store/${storeSlug}/products/new` : undefined}
-                        />
+                        isOwner ? (
+                            <SellerChecklist storeSlug={storeSlug} />
+                        ) : (
+                            <EmptyState
+                                title="No products listed yet"
+                                description="This store hasn't added any products yet. Check back soon!"
+                            />
+                        )
                     ) : (
                         <div className={styles.productGrid}>
                             {products.map(product => {
