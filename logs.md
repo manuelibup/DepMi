@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 62 — Mar 16, 2026 — Feed Sort Pills, DemandCardGrid, Landing Page Overhaul & Mobile Sidebar](#session-62--mar-16-2026--feed-sort-pills-demandcardgrid-landing-page-overhaul--mobile-sidebar)
 - [Session 61 — Mar 15, 2026 — Unique View Tracking & Admin Dashboard Overhaul](#session-61--mar-15-2026--unique-view-tracking--admin-dashboard-overhaul)
 - [Session 60 — Mar 14, 2026 — Infinite Scroll Feed, Onboarding Flow & DB Backup System](#session-60--mar-14-2026--infinite-scroll-feed-onboarding-flow--db-backup-system)
 - [Session 59 — Mar 13, 2026 — Feature Polish, Product Tracking & Auth Bug Fixes](#session-59--mar-13-2026--feature-polish-product-tracking--auth-bug-fixes)
@@ -44,6 +45,103 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 62 — Mar 16, 2026 — Feed Sort Pills, DemandCardGrid, Landing Page Overhaul & Mobile Sidebar
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Context
+Continuation from Session 61 (context compression). Focus: UX polish — richer feed layout, an overhauled landing page, and a full-navigation mobile sidebar to replace the 4 header icon buttons.
+
+### What Was Built
+
+#### 1. DemandCardGrid — compact demand card for 2-col grid
+- New component `web/src/components/DemandCardGrid/` — compact card matching the product card height/width.
+- Shows user avatar, "Demand" badge, truncated request text, optional reference image thumbnail, budget range, and bid count.
+- Tapping navigates to `/requests/[id]`.
+- `FeedInfiniteScroll` now renders `DemandCardGrid` for demand items in grid view (was full-width `DemandCard`).
+
+#### 2. Sort Pills — Newest / Popular toolbar
+- Added `SortMode = 'new' | 'popular'` state to `FeedInfiniteScroll`.
+- Sort pill buttons sit on the **left** of the toolbar row; grid/list view toggles remain on the **right**.
+- "Popular" mode client-sorts loaded items by `likeCount + viewCount` descending (no extra API call).
+- Fills the blank space in the toolbar that previously existed between the toggle buttons and the first post.
+
+#### 3. Landing Page Overhaul
+- `LandingPage` component fully rewritten — previous version was a bare placeholder.
+- New sections:
+  1. **Hero badge** ("Now in early access") + headline + CTA
+  2. **Live Stats bar** — shows real `users`, `stores`, `listings` counts fetched at server render, formatted with `fmt()` helper (1200 → "1.2k")
+  3. **How It Works** — 3-step buyer flow (Post Request → Sellers Respond → Escrow + Receive)
+  4. **For Buyers / For Sellers** split grid
+  5. **Escrow Trust** section (zero-risk messaging)
+  6. **Categories** grid (8 category chips)
+  7. **Bottom CTA** — "Get Started Free" button
+- Header nav on landing page now has a "Sign In" button.
+- `page.tsx` updated: unauthenticated path fetches stats from DB with `try/catch` fallback to zeros (handles Neon idle-connection drop).
+
+#### 4. `/api/stats` — public stats endpoint
+- `web/src/app/api/stats/route.ts` — GET endpoint, no auth required.
+- Returns `{ users, stores, listings }` counts. Catches DB errors and returns zeros (never throws).
+- Used by `MobileSidebar` on first open (fire-and-forget fetch, cached in component state).
+
+#### 5. MobileSidebar — X/Facebook-style slide-out drawer
+- New component `web/src/components/MobileSidebar/`.
+- Left-side drawer, slides in with `transform: translateX(-100%) → translateX(0)`, 280ms cubic-bezier.
+- Backdrop: `position: fixed; inset: 0; opacity 0.25s`.
+- Background: `var(--bg-color, #0f1116)` — fully solid, not translucent.
+- Body scroll lock: `document.body.style.overflow = 'hidden'` while open.
+- Sections: user avatar + name + @handle → live stats row (Members/Stores/Listings) → full nav with unread badges → sign-out button → footer links.
+- Nav items: Home, Requests, Orders, Search, Messages, Notifications, Bookmarks, Profile, Settings, Help & Support.
+- Stats fetched from `/api/stats` on first open; cached in state so subsequent opens don't re-fetch.
+
+#### 6. Header Hamburger (mobile only)
+- Removed all 4 right icon buttons (support, search, messages, notifications) from the Header.
+- Replaced with a single hamburger button + red dot indicator for total unread (notifs + messages).
+- Hamburger **hidden on desktop** (`@media (min-width: 768px) { display: none }`).
+- `<MobileSidebar>` rendered inside `<Header>` with `isOpen`/`onClose` state.
+
+### Bugs Fixed
+- **Landing page crash** (`PrismaClientInitializationError`): Neon idle-connection drop caused unhandled rejection. Wrapped stats query in `try/catch` with zeros fallback.
+- **Sidebar translucent background**: `--bg-main` token is undefined in this project. Changed to `var(--bg-color, #0f1116)` (the correct token).
+- **Duplicate route build failure**: `app/(static)/about`, `(static)/terms`, `(static)/privacy` conflicted with newer non-grouped versions. Deleted the old stubs — fixed Vercel Turbopack build error.
+- **Pre-existing `ratingAvg` TS error** in `app/store/[slug]/analytics/page.tsx`: field was renamed to `rating` in schema; fixed in both select and render.
+- **TypeScript sort error** (`viewCount` doesn't exist on ProductData): `ProductData` uses `viewers`; branched on `a.type === 'demand'` before field access.
+
+### Known Issues / Next Actions
+- **Username revert bug** — JWT race condition on Settings page; fix pending.
+- **Course/digital product selling** — Selar-style with 48h escrow; not yet started.
+- **`CRON_SECRET` env var** — must be added to Vercel project settings for auto-cancel cron to work.
+
+### Outcome
+Feed has sort pills, demand cards fit the 2-col grid, landing page now fully explains the platform to new visitors (with live stats), and mobile users have a full-nav sidebar behind a hamburger button, replacing all 4 former header icon buttons.
+
+---
+
+## Session 61 — Mar 15, 2026 — Unique View Tracking & Admin Dashboard Overhaul
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Built
+
+#### 1. Deduplicated View Tracking
+- `ProductView` and `DemandView` models committed to schema (were live in DB since Session 59 but uncommitted).
+- `ViewTracker` client component — fires after 2s delay; POSTs to `/api/view`; fire-and-forget.
+- `/api/view` route: hashes `IP + UserAgent + UserId` (sha256), checks for duplicate hash+target within 24h, only increments `viewCount` if no record exists. Uses Prisma `$transaction` for atomicity.
+- Replaces the naive `viewCount: { increment: 1 }` on every page load.
+
+#### 2. Admin Dashboard Overhaul
+- DAU (Daily Active User) tracking via `ActivityPing` model — pinged on first page load per day per user.
+- Admin dashboard KPI cards updated: DAU, MAU, new signups today, total revenue (sum of completed orders), platform fees collected.
+- Dispute queue page `/admin/disputes` — lists open disputes with buyer/seller info, order amount, and quick accept/reject actions.
+- User management page `/admin/users` — search, filter by KYC tier, promote/demote roles (ADMIN/MODERATOR), view account details.
+- Store management page `/admin/stores` — activate/deactivate stores, view dep counts and tiers.
+- Referral system — `referralCode` on User, `referredBy` FK. Referral tracking page in admin.
+
+### Known Issues
+- Turbopack ghost route `(auth)/admin` — clears on dev server restart.
 
 ---
 
