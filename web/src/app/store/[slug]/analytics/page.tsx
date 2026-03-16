@@ -14,7 +14,7 @@ export default async function StoreAnalyticsPage({ params }: { params: Promise<{
 
     const store = await prisma.store.findUnique({
         where: { slug },
-        select: { id: true, name: true, ownerId: true, depCount: true, depTier: true, reviewCount: true, ratingAvg: true },
+        select: { id: true, name: true, ownerId: true, depCount: true, depTier: true, reviewCount: true, rating: true },
     });
     if (!store) notFound();
     if (store.ownerId !== session.user.id) redirect(`/store/${slug}`);
@@ -143,7 +143,7 @@ export default async function StoreAnalyticsPage({ params }: { params: Promise<{
                     <span className={styles.kpiLabel}>Deps · {store.depTier.charAt(0) + store.depTier.slice(1).toLowerCase()}</span>
                 </div>
                 <div className={styles.kpi}>
-                    <span className={styles.kpiValue}>{store.ratingAvg ? Number(store.ratingAvg).toFixed(1) : '—'}</span>
+                    <span className={styles.kpiValue}>{store.rating ? Number(store.rating).toFixed(1) : '—'}</span>
                     <span className={styles.kpiLabel}>Avg Rating ({store.reviewCount ?? 0} reviews)</span>
                 </div>
             </div>
