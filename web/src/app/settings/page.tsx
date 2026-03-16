@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -37,13 +37,19 @@ export default function SettingsPage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
 
+    // Only populate identity fields from session once (on first valid session load).
+    // Subsequent session changes (e.g. after updateSession()) must NOT overwrite form
+    // state, otherwise the stale JWT value reverts what the user just saved.
+    const sessionInitialized = useRef(false);
+
     useEffect(() => {
         if (status === 'unauthenticated') router.push('/login?callbackUrl=/settings');
     }, [status, router]);
 
-    // Populate identity fields from session immediately
+    // Populate identity fields from session on first load only
     useEffect(() => {
-        if (session?.user) {
+        if (session?.user && !sessionInitialized.current) {
+            sessionInitialized.current = true;
             setDisplayName(session.user.name ?? '');
             setUsername((session.user.username ?? '').toLowerCase().replace(/[^a-z0-9_]/g, ''));
             setAvatarUrl(session.user.image ?? '');
@@ -196,8 +202,14 @@ export default function SettingsPage() {
             if (!res.ok) {
                 setError(data.message || 'Failed to save');
             } else {
+                // Update local state directly from API response so the form
+                // shows the saved values immediately, without waiting for the
+                // JWT to refresh (which would race and overwrite with old values).
+                if (data.user?.displayName) setDisplayName(data.user.displayName);
+                if (data.user?.username) setUsername(data.user.username);
+                if (data.user?.avatarUrl !== undefined) setAvatarUrl(data.user.avatarUrl ?? '');
                 setSuccess(true);
-                await updateSession();
+                updateSession(); // refresh JWT in background — no await needed
                 setTimeout(() => setSuccess(false), 3000);
             }
         } catch {
