@@ -1,0 +1,99 @@
+.wrap {
+    padding: 20px 4px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #000;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--text-main);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+
+.sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 14px;
+}
+
+.stepIcon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-elevated);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.stepBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.stepLabel {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 2px;
+}
+
+.stepDesc {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.stepCta {
+    flex-shrink: 0;
+    background: var(--primary);
+    color: #000;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 7px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.stepCta:hover {
+    opacity: 0.88;
+}
