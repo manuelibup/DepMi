@@ -36,6 +36,45 @@ interface ProductCardProps {
     index?: number;
 }
 
+function NotifyMeButton({ productId }: { productId?: string }) {
+    const { openGate } = useAuthGate();
+    const { status } = useSession();
+    const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
+
+    const handleClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (status === 'unauthenticated') { openGate(); return; }
+        if (!productId || state !== 'idle') return;
+        setState('loading');
+        try {
+            await fetch('/api/product-watch/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId }),
+            });
+            setState('done');
+        } catch { setState('idle'); }
+    };
+
+    if (state === 'done') {
+        return <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#00B894' }}>✓ We&apos;ll notify you!</span>;
+    }
+    return (
+        <button
+            onClick={handleClick}
+            disabled={state === 'loading'}
+            style={{
+                flex: 1, background: 'var(--bg-elevated)', border: '1px solid var(--card-border)',
+                color: 'var(--text-main)', borderRadius: 8, padding: '9px 12px',
+                fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', opacity: state === 'loading' ? 0.7 : 1,
+            }}
+        >
+            🔔 {state === 'loading' ? 'Saving…' : 'Notify Me When Available'}
+        </button>
+    );
+}
+
 function getDepLabel(tier: string): string {
     switch (tier) {
         case 'seedling': return '🌱';
@@ -224,18 +263,24 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
 
                     {/* CTA — part of the content body, not a separate action bar */}
                     <div className={styles.cta}>
-                        <button className={styles.buyBtn} onClick={e => handleAction(e, 'buy')}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
-                            </svg>
-                            Buy via Escrow
-                        </button>
-                        <button className={styles.chatBtn} onClick={e => handleAction(e, 'chat')}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                            </svg>
-                            Chat
-                        </button>
+                        {data.inStock === false ? (
+                            <NotifyMeButton productId={data.id} />
+                        ) : (
+                            <>
+                                <button className={styles.buyBtn} onClick={e => handleAction(e, 'buy')}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
+                                    </svg>
+                                    Buy via Escrow
+                                </button>
+                                <button className={styles.chatBtn} onClick={e => handleAction(e, 'chat')}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                    Chat
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
