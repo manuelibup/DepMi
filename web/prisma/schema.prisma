@@ -188,8 +188,11 @@ model Store {
   cacDocUrl           String?
   rcNumber            String?
   tin                 String?
-  verificationStatus  StoreVerificationStatus @default(UNVERIFIED)
-  feeWaiverUntil      DateTime?
+  verificationStatus    StoreVerificationStatus @default(UNVERIFIED)
+  feeWaiverUntil        DateTime?
+  storeState            String?
+  localDeliveryFee      Decimal?                @db.Decimal(10, 2)
+  nationwideDeliveryFee Decimal?                @db.Decimal(10, 2)
   bids                Bid[]                   @relation("StoreBids")
   depTransactions     DepTransaction[]        @relation("StoreDepTransactions")
   ordersAsSeller      Order[]                 @relation("SellerOrders")

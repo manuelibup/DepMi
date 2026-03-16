@@ -13,6 +13,9 @@ interface StoreData {
     bannerUrl: string | null;
     logoUrl: string | null;
     location: string | null;
+    storeState: string | null;
+    localDeliveryFee: number | null;
+    nationwideDeliveryFee: number | null;
 }
 
 export default function StoreSettingsForm({ store }: { store: StoreData }) {
@@ -22,6 +25,9 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
         location: store.location || '',
         bannerUrl: store.bannerUrl || '',
         logoUrl: store.logoUrl || '',
+        storeState: store.storeState || '',
+        localDeliveryFee: store.localDeliveryFee != null ? String(store.localDeliveryFee) : '',
+        nationwideDeliveryFee: store.nationwideDeliveryFee != null ? String(store.nationwideDeliveryFee) : '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -36,21 +42,31 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
         setLoading(true);
         setMsg({ text: '', type: '' });
 
+        const payload: Record<string, unknown> = {
+            description: formData.description || null,
+            location: formData.location || null,
+            bannerUrl: formData.bannerUrl || null,
+            logoUrl: formData.logoUrl || null,
+            storeState: formData.storeState || null,
+            localDeliveryFee: formData.localDeliveryFee !== '' ? Number(formData.localDeliveryFee) : null,
+            nationwideDeliveryFee: formData.nationwideDeliveryFee !== '' ? Number(formData.nationwideDeliveryFee) : null,
+        };
+
         try {
             const res = await fetch(`/api/store/${store.slug}/settings`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {
                 setMsg({ text: 'Store settings saved successfully!', type: 'success' });
-                router.refresh(); // Tells Next.js to re-fetch Server Components for current route
+                router.refresh();
             } else {
                 const data = await res.json().catch(() => ({}));
                 setMsg({ text: data.message || 'Failed to update store', type: 'error' });
             }
-        } catch (error) {
+        } catch {
             setMsg({ text: 'An unexpected error occurred', type: 'error' });
         } finally {
             setLoading(false);
@@ -65,7 +81,7 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                     {formData.bannerUrl && (
                         <img src={formData.bannerUrl} alt="Store Banner" className={styles.previewImage} />
                     )}
-                    <CloudinaryUploader 
+                    <CloudinaryUploader
                         onUploadSuccess={(res) => setFormData(p => ({ ...p, bannerUrl: res.secure_url }))}
                         buttonText={formData.bannerUrl ? 'Change Banner' : 'Upload Banner'}
                     />
@@ -76,7 +92,7 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                     {formData.logoUrl && (
                         <img src={formData.logoUrl} alt="Store Logo" className={styles.logoPreview} />
                     )}
-                    <CloudinaryUploader 
+                    <CloudinaryUploader
                         onUploadSuccess={(res) => setFormData(p => ({ ...p, logoUrl: res.secure_url }))}
                         buttonText={formData.logoUrl ? 'Change Logo' : 'Upload Logo'}
                     />
@@ -110,6 +126,62 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                     maxLength={100}
                 />
             </div>
+
+            {/* ── Delivery Fees ──────────────────────────────── */}
+            <div className={styles.sectionDivider}>
+                <span>Delivery Fees</span>
+            </div>
+
+            <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="storeState">Your State</label>
+                <input
+                    type="text"
+                    id="storeState"
+                    name="storeState"
+                    className={styles.input}
+                    placeholder="e.g. Lagos"
+                    value={formData.storeState}
+                    onChange={handleChange}
+                    maxLength={100}
+                />
+                <span className={styles.helpText}>Used to determine local vs nationwide delivery at checkout.</span>
+            </div>
+
+            <div className={styles.feeRow}>
+                <div className={styles.formGroup} style={{ flex: 1, minWidth: 0 }}>
+                    <label className={styles.label} htmlFor="localDeliveryFee">Local Fee (₦)</label>
+                    <input
+                        type="number"
+                        id="localDeliveryFee"
+                        name="localDeliveryFee"
+                        className={styles.input}
+                        placeholder="e.g. 1500"
+                        value={formData.localDeliveryFee}
+                        onChange={handleChange}
+                        min={0}
+                        step={100}
+                    />
+                    <span className={styles.helpText}>Same state as your store</span>
+                </div>
+                <div className={styles.formGroup} style={{ flex: 1, minWidth: 0 }}>
+                    <label className={styles.label} htmlFor="nationwideDeliveryFee">Nationwide Fee (₦)</label>
+                    <input
+                        type="number"
+                        id="nationwideDeliveryFee"
+                        name="nationwideDeliveryFee"
+                        className={styles.input}
+                        placeholder="e.g. 3500"
+                        value={formData.nationwideDeliveryFee}
+                        onChange={handleChange}
+                        min={0}
+                        step={100}
+                    />
+                    <span className={styles.helpText}>Different state (interstate)</span>
+                </div>
+            </div>
+            <span className={styles.helpText} style={{ display: 'block', marginTop: '-4px' }}>
+                Per-product delivery fees override these defaults. Set to 0 for free delivery.
+            </span>
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
                 {loading ? 'Saving...' : 'Save Changes'}

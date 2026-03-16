@@ -5,10 +5,13 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 
 const settingsSchema = z.object({
-    logoUrl:     z.string().url().nullable().optional(),
-    bannerUrl:   z.string().url().nullable().optional(),
-    description: z.string().max(500).nullable().optional(),
-    location:    z.string().max(200).nullable().optional(),
+    logoUrl:               z.string().url().nullable().optional(),
+    bannerUrl:             z.string().url().nullable().optional(),
+    description:           z.string().max(500).nullable().optional(),
+    location:              z.string().max(200).nullable().optional(),
+    storeState:            z.string().max(100).nullable().optional(),
+    localDeliveryFee:      z.number().min(0).nullable().optional(),
+    nationwideDeliveryFee: z.number().min(0).nullable().optional(),
 });
 
 export async function GET(
@@ -21,7 +24,11 @@ export async function GET(
 
     const store = await prisma.store.findUnique({
         where: { slug },
-        select: { id: true, ownerId: true, name: true, logoUrl: true, bannerUrl: true, description: true, location: true },
+        select: {
+            id: true, ownerId: true, name: true, logoUrl: true, bannerUrl: true,
+            description: true, location: true, storeState: true,
+            localDeliveryFee: true, nationwideDeliveryFee: true,
+        },
     });
 
     if (!store) return NextResponse.json({ message: 'Store not found' }, { status: 404 });
@@ -54,7 +61,10 @@ export async function PATCH(
         const updated = await prisma.store.update({
             where: { id: store.id },
             data: parsed.data,
-            select: { logoUrl: true, bannerUrl: true, description: true, location: true },
+            select: {
+                logoUrl: true, bannerUrl: true, description: true, location: true,
+                storeState: true, localDeliveryFee: true, nationwideDeliveryFee: true,
+            },
         });
 
         return NextResponse.json({ message: 'Store updated', store: updated });

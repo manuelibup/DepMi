@@ -155,6 +155,33 @@
 .success { color: #00B894; }
 .error { color: #D63031; }
 
+.sectionDivider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 -4px;
+}
+.sectionDivider::before,
+.sectionDivider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--card-border);
+}
+.sectionDivider span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.feeRow {
+    display: flex;
+    gap: 12px;
+}
+
 /* Modal Styles */
 .modalOverlay {
     position: fixed;

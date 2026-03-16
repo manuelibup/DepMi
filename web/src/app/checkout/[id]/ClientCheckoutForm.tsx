@@ -6,21 +6,37 @@ import styles from './page.module.css';
 
 interface Props {
     productId: string;
-    total: number;
     subtotal: number;
-    deliveryFee: number;
+    stock: number;
+    /** Product-level override — null means use store defaults */
+    productDeliveryFee: number | null;
+    localDeliveryFee: number;
+    nationwideDeliveryFee: number;
+    storeState: string;
     defaultPhone: string;
     defaultAddress: string;
     defaultCity: string;
     defaultState: string;
-    stock: number;
 }
 
 type Stage = 'form' | 'submitting' | 'redirecting';
 
+function isLocalDelivery(buyerState: string, storeState: string): boolean {
+    if (!buyerState || !storeState) return false;
+    const a = buyerState.toLowerCase().trim();
+    const b = storeState.toLowerCase().trim();
+    return a.includes(b) || b.includes(a);
+}
+
 export default function ClientCheckoutForm({
-    productId, subtotal: itemPrice, deliveryFee: initialDeliveryFee,
-    defaultPhone, defaultAddress, defaultCity, defaultState, stock,
+    productId,
+    subtotal: itemPrice,
+    stock,
+    productDeliveryFee,
+    localDeliveryFee,
+    nationwideDeliveryFee,
+    storeState,
+    defaultPhone, defaultAddress, defaultCity, defaultState,
 }: Props) {
     const searchParams = useSearchParams();
     const resumeOrderId = searchParams.get('resume');
@@ -37,7 +53,24 @@ export default function ClientCheckoutForm({
     const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [error, setError] = useState('');
 
-    const currentDeliveryFee = deliveryMethod === 'PICKUP' ? 0 : initialDeliveryFee;
+    // Compute active delivery fee:
+    // 1. PICKUP → 0
+    // 2. Product override → use that
+    // 3. Buyer state matches store state → local fee
+    // 4. Otherwise → nationwide fee (also used as default estimate)
+    function getDeliveryFee(): { fee: number; label: string | null } {
+        if (deliveryMethod === 'PICKUP') return { fee: 0, label: null };
+        if (productDeliveryFee !== null) return { fee: productDeliveryFee, label: null };
+        if (storeState && stateVal) {
+            if (isLocalDelivery(stateVal, storeState)) {
+                return { fee: localDeliveryFee, label: 'Local delivery' };
+            }
+            return { fee: nationwideDeliveryFee, label: 'Nationwide delivery' };
+        }
+        return { fee: nationwideDeliveryFee, label: nationwideDeliveryFee > 0 ? 'Est. nationwide' : null };
+    }
+
+    const { fee: currentDeliveryFee, label: deliveryLabel } = getDeliveryFee();
     const currentSubtotal = itemPrice * quantity;
     const baseTotal = currentSubtotal + currentDeliveryFee;
     const gatewayFee = Math.round(baseTotal * 0.05 * 100) / 100;
@@ -102,7 +135,7 @@ export default function ClientCheckoutForm({
                     </svg>
                 </div>
                 <h2>Redirecting to secure payment…</h2>
-                <p>You'll be taken to Flutterwave to complete your payment safely.</p>
+                <p>You&apos;ll be taken to Flutterwave to complete your payment safely.</p>
             </div>
         );
     }
@@ -139,12 +172,18 @@ export default function ClientCheckoutForm({
                             <input className={styles.inputField} placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} required />
                             <div className={styles.inputRow}>
                                 <input className={styles.inputField} placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} required />
-                                <input className={styles.inputField} placeholder="State" value={stateVal} onChange={(e) => setStateVal(e.target.value)} required />
+                                <input
+                                    className={styles.inputField}
+                                    placeholder="State"
+                                    value={stateVal}
+                                    onChange={(e) => setStateVal(e.target.value)}
+                                    required
+                                />
                             </div>
                         </>
                     ) : (
                         <div className={styles.pickupNotice}>
-                            <p>You'll need to contact the seller to arrange a pickup location after payment.</p>
+                            <p>You&apos;ll need to contact the seller to arrange a pickup location after payment.</p>
                         </div>
                     )}
 
@@ -166,7 +205,13 @@ export default function ClientCheckoutForm({
                 </h2>
 
                 <div className={styles.summaryRow}><span>Items ({quantity})</span><span>₦{currentSubtotal.toLocaleString()}</span></div>
-                <div className={styles.summaryRow}><span>Delivery</span><span>₦{currentDeliveryFee.toLocaleString()}</span></div>
+                <div className={styles.summaryRow}>
+                    <span>
+                        Delivery
+                        {deliveryLabel && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>({deliveryLabel})</span>}
+                    </span>
+                    <span>{deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>
+                </div>
                 <div className={styles.summaryRow}><span>Service &amp; escrow fee (5%)</span><span>₦{gatewayFee.toLocaleString()}</span></div>
 
                 <div className={styles.trustBanner} style={{ marginTop: '16px' }}>

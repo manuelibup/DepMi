@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Image from 'next/image';
-import Link from 'next/link';
 import BackButton from '@/components/BackButton';
 import ClientCheckoutForm from './ClientCheckoutForm';
 import styles from './page.module.css';
@@ -20,7 +19,14 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         where: { id },
         include: {
             images: true,
-            store: { select: { name: true } }
+            store: {
+                select: {
+                    name: true,
+                    storeState: true,
+                    localDeliveryFee: true,
+                    nationwideDeliveryFee: true,
+                },
+            },
         }
     });
 
@@ -28,8 +34,11 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         notFound();
     }
 
-    const deliveryFee = Number(product.deliveryFee) || 0;
-    const total = Number(product.price) + deliveryFee;
+    // Product-level fee: null = use store default, number (including 0) = explicit override
+    const productDeliveryFee = product.deliveryFee != null ? Number(product.deliveryFee) : null;
+    const localDeliveryFee = Number(product.store.localDeliveryFee ?? 0);
+    const nationwideDeliveryFee = Number(product.store.nationwideDeliveryFee ?? 0);
+    const storeState = product.store.storeState ?? '';
 
     // Try to get user data to pre-fill phone and address
     const user = await prisma.user.findUnique({
@@ -65,12 +74,14 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                     </div>
                 </section>
 
-                <ClientCheckoutForm 
-                    productId={product.id} 
-                    total={total} 
-                    deliveryFee={deliveryFee} 
-                    subtotal={Number(product.price)} 
+                <ClientCheckoutForm
+                    productId={product.id}
+                    subtotal={Number(product.price)}
                     stock={product.stock}
+                    productDeliveryFee={productDeliveryFee}
+                    localDeliveryFee={localDeliveryFee}
+                    nationwideDeliveryFee={nationwideDeliveryFee}
+                    storeState={storeState}
                     defaultPhone={user?.phoneNumber || ''}
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}
