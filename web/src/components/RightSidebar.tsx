@@ -119,7 +119,7 @@ export default async function RightSidebar() {
             <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Top Sellers</h2>
-                    <Link href="/explore" className={styles.seeAll}>Explore</Link>
+                    <Link href="/search" className={styles.seeAll}>Explore</Link>
                 </div>
 
                 <div className={styles.storeList}>

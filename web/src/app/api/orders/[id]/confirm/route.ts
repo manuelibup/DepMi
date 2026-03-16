@@ -95,7 +95,7 @@ export async function POST(
         type: 'PAYMENT_RELEASED',
         title: 'Add your bank details to receive payment',
         body: `Order #${orderId.slice(-6).toUpperCase()} confirmed. Add your bank account in Settings to receive ₦${sellerAmount.toLocaleString()}.`,
-        link: '/settings/payouts',
+        link: `/store/${order.seller.slug}/settings`,
       },
     })
     return NextResponse.json({ ok: true, pending: true, message: 'Seller needs to add bank details' })
