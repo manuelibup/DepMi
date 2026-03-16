@@ -51,18 +51,18 @@
     margin: 32px 0 10px;
 }
 
-p {
+.container p {
     color: var(--text-secondary);
     line-height: 1.75;
     margin: 0 0 14px;
     font-size: 0.95rem;
 }
 
-a {
+.container a {
     color: var(--primary);
     text-decoration: none;
 }
-a:hover { text-decoration: underline; }
+.container a:hover { text-decoration: underline; }
 
 .list {
     color: var(--text-secondary);
