@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 import { X, Tag, FolderOpen } from 'lucide-react';
 import styles from './CreateProductForm.module.css';
@@ -16,7 +17,6 @@ const CURRENCIES = ['₦', '$', '£', '€'];
 export default function CreateProductForm({ storeId, storeSlug }: { storeId: string; storeSlug: string }) {
     const router = useRouter();
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const [errorMsg, setErrorMsg] = useState('');
 
     const [form, setForm] = useState({
         title: '',
@@ -104,21 +104,20 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         e.preventDefault();
 
         if (!form.title.trim()) {
-            setErrorMsg('Pleae provide a title for your product.');
+            toast.error('Please provide a title for your product.');
             return;
         }
         if (!form.price || isNaN(parseFloat(form.price))) {
-            setErrorMsg('Please provide a valid price.');
+            toast.error('Please provide a valid price.');
             setActiveInput('price');
             return;
         }
         if (form.imageUrls.length < 3) {
-            setErrorMsg('Please add at least 3 images to showcase your product.');
+            toast.error('Please add at least 3 images to showcase your product.');
             return;
         }
 
         setStatus('loading');
-        setErrorMsg('');
 
         const payload = {
             storeId,
@@ -154,12 +153,13 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
             setStatus('success');
             localStorage.removeItem(`product_draft_${storeId}`);
+            toast.success('Product listed!');
             router.push(`/store/${storeSlug}`);
             router.refresh();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setStatus('error');
-            setErrorMsg(err.message || 'Failed to create product.');
+            toast.error(err.message || 'Failed to create product.');
         }
     };
 
@@ -186,10 +186,6 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     </button>
                 </div>
             </div>
-
-            {status === 'error' && (
-                <div className={styles.errorBanner}>{errorMsg}</div>
-            )}
 
             <div className={styles.body}>
                 <div className={styles.authorRow}>

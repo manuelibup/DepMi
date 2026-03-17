@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './page.module.css';
+import { toast } from 'sonner';
 import CloudinaryUploader from '@/components/CloudinaryUploader';
 import { useRouter } from 'next/navigation';
 
@@ -31,7 +32,6 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
     });
 
     const [loading, setLoading] = useState(false);
-    const [msg, setMsg] = useState({ text: '', type: '' });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -40,7 +40,6 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setMsg({ text: '', type: '' });
 
         const payload: Record<string, unknown> = {
             description: formData.description || null,
@@ -60,14 +59,14 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
             });
 
             if (res.ok) {
-                setMsg({ text: 'Store settings saved successfully!', type: 'success' });
+                toast.success('Store settings saved');
                 router.refresh();
             } else {
                 const data = await res.json().catch(() => ({}));
-                setMsg({ text: data.message || 'Failed to update store', type: 'error' });
+                toast.error(data.message || 'Failed to update store');
             }
         } catch {
-            setMsg({ text: 'An unexpected error occurred', type: 'error' });
+            toast.error('An unexpected error occurred');
         } finally {
             setLoading(false);
         }
@@ -187,11 +186,6 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                 {loading ? 'Saving...' : 'Save Changes'}
             </button>
 
-            {msg.text && (
-                <p className={`${styles.message} ${msg.type === 'success' ? styles.success : styles.error}`}>
-                    {msg.text}
-                </p>
-            )}
         </form>
     );
 }

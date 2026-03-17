@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
+import { Toaster } from "sonner";
 import { Providers } from "@/components/Providers";
 import NavigationWrapper from "@/components/NavigationWrapper";
 import ActivityPing from "@/components/ActivityPing";
@@ -33,7 +34,10 @@ export const metadata: Metadata = {
     title: "DepMi — Social Commerce for Africa",
     description: "The social commerce platform for African entrepreneurs.",
     images: ['/depmi-logo-text-dark.png'],
-  }
+  },
+  verification: {
+    google: 'OMgUtc-qD_n_okTc01Tjs-i-5swsdYK0qif7NH7H-jU',
+  },
 };
 
 export const viewport: Viewport = {
@@ -105,6 +109,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
+          <Toaster theme="dark" position="bottom-center" richColors />
           <ServiceWorkerRegistrar />
           <ActivityPing />
           <PushPrompt />

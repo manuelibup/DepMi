@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 import BottomNav from '@/components/BottomNav';
 import Header from '@/components/Header';
@@ -31,11 +32,8 @@ export default function SettingsPage() {
     const [emailOtpCode, setEmailOtpCode] = useState('');
     const [phoneOtpStep, setPhoneOtpStep] = useState<'idle' | 'sending' | 'entering' | 'verifying'>('idle');
     const [phoneOtpCode, setPhoneOtpCode] = useState('');
-    const [verifyMsg, setVerifyMsg] = useState({ text: '', type: '' });
 
     const [saving, setSaving] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState('');
 
     // Only populate identity fields from session once (on first valid session load).
     // Subsequent session changes (e.g. after updateSession()) must NOT overwrite form
@@ -82,7 +80,6 @@ export default function SettingsPage() {
 
     const sendEmailOtp = async () => {
         setEmailOtpStep('sending');
-        setVerifyMsg({ text: '', type: '' });
         try {
             const res = await fetch('/api/auth/send-email-otp', {
                 method: 'POST',
@@ -93,11 +90,11 @@ export default function SettingsPage() {
                 setEmailOtpStep('entering');
             } else {
                 const d = await res.json().catch(() => ({}));
-                setVerifyMsg({ text: d.message || 'Failed to send code', type: 'error' });
+                toast.error(d.message || 'Failed to send code');
                 setEmailOtpStep('idle');
             }
         } catch {
-            setVerifyMsg({ text: 'Network error', type: 'error' });
+            toast.error('Network error');
             setEmailOtpStep('idle');
         }
     };
@@ -114,25 +111,24 @@ export default function SettingsPage() {
                 setEmailVerified(true);
                 setEmailOtpStep('idle');
                 setEmailOtpCode('');
-                setVerifyMsg({ text: 'Email verified!', type: 'success' });
+                toast.success('Email verified!');
             } else {
                 const d = await res.json().catch(() => ({}));
-                setVerifyMsg({ text: d.message || 'Invalid code', type: 'error' });
+                toast.error(d.message || 'Invalid code');
                 setEmailOtpStep('entering');
             }
         } catch {
-            setVerifyMsg({ text: 'Network error', type: 'error' });
+            toast.error('Network error');
             setEmailOtpStep('entering');
         }
     };
 
     const sendPhoneOtp = async () => {
         if (!phoneNumber.trim()) {
-            setVerifyMsg({ text: 'Save your phone number first', type: 'error' });
+            toast.error('Save your phone number first');
             return;
         }
         setPhoneOtpStep('sending');
-        setVerifyMsg({ text: '', type: '' });
         try {
             const res = await fetch('/api/auth/send-phone-otp', {
                 method: 'POST',
@@ -143,11 +139,11 @@ export default function SettingsPage() {
                 setPhoneOtpStep('entering');
             } else {
                 const d = await res.json().catch(() => ({}));
-                setVerifyMsg({ text: d.message || 'Failed to send SMS', type: 'error' });
+                toast.error(d.message || 'Failed to send SMS');
                 setPhoneOtpStep('idle');
             }
         } catch {
-            setVerifyMsg({ text: 'Network error', type: 'error' });
+            toast.error('Network error');
             setPhoneOtpStep('idle');
         }
     };
@@ -164,14 +160,14 @@ export default function SettingsPage() {
                 setPhoneVerified(true);
                 setPhoneOtpStep('idle');
                 setPhoneOtpCode('');
-                setVerifyMsg({ text: 'Phone verified!', type: 'success' });
+                toast.success('Phone verified!');
             } else {
                 const d = await res.json().catch(() => ({}));
-                setVerifyMsg({ text: d.message || 'Invalid code', type: 'error' });
+                toast.error(d.message || 'Invalid code');
                 setPhoneOtpStep('entering');
             }
         } catch {
-            setVerifyMsg({ text: 'Network error', type: 'error' });
+            toast.error('Network error');
             setPhoneOtpStep('entering');
         }
     };
@@ -179,8 +175,6 @@ export default function SettingsPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        setError('');
-        setSuccess(false);
 
         try {
             const res = await fetch('/api/user/update', {
@@ -200,7 +194,7 @@ export default function SettingsPage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                setError(data.message || 'Failed to save');
+                toast.error(data.message || 'Failed to save changes');
             } else {
                 // Update local state directly from API response so the form
                 // shows the saved values immediately, without waiting for the
@@ -208,12 +202,11 @@ export default function SettingsPage() {
                 if (data.user?.displayName) setDisplayName(data.user.displayName);
                 if (data.user?.username) setUsername(data.user.username);
                 if (data.user?.avatarUrl !== undefined) setAvatarUrl(data.user.avatarUrl ?? '');
-                setSuccess(true);
+                toast.success('Changes saved');
                 updateSession(); // refresh JWT in background — no await needed
-                setTimeout(() => setSuccess(false), 3000);
             }
         } catch {
-            setError('Network error, please try again.');
+            toast.error('Network error, please try again.');
         } finally {
             setSaving(false);
         }
@@ -441,12 +434,6 @@ export default function SettingsPage() {
                     <div style={sectionStyle}>
                         <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Verification</p>
 
-                        {verifyMsg.text && (
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: verifyMsg.type === 'success' ? 'var(--primary)' : 'var(--error)', background: verifyMsg.type === 'success' ? 'rgba(0,200,83,0.08)' : 'var(--error-bg)', padding: '8px 12px', borderRadius: '8px' }}>
-                                {verifyMsg.text}
-                            </p>
-                        )}
-
                         {/* Email verification row */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
@@ -538,18 +525,6 @@ export default function SettingsPage() {
                             ) : null}
                         </div>
                     </div>
-
-                    {error && (
-                        <p style={{ color: 'var(--error)', fontSize: '0.875rem', background: 'var(--error-bg)', padding: '10px 14px', borderRadius: '10px', margin: 0, border: '1px solid var(--error-border)' }}>
-                            {error}
-                        </p>
-                    )}
-
-                    {success && (
-                        <p style={{ color: 'var(--primary)', fontSize: '0.875rem', background: 'rgba(0,200,83,0.1)', padding: '10px 14px', borderRadius: '10px', margin: 0, border: '1px solid rgba(0,200,83,0.2)' }}>
-                            ✓ Changes saved
-                        </p>
-                    )}
 
                     <button
                         type="submit"

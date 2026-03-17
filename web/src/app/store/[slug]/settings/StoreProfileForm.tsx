@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 
 interface Props {
@@ -44,13 +45,9 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
     const [description, setDescription] = useState(initial.description);
     const [location, setLocation] = useState(initial.location);
     const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [error, setError] = useState('');
 
     const handleSave = async () => {
         setSaving(true);
-        setError('');
-        setSaved(false);
         try {
             const res = await fetch(`/api/store/${slug}/settings`, {
                 method: 'PATCH',
@@ -59,13 +56,12 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
             });
             const data = await res.json();
             if (res.ok) {
-                setSaved(true);
-                setTimeout(() => setSaved(false), 3000);
+                toast.success('Store profile updated');
             } else {
-                setError(data.message ?? 'Failed to save');
+                toast.error(data.message ?? 'Failed to save');
             }
         } catch {
-            setError('Network error, please try again.');
+            toast.error('Network error, please try again.');
         } finally {
             setSaving(false);
         }
@@ -178,17 +174,6 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
                     style={inputStyle}
                 />
             </div>
-
-            {error && (
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#e74c3c', background: 'rgba(231,76,60,0.08)', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(231,76,60,0.2)' }}>
-                    {error}
-                </p>
-            )}
-            {saved && (
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', background: 'rgba(0,200,83,0.08)', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(0,200,83,0.2)' }}>
-                    ✓ Store profile updated
-                </p>
-            )}
 
             <button
                 onClick={handleSave}

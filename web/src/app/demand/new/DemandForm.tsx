@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 import { X, CreditCard, FolderOpen, MapPin, Camera, Video } from 'lucide-react';
 import styles from './DemandForm.module.css';
@@ -32,7 +33,6 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
     const { data: session } = useSession();
 
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const [errorMsg, setErrorMsg] = useState('');
 
     const [formData, setFormData] = useState({
         text: initialData?.text || (defaultQuery ? defaultQuery : ''),
@@ -101,17 +101,16 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
 
         // Basic validation before submission to ensure both text and budget are provided
         if (!formData.text.trim()) {
-            setErrorMsg('Please enter what you are looking for.');
+            toast.error('Please enter what you are looking for.');
             return;
         }
         if (!formData.budget || isNaN(parseFloat(formData.budget))) {
-            setErrorMsg('Please provide a valid budget.');
+            toast.error('Please provide a valid budget.');
             setActiveInput('budget');
             return;
         }
 
         setStatus('loading');
-        setErrorMsg('');
 
         try {
             const url = initialData ? `/api/requests/${initialData.id}` : '/api/demands/create';
@@ -141,8 +140,8 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
 
             setStatus('success');
             localStorage.removeItem('demand_draft');
+            toast.success(initialData ? 'Request updated' : 'Request posted!');
 
-            // Redirect to Requests feed or specific request
             if (initialData) {
                 router.push(`/requests/${initialData.id}`);
             } else {
@@ -152,7 +151,7 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setStatus('error');
-            setErrorMsg(err.message || 'An unexpected error occurred.');
+            toast.error(err.message || 'An unexpected error occurred.');
         }
     };
 
@@ -176,9 +175,6 @@ export default function DemandForm({ defaultQuery, initialData }: { defaultQuery
                 </button>
             </div>
 
-            {status === 'error' && (
-                <div className={styles.errorBanner}>{errorMsg}</div>
-            )}
 
             <div className={styles.body}>
                 <div className={styles.authorRow}>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 interface Bank {
@@ -33,7 +34,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [otpSent, setOtpSent] = useState(false);
-    const [msg, setMsg] = useState({ text: '', type: '' });
+    const [resolveError, setResolveError] = useState('');
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -87,7 +88,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
     const handleAccountBlur = async () => {
         if (formData.bankAccountNo.length === 10 && formData.bankCode) {
             setResolving(true);
-            setMsg({ text: '', type: '' });
+            setResolveError('');
             try {
                 const res = await fetch(`/api/banks/resolve?accountNumber=${formData.bankAccountNo}&bankCode=${formData.bankCode}`);
                 if (res.ok) {
@@ -96,10 +97,10 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 } else {
                     const data = await res.json().catch(() => ({}));
                     setFormData(prev => ({ ...prev, bankAccountName: '' }));
-                    setMsg({ text: data.message || 'Could not verify account number', type: 'error' });
+                    setResolveError(data.message || 'Could not verify account number');
                 }
             } catch {
-                setMsg({ text: 'Error verifying account', type: 'error' });
+                setResolveError('Error verifying account');
             } finally {
                 setResolving(false);
             }
@@ -135,7 +136,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 setOtpSent(true);
             } else {
                 const data = await res.json();
-                setMsg({ text: data.error || 'Failed to send verification code', type: 'error' });
+                toast.error(data.error || 'Failed to send verification code');
                 setShowOtpModal(false);
             }
         } finally {
@@ -145,7 +146,6 @@ export default function PayoutSettingsForm({ slug }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setMsg({ text: '', type: '' });
         setShowOtpModal(true);
         setOtpCode('');
         setOtpSent(false);
@@ -162,15 +162,15 @@ export default function PayoutSettingsForm({ slug }: Props) {
             });
 
             if (res.ok) {
-                setMsg({ text: 'Payout settings saved successfully!', type: 'success' });
+                toast.success('Payout account saved');
                 setShowOtpModal(false);
                 router.refresh();
             } else {
                 const data = await res.json().catch(() => ({}));
-                setMsg({ text: data.message || 'Verification failed. Please check the code.', type: 'error' });
+                toast.error(data.message || 'Verification failed. Please check the code.');
             }
         } catch {
-            setMsg({ text: 'An unexpected error occurred', type: 'error' });
+            toast.error('An unexpected error occurred');
         } finally {
             setSaving(false);
         }
@@ -297,10 +297,8 @@ export default function PayoutSettingsForm({ slug }: Props) {
                 {saving ? 'Saving...' : 'Save Payout Settings'}
             </button>
 
-            {msg.text && (
-                <p className={`${styles.message} ${msg.type === 'success' ? styles.success : styles.error}`}>
-                    {msg.text}
-                </p>
+            {resolveError && (
+                <p className={`${styles.message} ${styles.error}`}>{resolveError}</p>
             )}
 
             {showOtpModal && (
