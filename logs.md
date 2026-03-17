@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 63 — Mar 17, 2026 — Growth & SEO Sprint (Blog, Sitemap, Search Console)](#session-63--mar-17-2026--growth--seo-sprint-blog-sitemap-search-console)
 - [Session 62 — Mar 16, 2026 — Feed Sort Pills, DemandCardGrid, Landing Page Overhaul & Mobile Sidebar](#session-62--mar-16-2026--feed-sort-pills-demandcardgrid-landing-page-overhaul--mobile-sidebar)
 - [Session 61 — Mar 15, 2026 — Unique View Tracking & Admin Dashboard Overhaul](#session-61--mar-15-2026--unique-view-tracking--admin-dashboard-overhaul)
 - [Session 60 — Mar 14, 2026 — Infinite Scroll Feed, Onboarding Flow & DB Backup System](#session-60--mar-14-2026--infinite-scroll-feed-onboarding-flow--db-backup-system)
@@ -45,6 +46,54 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 63 — Mar 17, 2026 — Growth & SEO Sprint (Blog, Sitemap, Search Console)
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Context
+Growth-focused session. No new product features — full CMO/SEO sprint to build organic acquisition infrastructure and content marketing foundation. Goal: path from ~150 users to 1,000.
+
+### What Was Built
+
+#### 1. Blog — First Article
+- Created `web/src/app/(static)/blog/how-to-sell-safely-on-whatsapp-nigeria/page.tsx`
+- Full 4-min read article targeting keyword: "how to sell safely on WhatsApp Nigeria"
+- Includes 3 embedded real screenshots of the live product (store page, escrow button, feed)
+- Article CSS: `article.module.css` with blockquote, figure, figcaption, CTA block styling
+- Updated blog index `(static)/blog/page.tsx` — now shows article card grid (not placeholder)
+- New `blog.module.css` for the index card grid
+
+#### 2. Sitemap & Robots
+- Created `web/src/app/sitemap.ts` — dynamic Next.js sitemap hitting Prisma for stores, products, demands
+- Created `web/src/app/robots.ts` — blocks admin/api/auth/checkout routes, allows all public pages
+- Sitemap served at `https://depmi.com/sitemap.xml` automatically
+
+#### 3. Google Search Console
+- Verified site ownership via HTML meta tag method
+- Added `verification.google` to root `layout.tsx` metadata object
+- Next step: submit sitemap URL in Search Console after deploy
+
+#### 4. Screenshot Assets
+- Created `web/public/blog/` directory for article images
+- 3 screenshots to be saved by Manuel:
+  - `screenshot-feed.png` — desktop home feed with demand posts + sidebar stats
+  - `screenshot-store.png` — C_prime Gadgets store desktop view
+  - `screenshot-escrow.png` — mobile product card with "Buy via Escrow" button
+
+### CMO Strategy Delivered
+- Full growth audit: 150 users, 38 stores, 66 products, ~1–2 signups/day
+- Tiered plan to 1,000 users: seller activation, referral incentive, content marketing, category pages
+- Referral reward: extend `Store.feeWaiverUntil` (+30 days per referral) — infrastructure already exists
+- Seller activation WhatsApp copy (Version A buyer-facing + Version B seller recruitment)
+- 30-day Twitter/X content calendar framework
+- 8 SEO blog post topics identified
+
+### Validations
+- No build run (content/SEO files only, no logic changes)
+- Sitemap.ts uses existing Prisma models — no schema changes
 
 ---
 

@@ -1,0 +1,158 @@
+.article {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1rem 0 4rem;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.backLink {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.backLink:hover {
+    color: var(--primary);
+}
+
+.tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+}
+
+.byline {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.lead {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--text-main);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+}
+
+.article p {
+    color: var(--text-muted);
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+}
+
+.article h2 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.article ol,
+.article ul {
+    color: var(--text-muted);
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+}
+
+.article li {
+    margin-bottom: 0.5rem;
+}
+
+.article strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.article blockquote {
+    border-left: 3px solid var(--primary);
+    margin: 2rem 0;
+    padding: 0.75rem 1.25rem;
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+    border-radius: 0 8px 8px 0;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: var(--text-main);
+}
+
+.cta {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.ctaButton {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+
+.ctaButton:hover {
+    opacity: 0.88;
+}
+
+.ctaNote {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+}
+
+.figure {
+    margin: 2rem 0;
+}
+
+.screenshot {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    display: block;
+}
+
+.figure figcaption {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .title {
+        font-size: 1.625rem;
+    }
+}
