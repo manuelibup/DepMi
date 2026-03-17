@@ -80,9 +80,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(0, 200, 83, 0.12);
-    border: 1px solid rgba(0, 200, 83, 0.3);
-    color: #00C853;
+    background: rgba(5, 150, 105, 0.12);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+    color: var(--primary);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -143,7 +143,7 @@
 }
 
 .terms a {
-    color: #00C853;
+    color: var(--primary);
     text-decoration: none;
 }
 
@@ -203,7 +203,7 @@
     transform: translate(-50%, -50%);
     width: 480px;
     height: 480px;
-    background: radial-gradient(circle, rgba(0,200,83,0.18) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(5,150,105,0.18) 0%, transparent 70%);
     filter: blur(30px);
     z-index: 1;
     pointer-events: none;
@@ -232,7 +232,7 @@
 .statNumber {
     font-size: 2.5rem;
     font-weight: 900;
-    color: #00C853;
+    color: var(--primary);
     letter-spacing: -1px;
     line-height: 1;
 }
@@ -266,7 +266,7 @@
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #00C853;
+    color: var(--primary);
     margin-bottom: 12px;
 }
 
@@ -300,15 +300,15 @@
 }
 
 .stepCard:hover {
-    border-color: rgba(0,200,83,0.3);
+    border-color: rgba(5,150,105,0.3);
 }
 
 .stepNumber {
     font-size: 0.7rem;
     font-weight: 800;
-    color: #00C853;
-    background: rgba(0,200,83,0.12);
-    border: 1px solid rgba(0,200,83,0.25);
+    color: var(--primary);
+    background: rgba(5,150,105,0.12);
+    border: 1px solid rgba(5,150,105,0.25);
     border-radius: 999px;
     width: 28px;
     height: 28px;
@@ -357,19 +357,19 @@
 }
 
 .splitCardSeller {
-    background: rgba(0,200,83,0.06);
-    border: 1px solid rgba(0,200,83,0.2);
+    background: rgba(5,150,105,0.06);
+    border: 1px solid rgba(5,150,105,0.2);
 }
 
 .splitIcon {
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: rgba(0,200,83,0.12);
+    background: rgba(5,150,105,0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #00C853;
+    color: var(--primary);
 }
 
 .splitTitle {
@@ -403,7 +403,7 @@
 }
 
 .splitCta {
-    background: #00C853;
+    background: var(--primary);
     color: #000;
     border: none;
     border-radius: 999px;
@@ -422,8 +422,8 @@
 
 /* ── Escrow section ── */
 .escrowSection {
-    background: rgba(0,200,83,0.06);
-    border: 1px solid rgba(0,200,83,0.2);
+    background: rgba(5,150,105,0.06);
+    border: 1px solid rgba(5,150,105,0.2);
     border-radius: 28px;
     padding: 64px 60px;
     display: flex;
@@ -437,7 +437,7 @@
     width: 80px;
     height: 80px;
     border-radius: 999px;
-    background: rgba(0,200,83,0.12);
+    background: rgba(5,150,105,0.12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -486,12 +486,12 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #00C853;
+    background: var(--primary);
     flex-shrink: 0;
 }
 
 .escrowArrow {
-    color: rgba(0,200,83,0.6);
+    color: rgba(5,150,105,0.6);
     font-size: 1.2rem;
     font-weight: 700;
 }
@@ -521,7 +521,7 @@
 }
 
 .categoryChip:hover {
-    border-color: rgba(0,200,83,0.4);
+    border-color: rgba(5,150,105,0.4);
     color: #fff;
 }
 

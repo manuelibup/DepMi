@@ -249,7 +249,7 @@
 
 /* Footer */
 .footer {
-    padding: 8px 24px 0;
+    padding: 8px 24px 72px;
     font-size: 0.72rem;
     color: var(--text-muted);
     line-height: 1.6;

@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 65 — Mar 17, 2026 — Brand Color: Neon Green → Emerald Green](#session-65--mar-17-2026--brand-color-neon-green--emerald-green)
 - [Session 64 — Mar 17, 2026 — UX Polish: Carousels, Bid Replies, Nav Sync & Toast Notifications](#session-64--mar-17-2026--ux-polish-carousels-bid-replies-nav-sync--toast-notifications)
 - [Session 63 — Mar 17, 2026 — Growth & SEO Sprint (Blog, Sitemap, Search Console)](#session-63--mar-17-2026--growth--seo-sprint-blog-sitemap-search-console)
 - [Session 62 — Mar 16, 2026 — Feed Sort Pills, DemandCardGrid, Landing Page Overhaul & Mobile Sidebar](#session-62--mar-16-2026--feed-sort-pills-demandcardgrid-landing-page-overhaul--mobile-sidebar)
@@ -47,6 +48,21 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 65 — Mar 17, 2026 — Brand Color: Neon Green → Emerald Green
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+- **Landing page color fix:** All instances of neon green (`#00C853` / `rgba(0,200,83,...)`) in `LandingPage.module.css` replaced with emerald green (`var(--primary)` / `rgba(5,150,105,...)`). Affected elements: stats numbers, section eyebrows, step number badges, split card icons & seller card background, escrow section background & icon, CTA buttons, glow effect, hover states.
+- **Memory updated:** Added permanent rule — never use `#00C853` or `rgba(0,200,83,...)`. Always use `var(--primary)` (`#059669`) or `rgba(5,150,105,...)`.
+
+### Color Reference
+- **Old (neon):** `#00C853`, `rgba(0,200,83,...)`
+- **New (emerald):** `var(--primary)` = `#059669`, `rgba(5,150,105,...)`
 
 ---
 
