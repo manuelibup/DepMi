@@ -39,7 +39,11 @@ export default async function StoreSettingsPage({ params }: { params: Promise<{ 
             </header>
 
             <div className={styles.content}>
-                <StoreSettingsForm store={store} />
+                <StoreSettingsForm store={{
+                    ...store,
+                    localDeliveryFee: store.localDeliveryFee != null ? Number(store.localDeliveryFee) : null,
+                    nationwideDeliveryFee: store.nationwideDeliveryFee != null ? Number(store.nationwideDeliveryFee) : null,
+                }} />
                 <PayoutSettingsForm slug={slug} />
             </div>
         </main>
