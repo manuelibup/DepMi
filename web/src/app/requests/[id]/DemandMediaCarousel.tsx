@@ -1,62 +1,64 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 
-interface ProductImage {
-    id: string;
+interface DemandImage {
     url: string;
 }
 
 interface Props {
-    images: ProductImage[];
-    title: string;
+    images: DemandImage[];
+    videoUrl?: string | null;
 }
 
-export default function ProductImageGallery({ images, title }: Props) {
+export default function DemandMediaCarousel({ images, videoUrl }: Props) {
+    // Build a unified list: video first (if present), then images
+    type MediaItem = { type: 'video'; url: string } | { type: 'image'; url: string };
+    const items: MediaItem[] = [
+        ...(videoUrl ? [{ type: 'video' as const, url: videoUrl }] : []),
+        ...images.map(img => ({ type: 'image' as const, url: img.url })),
+    ];
+
     const [idx, setIdx] = useState(0);
 
-    if (images.length === 0) {
-        return (
-            <div style={{ width: '100%', aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--bg-hover)' }}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                    <circle cx="9" cy="9" r="2" />
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
-            </div>
-        );
-    }
+    if (items.length === 0) return null;
 
-    const prev = () => setIdx(i => (i - 1 + images.length) % images.length);
-    const next = () => setIdx(i => (i + 1) % images.length);
+    const prev = () => setIdx(i => (i - 1 + items.length) % items.length);
+    const next = () => setIdx(i => (i + 1) % items.length);
+    const current = items[idx];
 
     return (
         <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
-            {/* Main image */}
-            <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative', background: 'var(--bg-hover)' }}>
-                <Image
-                    src={images[idx].url}
-                    alt={`${title} — photo ${idx + 1}`}
-                    fill
-                    style={{ objectFit: 'contain' }}
-                    sizes="100vw"
-                    priority={idx === 0}
-                />
+            {/* Media frame */}
+            <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+                {current.type === 'video' ? (
+                    <video
+                        src={current.url}
+                        controls
+                        playsInline
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                    />
+                ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={current.url}
+                        alt={`Media ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                    />
+                )}
             </div>
 
-            {/* Nav arrows — only when multiple images */}
-            {images.length > 1 && (
+            {/* Nav arrows + indicators — only when multiple items */}
+            {items.length > 1 && (
                 <>
                     <button
                         onClick={prev}
-                        aria-label="Previous image"
+                        aria-label="Previous"
                         style={{
                             position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
                             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                            background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex',
+                            background: 'rgba(0,0,0,0.5)', color: '#fff', display: 'flex',
                             alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)',
-                            transition: 'background 0.15s',
                         }}
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -65,13 +67,12 @@ export default function ProductImageGallery({ images, title }: Props) {
                     </button>
                     <button
                         onClick={next}
-                        aria-label="Next image"
+                        aria-label="Next"
                         style={{
                             position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
                             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                            background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex',
+                            background: 'rgba(0,0,0,0.5)', color: '#fff', display: 'flex',
                             alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)',
-                            transition: 'background 0.15s',
                         }}
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -79,22 +80,22 @@ export default function ProductImageGallery({ images, title }: Props) {
                         </svg>
                     </button>
 
-                    {/* Counter badge */}
+                    {/* Counter */}
                     <div style={{
                         position: 'absolute', bottom: 10, right: 12,
                         background: 'rgba(0,0,0,0.55)', color: '#fff', borderRadius: 20,
                         padding: '3px 10px', fontSize: 12, fontWeight: 600, backdropFilter: 'blur(4px)',
                     }}>
-                        {idx + 1} / {images.length}
+                        {idx + 1} / {items.length}
                     </div>
 
-                    {/* Dot indicators */}
+                    {/* Dots */}
                     <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
-                        {images.map((_, i) => (
+                        {items.map((item, i) => (
                             <button
                                 key={i}
                                 onClick={() => setIdx(i)}
-                                aria-label={`Go to image ${i + 1}`}
+                                aria-label={`Go to ${item.type} ${i + 1}`}
                                 style={{
                                     width: i === idx ? 18 : 6, height: 6, borderRadius: 3, border: 'none', padding: 0,
                                     background: i === idx ? 'var(--primary)' : 'rgba(255,255,255,0.5)',

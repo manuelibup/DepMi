@@ -216,9 +216,15 @@ export default function MobileSidebar({ isOpen, onClose, unreadNotifs, unreadMes
                 <p className={styles.footer}>
                     <Link href="/about" onClick={onClose}>About</Link>
                     {' · '}
+                    <Link href="/help" onClick={onClose}>Help Center</Link>
+                    {' · '}
                     <Link href="/terms" onClick={onClose}>Terms</Link>
                     {' · '}
                     <Link href="/privacy" onClick={onClose}>Privacy</Link>
+                    {' · '}
+                    <Link href="/blog" onClick={onClose}>Blog</Link>
+                    {' · '}
+                    <Link href="/careers" onClick={onClose}>Careers</Link>
                 </p>
             </aside>
         </>

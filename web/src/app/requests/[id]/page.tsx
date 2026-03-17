@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
@@ -43,6 +42,7 @@ import BidsCommentsTab from './BidsCommentsTab';
 import DemandDetailActions from './DemandDetailActions';
 import CloseDemandButton from './CloseDemandButton';
 import ViewTracker from '@/components/ViewTracker';
+import DemandMediaCarousel from './DemandMediaCarousel';
 import styles from './RequestDetail.module.css';
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -202,23 +202,15 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     )}
                 </div>
 
-                {/* Media (NEW) */}
-                <div className={styles.mediaContainer}>
-                    {demand.videoUrl && (
-                        <div className={styles.videoPlayer}>
-                            <video src={demand.videoUrl} controls playsInline />
-                        </div>
-                    )}
-                    {demand.images && demand.images.length > 0 && (
-                        <div className={styles.imageGallery} data-count={demand.images.length}>
-                            {demand.images.map((img: any, i: number) => (
-                                <div key={i} className={styles.galleryItem}>
-                                    <img src={img.url} alt="Request Details" />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                {/* Media */}
+                {(demand.videoUrl || (demand.images && demand.images.length > 0)) && (
+                    <div className={styles.mediaContainer}>
+                        <DemandMediaCarousel
+                            images={demand.images ?? []}
+                            videoUrl={demand.videoUrl}
+                        />
+                    </div>
+                )}
 
                 {/* Social action bar */}
                 <DemandDetailActions
