@@ -203,7 +203,13 @@ export default function SettingsPage() {
                 if (data.user?.username) setUsername(data.user.username);
                 if (data.user?.avatarUrl !== undefined) setAvatarUrl(data.user.avatarUrl ?? '');
                 toast.success('Changes saved');
-                updateSession(); // refresh JWT in background — no await needed
+                // Pass new values directly so the JWT callback merges them without
+                // a DB roundtrip — fixes the username-appears-to-revert bug.
+                updateSession({
+                    username: data.user?.username,
+                    name: data.user?.displayName,
+                    picture: data.user?.avatarUrl ?? null,
+                });
             }
         } catch {
             toast.error('Network error, please try again.');
