@@ -1,13 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import BidActionGate from './BidActionGate';
 import BidForm from './BidForm';
 import AcceptBidButton from './AcceptBidButton';
 import CommentSection from './CommentSection';
 import styles from './RequestDetail.module.css';
+
+type SerializedComment = {
+    id: string;
+    text: string;
+    author: { displayName: string; username?: string | null; avatarUrl?: string | null };
+    createdAt: string;
+};
 
 type SerializedBid = {
     id: string;
@@ -18,13 +26,7 @@ type SerializedBid = {
     ownerUserId: string | null;
     ownerUsername: string | null;
     product: { title: string } | null;
-};
-
-type SerializedComment = {
-    id: string;
-    text: string;
-    author: { displayName: string; username?: string | null };
-    createdAt: string;
+    replies: SerializedComment[];
 };
 
 interface Props {
@@ -42,25 +44,158 @@ interface Props {
     apiPath: string;
 }
 
+function timeAgo(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+}
+
+function BidReplyThread({
+    bid,
+    isLoggedIn,
+    canComment,
+    expanded,
+    onToggle,
+}: {
+    bid: SerializedBid;
+    isLoggedIn: boolean;
+    canComment: boolean;
+    expanded: boolean;
+    onToggle: () => void;
+}) {
+    const { data: session } = useSession();
+    const [replies, setReplies] = useState<SerializedComment[]>(bid.replies);
+    const [replyText, setReplyText] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    const submitReply = async () => {
+        if (!replyText.trim()) return;
+        setSubmitting(true);
+        setError('');
+        const res = await fetch(`/api/bids/${bid.id}/replies`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: replyText.trim() }),
+        });
+        if (res.ok) {
+            const newReply = await res.json();
+            setReplies(prev => [...prev, newReply]);
+            setReplyText('');
+        } else {
+            const data = await res.json().catch(() => ({}));
+            setError(data.message || 'Failed to post reply');
+        }
+        setSubmitting(false);
+    };
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        void submitReply();
+    };
+
+    return (
+        <div className={styles.bidReplySection}>
+            {/* Toggle button */}
+            <button
+                type="button"
+                className={styles.bidReplyToggle}
+                onClick={onToggle}
+            >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {replies.length > 0 ? `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}` : 'Reply'}
+                <svg
+                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                    style={{ marginLeft: 2, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                >
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </button>
+
+            {expanded && (
+                <div className={styles.bidReplyList}>
+                    {/* Existing replies */}
+                    {replies.map(r => (
+                        <div key={r.id} className={styles.bidReplyItem}>
+                            <div className={styles.bidReplyAvatar}>
+                                {r.author.avatarUrl ? (
+                                    <img src={r.author.avatarUrl} alt={r.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                ) : (
+                                    r.author.displayName.substring(0, 2).toUpperCase()
+                                )}
+                            </div>
+                            <div className={styles.bidReplyContent}>
+                                <div className={styles.bidReplyMeta}>
+                                    {r.author.username ? (
+                                        <Link href={`/u/${r.author.username}`} className={styles.bidReplyAuthor}>{r.author.displayName}</Link>
+                                    ) : (
+                                        <span className={styles.bidReplyAuthor}>{r.author.displayName}</span>
+                                    )}
+                                    <span className={styles.bidReplyTime}>· {timeAgo(r.createdAt)}</span>
+                                </div>
+                                <p className={styles.bidReplyText}>{r.text}</p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Reply form */}
+                    {isLoggedIn && canComment && (
+                        <form onSubmit={handleSubmit} className={styles.bidReplyForm}>
+                            <div className={styles.bidReplyInputRow}>
+                                <div className={styles.bidReplyAvatar} style={{ flexShrink: 0 }}>
+                                    {session?.user?.image ? (
+                                        <img src={session.user.image} alt="you" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                    ) : (
+                                        session?.user?.name?.substring(0, 2).toUpperCase() ?? '?'
+                                    )}
+                                </div>
+                                <textarea
+                                    value={replyText}
+                                    onChange={e => setReplyText(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submitReply(); } }}
+                                    placeholder={`Reply to ${bid.store.name}… (Ctrl+Enter to post)`}
+                                    maxLength={500}
+                                    rows={2}
+                                    className={styles.bidReplyTextarea}
+                                />
+                            </div>
+                            {error && <p style={{ color: 'var(--error)', fontSize: '0.8rem', margin: '4px 0 0' }}>{error}</p>}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                                <button
+                                    type="submit"
+                                    disabled={submitting || !replyText.trim()}
+                                    className={styles.commentSubmitBtn}
+                                    style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+                                >
+                                    {submitting ? '…' : 'Post'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {!isLoggedIn && (
+                        <p className={styles.bidReplyGate}>Sign in to reply</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function BidsCommentsTab({
     bids, comments, isPoster, demandId, isActive, hasStore,
     storeId, storeProducts, canComment, isLoggedIn, sessionUserId, apiPath,
 }: Props) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'bids' | 'discussion'>('bids');
-    const [prefillMention, setPrefillMention] = useState<string>('');
+    const [expandedBidId, setExpandedBidId] = useState<string | null>(null);
     const [messagingUserId, setMessagingUserId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (window.location.hash === '#discussion') {
-            setActiveTab('discussion');
-        }
-    }, []);
-
-    const handleAsk = useCallback((ownerUsername: string) => {
-        setPrefillMention(`@${ownerUsername} `);
-        setActiveTab('discussion');
-    }, []);
 
     const handleMessage = useCallback(async (ownerUserId: string) => {
         if (!isLoggedIn) return;
@@ -139,20 +274,14 @@ export default function BidsCommentsTab({
                                     <div className={styles.bidHeader}>
                                         <div className={styles.bidStoreInfo}>
                                             {bid.store.slug ? (
-                                                <Link
-                                                    href={`/store/${bid.store.slug}`}
-                                                    className={styles.bidStoreName}
-                                                >
+                                                <Link href={`/store/${bid.store.slug}`} className={styles.bidStoreName}>
                                                     {bid.store.name}
                                                 </Link>
                                             ) : (
                                                 <strong>{bid.store.name}</strong>
                                             )}
                                             {bid.ownerUsername && (
-                                                <Link
-                                                    href={`/u/${bid.ownerUsername}`}
-                                                    className={styles.bidOwnerHandle}
-                                                >
+                                                <Link href={`/u/${bid.ownerUsername}`} className={styles.bidOwnerHandle}>
                                                     @{bid.ownerUsername}
                                                 </Link>
                                             )}
@@ -181,38 +310,34 @@ export default function BidsCommentsTab({
                                         {isPoster && !isActive && bid.isAccepted && (
                                             <p className={styles.successState} style={{ padding: '8px', textAlign: 'center' }}>✓ Accepted Bid</p>
                                         )}
-                                        {/* Ask / Message buttons — visible to logged-in non-bidder users */}
-                                        {isLoggedIn && bid.ownerUsername && bid.ownerUserId !== sessionUserId && (
+                                        {/* Message button — DM the store owner */}
+                                        {isLoggedIn && bid.ownerUserId && bid.ownerUserId !== sessionUserId && (
                                             <div className={styles.bidContactBtns}>
                                                 <button
                                                     type="button"
-                                                    className={styles.bidAskBtn}
-                                                    onClick={() => handleAsk(bid.ownerUsername!)}
-                                                    title="Ask a question in Discussion"
+                                                    className={styles.bidMsgBtn}
+                                                    onClick={() => handleMessage(bid.ownerUserId!)}
+                                                    disabled={messagingUserId === bid.ownerUserId}
+                                                    title="Send a direct message"
                                                 >
                                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                                        <polyline points="22,6 12,13 2,6" />
                                                     </svg>
-                                                    Ask
+                                                    {messagingUserId === bid.ownerUserId ? '…' : 'Message'}
                                                 </button>
-                                                {bid.ownerUserId && (
-                                                    <button
-                                                        type="button"
-                                                        className={styles.bidMsgBtn}
-                                                        onClick={() => handleMessage(bid.ownerUserId!)}
-                                                        disabled={messagingUserId === bid.ownerUserId}
-                                                        title="Send a direct message"
-                                                    >
-                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                                            <polyline points="22,6 12,13 2,6" />
-                                                        </svg>
-                                                        {messagingUserId === bid.ownerUserId ? '…' : 'Message'}
-                                                    </button>
-                                                )}
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Inline reply thread */}
+                                    <BidReplyThread
+                                        bid={bid}
+                                        isLoggedIn={isLoggedIn}
+                                        canComment={canComment}
+                                        expanded={expandedBidId === bid.id}
+                                        onToggle={() => setExpandedBidId(prev => prev === bid.id ? null : bid.id)}
+                                    />
                                 </div>
                             ))
                         )}
@@ -220,7 +345,7 @@ export default function BidsCommentsTab({
                 </div>
             )}
 
-            {/* Discussion tab */}
+            {/* Discussion tab — general conversation not tied to a specific bid */}
             {activeTab === 'discussion' && (
                 <div className={styles.tabDiscussionContent} data-comments-section>
                     <CommentSection
@@ -229,8 +354,6 @@ export default function BidsCommentsTab({
                         canComment={canComment}
                         isLoggedIn={isLoggedIn}
                         showTitle={false}
-                        prefillText={prefillMention}
-                        onPrefillConsumed={() => setPrefillMention('')}
                     />
                 </div>
             )}

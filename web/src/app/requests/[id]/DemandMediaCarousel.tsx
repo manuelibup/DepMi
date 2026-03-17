@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface DemandImage {
     url: string;
@@ -20,6 +20,7 @@ export default function DemandMediaCarousel({ images, videoUrl }: Props) {
     ];
 
     const [idx, setIdx] = useState(0);
+    const touchStartX = useRef<number | null>(null);
 
     if (items.length === 0) return null;
 
@@ -27,8 +28,25 @@ export default function DemandMediaCarousel({ images, videoUrl }: Props) {
     const next = () => setIdx(i => (i + 1) % items.length);
     const current = items[idx];
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null) return;
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(delta) > 40) {
+            delta < 0 ? next() : prev();
+        }
+        touchStartX.current = null;
+    };
+
     return (
-        <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
+        <div
+            style={{ position: 'relative', width: '100%', userSelect: 'none' }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+        >
             {/* Media frame */}
             <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
                 {current.type === 'video' ? (

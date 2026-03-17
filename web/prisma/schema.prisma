@@ -299,8 +299,9 @@ model Bid {
   storeId    String
   demand     Demand   @relation(fields: [demandId], references: [id])
   product    Product? @relation("BidProduct", fields: [productId], references: [id])
-  store      Store    @relation("StoreBids", fields: [storeId], references: [id])
-  order      Order?   @relation("BidOrder")
+  store      Store     @relation("StoreBids", fields: [storeId], references: [id])
+  order      Order?    @relation("BidOrder")
+  replies    Comment[] @relation("BidReplies")
 
   @@index([demandId])
   @@index([storeId])
@@ -568,15 +569,18 @@ model Comment {
   authorId  String
   productId String?
   demandId  String?
+  bidId     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   author    User     @relation("UserComments", fields: [authorId], references: [id])
   demand    Demand?  @relation("DemandComments", fields: [demandId], references: [id], onDelete: Cascade)
   product   Product? @relation("ProductComments", fields: [productId], references: [id], onDelete: Cascade)
+  bid       Bid?     @relation("BidReplies", fields: [bidId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([demandId])
   @@index([authorId])
+  @@index([bidId])
 }
 
 model StoreFollow {

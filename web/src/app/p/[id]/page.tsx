@@ -40,7 +40,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
-import ProductVideoPlayer from './ProductVideoPlayer';
 import ProductImageGallery from './ProductImageGallery';
 import EnquireButton from './EnquireButton';
 import { getServerSession } from 'next-auth';
@@ -87,8 +86,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         author: c.author,
         createdAt: c.createdAt.toISOString(),
     }));
-
-    const hasVideo = !!product.videoUrl;
 
     // JSON-LD: Product schema for Google rich results
     const productJsonLd = {
@@ -154,14 +151,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                         <div className={styles.backBtnWrap}>
                             <BackButton />
                         </div>
-                        {hasVideo ? (
-                            <ProductVideoPlayer src={product.videoUrl!} poster={product.images[0]?.url} />
-                        ) : (
-                            <ProductImageGallery images={product.images} title={product.title} />
-                        )}
-                        {hasVideo && product.images.length > 0 && (
-                            <ProductImageGallery images={product.images} title={product.title} />
-                        )}
+                        <ProductImageGallery
+                            images={product.images}
+                            title={product.title}
+                            videoUrl={product.videoUrl}
+                        />
                     </div>
 
                     {/* Right / below: info */}
