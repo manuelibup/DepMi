@@ -213,7 +213,7 @@ export default function Article() {
             </p>
 
             <div className={styles.cta}>
-                <a href="/register" className={styles.ctaButton}>
+                <a href="/" className={styles.ctaButton}>
                     Create your free store →
                 </a>
                 <p className={styles.ctaNote}>

@@ -90,8 +90,60 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     const hasVideo = !!product.videoUrl;
 
+    // JSON-LD: Product schema for Google rich results
+    const productJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.title,
+        ...(product.description && { description: product.description }),
+        image: product.images.map(img => img.url),
+        offers: {
+            '@type': 'Offer',
+            price: Number(product.price).toFixed(2),
+            priceCurrency: 'NGN',
+            availability: product.inStock
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            url: `https://depmi.com/p/${product.slug ?? product.id}`,
+            seller: {
+                '@type': 'Organization',
+                name: product.store.name,
+                url: `https://depmi.com/store/${product.store.slug}`,
+            },
+        },
+        ...(product.store.reviewCount > 0 && {
+            aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: Number(product.store.rating).toFixed(1),
+                reviewCount: product.store.reviewCount,
+            },
+        }),
+    };
+
+    // Organic recommendations: same category, different store, in stock, top by views
+    const recommendations = await prisma.product.findMany({
+        where: {
+            category: product.category,
+            storeId: { not: product.storeId },
+            inStock: true,
+            isPortfolioItem: false,
+        },
+        select: {
+            id: true,
+            slug: true,
+            title: true,
+            price: true,
+            currency: true,
+            images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+            store: { select: { name: true } },
+        },
+        orderBy: { viewCount: 'desc' },
+        take: 6,
+    });
+
     return (
         <main className={styles.page}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
             <Header />
             <ViewTracker productId={product.id} />
 
@@ -233,6 +285,38 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                         isLoggedIn={!!userId}
                     />
                 </div>
+
+                {/* Recommendations — same category, different stores */}
+                {recommendations.length > 0 && (
+                    <>
+                        <div className={styles.divider} />
+                        <div className={styles.fullWidthSection}>
+                            <p style={{ margin: '0 0 14px', fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                                You might also like
+                            </p>
+                            <div className={styles.recoGrid}>
+                                {recommendations.map(rec => (
+                                    <Link key={rec.id} href={'/p/' + (rec.slug ?? rec.id)} className={styles.recoCard}>
+                                        <div className={styles.recoImg}>
+                                            {rec.images[0]?.url ? (
+                                                <Image src={rec.images[0].url} alt={rec.title} fill style={{ objectFit: 'cover' }} sizes="160px" />
+                                            ) : (
+                                                <span style={{ fontSize: '1.5rem' }}>📦</span>
+                                            )}
+                                        </div>
+                                        <div className={styles.recoInfo}>
+                                            <p className={styles.recoTitle}>{rec.title}</p>
+                                            <p className={styles.recoStore}>{rec.store.name}</p>
+                                            <p className={styles.recoPrice}>
+                                                {rec.currency || '₦'}{Number(rec.price).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             <BottomNav />

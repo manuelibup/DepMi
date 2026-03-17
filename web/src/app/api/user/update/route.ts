@@ -14,6 +14,7 @@ const updateSchema = z.object({
     address: z.string().max(200).optional().nullable(),
     city: z.string().max(100).optional().nullable(),
     state: z.string().max(100).optional().nullable(),
+    country: z.string().max(100).optional().nullable(),
 });
 
 export async function GET() {
@@ -61,7 +62,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Invalid input', errors: parsed.error.flatten().fieldErrors }, { status: 400 });
         }
 
-        const { displayName, username, avatarUrl, coverUrl, bio, phoneNumber, address, city, state } = parsed.data;
+        const { displayName, username, avatarUrl, coverUrl, bio, phoneNumber, address, city, state, country } = parsed.data;
 
         // Username uniqueness check
         if (username) {
@@ -97,6 +98,7 @@ export async function PATCH(req: Request) {
                 ...(address !== undefined && { address }),
                 ...(city !== undefined && { city }),
                 ...(state !== undefined && { state }),
+                ...(country !== undefined && { country }),
             },
             select: { id: true, displayName: true, username: true, avatarUrl: true }
         });

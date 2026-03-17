@@ -144,12 +144,6 @@
 }
 
 /* Hamburger button — mobile only */
-@media (min-width: 768px) {
-    .hamburger {
-        display: none;
-    }
-}
-
 .hamburger {
     width: 40px;
     height: 40px;
@@ -163,6 +157,12 @@
     cursor: pointer;
     position: relative;
     transition: background 0.15s;
+}
+
+@media (min-width: 640px) {
+    .hamburger {
+        display: none;
+    }
 }
 
 .hamburger:hover {

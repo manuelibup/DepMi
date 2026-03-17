@@ -73,7 +73,13 @@
       "Bash(sed -i \"s/\\\\[Lead Engineer&rsquo;s WhatsApp Number\\\\]/___________________________/g\" DepMi_LeadEngineer_Agreement.html)",
       "Bash(sed -i \"s/\\\\[Lead Engineer&rsquo;s Gmail Address\\\\]/___________________________/g\" DepMi_LeadEngineer_Agreement.html)",
       "Bash(cat \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/about/page.tsx\")",
-      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/\")"
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/\")",
+      "Bash(npx ts-node --project tsconfig.json scripts/clear-test-orders.ts)",
+      "Bash(xargs grep -l \"checkout\\\\|Checkout\")",
+      "Bash(xargs grep -l \"onboarding\")",
+      "Bash(xargs grep -l \"videoUrl\\\\|deliveryFee\\\\|isFeatured\\\\|stock\\\\|categoryOther\")",
+      "Bash(npm install sonner)",
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/blog/how-to-sell-safely-on-whatsapp-nigeria/\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

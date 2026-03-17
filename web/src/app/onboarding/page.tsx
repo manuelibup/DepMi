@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import CloudinaryUploader from '@/components/CloudinaryUploader';
 import styles from './page.module.css';
 
 type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
-type Step = 1 | 2 | 3;
+type Step = 0 | 1 | 2 | 3 | 4 | 'done';
 
 interface SuggestedUser {
     id: string;
@@ -36,6 +37,7 @@ const INTEREST_OPTIONS = [
 ];
 
 const MIN_INTERESTS = 3;
+const MIN_FOLLOWS = 7;
 
 export default function OnboardingPage() {
     const { data: session, status, update } = useSession();
@@ -44,11 +46,12 @@ export default function OnboardingPage() {
     const searchParams = useSearchParams();
     const isRepair = searchParams.get('repair') === '1';
 
-    const [step, setStep] = useState<Step>(1);
+    const [step, setStep] = useState<Step>(isRepair ? 1 : 0);
 
     // ── Step 1 state ──
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState('');
     const [step1Loading, setStep1Loading] = useState(false);
     const [step1Error, setStep1Error] = useState('');
     const [checkState, setCheckState] = useState<CheckState>('idle');
@@ -61,12 +64,18 @@ export default function OnboardingPage() {
     const [followLoading, setFollowLoading] = useState<Set<string>>(new Set());
     const [step2Fetched, setStep2Fetched] = useState(false);
 
-    // ── Step 3 state ──
-    const [interests, setInterests] = useState<Set<string>>(new Set());
+    // ── Step 3 (location) state ──
+    const [city, setCity] = useState('');
+    const [locationState, setLocationState] = useState('');
+    const [country, setCountry] = useState('');
     const [step3Loading, setStep3Loading] = useState(false);
-    const [step3Error, setStep3Error] = useState('');
 
-    const minFollows = Math.min(10, suggestedUsers.length);
+    // ── Step 4 (interests) state ──
+    const [interests, setInterests] = useState<Set<string>>(new Set());
+    const [step4Loading, setStep4Loading] = useState(false);
+    const [step4Error, setStep4Error] = useState('');
+
+    const minFollows = Math.min(MIN_FOLLOWS, suggestedUsers.length);
 
     // ── Redirect guard ──
     useEffect(() => {
@@ -137,10 +146,13 @@ export default function OnboardingPage() {
         setStep1Error('');
 
         try {
+            const body: Record<string, string> = { username, displayName };
+            if (avatarUrl) body.avatarUrl = avatarUrl;
+
             const res = await fetch('/api/user/onboarding', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, displayName }),
+                body: JSON.stringify(body),
             });
 
             const data = await res.json();
@@ -153,11 +165,9 @@ export default function OnboardingPage() {
                 throw new Error(data.message || 'Failed to save username');
             }
 
-            // Update JWT with new username before moving on
             await update({ username, name: displayName });
 
             if (isRepair) {
-                // Repair flow: just complete onboarding and go home
                 await fetch('/api/user/complete-onboarding', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -208,7 +218,28 @@ export default function OnboardingPage() {
         }
     };
 
-    // ── Step 3: toggle interests ──
+    // ── Step 3 (location) submit ──
+    const handleStep3Submit = async () => {
+        setStep3Loading(true);
+        try {
+            await fetch('/api/user/update', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...(city.trim() && { city: city.trim() }),
+                    ...(locationState.trim() && { state: locationState.trim() }),
+                    ...(country.trim() && { country: country.trim() }),
+                }),
+            });
+        } catch {
+            // non-blocking
+        } finally {
+            setStep3Loading(false);
+        }
+        setStep(4);
+    };
+
+    // ── Step 4: toggle interests ──
     const toggleInterest = (value: string) => {
         setInterests(prev => {
             const next = new Set(prev);
@@ -218,11 +249,11 @@ export default function OnboardingPage() {
         });
     };
 
-    // ── Step 3 submit (complete onboarding) ──
+    // ── Step 4 submit (complete onboarding) ──
     const handleFinish = async () => {
         if (interests.size < MIN_INTERESTS) return;
-        setStep3Loading(true);
-        setStep3Error('');
+        setStep4Loading(true);
+        setStep4Error('');
 
         try {
             const res = await fetch('/api/user/complete-onboarding', {
@@ -234,12 +265,11 @@ export default function OnboardingPage() {
             if (!res.ok) throw new Error('Failed to complete onboarding');
 
             await update({ onboardingComplete: true });
-            router.push('/');
-            router.refresh();
+            setStep('done');
         } catch (e: unknown) {
-            setStep3Error(e instanceof Error ? e.message : 'Something went wrong');
+            setStep4Error(e instanceof Error ? e.message : 'Something went wrong');
         } finally {
-            setStep3Loading(false);
+            setStep4Loading(false);
         }
     };
 
@@ -273,25 +303,115 @@ export default function OnboardingPage() {
     const canProceedStep2 = followedIds.size >= minFollows || suggestedUsers.length === 0;
     const canFinish = interests.size >= MIN_INTERESTS;
 
+    // ── STEP 0: Welcome screen ──
+    if (step === 0) {
+        return (
+            <main className={styles.main}>
+                <div className={styles.bgBlob} />
+                <div className={styles.container}>
+                    <div className={styles.welcomeLogo}>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                    </div>
+                    <div className={styles.header}>
+                        <h1 className={styles.title}>Welcome to DepMi</h1>
+                        <p className={styles.subtitle}>Your social commerce marketplace. Buy, sell, and connect with trusted traders across Africa.</p>
+                    </div>
+                    <div className={styles.valueProps}>
+                        <div className={styles.valueProp}>
+                            <span className={styles.valuePropIcon}>🛡️</span>
+                            <div>
+                                <p className={styles.valuePropTitle}>Escrow Protection</p>
+                                <p className={styles.valuePropDesc}>Your money is held safely until you confirm delivery</p>
+                            </div>
+                        </div>
+                        <div className={styles.valueProp}>
+                            <span className={styles.valuePropIcon}>⭐</span>
+                            <div>
+                                <p className={styles.valuePropTitle}>Trusted Sellers</p>
+                                <p className={styles.valuePropDesc}>Verified stores with real reviews and Dep ratings</p>
+                            </div>
+                        </div>
+                        <div className={styles.valueProp}>
+                            <span className={styles.valuePropIcon}>🌍</span>
+                            <div>
+                                <p className={styles.valuePropTitle}>Made for Africa</p>
+                                <p className={styles.valuePropDesc}>Local and nationwide delivery, Naira payments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.submitBtn}
+                        onClick={() => setStep(1)}
+                    >
+                        Get Started
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14m-7-7 7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </main>
+        );
+    }
+
+    // ── DONE screen ──
+    if (step === 'done') {
+        return (
+            <main className={styles.main}>
+                <div className={styles.bgBlob} />
+                <div className={styles.container}>
+                    <div className={styles.doneIcon}>🎉</div>
+                    <div className={styles.header}>
+                        <h1 className={styles.title}>You&apos;re in!</h1>
+                        <p className={styles.subtitle}>Your DepMi account is ready. Explore the marketplace or post your first request.</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <button
+                            type="button"
+                            className={styles.submitBtn}
+                            onClick={() => { router.push('/'); router.refresh(); }}
+                        >
+                            Explore the Feed
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.ghostBtn}
+                            onClick={() => { router.push('/demand/new'); router.refresh(); }}
+                        >
+                            Post a Request
+                        </button>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
     return (
         <main className={styles.main}>
             <div className={styles.bgBlob} />
 
             <div className={styles.container} style={step === 2 ? { maxWidth: 520 } : undefined}>
 
-                {/* Step indicator (only for fresh onboarding) */}
+                {/* Step indicator — steps 1–4 only, not repair */}
                 {!isRepair && (
                     <div className={styles.stepIndicator}>
-                        {([1, 2, 3] as Step[]).map(s => (
+                        {([1, 2, 3, 4] as (1|2|3|4)[]).map(s => (
                             <div
                                 key={s}
-                                className={`${styles.stepDot} ${step === s ? styles.stepDotActive : ''} ${step > s ? styles.stepDotDone : ''}`}
+                                className={`${styles.stepDot} ${step === s ? styles.stepDotActive : ''} ${(step as number) > s ? styles.stepDotDone : ''}`}
                             />
                         ))}
                     </div>
                 )}
 
-                {/* ── STEP 1: Username + display name ── */}
+                {/* ── STEP 1: Profile ── */}
                 {step === 1 && (
                     <>
                         <div className={styles.header}>
@@ -299,7 +419,7 @@ export default function OnboardingPage() {
                             <p className={styles.subtitle}>
                                 {isRepair
                                     ? 'Your current username contains spaces, which is no longer supported. Please choose a new handle.'
-                                    : 'Choose a unique username to start discovery on DepMi.'}
+                                    : 'Add your photo, name, and a unique username.'}
                             </p>
                         </div>
 
@@ -318,7 +438,7 @@ export default function OnboardingPage() {
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--primary)' }}>
                                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
                                 </svg>
-                                <span>We've suggested a cleaned version for you below.</span>
+                                <span>We&apos;ve suggested a cleaned version for you below.</span>
                             </div>
                         )}
 
@@ -328,6 +448,33 @@ export default function OnboardingPage() {
                                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                                 </svg>
                                 {step1Error}
+                            </div>
+                        )}
+
+                        {/* Avatar upload */}
+                        {!isRepair && (
+                            <div className={styles.avatarUploadRow}>
+                                <div className={styles.avatarPreview}>
+                                    {avatarUrl ? (
+                                        <Image src={avatarUrl} alt="Your avatar" fill style={{ objectFit: 'cover' }} sizes="72px" />
+                                    ) : (
+                                        <span style={{ fontSize: '1.75rem' }}>
+                                            {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+                                        </span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <p style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Profile photo</p>
+                                    <CloudinaryUploader
+                                        accept="image/*"
+                                        maxSizeMB={5}
+                                        buttonText={avatarUrl ? 'Change photo' : 'Upload photo'}
+                                        cropAspectRatio={1}
+                                        cropTitle="Crop your profile photo"
+                                        onUploadSuccess={(result) => setAvatarUrl(result.secure_url)}
+                                    />
+                                    <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Optional · JPG or PNG</p>
+                                </div>
                             </div>
                         )}
 
@@ -408,17 +555,16 @@ export default function OnboardingPage() {
                             <p className={styles.subtitle}>
                                 {suggestedUsers.length === 0
                                     ? 'Loading suggestions...'
-                                    : minFollows > 0
-                                        ? `Follow at least ${minFollows} account${minFollows > 1 ? 's' : ''} to curate your feed.`
-                                        : 'Curate your DepMi feed by following accounts below.'}
+                                    : `Follow at least ${minFollows} account${minFollows !== 1 ? 's' : ''} to grow the community and curate your feed.`}
                             </p>
                         </div>
 
-                        {followedIds.size > 0 && (
-                            <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
-                                {followedIds.size} following{minFollows > 0 ? ` · ${Math.max(0, minFollows - followedIds.size)} more to go` : ''}
-                            </p>
-                        )}
+                        <p style={{ textAlign: 'center', fontSize: '0.85rem', color: followedIds.size >= minFollows ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600 }}>
+                            {followedIds.size} following
+                            {followedIds.size < minFollows
+                                ? ` · ${minFollows - followedIds.size} more to go`
+                                : ' · Ready to continue!'}
+                        </p>
 
                         <div className={styles.userGrid}>
                             {suggestedUsers.map(user => {
@@ -458,43 +604,103 @@ export default function OnboardingPage() {
                             )}
                         </div>
 
-                        <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            type="button"
+                            className={styles.submitBtn}
+                            onClick={() => setStep(3)}
+                            disabled={!canProceedStep2}
+                        >
+                            Continue
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </button>
+                    </>
+                )}
+
+                {/* ── STEP 3: Location ── */}
+                {step === 3 && (
+                    <>
+                        <div className={styles.header}>
+                            <h1 className={styles.title}>Where are you based?</h1>
+                            <p className={styles.subtitle}>
+                                Help us show you relevant products and sellers near you.
+                            </p>
+                        </div>
+
+                        <div className={styles.form}>
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.label}>City</label>
+                                <div className={styles.inputWrapper}>
+                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="e.g. Lagos"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.label}>State / Region</label>
+                                <div className={styles.inputWrapper}>
+                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="e.g. Lagos State"
+                                        value={locationState}
+                                        onChange={(e) => setLocationState(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className={styles.fieldGroup}>
+                                <label className={styles.label}>Country</label>
+                                <div className={styles.inputWrapper}>
+                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="e.g. Nigeria"
+                                        value={country}
+                                        onChange={(e) => setCountry(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
                             <button
                                 type="button"
                                 className={styles.submitBtn}
-                                onClick={() => setStep(3)}
-                                disabled={!canProceedStep2}
-                                style={{ flex: 1 }}
+                                onClick={handleStep3Submit}
+                                disabled={step3Loading}
                             >
-                                Continue
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M5 12h14m-7-7 7 7-7 7" />
-                                </svg>
+                                {step3Loading ? 'Saving...' : 'Continue'}
+                                {!step3Loading && (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M5 12h14m-7-7 7 7-7 7" />
+                                    </svg>
+                                )}
                             </button>
-                            {suggestedUsers.length > 0 && followedIds.size < minFollows && (
-                                <button
-                                    type="button"
-                                    onClick={() => setStep(3)}
-                                    style={{
-                                        padding: '0 20px',
-                                        background: 'transparent',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: 'var(--radius-md)',
-                                        color: 'var(--text-muted)',
-                                        cursor: 'pointer',
-                                        fontSize: '0.9rem',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    Skip
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                className={styles.ghostBtn}
+                                onClick={() => setStep(4)}
+                            >
+                                Skip for now
+                            </button>
                         </div>
                     </>
                 )}
 
-                {/* ── STEP 3: Interests ── */}
-                {step === 3 && (
+                {/* ── STEP 4: Interests ── */}
+                {step === 4 && (
                     <>
                         <div className={styles.header}>
                             <h1 className={styles.title}>What are you into?</h1>
@@ -504,12 +710,12 @@ export default function OnboardingPage() {
                             </p>
                         </div>
 
-                        {step3Error && (
+                        {step4Error && (
                             <div className={styles.error}>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                                 </svg>
-                                {step3Error}
+                                {step4Error}
                             </div>
                         )}
 
@@ -534,10 +740,10 @@ export default function OnboardingPage() {
                             type="button"
                             className={styles.submitBtn}
                             onClick={handleFinish}
-                            disabled={!canFinish || step3Loading}
+                            disabled={!canFinish || step4Loading}
                         >
-                            {step3Loading ? 'Setting up your feed...' : 'Finish & Explore DepMi'}
-                            {!step3Loading && (
+                            {step4Loading ? 'Setting up your feed...' : 'Finish & Explore DepMi'}
+                            {!step4Loading && (
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M5 12h14m-7-7 7 7-7 7" />
                                 </svg>

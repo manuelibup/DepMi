@@ -10,6 +10,7 @@ const onboardingSchema = z.object({
         .max(20, "Username must be at most 20 characters")
         .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
     displayName: z.string().min(2, "Display Name must be at least 2 characters").max(50),
+    avatarUrl: z.string().url().optional(),
 });
 
 export async function POST(req: Request) {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { username, displayName } = onboardingSchema.parse(body);
+        const { username, displayName, avatarUrl } = onboardingSchema.parse(body);
 
         // Check if username is already taken by someone else
         const existingUser = await prisma.user.findUnique({
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
             data: {
                 username,
                 displayName,
+                ...(avatarUrl && { avatarUrl }),
             },
         });
 

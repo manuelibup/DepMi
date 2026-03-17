@@ -1,0 +1,21 @@
+# Legal & contracts — never leave this machine
+*_Agreement*
+*_Contract*
+*_NDA*
+*_MOU*
+DepMi_CTO_Agreement_files/
+
+# Microsoft Office temp/lock files
+~$*
+
+# Environment & secrets
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups (contain PII)
+web/backups/

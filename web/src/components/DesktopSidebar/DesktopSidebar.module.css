@@ -314,6 +314,34 @@
     color: var(--text-muted);
 }
 
+/* Footer links — only shown at full sidebar width */
+.footerLinks {
+    display: none;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 16px;
+    padding: 12px 4px 0;
+    border-top: 1px solid var(--card-border);
+}
+
+@media (min-width: 1024px) {
+    .footerLinks {
+        display: flex;
+    }
+}
+
+.footerLink {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.footerLink:hover {
+    color: var(--text-main);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
