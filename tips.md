@@ -521,3 +521,14 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   2. Use `process.env.RESEND_FROM_EMAIL` instead of hardcoding the sender address — makes it easy to swap to `onboarding@resend.dev` for testing before domain verification.
   3. Verify your domain in the Resend dashboard by adding DNS TXT + MX records. Until then, use `onboarding@resend.dev` as the `from` address in dev/staging.
 - **Bonus**: Termii SMS responses were also not being checked. Always check HTTP response status for third-party delivery APIs — they return 4xx on failure but the call itself doesn't throw.
+
+---
+
+## 🔌 43. Neon P1017 — "Server has closed the connection" on `db:push`
+
+*Added after a timeout during `npm run db:push` on Session 63.*
+
+- **The Issue**: `npm run db:push` runs the backup script first, then calls `prisma db push`. On a slow network or right after Neon wakes from cold start, the DB connection can timeout between the backup completing and the push starting — resulting in `Error: P1017 — Server has closed the connection`.
+- **The Fix**: Since the backup script already ran successfully, it's safe to retry `npx prisma db push` directly without re-running the backup.
+- **What to check**: Run `npx prisma db push` alone. If you see "already in sync", the migration either applied on retry or was already done. If you see actual schema changes being applied, you're good.
+- **Prevention**: If `npm run db:push` consistently fails at P1017, open Prisma Studio or ping Neon via the dashboard first to wake the instance, then re-run.

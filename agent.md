@@ -219,6 +219,16 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **Bookstore Importer** (`/store/[slug]/products/import`): ISBN lookup (Open Library + Google Books), AI catalog parse (Claude Haiku via `/api/catalog/ai-parse`), bulk create via `/api/catalog/import`. Merges and supersedes the older `/store/[slug]/ai-import` and `/store/[slug]/import` pages.
 *   **DAU Tracking**: `ActivityPing` client component fires on mount → `POST /api/activity/ping` → updates `User.lastActiveAt` (rate-limited to once/hour).
 
+### **Session 63 Extensions (Mar 17, 2026)** ✅ *Complete.*
+*   **Onboarding Flow** (5 steps + welcome/done screens): Step 0 = branded Welcome (value props, skipped on repair); Step 1 = Profile (username + display name + **avatar upload via Cloudinary**); Step 2 = Follow (min 7, no skip); Step 3 = **Location** (city/state/country, skippable); Step 4 = Interests. Ends on "You're in!" done screen with two CTAs.
+*   **Suggested Users**: SUPER_ADMIN always pinned first; remaining users Fisher-Yates shuffled before returning top 30.
+*   **Product Recommendations**: "You might also like" section on product detail pages — same category, different store, in-stock, limit 6, ordered by `viewCount` desc.
+*   **SEO — Structured Data**: JSON-LD `Product` schema on `/p/[id]` pages (price, availability, seller, aggregateRating). JSON-LD `Article` schema on all blog posts.
+*   **SEO — Blog Content**: Two new high-intent articles: "How to Start an Online Store in Nigeria for Free" + "How to Buy Safely Online in Nigeria". Shared `article.module.css`. All blog CTAs point to `/` (landing page) not `/register`.
+*   **Sitemap**: Products use `slug ?? id` in URLs. 3 blog entries added.
+*   **Image Carousels**: `ProductImageGallery` upgraded from thumbnail strip to swipe carousel (arrows, dot indicators, counter badge). New `DemandMediaCarousel` component unifies video + image on request detail pages.
+*   **Skeleton/Loading**: Shimmer animation fixed (proper linear-gradient). `loading.tsx` now shows branded green icon + "Curating your feed…" above skeleton cards.
+
 ### **Phase 4: Social Connectivity (Week 7)** ✅ *Complete.*
 *   **W7: Interactions & Retention:** Establish the social feedback loops that drive daily active usage (DAU).
     - **Direct Messaging (DMs):** Real-time buyer-to-vendor communication (`/messages`). Polling-based or WebSocket chat interface with optimistic UI updates.
@@ -230,7 +240,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), and shipping fields (`address`, `city`, `state`) to reduce checkout friction.
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).
@@ -467,7 +477,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), and shipping fields (`address`, `city`, `state`) to reduce checkout friction.
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).

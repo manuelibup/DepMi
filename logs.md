@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 64 — Mar 17, 2026 — UX Polish: Carousels, Bid Replies, Nav Sync & Toast Notifications](#session-64--mar-17-2026--ux-polish-carousels-bid-replies-nav-sync--toast-notifications)
 - [Session 63 — Mar 17, 2026 — Growth & SEO Sprint (Blog, Sitemap, Search Console)](#session-63--mar-17-2026--growth--seo-sprint-blog-sitemap-search-console)
 - [Session 62 — Mar 16, 2026 — Feed Sort Pills, DemandCardGrid, Landing Page Overhaul & Mobile Sidebar](#session-62--mar-16-2026--feed-sort-pills-demandcardgrid-landing-page-overhaul--mobile-sidebar)
 - [Session 61 — Mar 15, 2026 — Unique View Tracking & Admin Dashboard Overhaul](#session-61--mar-15-2026--unique-view-tracking--admin-dashboard-overhaul)
@@ -46,6 +47,30 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 64 — Mar 17, 2026 — UX Polish: Carousels, Bid Replies, Nav Sync & Toast Notifications
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+- **Toast notifications (Sonner):** Replaced all inline success/error banners across 7 forms (settings, store settings, payout, create product, demand form, store profile). `<Toaster>` added to root layout.
+- **JWT username revert fix:** `updateSession()` now passes `{ username, name, picture }` directly so the JWT callback merges them without a DB roundtrip race.
+- **Prisma Decimal build fix:** `store.localDeliveryFee` and `nationwideDeliveryFee` serialized with `Number()` before passing to client component (fixes Vercel TypeScript build).
+- **Hamburger CSS cascade fix:** `.hamburger { display: flex }` was declared after the `@media (min-width: 640px) { display: none }` rule, overriding it at all widths. Fixed ordering. Breakpoint changed from 768px → 640px to match when `DesktopSidebar` appears.
+- **DesktopSidebar nav sync:** Added Search, Settings, Help & Support (were in MobileSidebar only). Added footer links: About, Help Center, Terms, Privacy, Blog, Careers (shown at ≥1024px).
+- **MobileSidebar footer:** Added Help Center, Blog, Careers alongside existing About/Terms/Privacy.
+- **Media carousels:** Replaced ProductImageGallery thumbnail strip with `< >` arrows, dot indicators, counter badge, and swipe-to-navigate. New `DemandMediaCarousel` component unifies video + images into one carousel with same nav + swipe. `ProductVideoPlayer` removed (video now first slide in gallery).
+- **Bid reply threads (schema change):** Added `bidId String?` to Comment + `replies Comment[] @relation("BidReplies")` to Bid. DB pushed. New API `POST /api/bids/[bidId]/replies` with notifications to bid owner and demand poster. Inline reply section under each bid card in the Bids tab — accordion expand/collapse, reply list, mini reply form. "Ask" button replaced by inline thread toggle. Discussion tab preserved for general conversation.
+
+### Schema Changes
+- `Comment`: added `bidId String?`, `bid Bid? @relation("BidReplies")`, `@@index([bidId])`
+- `Bid`: added `replies Comment[] @relation("BidReplies")`
+- Pushed with `npm run db:push` (auto-backup ran)
+
+### Known: Restart Dev Server
+After this session, restart the dev server to pick up the Prisma generate (DLL was locked during generate).
 
 ---
 
@@ -2608,3 +2633,82 @@ Continuing from a prior context-window that built the full admin dashboard (Sess
 
 ### Outcome
 Fee waiver live for new sellers. Orders page redesigned with proper PC layout. Bookstore importer ready for Dara. OTP delivery now fails with actionable error messages instead of silent 500s.
+
+---
+
+## Session 63 — Mar 17, 2026 — Onboarding Overhaul, SEO, Carousels & Content Marketing
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Context
+Continuing from Sessions 59–62 (context-window boundary). Picked up pending feature backlog.
+
+### What was done
+
+#### Suggested Users Fix
+- **`/api/user/suggested/route.ts`**: SUPER_ADMIN (Manuel) is always pinned first in onboarding follow suggestions. Remaining users are Fisher-Yates shuffled before returning up to 30.
+
+#### Onboarding Overhaul (`/onboarding/page.tsx`)
+- **Step type** extended to `0 | 1 | 2 | 3 | 4 | 'done'`
+- **Step 0 (Welcome screen)**: New branded welcome with 3 value props (Escrow, Trusted Sellers, Made for Africa). Skipped on repair flow (`isRepair = true`).
+- **Step 1 (Profile)**: Added CloudinaryUploader avatar upload (`cropAspectRatio={1}`). Saves `avatarUrl` via `/api/user/onboarding`.
+- **Step 2 (Follow)**: Minimum raised to 7 (hard). Skip button removed. Progress counter shown.
+- **Step 3 (Location)**: New step — city / state / country inputs. Saves via `PATCH /api/user/update`. Skippable.
+- **Step 4 (Interests)**: Renamed from step 3. Same logic.
+- **Done screen**: "You're in!" with `bounceIn` animation + two CTAs: "Explore the Feed" + "Post a Request".
+- **Step dots**: Now 4 dots for steps 1–4.
+- **CSS additions**: `.welcomeLogo`, `.valueProps`, `.valueProp`, `.doneIcon` (bounceIn keyframe), `.ghostBtn`, `.avatarUploadRow`, `.avatarPreview`.
+
+#### Schema Change — `country` on User
+- Added `country String?` to User model in `schema.prisma`.
+- Added `country` to Zod schema in `/api/user/update/route.ts` and `/api/user/onboarding/route.ts`.
+- `npm run db:push` → backup completed, P1017 timeout on first attempt → retried `npx prisma db push` directly (backup already done) → "already in sync" (field was applied previously). `npx prisma generate` re-ran successfully.
+
+#### Product Recommendations
+- **`/app/p/[id]/page.tsx`**: Added "You might also like" section — same category, different store, in-stock, limit 6, ordered by `viewCount` desc. Rendered below comments.
+- **CSS**: `.fullWidthSection`, `.recoGrid` (2-col mobile / 6-col desktop), `.recoCard`, `.recoImg`, `.recoInfo`, `.recoTitle`, `.recoStore`, `.recoPrice`.
+
+#### SEO Improvements
+- **JSON-LD Product schema** on `/app/p/[id]/page.tsx`: `Product` type with price, availability (InStock/OutOfStock), seller Organization, optional `aggregateRating` if store has reviews.
+- **JSON-LD Article schema** on all blog posts: Added to WhatsApp article (existing) + both new articles.
+- **Sitemap** (`/app/sitemap.ts`): Products now use `product.slug ?? product.id` in URLs. Added 3 blog post entries (priority 0.85/0.8).
+
+#### New Blog Posts
+- **`/blog/how-to-start-an-online-store-in-nigeria`**: 5 min read, target keyword "how to start online store Nigeria". Steps: choose product → create store → add products → payments → share. CTA → `/`.
+- **`/blog/how-to-buy-safely-online-nigeria`**: 4 min read, target keyword "buy online Nigeria safe". Covers: common scams, escrow rule, red flags, dispute process. CTA → `/`.
+- **Shared CSS**: `web/src/app/(static)/blog/article.module.css` — single file used by both new articles.
+- **Blog index** (`/blog/page.tsx`): Added both new posts to the `posts` array.
+- **Blog CTAs**: All three articles changed from `href="/register"` → `href="/"` — users land on the full trust-building landing page first.
+
+#### Image Gallery Upgrades
+- **`ProductImageGallery.tsx`**: Replaced scrollable thumbnail strip with swipe-style carousel — prev/next arrow buttons (frosted glass), animated dot indicators (active dot expands), counter badge (e.g. "2 / 4"). No-image state now has a background fill.
+- **`DemandMediaCarousel.tsx`** (new): Unified video + image carousel for request detail pages. Unified media list (video first), same arrow/dot/counter UX, 16:9 aspect ratio.
+- **`requests/[id]/page.tsx`**: Replaced old static gallery with `<DemandMediaCarousel>`.
+- **`RequestDetail.module.css`**: Removed old `.videoPlayer`, `.imageGallery`, `.galleryItem` CSS.
+
+#### Loading & Skeleton UX
+- **`Skeleton.module.css`**: Fixed broken shimmer — was a flat `var(--card-border)` with no visible animation. Now a proper `linear-gradient(90deg, ...)` with `background-size: 800px` and 1.6s animation.
+- **`loading.tsx`**: Added branded loading indicator above skeleton cards — green gradient circle with shopping bag icon + "Curating your feed…" caption.
+
+#### Sidebar Footer
+- **`MobileSidebar/index.tsx`**: Added Help Center, Blog, and Careers links to footer.
+
+### Schema changes
+- `User.country String?` — added and pushed.
+
+### Validations
+- ✅ `npx prisma db push` — schema in sync (field previously applied or applied this session).
+- ✅ `npx prisma generate` — client regenerated.
+- ✅ All changes committed and pushed to `origin/main`.
+
+### Commits
+- `a62da9d` — chore: commit all pending changes (bulk mid-session commit)
+- `c78dd48` — feat: add blog article screenshots
+- `3c4e9f0` — feat: upgrade image carousels and expand sidebar footer links
+
+### Pending / Next actions
+- Restart dev server after `prisma generate` (Turbopack cache).
+- Verify `depmi.com` domain in Resend dashboard for OTP emails in production.
+- Course/digital product selling (Selar-style, 48h escrow) — still pending.
+- Username revert fix (JWT race condition) — still pending.
+- Sponsored/bidded product placement — deferred.
