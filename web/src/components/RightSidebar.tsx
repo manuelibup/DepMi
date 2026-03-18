@@ -2,51 +2,65 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
 import styles from './RightSidebar.module.css';
 
-async function getOpenDemands() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (prisma.demand as any).findMany({
-        where: { isActive: true },
-        orderBy: [{ createdAt: 'desc' }],
-        take: 5,
-        select: {
-            id: true,
-            text: true,
-            budget: true,
-            budgetMin: true,
-            location: true,
-            category: true,
-            user: { select: { displayName: true, avatarUrl: true } },
-            _count: { select: { bids: true } },
-        },
-    });
-}
-
-async function getPlatformStats() {
-    const [users, stores, products] = await Promise.all([
-        prisma.user.count(),
-        prisma.store.count({ where: { isActive: true } }),
+// Cache for 5 minutes — sidebar data doesn't need to be real-time
+const getOpenDemands = unstable_cache(
+    async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (prisma.product as any).count({ where: { stock: { gt: 0 } } }),
-    ]);
-    return { users, stores, products };
-}
+        return (prisma.demand as any).findMany({
+            where: { isActive: true },
+            orderBy: [{ createdAt: 'desc' }],
+            take: 5,
+            select: {
+                id: true,
+                text: true,
+                budget: true,
+                budgetMin: true,
+                location: true,
+                category: true,
+                user: { select: { displayName: true, avatarUrl: true } },
+                _count: { select: { bids: true } },
+            },
+        });
+    },
+    ['sidebar-demands'],
+    { revalidate: 300 },
+);
 
-async function getSuggestedStores() {
-    return prisma.store.findMany({
-        where: { isActive: true },
-        orderBy: { depCount: 'desc' },
-        take: 4,
-        select: { id: true, name: true, slug: true, logoUrl: true, depCount: true, depTier: true },
-    });
-}
+const getPlatformStats = unstable_cache(
+    async () => {
+        const [users, stores, products] = await Promise.all([
+            prisma.user.count(),
+            prisma.store.count({ where: { isActive: true } }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (prisma.product as any).count({ where: { stock: { gt: 0 } } }),
+        ]);
+        return { users, stores, products };
+    },
+    ['platform-stats'],
+    { revalidate: 300 },
+);
+
+const getSuggestedStores = unstable_cache(
+    async () => {
+        return prisma.store.findMany({
+            where: { isActive: true },
+            orderBy: { depCount: 'desc' },
+            take: 4,
+            select: { id: true, name: true, slug: true, logoUrl: true, depCount: true, depTier: true },
+        });
+    },
+    ['sidebar-top-stores'],
+    { revalidate: 300 },
+);
 
 const TIER_COLOR: Record<string, string> = {
     SEEDLING: '#aaa',
     RISING: '#FFD700',
     TRUSTED: '#FF6B35',
-    ELITE: '#00C853',
+    ELITE: '#059669',
     LEGEND: '#A855F7',
 };
 

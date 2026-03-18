@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
 import styles from './page.module.css';
 
 import WaitlistHome from '@/components/WaitlistHome';
@@ -29,12 +30,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   if (!session) {
     let stats = { users: 0, stores: 0, listings: 0 };
     try {
-      const [userCount, storeCount, listingCount] = await Promise.all([
-        prisma.user.count(),
-        prisma.store.count({ where: { isActive: true } }),
-        prisma.product.count({ where: { inStock: true } }),
-      ]);
-      stats = { users: userCount, stores: storeCount, listings: listingCount };
+      const getLandingStats = unstable_cache(
+        async () => {
+          const [userCount, storeCount, listingCount] = await Promise.all([
+            prisma.user.count(),
+            prisma.store.count({ where: { isActive: true } }),
+            prisma.product.count({ where: { inStock: true } }),
+          ]);
+          return { users: userCount, stores: storeCount, listings: listingCount };
+        },
+        ['platform-stats'],
+        { revalidate: 300 },
+      );
+      stats = await getLandingStats();
     } catch { /* DB unavailable — show landing page with zero stats */ }
     return <LandingPage stats={stats} />;
   }
