@@ -69,7 +69,7 @@ export default function Error({
                     <button
                         onClick={() => window.location.reload()}
                         style={{
-                            background: 'var(--primary, #00C853)',
+                            background: 'var(--primary, #059669)',
                             color: '#000',
                             border: 'none',
                             padding: '12px 28px',

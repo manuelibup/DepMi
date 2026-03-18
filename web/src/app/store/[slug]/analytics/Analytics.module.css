@@ -55,6 +55,64 @@
     flex-shrink: 0;
 }
 
+/* ─── Fee waiver banner ──────────────── */
+.feeWaiver {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 16px 0;
+    padding: 12px 16px;
+    background: rgba(5, 150, 105, 0.08);
+    border: 1px solid rgba(5, 150, 105, 0.25);
+    border-radius: 14px;
+}
+
+.feeWaiverIcon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.feeWaiverTitle {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.feeWaiverSub {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+/* ─── Period filter ──────────────────── */
+.periodRow {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px 4px;
+}
+
+.periodBtn {
+    flex: 1;
+    text-align: center;
+    padding: 7px 0;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--text-muted);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.periodActive {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: rgba(5, 150, 105, 0.08);
+}
+
 /* ─── KPI Grid ───────────────────────── */
 .kpiGrid {
     display: grid;
