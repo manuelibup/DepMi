@@ -26,7 +26,7 @@ export default function Loading() {
                         width: 44,
                         height: 44,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
+                        background: 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

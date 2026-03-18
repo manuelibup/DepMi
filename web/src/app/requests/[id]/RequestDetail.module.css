@@ -199,7 +199,7 @@
 }
 
 .tabBadgeActive {
-    background: rgba(0, 200, 83, 0.12);
+    background: rgba(5, 150, 105, 0.12);
     color: var(--primary);
 }
 
@@ -471,7 +471,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, #00E676 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #34d399 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -518,9 +518,9 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: rgba(0, 200, 83, 0.1);
+    background: rgba(5, 150, 105, 0.1);
     color: var(--primary);
-    border: 1px solid rgba(0, 200, 83, 0.25);
+    border: 1px solid rgba(5, 150, 105, 0.25);
     border-radius: 6px;
     padding: 1px 7px 1px 5px;
     font-size: 0.8rem;
@@ -530,7 +530,7 @@
 }
 
 .productMention:hover {
-    background: rgba(0, 200, 83, 0.18);
+    background: rgba(5, 150, 105, 0.18);
 }
 
 /* Inline user mention */
@@ -714,7 +714,7 @@
 }
 
 .pickerItem:hover {
-    background: rgba(0, 200, 83, 0.08);
+    background: rgba(5, 150, 105, 0.08);
 }
 
 .pickerTitle {
@@ -889,7 +889,7 @@
 .bidAskBtn:hover {
     color: var(--primary);
     border-color: var(--primary);
-    background: rgba(0, 200, 83, 0.06);
+    background: rgba(5, 150, 105, 0.06);
 }
 
 .bidMsgBtn:hover {

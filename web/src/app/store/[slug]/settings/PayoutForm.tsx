@@ -208,8 +208,8 @@ export default function PayoutForm({ slug, initial }: Props) {
             {/* Account name (auto-resolved) */}
             <div style={{
                 minHeight: '44px',
-                background: accountName ? 'rgba(0,200,83,0.06)' : 'var(--bg-elevated)',
-                border: `1px solid ${accountName ? 'rgba(0,200,83,0.25)' : 'var(--card-border)'}`,
+                background: accountName ? 'rgba(5,150,105,0.06)' : 'var(--bg-elevated)',
+                border: `1px solid ${accountName ? 'rgba(5,150,105,0.25)' : 'var(--card-border)'}`,
                 borderRadius: '12px',
                 padding: '12px 16px',
                 display: 'flex',
@@ -230,7 +230,7 @@ export default function PayoutForm({ slug, initial }: Props) {
                     <span style={{ fontSize: '0.9rem', color: '#e74c3c' }}>{resolveError}</span>
                 ) : accountName ? (
                     <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{accountName}</span>
@@ -249,7 +249,7 @@ export default function PayoutForm({ slug, initial }: Props) {
             )}
 
             {saved && (
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', background: 'rgba(0,200,83,0.08)', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(0,200,83,0.2)' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary)', background: 'rgba(5,150,105,0.08)', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(5,150,105,0.2)' }}>
                     ✓ Payout account saved
                 </p>
             )}

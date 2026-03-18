@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-import { seedDefaultFollows } from "@/lib/auto-follow";
+import { seedDefaultFollows } from "@/lib/autoFollow";
 import { sendWelcomeEmail } from "@/lib/email";
 import { captureReferral } from "@/lib/referral";
 

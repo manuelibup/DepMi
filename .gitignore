@@ -1,9 +1,9 @@
 # Legal & contracts — never leave this machine
 *_Agreement*
+*_Agreement_files/
 *_Contract*
 *_NDA*
 *_MOU*
-DepMi_CTO_Agreement_files/
 
 # Microsoft Office temp/lock files
 ~$*
@@ -16,6 +16,18 @@ DepMi_CTO_Agreement_files/
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Backups (contain PII)
 web/backups/
+
+# Temp / debug / one-off scripts
+docx_output.txt
+*.resolved
+logo_v3_concept.html
+read_docx.py
+stage.sh
+tmp/
+update_docs_vercel.*
+update_logs*.py
+update_session_*.js

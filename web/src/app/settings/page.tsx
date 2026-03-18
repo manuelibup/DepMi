@@ -277,7 +277,7 @@ export default function SettingsPage() {
                                 {coverUrl ? (
                                     <Image src={coverUrl} alt="Cover" fill style={{ objectFit: 'cover' }} sizes="440px" />
                                 ) : (
-                                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <span style={{ fontSize: '0.8rem', color: 'rgba(0,0,0,0.5)', fontWeight: 600 }}>No cover photo</span>
                                     </div>
                                 )}
@@ -448,7 +448,7 @@ export default function SettingsPage() {
                                     <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-main)' }}>{session?.user?.email}</p>
                                 </div>
                                 {emailVerified ? (
-                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(0,200,83,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(5,150,105,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
                                 ) : (
                                     <button
                                         type="button"
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                                     </p>
                                 </div>
                                 {phoneVerified ? (
-                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(0,200,83,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(5,150,105,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
                                 ) : (
                                     <button
                                         type="button"
@@ -538,7 +538,7 @@ export default function SettingsPage() {
                         style={{
                             padding: '16px',
                             borderRadius: '12px',
-                            background: saving ? 'var(--card-border)' : 'linear-gradient(135deg, var(--primary) 0%, #00E676 100%)',
+                            background: saving ? 'var(--card-border)' : 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)',
                             color: saving ? 'var(--text-muted)' : '#000',
                             fontWeight: 700,
                             fontSize: '1rem',

@@ -149,7 +149,7 @@ export default function FeedInfiniteScroll({
                                 borderRadius: 20,
                                 border: '1px solid',
                                 borderColor: sortMode === mode ? 'var(--primary)' : 'var(--card-border)',
-                                background: sortMode === mode ? 'rgba(0,200,83,0.12)' : 'transparent',
+                                background: sortMode === mode ? 'rgba(5,150,105,0.12)' : 'transparent',
                                 color: sortMode === mode ? 'var(--primary)' : 'var(--text-muted)',
                                 fontSize: '0.75rem',
                                 fontWeight: 600,

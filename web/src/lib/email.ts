@@ -23,7 +23,7 @@ function layout(body: string): string {
       <table width="100%" style="max-width:520px;background:#141414;border-radius:16px;border:1px solid #222;overflow:hidden">
         <!-- Header -->
         <tr>
-          <td style="background:linear-gradient(135deg,#00C853 0%,#00E676 100%);padding:28px 32px">
+          <td style="background:linear-gradient(135deg,#059669 0%,#34d399 100%);padding:28px 32px">
             <span style="font-size:1.5rem;font-weight:800;color:#000;letter-spacing:-0.5px">DepMi</span>
           </td>
         </tr>
@@ -32,7 +32,7 @@ function layout(body: string): string {
         <!-- Footer -->
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #222;font-size:0.75rem;color:#555;text-align:center">
-            © ${new Date().getFullYear()} DepMi · <a href="${APP_URL}" style="color:#00C853;text-decoration:none">depmi.com</a>
+            © ${new Date().getFullYear()} DepMi · <a href="${APP_URL}" style="color:#059669;text-decoration:none">depmi.com</a>
           </td>
         </tr>
       </table>
@@ -42,7 +42,7 @@ function layout(body: string): string {
 }
 
 function btn(label: string, href: string): string {
-    return `<a href="${href}" style="display:inline-block;margin-top:24px;padding:14px 28px;background:#00C853;color:#000;font-weight:700;font-size:0.95rem;border-radius:10px;text-decoration:none">${label}</a>`;
+    return `<a href="${href}" style="display:inline-block;margin-top:24px;padding:14px 28px;background:#059669;color:#000;font-weight:700;font-size:0.95rem;border-radius:10px;text-decoration:none">${label}</a>`;
 }
 
 // ─── Welcome email ─────────────────────────────────────────────────────────────
@@ -57,27 +57,27 @@ export async function sendWelcomeEmail(to: string, displayName: string): Promise
             html: layout(`
                 <h2 style="margin:0 0 8px;font-size:1.4rem;color:#fff">Welcome, ${safeName}!</h2>
                 <p style="margin:0 0 24px;color:#aaa;line-height:1.6">
-                    You just joined Africa's marketplace built on <strong style="color:#00C853">trust</strong>.
+                    You just joined Africa's marketplace built on <strong style="color:#059669">trust</strong>.
                     Here's what you can do on DepMi:
                 </p>
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         <td style="padding:14px 16px;background:#1a1a1a;border-radius:10px;margin-bottom:10px">
-                            <span style="color:#00C853;font-weight:700">🔍 Search & discover</span>
+                            <span style="color:#059669;font-weight:700">🔍 Search & discover</span>
                             <p style="margin:4px 0 0;color:#999;font-size:0.875rem">Find products from verified sellers across Nigeria.</p>
                         </td>
                     </tr>
                     <tr><td style="height:10px"></td></tr>
                     <tr>
                         <td style="padding:14px 16px;background:#1a1a1a;border-radius:10px">
-                            <span style="color:#00C853;font-weight:700">📋 Post a request</span>
+                            <span style="color:#059669;font-weight:700">📋 Post a request</span>
                             <p style="margin:4px 0 0;color:#999;font-size:0.875rem">Tell sellers what you need — they come to you with offers.</p>
                         </td>
                     </tr>
                     <tr><td style="height:10px"></td></tr>
                     <tr>
                         <td style="padding:14px 16px;background:#1a1a1a;border-radius:10px">
-                            <span style="color:#00C853;font-weight:700">🏪 Open your store</span>
+                            <span style="color:#059669;font-weight:700">🏪 Open your store</span>
                             <p style="margin:4px 0 0;color:#999;font-size:0.875rem">List products and get paid securely with escrow protection.</p>
                         </td>
                     </tr>
@@ -104,7 +104,7 @@ export async function sendWaitlistConfirmEmail(to: string): Promise<void> {
                     Thanks for joining the DepMi waitlist. We're putting the finishing touches on
                     Africa's most trusted marketplace and you'll be among the first to know when we launch.
                 </p>
-                <div style="padding:16px;background:#1a1a1a;border-radius:10px;border-left:3px solid #00C853">
+                <div style="padding:16px;background:#1a1a1a;border-radius:10px;border-left:3px solid #059669">
                     <p style="margin:0;color:#ccc;font-size:0.9rem">
                         We'll send you a personal invite with early access as soon as we're ready.
                         Keep an eye on this inbox!
@@ -135,9 +135,9 @@ export async function sendWaitlistLaunchEmail(to: string): Promise<void> {
                     You're one of the first. Create your account now and start exploring —
                     search for products, post what you need, or open your own store.
                 </p>
-                <div style="padding:16px;background:#1a1a1a;border-radius:10px;border-left:3px solid #00C853">
+                <div style="padding:16px;background:#1a1a1a;border-radius:10px;border-left:3px solid #059669">
                     <p style="margin:0;color:#ccc;font-size:0.9rem">
-                        <strong style="color:#00C853">Early access perk:</strong> Your account gets a
+                        <strong style="color:#059669">Early access perk:</strong> Your account gets a
                         head-start — be among the first sellers and buyers in your city.
                     </p>
                 </div>

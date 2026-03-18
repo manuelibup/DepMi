@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
 import { generateProductSlug } from '@/lib/slugify';
-import { notifySearchWatchers } from '@/lib/notify-watchers';
+import { notifySearchWatchers } from '@/lib/notifyWatchers';
 
 const productSchema = z.object({
     storeId: z.string().min(1, "Store ID is required"),

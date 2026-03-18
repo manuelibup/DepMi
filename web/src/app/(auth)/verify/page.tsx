@@ -132,7 +132,7 @@ export default function VerifyPhonePage() {
                 )}
 
                 {successMessage && step === 2 && (
-                    <div style={{ padding: '1rem', background: 'rgba(0, 200, 83, 0.1)', color: 'var(--primary)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', border: '1px solid var(--primary)', marginBottom: '1.5rem' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--primary)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', border: '1px solid var(--primary)', marginBottom: '1.5rem' }}>
                         {successMessage}
                     </div>
                 )}

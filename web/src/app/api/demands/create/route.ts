@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
-import { notifyStoreOwnersOfDemand } from '@/lib/notify-watchers';
+import { notifyStoreOwnersOfDemand } from '@/lib/notifyWatchers';
 
 const demandSchema = z.object({
     text: z.string().min(10, "Request must be at least 10 characters").max(500, "Request is too long"),

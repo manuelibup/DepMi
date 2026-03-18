@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
-import { notifyOrderUpdate } from '@/lib/notify-watchers'
+import { notifyOrderUpdate } from '@/lib/notifyWatchers'
 
 /**
  * Flutterwave payment webhook.

@@ -98,7 +98,7 @@ export default function AnnounceForm() {
                     disabled={sending || !title.trim() || !body.trim()}
                     style={{
                         padding: '11px 28px',
-                        background: '#00C853',
+                        background: '#059669',
                         color: '#fff',
                         border: 'none',
                         borderRadius: 8,
@@ -116,8 +116,8 @@ export default function AnnounceForm() {
                 <p style={{
                     padding: '12px 16px',
                     borderRadius: 8,
-                    background: result.count ? 'rgba(0,200,83,0.08)' : 'rgba(214,48,49,0.08)',
-                    color: result.count ? '#00C853' : '#D63031',
+                    background: result.count ? 'rgba(5,150,105,0.08)' : 'rgba(214,48,49,0.08)',
+                    color: result.count ? '#059669' : '#D63031',
                     fontWeight: 600,
                     fontSize: '0.9rem',
                     margin: 0,

@@ -240,7 +240,7 @@ export default function PayoutSettingsForm({ slug }: Props) {
                                             width: '100%',
                                             textAlign: 'left',
                                             padding: '11px 16px',
-                                            background: formData.bankCode === bank.code ? 'rgba(0,200,83,0.08)' : 'transparent',
+                                            background: formData.bankCode === bank.code ? 'rgba(5,150,105,0.08)' : 'transparent',
                                             border: 'none',
                                             color: formData.bankCode === bank.code ? 'var(--primary)' : 'var(--text-main)',
                                             fontWeight: formData.bankCode === bank.code ? 600 : 400,

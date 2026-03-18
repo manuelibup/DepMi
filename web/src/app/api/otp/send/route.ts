@@ -68,13 +68,13 @@ export async function POST(req: NextRequest) {
                 subject: 'Your DepMi Verification Code',
                 html: `
                     <div style="font-family:sans-serif;max-width:420px;margin:auto;background:#0a0a0a;border:1px solid #222;border-radius:14px;overflow:hidden">
-                        <div style="background:linear-gradient(135deg,#00C853,#00E676);padding:18px 24px">
+                        <div style="background:linear-gradient(135deg,#059669,#34d399);padding:18px 24px">
                             <span style="font-size:1.25rem;font-weight:800;color:#000">DepMi</span>
                         </div>
                         <div style="padding:28px 24px">
                             <h2 style="margin:0 0 8px;color:#fff;font-size:1.2rem">Security Code</h2>
                             <p style="color:#aaa;margin:0 0 20px">Hi ${user.displayName}, use the code below to complete your action. Expires in 10 minutes.</p>
-                            <div style="background:#1a1a1a;border:1px solid #333;padding:20px;text-align:center;font-size:2.5rem;font-weight:900;letter-spacing:12px;border-radius:10px;color:#00C853">
+                            <div style="background:#1a1a1a;border:1px solid #333;padding:20px;text-align:center;font-size:2.5rem;font-weight:900;letter-spacing:12px;border-radius:10px;color:#059669">
                                 ${code}
                             </div>
                             <p style="color:#555;font-size:0.8rem;margin-top:20px">If you didn't request this, please secure your account immediately.</p>

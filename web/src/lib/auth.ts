@@ -5,7 +5,7 @@ import { AuthProvider, Account as PrismaAccount } from "@prisma/client";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
 import { authenticator } from 'otplib';
-import { seedDefaultFollows } from "./auto-follow";
+import { seedDefaultFollows } from "./autoFollow";
 import { sendWelcomeEmail } from "./email";
 
 // Extend NextAuth Session to expose the DB user id on session.user.id

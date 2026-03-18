@@ -74,8 +74,8 @@ export default function NotifPrefsForm({ initial }: { initial: string[] }) {
                                 padding: '6px 14px',
                                 borderRadius: 20,
                                 border: '1.5px solid',
-                                borderColor: active ? 'var(--primary, #00C853)' : 'var(--border-color, rgba(0,0,0,0.12))',
-                                background: active ? 'var(--primary, #00C853)' : 'transparent',
+                                borderColor: active ? 'var(--primary, #059669)' : 'var(--border-color, rgba(0,0,0,0.12))',
+                                background: active ? 'var(--primary, #059669)' : 'transparent',
                                 color: active ? '#fff' : 'var(--text-main)',
                                 fontSize: '0.82rem',
                                 fontWeight: 600,
@@ -95,7 +95,7 @@ export default function NotifPrefsForm({ initial }: { initial: string[] }) {
                     disabled={saving}
                     style={{
                         padding: '10px 24px',
-                        background: 'var(--primary, #00C853)',
+                        background: 'var(--primary, #059669)',
                         color: '#fff',
                         border: 'none',
                         borderRadius: 8,
@@ -108,7 +108,7 @@ export default function NotifPrefsForm({ initial }: { initial: string[] }) {
                     {saving ? 'Saving…' : 'Save Preferences'}
                 </button>
                 {status === 'saved' && (
-                    <span style={{ fontSize: '0.85rem', color: 'var(--primary, #00C853)', fontWeight: 600 }}>Saved!</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--primary, #059669)', fontWeight: 600 }}>Saved!</span>
                 )}
                 {status === 'error' && (
                     <span style={{ fontSize: '0.85rem', color: '#D63031', fontWeight: 600 }}>Failed — try again.</span>

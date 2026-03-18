@@ -79,7 +79,19 @@
       "Bash(xargs grep -l \"onboarding\")",
       "Bash(xargs grep -l \"videoUrl\\\\|deliveryFee\\\\|isFeatured\\\\|stock\\\\|categoryOther\")",
       "Bash(npm install sonner)",
-      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/blog/how-to-sell-safely-on-whatsapp-nigeria/\")"
+      "Bash(ls \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/\\(static\\)/blog/how-to-sell-safely-on-whatsapp-nigeria/\")",
+      "Bash(mv \"Screenshot \\(1065\\).png\" \"screenshot-feed.png\")",
+      "Bash(mv \"Screenshot \\(1066\\).png\" \"screenshot-store.png\")",
+      "Bash(mv \"Screenshot \\(1067\\).png\" \"screenshot-escrow.png\")",
+      "Bash(\"c:/Users/web5Manuel/OneDrive/Documents/DepMi/logs.md\":*)",
+      "Bash(powershell -Command \"\\(Get-Content ''LandingPage.module.css'' -Raw\\) -replace ''#00C853'', ''var\\(--primary\\)'' -replace ''rgba\\\\\\(0, 200, 83, 0\\\\.12\\\\\\)'', ''rgba\\(5, 150, 105, 0.12\\)'' -replace ''rgba\\\\\\(0, 200, 83, 0\\\\.3\\\\\\)'', ''rgba\\(5, 150, 105, 0.3\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.18\\\\\\)'', ''rgba\\(5,150,105,0.18\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.3\\\\\\)'', ''rgba\\(5,150,105,0.3\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.12\\\\\\)'', ''rgba\\(5,150,105,0.12\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.25\\\\\\)'', ''rgba\\(5,150,105,0.25\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.06\\\\\\)'', ''rgba\\(5,150,105,0.06\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.2\\\\\\)'', ''rgba\\(5,150,105,0.2\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.6\\\\\\)'', ''rgba\\(5,150,105,0.6\\)'' -replace ''rgba\\\\\\(0,200,83,0\\\\.4\\\\\\)'', ''rgba\\(5,150,105,0.4\\)'' | Set-Content ''LandingPage.module.css'' -NoNewline\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(cmd /c \"taskkill /F /IM node.exe\")",
+      "Bash(cmd /c \"taskkill /F /IM node.exe && echo done\")",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, Name, CPU\")",
+      "Bash(powershell -Command \"Get-Process node | Stop-Process -Force; Write-Host ''Killed all node processes''\")",
+      "Bash(npx next build)",
+      "Bash(ls -la web/.env*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",
@@ -89,7 +101,8 @@
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\posts\\[id]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\u\\[username]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]\\products",
-      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]"
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\bids\\[bidId]"
     ]
   }
 }

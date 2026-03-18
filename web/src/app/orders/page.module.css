@@ -119,7 +119,7 @@
     position: relative;
 }
 .orderRow:hover { background: rgba(255,255,255,0.03); }
-.orderRow.selected { background: rgba(0,200,83,0.06); }
+.orderRow.selected { background: rgba(5,150,105,0.06); }
 .orderRow.selected::before {
     content: '';
     position: absolute;
@@ -299,7 +299,7 @@
 }
 .timelineDot.current {
     border-color: var(--primary);
-    background: rgba(0,200,83,0.12);
+    background: rgba(5,150,105,0.12);
     color: var(--primary);
 }
 .timelineLabel {

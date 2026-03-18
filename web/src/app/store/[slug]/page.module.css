@@ -180,8 +180,8 @@
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--primary);
-    background: rgba(0, 200, 83, 0.1);
-    border: 1px solid rgba(0, 200, 83, 0.2);
+    background: rgba(5, 150, 105, 0.1);
+    border: 1px solid rgba(5, 150, 105, 0.2);
     padding: 3px 9px;
     border-radius: 999px;
 }
@@ -325,7 +325,7 @@
 }
 
 .productEditBtn:hover {
-    background: rgba(0, 200, 83, 0.85);
+    background: rgba(5, 150, 105, 0.85);
 }
 
 .outOfStockBadge {

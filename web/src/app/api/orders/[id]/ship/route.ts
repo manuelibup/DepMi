@@ -59,7 +59,7 @@ export async function POST(
 
         // Send Email
         if (order.buyer.email) {
-            const { notifyOrderUpdate } = await import('@/lib/notify-watchers');
+            const { notifyOrderUpdate } = await import('@/lib/notifyWatchers');
             await notifyOrderUpdate({
                 orderId,
                 status: 'SHIPPED',

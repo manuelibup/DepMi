@@ -243,7 +243,7 @@ export default function AIImportPage({ params }: { params: { slug: string } }) {
             )}
 
             {successMsg && (
-                <div style={{ padding: '1rem', background: 'rgba(0, 200, 83, 0.1)', color: 'var(--primary)', borderRadius: '8px', marginBottom: '2rem', border: '1px solid var(--primary)' }}>
+                <div style={{ padding: '1rem', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--primary)', borderRadius: '8px', marginBottom: '2rem', border: '1px solid var(--primary)' }}>
                     {successMsg}
                 </div>
             )}

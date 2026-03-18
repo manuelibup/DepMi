@@ -59,8 +59,8 @@
     font-size: 0.6rem;
     font-weight: 700;
     color: var(--primary);
-    background: rgba(0, 200, 83, 0.1);
-    border: 1px solid rgba(0, 200, 83, 0.25);
+    background: rgba(5, 150, 105, 0.1);
+    border: 1px solid rgba(5, 150, 105, 0.25);
     border-radius: 4px;
     padding: 2px 5px;
     white-space: nowrap;

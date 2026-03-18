@@ -106,11 +106,11 @@
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    background: rgba(0, 200, 83, 0.1);
+    background: rgba(5, 150, 105, 0.1);
     color: var(--primary);
     transition: background 0.2s;
 }
 
 .actionBtn:hover {
-    background: rgba(0, 200, 83, 0.2);
+    background: rgba(5, 150, 105, 0.2);
 }
