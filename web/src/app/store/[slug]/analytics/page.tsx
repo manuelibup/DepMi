@@ -92,11 +92,9 @@ export default async function StoreAnalyticsPage({
                 images: { take: 1, select: { url: true } },
             },
         }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (prisma.product as any).findMany({
+        prisma.product.findMany({
             where: { storeId: store.id },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            orderBy: { _count: { saves: true } } as any,
+            orderBy: { saves: { _count: 'desc' } },
             take: 5,
             select: {
                 id: true,
