@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
 import { notifyOrderUpdate } from '@/lib/notifyWatchers'
+import { bookShipment } from '@/lib/shipbubble'
 
 /**
  * Flutterwave payment webhook.
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
                     items: { include: { product: true }, take: 1 }
                 },
             })
+
 
             // Fallback for different txRef formats or IDs
             if (!order) {
@@ -118,6 +120,34 @@ export async function POST(req: NextRequest) {
                     productTitle: order.items[0]?.product.title || 'Product',
                     link: '/orders'
                 })
+            }
+
+            // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved
+            if (order.seller.dispatchEnabled && order.shipbubbleReqToken) {
+                try {
+                    const booking = await bookShipment(order.shipbubbleReqToken)
+                    await tx.order.update({
+                        where: { id: orderId },
+                        data: {
+                            dispatchOrderId: booking.shipbubbleOrderId,
+                            dispatchProvider: 'shipbubble/gigl',
+                            trackingNo: booking.trackingUrl ?? booking.trackingCode ?? null,
+                            status: 'SHIPPED',
+                        },
+                    })
+                    await tx.notification.create({
+                        data: {
+                            userId: order.seller.ownerId,
+                            type: 'ORDER_CONFIRMED',
+                            title: 'Dispatch booked automatically',
+                            body: `A GIG Logistics rider has been booked for order #${orderId.slice(-6).toUpperCase()}. Prepare the package for pickup.`,
+                            link: '/orders',
+                        },
+                    })
+                } catch (dispatchErr) {
+                    // Don't fail payment confirmation — seller can ship manually
+                    console.error('[flutterwave-webhook] Dispatch booking failed:', dispatchErr)
+                }
             }
         })
     } catch (err) {

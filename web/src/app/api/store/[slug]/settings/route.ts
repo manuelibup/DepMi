@@ -12,6 +12,8 @@ const settingsSchema = z.object({
     storeState:            z.string().max(100).nullable().optional(),
     localDeliveryFee:      z.number().min(0).nullable().optional(),
     nationwideDeliveryFee: z.number().min(0).nullable().optional(),
+    dispatchEnabled:       z.boolean().optional(),
+    pickupAddress:         z.string().max(300).nullable().optional(),
 });
 
 export async function GET(
@@ -28,6 +30,7 @@ export async function GET(
             id: true, ownerId: true, name: true, logoUrl: true, bannerUrl: true,
             description: true, location: true, storeState: true,
             localDeliveryFee: true, nationwideDeliveryFee: true,
+            dispatchEnabled: true, pickupAddress: true,
         },
     });
 
@@ -58,12 +61,19 @@ export async function PATCH(
         const parsed = settingsSchema.safeParse(body);
         if (!parsed.success) return NextResponse.json({ message: 'Invalid input', errors: parsed.error.format() }, { status: 400 });
 
+        // Reset cached Shipbubble address code if pickup address changed
+        const updateData: Record<string, unknown> = { ...parsed.data }
+        if ('pickupAddress' in parsed.data) {
+            updateData.shipbubbleAddrCode = null
+        }
+
         const updated = await prisma.store.update({
             where: { id: store.id },
-            data: parsed.data,
+            data: updateData,
             select: {
                 logoUrl: true, bannerUrl: true, description: true, location: true,
                 storeState: true, localDeliveryFee: true, nationwideDeliveryFee: true,
+                dispatchEnabled: true, pickupAddress: true,
             },
         });
 

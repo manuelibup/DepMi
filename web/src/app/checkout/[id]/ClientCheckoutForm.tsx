@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
 interface Props {
     productId: string;
+    storeId: string;
+    productTitle: string;
+    productPrice: number;
     subtotal: number;
     stock: number;
     /** Product-level override — null means use store defaults */
@@ -13,6 +16,7 @@ interface Props {
     localDeliveryFee: number;
     nationwideDeliveryFee: number;
     storeState: string;
+    dispatchEnabled: boolean;
     defaultPhone: string;
     defaultAddress: string;
     defaultCity: string;
@@ -20,6 +24,7 @@ interface Props {
 }
 
 type Stage = 'form' | 'submitting' | 'redirecting';
+type QuoteState = 'idle' | 'loading' | 'done' | 'error';
 
 function isLocalDelivery(buyerState: string, storeState: string): boolean {
     if (!buyerState || !storeState) return false;
@@ -30,12 +35,16 @@ function isLocalDelivery(buyerState: string, storeState: string): boolean {
 
 export default function ClientCheckoutForm({
     productId,
+    storeId,
+    productTitle,
+    productPrice,
     subtotal: itemPrice,
     stock,
     productDeliveryFee,
     localDeliveryFee,
     nationwideDeliveryFee,
     storeState,
+    dispatchEnabled,
     defaultPhone, defaultAddress, defaultCity, defaultState,
 }: Props) {
     const searchParams = useSearchParams();
@@ -53,24 +62,73 @@ export default function ClientCheckoutForm({
     const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [error, setError] = useState('');
 
-    // Compute active delivery fee:
-    // 1. PICKUP → 0
-    // 2. Product override → use that
-    // 3. Buyer state matches store state → local fee
-    // 4. Otherwise → nationwide fee (also used as default estimate)
-    function getDeliveryFee(): { fee: number; label: string | null } {
-        if (deliveryMethod === 'PICKUP') return { fee: 0, label: null };
-        if (productDeliveryFee !== null) return { fee: productDeliveryFee, label: null };
+    // Live dispatch quote state
+    const [quoteState, setQuoteState] = useState<QuoteState>('idle');
+    const [liveDeliveryFee, setLiveDeliveryFee] = useState<number | null>(null);
+    const [liveEta, setLiveEta] = useState<string | null>(null);
+    const [shipbubbleReqToken, setShipbubbleReqToken] = useState<string | null>(null);
+    const quoteDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Fetch live quote when address is complete and store has dispatch enabled
+    useEffect(() => {
+        if (!dispatchEnabled || deliveryMethod === 'PICKUP') return;
+        if (!address.trim() || !city.trim() || !stateVal.trim()) return;
+
+        if (quoteDebounceRef.current) clearTimeout(quoteDebounceRef.current);
+        quoteDebounceRef.current = setTimeout(async () => {
+            setQuoteState('loading');
+            setLiveDeliveryFee(null);
+            setShipbubbleReqToken(null);
+            try {
+                const res = await fetch('/api/delivery/quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storeId,
+                        deliveryAddress: address.trim(),
+                        deliveryCity: city.trim(),
+                        deliveryState: stateVal.trim(),
+                        productTitle,
+                        productPrice,
+                        quantity,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.dispatchEnabled) {
+                    setQuoteState('error');
+                    return;
+                }
+                setLiveDeliveryFee(data.fee);
+                setLiveEta(data.eta ?? null);
+                setShipbubbleReqToken(data.requestToken);
+                setQuoteState('done');
+            } catch {
+                setQuoteState('error');
+            }
+        }, 800);
+
+        return () => {
+            if (quoteDebounceRef.current) clearTimeout(quoteDebounceRef.current);
+        };
+    }, [address, city, stateVal, quantity, deliveryMethod, dispatchEnabled, storeId, productTitle, productPrice]);
+
+    // Compute active delivery fee
+    function getDeliveryFee(): { fee: number; label: string | null; isLive: boolean } {
+        if (deliveryMethod === 'PICKUP') return { fee: 0, label: null, isLive: false };
+        if (dispatchEnabled && liveDeliveryFee !== null) {
+            return { fee: liveDeliveryFee, label: liveEta ? `GIG Logistics · ${liveEta}` : 'GIG Logistics', isLive: true };
+        }
+        if (productDeliveryFee !== null) return { fee: productDeliveryFee, label: null, isLive: false };
         if (storeState && stateVal) {
             if (isLocalDelivery(stateVal, storeState)) {
-                return { fee: localDeliveryFee, label: 'Local delivery' };
+                return { fee: localDeliveryFee, label: 'Local delivery', isLive: false };
             }
-            return { fee: nationwideDeliveryFee, label: 'Nationwide delivery' };
+            return { fee: nationwideDeliveryFee, label: 'Nationwide delivery', isLive: false };
         }
-        return { fee: nationwideDeliveryFee, label: nationwideDeliveryFee > 0 ? 'Est. nationwide' : null };
+        return { fee: nationwideDeliveryFee, label: nationwideDeliveryFee > 0 ? 'Est. nationwide' : null, isLive: false };
     }
 
-    const { fee: currentDeliveryFee, label: deliveryLabel } = getDeliveryFee();
+    const { fee: currentDeliveryFee, label: deliveryLabel, isLive } = getDeliveryFee();
     const currentSubtotal = itemPrice * quantity;
     const baseTotal = currentSubtotal + currentDeliveryFee;
     const gatewayFee = Math.round(baseTotal * 0.05 * 100) / 100;
@@ -107,6 +165,8 @@ export default function ClientCheckoutForm({
                     stateVal: stateVal.trim(),
                     saveDetails,
                     resumeOrderId,
+                    shipbubbleReqToken: shipbubbleReqToken ?? undefined,
+                    shipbubbleDeliveryFee: liveDeliveryFee ?? undefined,
                 }),
             });
 
@@ -208,7 +268,17 @@ export default function ClientCheckoutForm({
                 <div className={styles.summaryRow}>
                     <span>
                         Delivery
-                        {deliveryLabel && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>({deliveryLabel})</span>}
+                        {deliveryLabel && (
+                            <span style={{ fontSize: '0.75rem', color: isLive ? 'var(--primary)' : 'var(--text-muted)', marginLeft: '6px' }}>
+                                ({deliveryLabel})
+                            </span>
+                        )}
+                        {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'loading' && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Fetching live quote…</span>
+                        )}
+                        {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'error' && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Using estimate</span>
+                        )}
                     </span>
                     <span>{deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>
                 </div>

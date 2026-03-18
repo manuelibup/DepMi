@@ -17,6 +17,8 @@ interface StoreData {
     storeState: string | null;
     localDeliveryFee: number | null;
     nationwideDeliveryFee: number | null;
+    dispatchEnabled: boolean;
+    pickupAddress: string | null;
 }
 
 export default function StoreSettingsForm({ store }: { store: StoreData }) {
@@ -29,6 +31,8 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
         storeState: store.storeState || '',
         localDeliveryFee: store.localDeliveryFee != null ? String(store.localDeliveryFee) : '',
         nationwideDeliveryFee: store.nationwideDeliveryFee != null ? String(store.nationwideDeliveryFee) : '',
+        dispatchEnabled: store.dispatchEnabled,
+        pickupAddress: store.pickupAddress || '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -49,6 +53,8 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
             storeState: formData.storeState || null,
             localDeliveryFee: formData.localDeliveryFee !== '' ? Number(formData.localDeliveryFee) : null,
             nationwideDeliveryFee: formData.nationwideDeliveryFee !== '' ? Number(formData.nationwideDeliveryFee) : null,
+            dispatchEnabled: formData.dispatchEnabled,
+            pickupAddress: formData.pickupAddress || null,
         };
 
         try {
@@ -181,6 +187,45 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
             <span className={styles.helpText} style={{ display: 'block', marginTop: '-4px' }}>
                 Per-product delivery fees override these defaults. Set to 0 for free delivery.
             </span>
+
+            {/* ── DepMi Dispatch ─────────────────────────────── */}
+            <div className={styles.sectionDivider}>
+                <span>DepMi Dispatch</span>
+            </div>
+
+            <div className={styles.formGroup}>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                    <div>
+                        <span className={styles.label} style={{ marginBottom: 0 }}>Enable DepMi Dispatch</span>
+                        <span className={styles.helpText} style={{ display: 'block', marginTop: '2px' }}>
+                            GIG Logistics riders pick up from your store and deliver to buyers automatically.
+                        </span>
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={formData.dispatchEnabled}
+                        onChange={(e) => setFormData(p => ({ ...p, dispatchEnabled: e.target.checked }))}
+                        style={{ accentColor: 'var(--primary)', width: '18px', height: '18px', flexShrink: 0 }}
+                    />
+                </label>
+            </div>
+
+            {formData.dispatchEnabled && (
+                <div className={styles.formGroup}>
+                    <label className={styles.label} htmlFor="pickupAddress">Pickup Address</label>
+                    <input
+                        type="text"
+                        id="pickupAddress"
+                        name="pickupAddress"
+                        className={styles.input}
+                        placeholder="e.g. 12 Abak Road, Uyo, Akwa Ibom"
+                        value={formData.pickupAddress}
+                        onChange={handleChange}
+                        maxLength={300}
+                    />
+                    <span className={styles.helpText}>Full address where riders will collect packages from your store.</span>
+                </div>
+            )}
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
                 {loading ? 'Saving...' : 'Save Changes'}

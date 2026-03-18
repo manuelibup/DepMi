@@ -21,10 +21,12 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
             images: true,
             store: {
                 select: {
+                    id: true,
                     name: true,
                     storeState: true,
                     localDeliveryFee: true,
                     nationwideDeliveryFee: true,
+                    dispatchEnabled: true,
                 },
             },
         }
@@ -39,6 +41,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
     const localDeliveryFee = Number(product.store.localDeliveryFee ?? 0);
     const nationwideDeliveryFee = Number(product.store.nationwideDeliveryFee ?? 0);
     const storeState = product.store.storeState ?? '';
+    const dispatchEnabled = product.store.dispatchEnabled;
 
     // Try to get user data to pre-fill phone and address
     const user = await prisma.user.findUnique({
@@ -76,12 +79,16 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
 
                 <ClientCheckoutForm
                     productId={product.id}
+                    storeId={product.store.id}
+                    productTitle={product.title}
+                    productPrice={Number(product.price)}
                     subtotal={Number(product.price)}
                     stock={product.stock}
                     productDeliveryFee={productDeliveryFee}
                     localDeliveryFee={localDeliveryFee}
                     nationwideDeliveryFee={nationwideDeliveryFee}
                     storeState={storeState}
+                    dispatchEnabled={dispatchEnabled}
                     defaultPhone={user?.phoneNumber || ''}
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}

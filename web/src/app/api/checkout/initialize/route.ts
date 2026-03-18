@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY' } = body
+  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY', shipbubbleReqToken, shipbubbleDeliveryFee } = body
 
   if (!productId || !deliveryAddress) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -45,7 +45,10 @@ export async function POST(req: NextRequest) {
 
     const itemPrice = Number(product.price)
     const totalItemsAmount = itemPrice * quantity
-    const deliveryFee = deliveryMethod === 'PICKUP' ? 0 : Number(product.deliveryFee || 2500)
+    // Use live Shipbubble quote if provided, otherwise fall back to static product fee
+    const deliveryFee = deliveryMethod === 'PICKUP'
+      ? 0
+      : (shipbubbleDeliveryFee ? Number(shipbubbleDeliveryFee) : Number(product.deliveryFee || 2500))
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
     // Service & escrow fee (5%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
     const gatewayFee = Math.round(subtotalAndDelivery * 0.05 * 100) / 100
@@ -95,6 +98,8 @@ export async function POST(req: NextRequest) {
           deliveryNote: deliveryNote ?? null,
           demandId: demandId ?? null,
           bidId: bidId ?? null,
+          shipbubbleReqToken: shipbubbleReqToken ?? null,
+          dispatchProvider: shipbubbleReqToken ? 'shipbubble/gigl' : null,
           items: {
             create: {
               productId: product.id,

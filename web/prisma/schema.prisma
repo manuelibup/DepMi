@@ -194,6 +194,9 @@ model Store {
   storeState            String?
   localDeliveryFee      Decimal?                @db.Decimal(10, 2)
   nationwideDeliveryFee Decimal?                @db.Decimal(10, 2)
+  dispatchEnabled       Boolean                 @default(true)
+  pickupAddress         String?
+  shipbubbleAddrCode    Int?
   bids                Bid[]                   @relation("StoreBids")
   depTransactions     DepTransaction[]        @relation("StoreDepTransactions")
   ordersAsSeller      Order[]                 @relation("SellerOrders")
@@ -374,6 +377,9 @@ model Order {
   virtualAcctNo     String?
   deliveryMethod    String       @default("DELIVERY")
   trackingNo        String?
+  dispatchOrderId   String?
+  dispatchProvider  String?
+  shipbubbleReqToken String?
   bid               Bid?         @relation("BidOrder", fields: [bidId], references: [id])
   buyer             User         @relation("BuyerOrders", fields: [buyerId], references: [id])
   demand            Demand?      @relation("DemandOrders", fields: [demandId], references: [id])
