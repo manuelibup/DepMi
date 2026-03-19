@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthGate } from '@/context/AuthGate';
 import { useSession } from 'next-auth/react';
 import styles from './ProductCard.module.css';
+import { useTrackImpression } from '@/hooks/useTrackImpression';
 
 export interface ProductData {
     store: string;
@@ -90,6 +91,8 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     const { openGate } = useAuthGate();
     const { status } = useSession();
     const router = useRouter();
+
+    const impressionRef = useTrackImpression(data.id ?? '', 'product', { index });
 
     const [liked, setLiked] = useState<boolean>(data.isLiked || false);
     const [saved, setSaved] = useState<boolean>(data.isSaved || false);
@@ -185,6 +188,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     return (
         <>
             <article
+                ref={impressionRef as React.RefObject<HTMLElement>}
                 className={styles.card}
                 style={{ animationDelay: `${index * 80 + 100}ms` }}
                 onClick={() => data.id && router.push(`/p/${data.id}`)}

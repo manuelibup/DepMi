@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthGate } from '@/context/AuthGate';
 import { useSession } from 'next-auth/react';
 import styles from './DemandCard.module.css';
+import { useTrackImpression } from '@/hooks/useTrackImpression';
 
 export interface DemandData {
     id?: string;
@@ -40,6 +41,8 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
     const router = useRouter();
     const { openGate } = useAuthGate();
     const { status } = useSession();
+
+    const impressionRef = useTrackImpression(data.id ?? '', 'demand', { index });
 
     const [liked, setLiked] = useState(data.isLiked || false);
     const [likeCount, setLikeCount] = useState(data.likeCount ?? 0);
@@ -122,6 +125,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
     return (
         <>
             <article
+                ref={impressionRef as React.RefObject<HTMLElement>}
                 className={styles.card}
                 style={{ animationDelay: `${index * 80}ms` }}
                 onClick={() => data.id && router.push(`/requests/${data.id}`)}

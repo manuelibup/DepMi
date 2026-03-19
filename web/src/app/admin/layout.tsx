@@ -40,6 +40,10 @@ const NAV = [
     label: 'Announce', href: '/admin/announce', minRole: 'ADMIN' as AdminRole,
     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h12.5" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /><path d="M18 14v4" /><path d="M18 22v.01" /></svg>
   },
+  {
+    label: 'Analytics', href: '/admin/analytics', minRole: 'ADMIN' as AdminRole,
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  },
 ];
 
 const ROLE_RANK: Record<AdminRole, number> = { MODERATOR: 1, ADMIN: 2, SUPER_ADMIN: 3 };
