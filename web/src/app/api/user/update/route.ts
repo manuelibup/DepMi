@@ -15,6 +15,7 @@ const updateSchema = z.object({
     city: z.string().max(100).optional().nullable(),
     state: z.string().max(100).optional().nullable(),
     country: z.string().max(100).optional().nullable(),
+    analyticsOptOut: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -38,6 +39,7 @@ export async function GET() {
                 address: true,
                 city: true,
                 state: true,
+                analyticsOptOut: true,
             }
         });
 
@@ -62,7 +64,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: 'Invalid input', errors: parsed.error.flatten().fieldErrors }, { status: 400 });
         }
 
-        const { displayName, username, avatarUrl, coverUrl, bio, phoneNumber, address, city, state, country } = parsed.data;
+        const { displayName, username, avatarUrl, coverUrl, bio, phoneNumber, address, city, state, country, analyticsOptOut } = parsed.data;
 
         // Username uniqueness check
         if (username) {
@@ -99,6 +101,7 @@ export async function PATCH(req: Request) {
                 ...(city !== undefined && { city }),
                 ...(state !== undefined && { state }),
                 ...(country !== undefined && { country }),
+                ...(analyticsOptOut !== undefined && { analyticsOptOut }),
             },
             select: { id: true, displayName: true, username: true, avatarUrl: true }
         });

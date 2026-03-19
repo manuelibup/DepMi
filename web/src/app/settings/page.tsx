@@ -34,6 +34,8 @@ export default function SettingsPage() {
     const [phoneOtpCode, setPhoneOtpCode] = useState('');
 
     const [saving, setSaving] = useState(false);
+    const [analyticsOptOut, setAnalyticsOptOut] = useState(false);
+    const [savingOptOut, setSavingOptOut] = useState(false);
 
     // Only populate identity fields from session once (on first valid session load).
     // Subsequent session changes (e.g. after updateSession()) must NOT overwrite form
@@ -69,6 +71,7 @@ export default function SettingsPage() {
                     setState(data.user.state ?? '');
                     setEmailVerified(data.user.emailVerified ?? false);
                     setPhoneVerified(data.user.phoneVerified ?? false);
+                    setAnalyticsOptOut(data.user.analyticsOptOut ?? false);
                 }
             })
             .catch(() => {});
@@ -548,6 +551,71 @@ export default function SettingsPage() {
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
+
+                    {/* — Privacy section — */}
+                    <div style={sectionStyle}>
+                        <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Privacy</p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                            <div>
+                                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>Analytics Opt-Out</p>
+                                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                                    Stop DepMi from collecting data about how you use the app.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                disabled={savingOptOut}
+                                onClick={async () => {
+                                    setSavingOptOut(true);
+                                    const next = !analyticsOptOut;
+                                    try {
+                                        const res = await fetch('/api/user/update', {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ analyticsOptOut: next }),
+                                        });
+                                        if (res.ok) {
+                                            setAnalyticsOptOut(next);
+                                            toast.success(next ? 'Analytics disabled' : 'Analytics enabled');
+                                        } else {
+                                            toast.error('Failed to update preference');
+                                        }
+                                    } catch {
+                                        toast.error('Network error');
+                                    } finally {
+                                        setSavingOptOut(false);
+                                    }
+                                }}
+                                style={{
+                                    flexShrink: 0,
+                                    width: 48,
+                                    height: 28,
+                                    borderRadius: 14,
+                                    border: 'none',
+                                    background: analyticsOptOut ? '#555' : 'var(--primary)',
+                                    cursor: savingOptOut ? 'not-allowed' : 'pointer',
+                                    position: 'relative',
+                                    transition: 'background 0.2s',
+                                    opacity: savingOptOut ? 0.6 : 1,
+                                }}
+                                aria-label="Toggle analytics opt-out"
+                            >
+                                <span style={{
+                                    position: 'absolute',
+                                    top: 3,
+                                    left: analyticsOptOut ? 23 : 3,
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: '50%',
+                                    background: '#fff',
+                                    transition: 'left 0.2s',
+                                }} />
+                            </button>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            See our <a href="/privacy" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Privacy Policy</a> for details on what we collect.
+                        </p>
+                    </div>
 
                     {/* — Account section — */}
                     <div style={{ ...sectionStyle, gap: '0' }}>

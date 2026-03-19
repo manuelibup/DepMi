@@ -70,6 +70,9 @@ model User {
   referralsMade   ReferralTransaction[] @relation("ReferrerTxns")
   referralReceived ReferralTransaction[] @relation("ReferredTxns")
   pushSubscriptions PushSubscription[]
+  events            Event[]
+
+  analyticsOptOut   Boolean          @default(false)
 
   @@index([lastActiveAt])
 }
@@ -800,6 +803,53 @@ model DemandView {
   @@index([demandId])
   @@index([identifier])
   @@index([createdAt])
+}
+
+// ─── Behavioral Analytics ──────────────────────────────────────────────────
+
+model Event {
+  id         String    @id @default(cuid())
+  type       EventType
+  userId     String?
+  sessionId  String    // anonymous UUID from localStorage
+  targetId   String?   // productId | demandId | storeId | etc.
+  targetType String?   // "product" | "demand" | "store" | "search"
+  metadata   Json?     // feed position, search query, device type, etc.
+  createdAt  DateTime  @default(now())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type, createdAt])
+  @@index([targetId, type])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model DailyEventSummary {
+  id          String    @id @default(cuid())
+  date        DateTime  @db.Date
+  type        EventType
+  targetId    String?
+  targetType  String?
+  count       Int       @default(0)
+  uniqueUsers Int       @default(0)
+
+  @@unique([date, type, targetId])
+  @@index([date])
+  @@index([targetId, type])
+}
+
+enum EventType {
+  FEED_IMPRESSION  // user scrolled past item (Intersection Observer)
+  PRODUCT_VIEW     // opened product detail
+  DEMAND_VIEW      // opened demand detail
+  STORE_VIEW       // opened store page
+  SEARCH           // submitted a search query
+  LIKE             // liked a product or demand
+  SAVE             // saved a product
+  BID              // placed a bid
+  ORDER            // placed an order
+  SHARE            // tapped share
 }
 
 model PushSubscription {
