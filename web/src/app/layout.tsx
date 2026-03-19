@@ -65,40 +65,86 @@ export default function RootLayout({
                   "@type": "Organization",
                   "@id": "https://depmi.com/#organization",
                   "name": "DepMi",
-                  "alternateName": "DepMi Nigeria",
+                  "alternateName": ["DepMi Nigeria", "DepMi Limited"],
                   "url": "https://depmi.com",
-                  "logo": "https://depmi.com/depmi-logo.svg",
-                  "description": "DepMi (\"Buy Here\" in Ibibio) is a social commerce platform for African entrepreneurs. Buy, sell, and discover products with trust-based escrow, demand-driven marketplace, and credibility scores.",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://depmi.com/depmi-logo.png",
+                    "width": 512,
+                    "height": 512
+                  },
+                  "image": "https://depmi.com/depmi-logo-text-dark.png",
+                  "description": "DepMi is Nigeria's social commerce marketplace. Buy, sell and discover products with built-in escrow, demand-driven bidding, and trust scores for buyers and sellers.",
+                  "slogan": "Buy Here. Build Here. Grow Here.",
                   "foundingDate": "2025",
-                  "founder": { "@type": "Person", "name": "Manuel" },
-                  "areaServed": { "@type": "Place", "name": "Africa" },
+                  "foundingLocation": {
+                    "@type": "Place",
+                    "addressCountry": "NG",
+                    "name": "Nigeria"
+                  },
+                  "founder": {
+                    "@type": "Person",
+                    "name": "Manuel",
+                    "jobTitle": "Founder & CEO"
+                  },
+                  "areaServed": [
+                    { "@type": "Country", "name": "Nigeria" },
+                    { "@type": "Place", "name": "Africa" }
+                  ],
+                  "contactPoint": [
+                    {
+                      "@type": "ContactPoint",
+                      "email": "support@depmi.com",
+                      "contactType": "customer support",
+                      "availableLanguage": "English"
+                    },
+                    {
+                      "@type": "ContactPoint",
+                      "email": "privacy@depmi.com",
+                      "contactType": "privacy inquiries",
+                      "availableLanguage": "English"
+                    }
+                  ],
                   "sameAs": [
-                    "https://x.com/web5manuel",
-                    "https://instagram.com/depmilimited"
-                  ]
+                    "https://instagram.com/depmilimited",
+                    "https://twitter.com/depmihq",
+                    "https://x.com/depmihq",
+                    "https://linkedin.com/company/depmi",
+                    "https://facebook.com/depmilimited",
+                    "https://tiktok.com/@depmihq"
+                  ],
+                  "keywords": "social commerce Nigeria, buy and sell Nigeria, online marketplace Nigeria, escrow Nigeria, African entrepreneurs, depmi"
                 },
                 {
                   "@type": "WebSite",
                   "@id": "https://depmi.com/#website",
                   "url": "https://depmi.com",
                   "name": "DepMi",
+                  "description": "Nigeria's social commerce marketplace — buy, sell, and grow with escrow-protected transactions.",
                   "publisher": { "@id": "https://depmi.com/#organization" },
+                  "inLanguage": "en-NG",
                   "potentialAction": {
                     "@type": "SearchAction",
-                    "target": "https://depmi.com/search?q={search_term_string}",
+                    "target": {
+                      "@type": "EntryPoint",
+                      "urlTemplate": "https://depmi.com/search?q={search_term_string}"
+                    },
                     "query-input": "required name=search_term_string"
                   }
                 },
                 {
                   "@type": "WebApplication",
+                  "@id": "https://depmi.com/#webapp",
                   "name": "DepMi",
                   "url": "https://depmi.com",
                   "applicationCategory": "ShoppingApplication",
                   "operatingSystem": "Any",
+                  "browserRequirements": "Requires JavaScript",
                   "offers": {
                     "@type": "Offer",
                     "price": "0",
-                    "priceCurrency": "NGN"
+                    "priceCurrency": "NGN",
+                    "description": "Free to join. Sellers pay a small platform fee per transaction."
                   },
                   "description": "The social commerce platform for African entrepreneurs. Buy, sell, and discover products with trust."
                 }
