@@ -4,6 +4,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
+declare global {
+    interface Window { google: any }
+}
+
+const NIGERIAN_STATES = [
+    'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
+    'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu',
+    'FCT (Abuja)', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina',
+    'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo',
+    'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+];
+
 interface Props {
     productId: string;
     storeId: string;
@@ -62,12 +74,92 @@ export default function ClientCheckoutForm({
     const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
     const [error, setError] = useState('');
 
+    // State searchable dropdown
+    const [showStateList, setShowStateList] = useState(false);
+    const stateRef = useRef<HTMLDivElement>(null);
+
+    // Google Places
+    const addressInputRef = useRef<HTMLInputElement>(null);
+
     // Live dispatch quote state
     const [quoteState, setQuoteState] = useState<QuoteState>('idle');
     const [liveDeliveryFee, setLiveDeliveryFee] = useState<number | null>(null);
     const [liveEta, setLiveEta] = useState<string | null>(null);
     const [shipbubbleReqToken, setShipbubbleReqToken] = useState<string | null>(null);
+    const [quoteHint, setQuoteHint] = useState<string | null>(null);
     const quoteDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Close state dropdown on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (stateRef.current && !stateRef.current.contains(e.target as Node)) {
+                setShowStateList(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    // Load Google Places Autocomplete on address input
+    useEffect(() => {
+        const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!key) return;
+
+        const initAutocomplete = () => {
+            if (!addressInputRef.current || !window.google?.maps?.places) return;
+            const ac = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+                componentRestrictions: { country: 'ng' },
+                fields: ['address_components', 'formatted_address'],
+                types: ['address'],
+            });
+            ac.addListener('place_changed', () => {
+                const place = ac.getPlace();
+                let streetNumber = '', route = '', cityVal = '', stateFromPlace = '';
+                for (const comp of (place.address_components ?? [])) {
+                    if (comp.types.includes('street_number')) streetNumber = comp.long_name;
+                    if (comp.types.includes('route')) route = comp.long_name;
+                    if (comp.types.includes('locality') || comp.types.includes('sublocality_level_1')) cityVal = comp.long_name;
+                    if (!cityVal && comp.types.includes('administrative_area_level_2')) cityVal = comp.long_name;
+                    if (comp.types.includes('administrative_area_level_1')) stateFromPlace = comp.long_name;
+                }
+                const street = [streetNumber, route].filter(Boolean).join(' ')
+                    || place.formatted_address?.split(',')[0]
+                    || '';
+                setAddress(street);
+                if (cityVal) setCity(cityVal);
+                if (stateFromPlace) {
+                    const normalized = stateFromPlace.replace(/\s*state$/i, '').trim();
+                    const match = NIGERIAN_STATES.find(s =>
+                        s.toLowerCase() === normalized.toLowerCase() ||
+                        s.toLowerCase().includes(normalized.toLowerCase()) ||
+                        normalized.toLowerCase().includes(s.toLowerCase())
+                    );
+                    if (match) setStateVal(match);
+                }
+            });
+        };
+
+        const scriptId = 'google-places-script';
+        if (window.google?.maps?.places) {
+            initAutocomplete();
+        } else if (!document.getElementById(scriptId)) {
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+            script.async = true;
+            script.onload = initAutocomplete;
+            document.head.appendChild(script);
+        } else {
+            // Script already injected but not ready yet — poll briefly
+            const interval = setInterval(() => {
+                if (window.google?.maps?.places) {
+                    clearInterval(interval);
+                    initAutocomplete();
+                }
+            }, 100);
+            return () => clearInterval(interval);
+        }
+    }, []);
 
     // Fetch live quote when address is complete and store has dispatch enabled
     useEffect(() => {
@@ -79,6 +171,7 @@ export default function ClientCheckoutForm({
             setQuoteState('loading');
             setLiveDeliveryFee(null);
             setShipbubbleReqToken(null);
+            setQuoteHint(null);
             try {
                 const res = await fetch('/api/delivery/quote', {
                     method: 'POST',
@@ -95,6 +188,7 @@ export default function ClientCheckoutForm({
                 });
                 const data = await res.json();
                 if (!res.ok || !data.dispatchEnabled) {
+                    setQuoteHint(data.userHint ?? null);
                     setQuoteState('error');
                     return;
                 }
@@ -116,7 +210,7 @@ export default function ClientCheckoutForm({
     function getDeliveryFee(): { fee: number; label: string | null; isLive: boolean } {
         if (deliveryMethod === 'PICKUP') return { fee: 0, label: null, isLive: false };
         if (dispatchEnabled && liveDeliveryFee !== null) {
-            return { fee: liveDeliveryFee, label: liveEta ? `GIG Logistics · ${liveEta}` : 'GIG Logistics', isLive: true };
+            return { fee: liveDeliveryFee, label: liveEta ? `DepMi Dispatch · ${liveEta}` : 'DepMi Dispatch', isLive: true };
         }
         if (productDeliveryFee !== null) return { fee: productDeliveryFee, label: null, isLive: false };
         if (storeState && stateVal) {
@@ -133,6 +227,10 @@ export default function ClientCheckoutForm({
     const baseTotal = currentSubtotal + currentDeliveryFee;
     const gatewayFee = Math.round(baseTotal * 0.05 * 100) / 100;
     const finalTotal = baseTotal + gatewayFee;
+
+    const filteredStates = NIGERIAN_STATES.filter(s =>
+        s.toLowerCase().includes(stateVal.toLowerCase())
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -229,16 +327,81 @@ export default function ClientCheckoutForm({
                         <>
                             <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
                             <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                            <input className={styles.inputField} placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} required />
+                            <input
+                                ref={addressInputRef}
+                                className={styles.inputField}
+                                placeholder="Street Address"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                autoComplete="off"
+                                required
+                            />
                             <div className={styles.inputRow}>
                                 <input className={styles.inputField} placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} required />
-                                <input
-                                    className={styles.inputField}
-                                    placeholder="State"
-                                    value={stateVal}
-                                    onChange={(e) => setStateVal(e.target.value)}
-                                    required
-                                />
+
+                                {/* Searchable state dropdown */}
+                                <div ref={stateRef} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                                    <input
+                                        className={styles.inputField}
+                                        placeholder="State"
+                                        value={stateVal}
+                                        autoComplete="off"
+                                        onChange={(e) => {
+                                            setStateVal(e.target.value);
+                                            setShowStateList(true);
+                                        }}
+                                        onFocus={() => setShowStateList(true)}
+                                        required
+                                        style={{ paddingRight: '32px' }}
+                                    />
+                                    <svg
+                                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}
+                                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                    >
+                                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                                    </svg>
+                                    {showStateList && stateVal.length > 0 && filteredStates.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 'calc(100% + 4px)',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'var(--card-bg)',
+                                            border: '1px solid var(--card-border)',
+                                            borderRadius: '12px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            zIndex: 50,
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                        }}>
+                                            {filteredStates.map(state => (
+                                                <button
+                                                    key={state}
+                                                    type="button"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setStateVal(state);
+                                                        setShowStateList(false);
+                                                    }}
+                                                    style={{
+                                                        display: 'block',
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        padding: '10px 14px',
+                                                        background: stateVal === state ? 'rgba(5,150,105,0.08)' : 'transparent',
+                                                        border: 'none',
+                                                        color: stateVal === state ? 'var(--primary)' : 'var(--text-main)',
+                                                        fontWeight: stateVal === state ? 600 : 400,
+                                                        fontSize: '0.875rem',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                >
+                                                    {state}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </>
                     ) : (
@@ -277,7 +440,9 @@ export default function ClientCheckoutForm({
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Fetching live quote…</span>
                         )}
                         {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'error' && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Using estimate</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                                {quoteHint ?? 'Using estimate'}
+                            </span>
                         )}
                     </span>
                     <span>{deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>

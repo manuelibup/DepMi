@@ -211,20 +211,40 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
             </div>
 
             {formData.dispatchEnabled && (
-                <div className={styles.formGroup}>
-                    <label className={styles.label} htmlFor="pickupAddress">Pickup Address</label>
-                    <input
-                        type="text"
-                        id="pickupAddress"
-                        name="pickupAddress"
-                        className={styles.input}
-                        placeholder="e.g. 12 Abak Road, Uyo, Akwa Ibom"
-                        value={formData.pickupAddress}
-                        onChange={handleChange}
-                        maxLength={300}
-                    />
-                    <span className={styles.helpText}>Full address where riders will collect packages from your store.</span>
-                </div>
+                <>
+                    {(!formData.pickupAddress || !formData.storeState) && (
+                        <div style={{
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            background: 'rgba(234,179,8,0.08)',
+                            border: '1px solid rgba(234,179,8,0.25)',
+                            fontSize: '0.85rem',
+                            color: '#ca8a04',
+                            lineHeight: 1.5,
+                        }}>
+                            <strong>Action needed:</strong>{' '}
+                            {!formData.storeState && !formData.pickupAddress
+                                ? 'Set your State (above) and Pickup Address below to activate live delivery pricing for buyers.'
+                                : !formData.storeState
+                                ? 'Set your State (above) so buyers get accurate delivery quotes.'
+                                : 'Add a Pickup Address below so riders know where to collect orders.'}
+                        </div>
+                    )}
+                    <div className={styles.formGroup}>
+                        <label className={styles.label} htmlFor="pickupAddress">Pickup Address</label>
+                        <input
+                            type="text"
+                            id="pickupAddress"
+                            name="pickupAddress"
+                            className={styles.input}
+                            placeholder="e.g. 12 Abak Road, Uyo, Akwa Ibom"
+                            value={formData.pickupAddress}
+                            onChange={handleChange}
+                            maxLength={300}
+                        />
+                        <span className={styles.helpText}>Full address where riders will collect packages from your store.</span>
+                    </div>
+                </>
             )}
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>

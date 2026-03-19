@@ -5,6 +5,15 @@ import { prisma } from '@/lib/prisma'
 import { registerAddress, getDeliveryQuote } from '@/lib/shipbubble'
 
 /**
+ * Shipbubble requires names with only letters and spaces (e.g. "John Doe").
+ * Strip numbers and symbols, collapse whitespace, fallback to a generic name.
+ */
+function sanitizeName(raw: string | null | undefined, fallback: string): string {
+    const clean = (raw ?? '').replace(/[^a-zA-Z\s]/g, '').replace(/\s+/g, ' ').trim()
+    return clean || fallback
+}
+
+/**
  * POST /api/delivery/quote
  * Returns a live GIGL delivery quote for the checkout page.
  * Saves the Shipbubble address code on the Store (cached for future quotes).
@@ -56,7 +65,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ dispatchEnabled: false })
         }
         if (!store.pickupAddress) {
-            return NextResponse.json({ error: 'Store has no pickup address configured' }, { status: 422 })
+            return NextResponse.json({
+                error: 'Store has no pickup address configured',
+                userHint: 'Using estimate — seller hasn\'t set a pickup address yet',
+            }, { status: 422 })
+        }
+        if (!store.storeState) {
+            return NextResponse.json({
+                error: 'Store has no state configured',
+                userHint: 'Using estimate — seller hasn\'t set their state yet',
+            }, { status: 422 })
         }
 
         // Derive store city from location field (e.g. "Uyo, Akwa Ibom" → "Uyo")
@@ -67,7 +85,7 @@ export async function POST(req: NextRequest) {
         let senderCode = store.shipbubbleAddrCode
         if (!senderCode) {
             senderCode = await registerAddress({
-                name: store.name,
+                name: sanitizeName(store.name, 'DepMi Store'),
                 email: store.owner.email ?? `store-${store.id}@depmi.app`,
                 phone: store.owner.phoneNumber ?? '08000000000',
                 address: store.pickupAddress,
@@ -83,7 +101,7 @@ export async function POST(req: NextRequest) {
 
         // Register receiver address (buyer) — fresh per quote, no caching needed
         const receiverCode = await registerAddress({
-            name: buyer?.displayName ?? 'Buyer',
+            name: sanitizeName(buyer?.displayName, 'DepMi Buyer'),
             email: buyer?.email ?? `buyer-${session.user.id}@depmi.app`,
             phone: buyer?.phoneNumber ?? '08000000000',
             address: deliveryAddress,
@@ -107,8 +125,12 @@ export async function POST(req: NextRequest) {
         })
     } catch (err: any) {
         console.error('[delivery/quote] Error:', err)
+        const msg: string = err.message ?? ''
+        const userHint = msg.toLowerCase().includes('no rates')
+            ? 'No dispatch service available for this route — using estimate'
+            : 'Using estimate'
         return NextResponse.json(
-            { error: err.message ?? 'Failed to fetch delivery quote' },
+            { error: msg || 'Failed to fetch delivery quote', userHint },
             { status: 502 }
         )
     }
