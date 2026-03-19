@@ -2817,3 +2817,65 @@ Continued from Session 65 (context-window boundary). Debugged Shipbubble/GIGL di
 - Resend domain `depmi.com` still needs verification for prod OTP emails.
 - Course/digital product selling (Selar-style, 48h escrow) — still pending.
 - Wire `useTrackImpression` + `useTrackEvent` into feed cards and product detail pages.
+
+---
+
+## Session 67 — Mar 19, 2026 — Growth Features: Dispatch Badge, Analytics, Watermark, Social Notifications
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Context
+Continuation of Session 66. Tackled growth/retention backlog: dispatch badge, analytics wiring, portfolio toggle, powered-by footer, watermark, social notifications.
+
+### What was done
+
+#### DepMi Dispatch Badge
+- **Store profile page**: Small truck-icon pill chip ("DepMi Dispatch") shown in meta row beside tier chip — only when `dispatchEnabled=true` AND `pickupAddress` is set.
+- **Product detail page**: Same chip shown above the store card — `dispatchEnabled` + `pickupAddress` added to store select query.
+
+#### Analytics Full Wiring
+- **ViewTracker** extended with `storeId` prop + behavioral analytics fire (PRODUCT_VIEW / DEMAND_VIEW / STORE_VIEW) via `useTrackEvent`, alongside existing view-count increment.
+- **Store page** (`/store/[slug]`): Added `<ViewTracker storeId={store.id} />`.
+- **Feed cards** (ProductCard, DemandCard): Already had `useTrackImpression` from prior session.
+- Full funnel now covered: FEED_IMPRESSION → PRODUCT/DEMAND/STORE_VIEW.
+
+#### isPortfolioItem Toggle in Create Form
+- Added `isPortfolioItem` boolean to CreateProductForm state, sent in create payload.
+- Added "For Sale ↔ Portfolio" pill to the action bar (matches edit form pattern).
+
+#### "Powered by DepMi" Seller Acquisition Footer
+- On store pages for non-owners: trust tagline + "Open your own store — free" CTA + "Powered by DepMi" attribution.
+
+#### Onboarding Done Screen
+- 3 CTAs: Explore Feed, Post a Request, Open a Store & Start Selling.
+- Help section: links to both blog posts + `mailto:manuel@depmi.com` support link.
+
+#### STORE_FOLLOW_SALE Social Notifications
+- Added `SOCIAL_ACTIVITY` + `STORE_FOLLOW_SALE` enum values to `NotificationType`.
+- Flutterwave webhook now fires `STORE_FOLLOW_SALE` after payment confirmed: all store followers (up to 100) get "Someone just bought [product] from [store]" with link to store page. Fire-and-forget after transaction — never blocks payment.
+
+#### Cloudinary Watermark
+- `web/src/lib/cloudinaryWatermark.ts`: `withWatermark(url)` inserts `l_text:Arial_15_bold:depmi.com,co_white,o_50,g_south_east,x_8,y_8` into Cloudinary image delivery URLs. Safe: no-ops on non-Cloudinary URLs, idempotent.
+- Applied to: ProductCard feed images, ProductImageGallery (product detail page).
+
+### Schema changes
+- `NotificationType` enum: added `SOCIAL_ACTIVITY`, `STORE_FOLLOW_SALE`. Pushed to DB.
+
+### Validations
+- ✅ `npm run db:push` — schema synced (SOCIAL_ACTIVITY + STORE_FOLLOW_SALE added).
+- ✅ `npx tsc --noEmit` — no type errors.
+- ✅ All changes committed and pushed to `origin/main`.
+
+### Commits
+- `3ecb296` — feat: add DepMi Dispatch badge on store pages and product detail
+- `3ae03c7` — feat: analytics wiring, powered-by footer, portfolio toggle, onboarding done screen
+- `373e302` — feat: social notifications, cloudinary watermark, support email fix
+
+### Pending / Next actions
+- **Vercel env vars** still needed: `SHIPBUBBLE_API_KEY`, `SHIPBUBBLE_MARKUP_PERCENT=15`.
+- **Store pickupAddress** still needed in store settings for dispatch to work.
+- Cloudinary watermark needs testing — Cloudinary strict upload preset may block text overlay delivery transforms. If it fails, add allowed transformation in Cloudinary settings dashboard.
+- `STORE_FOLLOW_SALE` notifications not yet shown in the notifications UI — add rendering for this type.
+- Seller analytics dashboard UI (models ready).
+- Telegram bot / Mini App (roadmap).
+- Course/digital product selling.
