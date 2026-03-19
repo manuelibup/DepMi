@@ -106,12 +106,12 @@ export default function RootLayout({
                     }
                   ],
                   "sameAs": [
-                    "https://instagram.com/depmilimited",
-                    "https://twitter.com/depmihq",
-                    "https://x.com/depmihq",
-                    "https://linkedin.com/company/depmi",
-                    "https://facebook.com/depmilimited",
-                    "https://tiktok.com/@depmihq"
+                    "https://instagram.com/depmidotcom",
+                    "https://twitter.com/depmidotcom",
+                    "https://x.com/depmidotcom",
+                    "https://linkedin.com/company/depmidotcom",
+                    "https://facebook.com/depmidotcom",
+                    "https://tiktok.com/@depmidotcom"
                   ],
                   "keywords": "social commerce Nigeria, buy and sell Nigeria, online marketplace Nigeria, escrow Nigeria, African entrepreneurs, depmi"
                 },
