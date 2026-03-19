@@ -238,12 +238,18 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     <p className={styles.description}>{store.description}</p>
                 )}
 
-                {/* Meta row: tier + followers */}
+                {/* Meta row: tier + dispatch + followers */}
                 <div className={styles.metaRow}>
                     <span className={styles.tierChip} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <TierIcon tier={store.depTier} />
                         {tierLabel}
                     </span>
+                    {store.dispatchEnabled && store.pickupAddress && (
+                        <span className={styles.dispatchChip} title="This store ships via DepMi Dispatch — tracked delivery nationwide">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 5v4h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                            DepMi Dispatch
+                        </span>
+                    )}
                     <span className={styles.metaSep}>·</span>
                     <span className={styles.metaText}>{store._count.followers} follower{store._count.followers !== 1 ? 's' : ''}</span>
                 </div>
