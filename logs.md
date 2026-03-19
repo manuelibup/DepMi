@@ -2753,3 +2753,67 @@ Continuing from Sessions 59–62 (context-window boundary). Picked up pending fe
 - Course/digital product selling (Selar-style, 48h escrow) — still pending.
 - Username revert fix (JWT race condition) — still pending.
 - Sponsored/bidded product placement — deferred.
+
+---
+
+## Session 65–66 — Mar 17–19, 2026 — Shipbubble Dispatch Integration & Behavioral Analytics
+**Agent:** Claude Sonnet 4.6
+**Human:** Manuel
+
+### Context
+Continued from Session 65 (context-window boundary). Debugged Shipbubble/GIGL dispatch errors, fixed address registration, then backfilled store state data.
+
+### What was done
+
+#### Shipbubble Dispatch Debugging & Fixes
+- **Root cause 1 — name rejection**: Shipbubble `POST /v1/shipping/address/validate` rejects names containing numbers or symbols. Added `sanitizeName()` helper in `delivery/quote/route.ts` that strips `[^a-zA-Z\s]` from store and buyer names before sending.
+- **Root cause 2 — address geocoding failure**: Shipbubble geocodes address strings strictly. Freeform addresses like "University of Uyo, Nwaniba" fail validation. Fix: send `"${city}, ${state}"` as the address field for both sender and receiver in quote requests. Full street address only needed at actual booking time.
+- **Root cause 3 — missing env vars**: `SHIPBUBBLE_API_KEY` and `SHIPBUBBLE_MARKUP_PERCENT` needed in Vercel → still pending user action.
+- **Root cause 4 — missing store fields**: `storeState` and `pickupAddress` not set on existing stores.
+- **Label change**: "GIG Logistics" → "DepMi Dispatch" in `ClientCheckoutForm.tsx`.
+- **`userHint` field**: Added structured error messages from `/api/delivery/quote` displayed inline in checkout — e.g. "No dispatch service available for this route — using estimate".
+- **Store settings warning**: Added yellow banner in `StoreSettingsForm.tsx` when `dispatchEnabled=true` but `storeState` or `pickupAddress` is missing.
+
+#### Nominatim Address Autocomplete (replaces Google Places)
+- Integrated Nominatim (OpenStreetMap) free address autocomplete in checkout — no billing card required.
+- Restricted to Nigeria (`countrycodes=ng`), parses results into street/city/state.
+- Replaced plain state `<input>` with searchable combobox (`NIGERIAN_STATES` array, 36 states + FCT) matching the bank picker pattern.
+
+#### Store State Backfill (`web/scripts/backfill-store-state.js`)
+- Wrote one-time script to auto-populate `Store.storeState` from existing `location` field.
+- 3-phase parser: (1) exact match after normalizing ("State" suffix, non-alpha strip), (2) word-boundary partial match (longest state first, avoids Niger/Nigeria false match), (3) city→state lookup table for 40+ common Nigerian cities.
+- Ran on production DB: 37 stores set/corrected, 11 unresolvable (blank location).
+- Fixed initial run bug where "Nigeria" substring matched "Niger" — corrected 6 stores during correction pass.
+
+#### In-House Behavioral Analytics (committed `792e860` — pre-session)
+- **Schema**: `Event` model (type, userId, sessionId, targetId, targetType, metadata), `DailyEventSummary`, `EventType` enum (10 types: FEED_IMPRESSION, PRODUCT_VIEW, DEMAND_VIEW, STORE_VIEW, SEARCH, LIKE, SAVE, BID, ORDER, SHARE).
+- **`User.analyticsOptOut Boolean @default(false)`** — privacy opt-out field.
+- **`/api/track/route.ts`**: POST endpoint, rate-limited (60 events/session/minute), respects opt-out, fire-and-forget to never block UI.
+- **`useTrackEvent` hook**: Sends events via `fetch` fire-and-forget, reads/creates `_dm_sid` in localStorage.
+- **`useTrackImpression` hook**: Intersection Observer (50% visible, 1s dwell) for FEED_IMPRESSION events.
+- **Settings privacy section**: Analytics Opt-Out toggle in `/settings` — saves via `PATCH /api/user/update`.
+
+### Schema changes
+- `Event` model + `DailyEventSummary` model + `EventType` enum — pushed to DB.
+- `User.analyticsOptOut Boolean @default(false)` — pushed to DB.
+
+### Validations
+- ✅ `npm run db:push` — "already in sync" (analytics schema applied in earlier commit).
+- ✅ Backfill script ran successfully: 37 stores updated, 11 unresolvable.
+- ✅ All changes committed and pushed to `origin/main`.
+
+### Commits
+- `24ec763` — fix: use city+state for Shipbubble address registration
+- `c5d415f` — feat: replace Google Places with Nominatim address autocomplete
+- `c88bd84` — fix: sanitize names for Shipbubble, add state dropdown + Google Places autocomplete
+- `792e860` — feat: in-house behavioral analytics system
+- `ac137da` — feat: backfill Store.storeState from location field (3-phase city+state parser)
+
+### Pending / Next actions
+- **Vercel env vars needed**: `SHIPBUBBLE_API_KEY` (sandbox: `sb_sandbox_b3f07caf...`), `SHIPBUBBLE_MARKUP_PERCENT=15`.
+- **Store setup**: Manuel's test store needs `pickupAddress` set in `/store/[slug]/settings`.
+- **Shipbubble webhook**: Configure `https://depmi.com/api/webhooks/shipbubble` in Shipbubble dashboard.
+- **11 stores unresolvable** — owners need to set state manually in `/store/[slug]/settings`.
+- Resend domain `depmi.com` still needs verification for prod OTP emails.
+- Course/digital product selling (Selar-style, 48h escrow) — still pending.
+- Wire `useTrackImpression` + `useTrackEvent` into feed cards and product detail pages.

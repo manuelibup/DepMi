@@ -252,7 +252,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
-- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum), `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`.
+- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum), `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`, `storeState String?` (used for Shipbubble delivery zone; auto-backfilled from `location` via `scripts/backfill-store-state.js`).
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
 - **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category`, `inStock`, `isPortfolioItem`, `videoUrl`, `viewCount`, and `slug` (String? @unique — URL-safe identifier e.g. `dell-xps-15-techstore`, auto-generated from title + store name on create, nullable for backward compat with existing UUID routes).
 - **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.
@@ -264,7 +264,10 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
 - **StoreFollow** — `{ id, userId, storeId, notify (bool), createdAt, updatedAt }`. Tracks store follows + per-follow notification toggle ("Bell" icon). `@@unique([userId, storeId])`.
 - **Conversation** — `{ id, participants (User[]), messages, lastMessageAt, lastMessagePreview, createdAt, updatedAt }`. Many-to-many with User via implicit join.
-- **Message** — `{ id, conversationId, senderId, text?, type, mediaUrl?, read, createdAt }`. Supports multi-media: TEXT, IMAGE, AUDIO, STICKER.# DepMi (Buy Here) - Project Blueprint
+- **Message** — `{ id, conversationId, senderId, text?, type, mediaUrl?, read, createdAt }`. Supports multi-media: TEXT, IMAGE, AUDIO, STICKER.
+- **Event** — Behavioral analytics. `{ id, type (EventType enum), userId?, sessionId, targetId?, targetType?, metadata (Json?), createdAt }`. Fire-and-forget via `POST /api/track`. Rate-limited (60 events/session/min). `User.analyticsOptOut Boolean @default(false)` for GDPR-style opt-out.
+- **DailyEventSummary** — Aggregated daily counts per event type + target. Used by seller analytics dashboard.
+- **EventType** enum: `FEED_IMPRESSION | PRODUCT_VIEW | DEMAND_VIEW | STORE_VIEW | SEARCH | LIKE | SAVE | BID | ORDER | SHARE`.# DepMi (Buy Here) - Project Blueprint
 
 ## Table of Contents
 - [1. Core Vision](#1-core-vision)
