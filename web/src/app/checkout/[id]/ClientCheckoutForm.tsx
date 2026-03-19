@@ -4,10 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
-declare global {
-    interface Window { google: any }
-}
-
 const NIGERIAN_STATES = [
     'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
     'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu',
@@ -78,8 +74,12 @@ export default function ClientCheckoutForm({
     const [showStateList, setShowStateList] = useState(false);
     const stateRef = useRef<HTMLDivElement>(null);
 
-    // Google Places
-    const addressInputRef = useRef<HTMLInputElement>(null);
+    // Nominatim address autocomplete
+    interface NominatimResult { display_name: string; address: Record<string, string> }
+    const [addressSuggestions, setAddressSuggestions] = useState<NominatimResult[]>([]);
+    const [showAddressList, setShowAddressList] = useState(false);
+    const addressRef = useRef<HTMLDivElement>(null);
+    const addressDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
     // Live dispatch quote state
     const [quoteState, setQuoteState] = useState<QuoteState>('idle');
@@ -89,77 +89,61 @@ export default function ClientCheckoutForm({
     const [quoteHint, setQuoteHint] = useState<string | null>(null);
     const quoteDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Close state dropdown on outside click
+    // Close dropdowns on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (stateRef.current && !stateRef.current.contains(e.target as Node)) {
                 setShowStateList(false);
+            }
+            if (addressRef.current && !addressRef.current.contains(e.target as Node)) {
+                setShowAddressList(false);
             }
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    // Load Google Places Autocomplete on address input
+    // Nominatim address autocomplete — fetch suggestions as user types
     useEffect(() => {
-        const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-        if (!key) return;
+        if (address.length < 3) { setAddressSuggestions([]); return; }
+        if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current);
+        addressDebounceRef.current = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({
+                    q: address + ', Nigeria',
+                    countrycodes: 'ng',
+                    format: 'json',
+                    addressdetails: '1',
+                    limit: '5',
+                });
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+                    headers: { 'Accept-Language': 'en' },
+                });
+                const data = await res.json();
+                setAddressSuggestions(data);
+                if (data.length > 0) setShowAddressList(true);
+            } catch { /* silently ignore — user can still type manually */ }
+        }, 600);
+        return () => { if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current); };
+    }, [address]);
 
-        const initAutocomplete = () => {
-            if (!addressInputRef.current || !window.google?.maps?.places) return;
-            const ac = new window.google.maps.places.Autocomplete(addressInputRef.current, {
-                componentRestrictions: { country: 'ng' },
-                fields: ['address_components', 'formatted_address'],
-                types: ['address'],
-            });
-            ac.addListener('place_changed', () => {
-                const place = ac.getPlace();
-                let streetNumber = '', route = '', cityVal = '', stateFromPlace = '';
-                for (const comp of (place.address_components ?? [])) {
-                    if (comp.types.includes('street_number')) streetNumber = comp.long_name;
-                    if (comp.types.includes('route')) route = comp.long_name;
-                    if (comp.types.includes('locality') || comp.types.includes('sublocality_level_1')) cityVal = comp.long_name;
-                    if (!cityVal && comp.types.includes('administrative_area_level_2')) cityVal = comp.long_name;
-                    if (comp.types.includes('administrative_area_level_1')) stateFromPlace = comp.long_name;
-                }
-                const street = [streetNumber, route].filter(Boolean).join(' ')
-                    || place.formatted_address?.split(',')[0]
-                    || '';
-                setAddress(street);
-                if (cityVal) setCity(cityVal);
-                if (stateFromPlace) {
-                    const normalized = stateFromPlace.replace(/\s*state$/i, '').trim();
-                    const match = NIGERIAN_STATES.find(s =>
-                        s.toLowerCase() === normalized.toLowerCase() ||
-                        s.toLowerCase().includes(normalized.toLowerCase()) ||
-                        normalized.toLowerCase().includes(s.toLowerCase())
-                    );
-                    if (match) setStateVal(match);
-                }
-            });
-        };
-
-        const scriptId = 'google-places-script';
-        if (window.google?.maps?.places) {
-            initAutocomplete();
-        } else if (!document.getElementById(scriptId)) {
-            const script = document.createElement('script');
-            script.id = scriptId;
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-            script.async = true;
-            script.onload = initAutocomplete;
-            document.head.appendChild(script);
-        } else {
-            // Script already injected but not ready yet — poll briefly
-            const interval = setInterval(() => {
-                if (window.google?.maps?.places) {
-                    clearInterval(interval);
-                    initAutocomplete();
-                }
-            }, 100);
-            return () => clearInterval(interval);
-        }
-    }, []);
+    function handleAddressSelect(result: NominatimResult) {
+        const a = result.address;
+        const street = [a.house_number, a.road].filter(Boolean).join(' ')
+            || result.display_name.split(',')[0];
+        const cityVal = a.city || a.town || a.village || a.suburb || a.county || '';
+        const stateRaw = (a.state || '').replace(/\s*state$/i, '').trim();
+        const stateMatch = NIGERIAN_STATES.find(s =>
+            s.toLowerCase() === stateRaw.toLowerCase() ||
+            s.toLowerCase().includes(stateRaw.toLowerCase()) ||
+            stateRaw.toLowerCase().includes(s.toLowerCase())
+        );
+        setAddress(street);
+        if (cityVal) setCity(cityVal);
+        if (stateMatch) setStateVal(stateMatch);
+        setAddressSuggestions([]);
+        setShowAddressList(false);
+    }
 
     // Fetch live quote when address is complete and store has dispatch enabled
     useEffect(() => {
@@ -327,15 +311,55 @@ export default function ClientCheckoutForm({
                         <>
                             <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
                             <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-                            <input
-                                ref={addressInputRef}
-                                className={styles.inputField}
-                                placeholder="Street Address"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                autoComplete="off"
-                                required
-                            />
+                            <div ref={addressRef} style={{ position: 'relative' }}>
+                                <input
+                                    className={styles.inputField}
+                                    placeholder="Street Address"
+                                    value={address}
+                                    autoComplete="off"
+                                    onChange={(e) => { setAddress(e.target.value); setShowAddressList(true); }}
+                                    onFocus={() => { if (addressSuggestions.length > 0) setShowAddressList(true); }}
+                                    required
+                                />
+                                {showAddressList && addressSuggestions.length > 0 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 4px)',
+                                        left: 0,
+                                        right: 0,
+                                        background: 'var(--card-bg)',
+                                        border: '1px solid var(--card-border)',
+                                        borderRadius: '12px',
+                                        maxHeight: '220px',
+                                        overflowY: 'auto',
+                                        zIndex: 50,
+                                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                    }}>
+                                        {addressSuggestions.map((r, i) => (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onMouseDown={(e) => { e.preventDefault(); handleAddressSelect(r); }}
+                                                style={{
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    textAlign: 'left',
+                                                    padding: '10px 14px',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-main)',
+                                                    fontSize: '0.85rem',
+                                                    cursor: 'pointer',
+                                                    lineHeight: 1.4,
+                                                    borderBottom: i < addressSuggestions.length - 1 ? '1px solid var(--card-border)' : 'none',
+                                                }}
+                                            >
+                                                {r.display_name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <div className={styles.inputRow}>
                                 <input className={styles.inputField} placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} required />
 
