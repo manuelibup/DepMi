@@ -32,6 +32,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         displayStock: '1',
         deliveryFee: '0',
         displayDeliveryFee: '0',
+        isPortfolioItem: false,
     });
 
     const [activeInput, setActiveInput] = useState<'price' | 'category' | 'stock' | 'deliveryFee' | null>(null);
@@ -131,6 +132,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             videoUrl: form.videoUrl || null,
             stock: Number(form.stock) || 1,
             deliveryFee: Number(form.deliveryFee) || 0,
+            isPortfolioItem: form.isPortfolioItem,
         };
 
         try {
@@ -410,6 +412,18 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
                         </svg>
                         {form.deliveryFee && form.deliveryFee !== '0' ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                    </button>
+
+                    <button
+                        type="button"
+                        className={`${styles.pill} ${form.isPortfolioItem ? styles.pillActive : ''}`}
+                        onClick={() => setForm(f => ({ ...f, isPortfolioItem: !f.isPortfolioItem }))}
+                        title="Portfolio items show 'Enquire' instead of 'Buy' — great for services or made-to-order work"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
+                            <rect width="20" height="14" x="2" y="7" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                        </svg>
+                        {form.isPortfolioItem ? 'Portfolio' : 'For Sale'}
                     </button>
                 </div>
             </div>

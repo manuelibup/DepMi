@@ -367,9 +367,11 @@ export default function OnboardingPage() {
                     <div className={styles.doneIcon}>🎉</div>
                     <div className={styles.header}>
                         <h1 className={styles.title}>You&apos;re in!</h1>
-                        <p className={styles.subtitle}>Your DepMi account is ready. Explore the marketplace or post your first request.</p>
+                        <p className={styles.subtitle}>Your DepMi account is ready. Here&apos;s what you can do next.</p>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                    {/* Next-step cards */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                         <button
                             type="button"
                             className={styles.submitBtn}
@@ -387,6 +389,42 @@ export default function OnboardingPage() {
                         >
                             Post a Request
                         </button>
+                        <button
+                            type="button"
+                            className={styles.ghostBtn}
+                            onClick={() => { router.push('/store/create'); router.refresh(); }}
+                        >
+                            Open a Store &amp; Start Selling
+                        </button>
+                    </div>
+
+                    {/* Help section */}
+                    <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '16px', textAlign: 'center' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Need help getting started?
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <a
+                                href="/blog/how-to-start-an-online-store-in-nigeria"
+                                style={{ fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}
+                            >
+                                How to sell on DepMi
+                            </a>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>·</span>
+                            <a
+                                href="/blog/how-to-buy-safely-online-nigeria"
+                                style={{ fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}
+                            >
+                                How to buy safely
+                            </a>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>·</span>
+                            <a
+                                href="mailto:hello@depmi.com"
+                                style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textDecoration: 'none' }}
+                            >
+                                Contact support
+                            </a>
+                        </div>
                     </div>
                 </div>
             </main>

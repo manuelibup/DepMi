@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 import FollowButton from '@/components/FollowButton';
 import StoreTabBar from './StoreTabBar';
+import ViewTracker from '@/components/ViewTracker';
 
 interface StorePageProps {
     params: Promise<{ slug: string }>;
@@ -148,6 +149,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
 
     return (
         <main className={styles.container}>
+            <ViewTracker storeId={store.id} />
 
             {/* ── Cover ─────────────────────────────────── */}
             <div className={styles.cover}>
@@ -286,6 +288,25 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 sessionUserId={currentUserId}
                 isOwner={isOwner}
             />
+
+            {/* ── Powered by DepMi — seller acquisition footer ── */}
+            {!isOwner && (
+                <div style={{ textAlign: 'center', padding: '24px 16px 36px', borderTop: '1px solid var(--card-border)', marginTop: '8px' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        Secure checkout · Escrow protection · Tracked delivery
+                    </p>
+                    <Link
+                        href="/store/create"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(5,150,105,0.25)', background: 'rgba(5,150,105,0.06)' }}
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9,22 9,12 15,12 15,22" /></svg>
+                        Open your own store on DepMi — free
+                    </Link>
+                    <p style={{ margin: '10px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', opacity: 0.6 }}>
+                        Powered by <Link href="/" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>DepMi</Link>
+                    </p>
+                </div>
+            )}
         </main>
     );
 }

@@ -756,6 +756,8 @@ enum NotificationType {
   NEW_PRODUCT_FROM_STORE
   NEW_DEMAND
   ANNOUNCEMENT
+  SOCIAL_ACTIVITY  // "Your friend X just bought Y from Z" — social proof feed
+  STORE_FOLLOW_SALE // "A store you follow just completed a sale" — seller social proof
 }
 
 enum MessageType {
