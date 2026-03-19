@@ -229,6 +229,15 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **Image Carousels**: `ProductImageGallery` upgraded from thumbnail strip to swipe carousel (arrows, dot indicators, counter badge). New `DemandMediaCarousel` component unifies video + image on request detail pages.
 *   **Skeleton/Loading**: Shimmer animation fixed (proper linear-gradient). `loading.tsx` now shows branded green icon + "Curating your feed…" above skeleton cards.
 
+### **Session 66 Extensions (Mar 18, 2026)** ✅ *Complete.*
+*   **Shipbubble Dispatch Integration (GIG Logistics):** Live delivery quotes at checkout via Shipbubble API. Address registration (`registerAddress`), live quote (`getDeliveryQuote`), shipment booking (`bookShipment`), shipment tracking (`trackShipment`) — all in `web/src/lib/shipbubble.ts`.
+*   **Checkout live quote flow**: `ClientCheckoutForm` debounces buyer address input (800ms) → fetches live GIGL quote from `POST /api/delivery/quote` → shows live fee; falls back silently to store's static delivery fee on error.
+*   **Auto-dispatch on payment**: Flutterwave webhook auto-books shipment after payment confirmed using the `shipbubbleReqToken` saved on the Order.
+*   **Store settings**: DepMi Dispatch section added — enable/disable toggle (`dispatchEnabled`) + pickup address field. API route updated.
+*   **New schema fields** — `Store`: `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`. `Order`: `dispatchOrderId String?`, `dispatchProvider String?`, `shipbubbleReqToken String?`.
+*   **New env vars**: `SHIPBUBBLE_API_KEY` (required for live quotes), `SHIPBUBBLE_MARKUP_PERCENT` (default `15`).
+*   **Webhook**: `https://depmi.com/api/webhooks/shipbubble` — handles delivery status events, updates Order status.
+
 ### **Phase 4: Social Connectivity (Week 7)** ✅ *Complete.*
 *   **W7: Interactions & Retention:** Establish the social feedback loops that drive daily active usage (DAU).
     - **Direct Messaging (DMs):** Real-time buyer-to-vendor communication (`/messages`). Polling-based or WebSocket chat interface with optimistic UI updates.
@@ -243,7 +252,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`.
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
-- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).
+- **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 90-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum), `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`.
 - **Media Storage (Cloudinary):** All product images, store banners/logos, and user avatars hosted on Cloudinary CDN. DB stores clean Cloudinary URLs only — never raw file bytes. Originals stored without watermark; watermarked transformation URLs delivered to all clients. Video originals stored; `q_auto` compressed on delivery.
 - **Product + ProductImage** — Catalog with multi-image carousel support. Includes `category`, `inStock`, `isPortfolioItem`, `videoUrl`, `viewCount`, and `slug` (String? @unique — URL-safe identifier e.g. `dell-xps-15-techstore`, auto-generated from title + store name on create, nullable for backward compat with existing UUID routes).
 - **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.
@@ -251,7 +260,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
 - **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
 - **Comment** — `{ id, text, authorId, productId?, demandId?, createdAt, updatedAt }`. Belongs to either a Product OR a Demand (nullable FK). KYC-gated (UNVERIFIED users cannot comment). Text limit 500 chars. Supports inline product mentions via `[Title](/p/id)` syntax rendered as green chip links.
-- **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`.
+- **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`. Dispatch fields: `dispatchOrderId String?`, `dispatchProvider String?`, `shipbubbleReqToken String?`.
 - **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
 - **StoreFollow** — `{ id, userId, storeId, notify (bool), createdAt, updatedAt }`. Tracks store follows + per-follow notification toggle ("Bell" icon). `@@unique([userId, storeId])`.
 - **Conversation** — `{ id, participants (User[]), messages, lastMessageAt, lastMessagePreview, createdAt, updatedAt }`. Many-to-many with User via implicit join.

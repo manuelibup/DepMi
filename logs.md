@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 66 — Mar 18, 2026 — Shipbubble Dispatch Integration (GIG Logistics)](#session-66--mar-18-2026--shipbubble-dispatch-integration-gig-logistics)
 - [Session 65 — Mar 17, 2026 — Brand Color: Neon Green → Emerald Green](#session-65--mar-17-2026--brand-color-neon-green--emerald-green)
 - [Session 64 — Mar 17, 2026 — UX Polish: Carousels, Bid Replies, Nav Sync & Toast Notifications](#session-64--mar-17-2026--ux-polish-carousels-bid-replies-nav-sync--toast-notifications)
 - [Session 63 — Mar 17, 2026 — Growth & SEO Sprint (Blog, Sitemap, Search Console)](#session-63--mar-17-2026--growth--seo-sprint-blog-sitemap-search-console)
@@ -48,6 +49,30 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 66 — Mar 18, 2026 — Shipbubble Dispatch Integration (GIG Logistics)
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+- **`web/src/lib/shipbubble.ts`**: Shipbubble API wrapper — address registration (`registerAddress`), live quote (`getDeliveryQuote`), book shipment (`bookShipment`), shipment tracking (`trackShipment`).
+- **`web/src/app/api/delivery/quote/route.ts`**: `POST` endpoint for live GIGL delivery quotes at checkout. Accepts sender (store pickup address) + receiver (buyer address) + package weight → returns quote from Shipbubble.
+- **`web/src/app/api/webhooks/shipbubble/route.ts`**: Webhook handler for Shipbubble delivery status events — updates `Order.status` on delivery lifecycle events.
+- **Checkout live quote flow**: `ClientCheckoutForm.tsx` debounces address input (800ms) and fetches a live quote when address is complete; falls back silently to store's static delivery fee on error.
+- **Checkout initialize**: `api/checkout/initialize/route.ts` now accepts `shipbubbleReqToken` + `shipbubbleDeliveryFee` and saves the token on the Order for later dispatch booking.
+- **Auto-book on payment**: `api/webhooks/flutterwave/route.ts` calls `bookShipment()` after Flutterwave confirms payment, passing the saved `shipbubbleReqToken`.
+- **Store settings**: Added DepMi Dispatch section to `StoreSettingsForm.tsx` — enable/disable toggle + pickup address field. API route updated to accept `dispatchEnabled` + `pickupAddress`.
+- **Schema changes**: `Store` — `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`. `Order` — `dispatchOrderId String?`, `dispatchProvider String?`, `shipbubbleReqToken String?`. Pushed with `npm run db:push`.
+
+### New Env Vars Required (Production)
+- `SHIPBUBBLE_API_KEY` — Shipbubble live API key
+- `SHIPBUBBLE_MARKUP_PERCENT` — platform markup on delivery quotes (default: `15`)
+
+### Webhook to Configure
+- Shipbubble dashboard → set webhook URL to `https://depmi.com/api/webhooks/shipbubble`
 
 ---
 

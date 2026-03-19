@@ -532,3 +532,18 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Fix**: Since the backup script already ran successfully, it's safe to retry `npx prisma db push` directly without re-running the backup.
 - **What to check**: Run `npx prisma db push` alone. If you see "already in sync", the migration either applied on retry or was already done. If you see actual schema changes being applied, you're good.
 - **Prevention**: If `npm run db:push` consistently fails at P1017, open Prisma Studio or ping Neon via the dashboard first to wake the instance, then re-run.
+
+---
+
+## 44. Shipbubble (GIG Logistics) Integration — Key Gotchas
+
+*Added after building the dispatch integration in Session 66.*
+
+- **Address registration is a one-time step**: Before requesting a quote or booking a shipment, both sender and receiver addresses must be registered with Shipbubble via `POST /address` to receive an `address_code`. Store the sender's `address_code` in `Store.shipbubbleAddrCode` so it isn't re-registered on every checkout.
+- **Quote token is single-use**: The `request_token` returned by `POST /fetch_rates` must be saved immediately (on the Order as `shipbubbleReqToken`). Shipbubble uses it to confirm the quoted price when `POST /shipment/create` is called. Do not discard it after checkout initialisation.
+- **Auto-book timing**: Book the shipment (`POST /shipment/create`) only after Flutterwave confirms payment (in the webhook handler). Never book before payment is confirmed — Shipbubble charges immediately on booking.
+- **15% markup default**: `SHIPBUBBLE_MARKUP_PERCENT` env var (default `15`) is applied server-side in `lib/shipbubble.ts` before returning the quote to the client. Never expose the raw Shipbubble rate to buyers.
+- **Fallback on quote failure**: If the live quote API is unavailable at checkout (network error, address incomplete), the UI silently falls back to the store's static `localDeliveryFee` / `nationwideDeliveryFee`. Do not surface Shipbubble errors to buyers.
+- **Webhook secret**: Shipbubble sends a header (check their docs for the exact header name — typically `x-shipbubble-signature`) that should be validated in `api/webhooks/shipbubble/route.ts` to prevent spoofed status updates.
+- **New env vars needed in Vercel**: `SHIPBUBBLE_API_KEY` (live key from Shipbubble dashboard) + `SHIPBUBBLE_MARKUP_PERCENT` (set to `15` for production). Without `SHIPBUBBLE_API_KEY`, the quote endpoint returns an error and checkout falls back to static fee — safe but no live quotes.
+- **Webhook URL to register**: `https://depmi.com/api/webhooks/shipbubble` in the Shipbubble merchant dashboard.
