@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
     }
 
+    let confirmedOrder: { storeId: string; storeName: string; productTitle: string; storeSlug: string } | null = null
+
     try {
         await prisma.$transaction(async (tx) => {
             let order = await tx.order.findUnique({
@@ -122,6 +124,14 @@ export async function POST(req: NextRequest) {
                 })
             }
 
+            // Capture for post-transaction social notifications
+            confirmedOrder = {
+                storeId: order.seller.id,
+                storeName: order.seller.name,
+                productTitle: order.items[0]?.product?.title ?? 'a product',
+                storeSlug: order.seller.slug,
+            }
+
             // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved
             if (order.seller.dispatchEnabled && order.shipbubbleReqToken) {
                 try {
@@ -152,6 +162,33 @@ export async function POST(req: NextRequest) {
         })
     } catch (err) {
         console.error('[flutterwave-webhook] DB error:', err)
+    }
+
+    // Fire social notifications after transaction — never block payment confirmation
+    if (confirmedOrder) {
+        const { storeId, storeName, productTitle, storeSlug } = confirmedOrder
+        try {
+            // Notify store followers: "Someone just bought X from [Store]"
+            const followers = await prisma.storeFollow.findMany({
+                where: { storeId },
+                select: { userId: true },
+                take: 100, // cap per-order fan-out
+            })
+            if (followers.length > 0) {
+                await prisma.notification.createMany({
+                    data: followers.map(f => ({
+                        userId: f.userId,
+                        type: 'STORE_FOLLOW_SALE' as const,
+                        title: `Someone just bought from ${storeName}`,
+                        body: `"${productTitle}" was just purchased — check out what else is available.`,
+                        link: `/store/${storeSlug}`,
+                    })),
+                    skipDuplicates: true,
+                })
+            }
+        } catch (err) {
+            console.error('[flutterwave-webhook] Social notification error:', err)
+        }
     }
 
     return NextResponse.json({ ok: true })

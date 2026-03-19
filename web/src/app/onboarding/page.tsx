@@ -419,7 +419,7 @@ export default function OnboardingPage() {
                             </a>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>·</span>
                             <a
-                                href="mailto:hello@depmi.com"
+                                href="mailto:manuel@depmi.com"
                                 style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textDecoration: 'none' }}
                             >
                                 Contact support

@@ -7,6 +7,7 @@ import { useAuthGate } from '@/context/AuthGate';
 import { useSession } from 'next-auth/react';
 import styles from './ProductCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
+import { withWatermark } from '@/lib/cloudinaryWatermark';
 
 export interface ProductData {
     store: string;
@@ -236,7 +237,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                     {data.image ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                            src={data.image}
+                            src={withWatermark(data.image)}
                             alt={data.title}
                             className={styles.productImage}
                             loading="lazy"
