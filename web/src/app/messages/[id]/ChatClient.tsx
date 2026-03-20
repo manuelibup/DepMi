@@ -166,23 +166,54 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // SSE
+    // SSE with visibility detection
     useEffect(() => {
-        const eventSource = new EventSource(`/api/messages/stream?conversationId=${conversationId}`);
-        eventSource.onmessage = (event) => {
-            try {
-                const newMsgs = JSON.parse(event.data);
-                if (Array.isArray(newMsgs) && newMsgs.length > 0) {
-                    setMessages((prev) => {
-                        const existingIds = new Set(prev.map((m) => m.id));
-                        const uniqueNew = newMsgs.filter((m) => m.id && !existingIds.has(m.id));
-                        if (uniqueNew.length === 0) return prev;
-                        return [...prev, ...uniqueNew];
-                    });
-                }
-            } catch (err) { }
+        let eventSource: EventSource | null = null;
+
+        const connect = () => {
+            if (eventSource) return;
+            eventSource = new EventSource(`/api/messages/stream?conversationId=${conversationId}`);
+            eventSource.onmessage = (event) => {
+                try {
+                    const newMsgs = JSON.parse(event.data);
+                    if (Array.isArray(newMsgs) && newMsgs.length > 0) {
+                        setMessages((prev) => {
+                            const existingIds = new Set(prev.map((m) => m.id));
+                            const uniqueNew = newMsgs.filter((m) => m.id && !existingIds.has(m.id));
+                            if (uniqueNew.length === 0) return prev;
+                            return [...prev, ...uniqueNew];
+                        });
+                    }
+                } catch (err) { }
+            };
         };
-        return () => eventSource.close();
+
+        const disconnect = () => {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                connect();
+            } else {
+                disconnect();
+            }
+        };
+
+        // Connect initially if visible
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+            connect();
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            disconnect();
+        };
     }, [conversationId]);
 
     const handleSend = async (payload: { text?: string, type?: string, mediaUrl?: string }) => {
