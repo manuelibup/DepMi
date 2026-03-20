@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
                 name: sanitizeName(store.name, 'DepMi Store'),
                 email: store.owner.email ?? `store-${store.id}@depmi.app`,
                 phone: store.owner.phoneNumber ?? '08000000000',
-                address: `${store.pickupAddress}, ${storeCity}, ${storeState}`,
+                address: store.pickupAddress,
                 city: storeCity,
                 state: storeState,
             })
@@ -99,12 +99,12 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        // Register receiver address (buyer) — full address required by Shipbubble validator.
+        // Register receiver address (buyer) — street only; city/state are separate fields.
         const receiverCode = await registerAddress({
             name: sanitizeName(buyer?.displayName, 'DepMi Buyer'),
             email: buyer?.email ?? `buyer-${session.user.id}@depmi.app`,
             phone: buyer?.phoneNumber ?? '08000000000',
-            address: `${deliveryAddress}, ${deliveryCity}, ${deliveryState}`,
+            address: deliveryAddress,
             city: deliveryCity,
             state: deliveryState,
         })
