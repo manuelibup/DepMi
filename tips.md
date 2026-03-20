@@ -547,3 +547,17 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **Webhook secret**: Shipbubble sends a header (check their docs for the exact header name — typically `x-shipbubble-signature`) that should be validated in `api/webhooks/shipbubble/route.ts` to prevent spoofed status updates.
 - **New env vars needed in Vercel**: `SHIPBUBBLE_API_KEY` (live key from Shipbubble dashboard) + `SHIPBUBBLE_MARKUP_PERCENT` (set to `15` for production). Without `SHIPBUBBLE_API_KEY`, the quote endpoint returns an error and checkout falls back to static fee — safe but no live quotes.
 - **Webhook URL to register**: `https://depmi.com/api/webhooks/shipbubble` in the Shipbubble merchant dashboard.
+- **Address field = street only**: Shipbubble's address validation endpoint takes `address`, `city`, `state`, and `country` as **separate fields**. Never concatenate city or state into the `address` field — doing so causes "couldn't validate the provided address" errors even with a live key. Pass just the street (e.g. `"17 IBB Avenue"`) in `address`.
+- **Sandbox key rejects real addresses**: The sandbox API key only accepts synthetic test addresses. Use a live/production key for any real Nigerian address testing.
+- **Clear cached `shipbubbleAddrCode` if address format changes**: If stores have a cached code registered with wrong format, clear it via `UPDATE "Store" SET "shipbubbleAddrCode" = NULL` so they re-register correctly on next quote.
+
+---
+
+## 🛑 45. DB Compute Exhaustion via SSE Background Tabs
+
+*This tip was added after diagnosing a 100% database compute drain in Neon (Session 67).*
+
+- **The Issue**: A `setInterval` used for DB polling in a Server-Sent Events (SSE) stream (`/api/messages/stream`) continued running indefinitely because the browser tab remained open in the background. Vercel periodically restarts it, meaning a single user with a dormant background tab will keep your DB awake 24/7, burning Neon compute hours.
+- **The Root Cause**: `EventSource` connections do not automatically pause when a tab goes inactive/backgrounded on mobile or desktop.
+- **The Fix**: Use the Page Visibility API (`document.visibilityState`) to explicitly `close()` the SSE connection when hidden, and `new EventSource()` when visible again. This allows the serverless polling loop to terminate, letting the database autosuspend via its 5-minute inactivity rule.
+- **Prevention**: Never use an unconditional `setInterval` for database polling behind an SSE or WebSocket stream without a visibility check on the client. For basic counts like unread notifications, prefer `SWR` with `refreshInterval`, which automatically pauses polling on tab blur out-of-the-box.
