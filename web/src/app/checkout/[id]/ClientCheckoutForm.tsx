@@ -197,6 +197,7 @@ export default function ClientCheckoutForm({
 
     // Compute active delivery fee
     function getDeliveryFee(): { fee: number; label: string | null; isLive: boolean } {
+        if (isDigital) return { fee: 0, label: 'Instant digital delivery', isLive: false };
         if (deliveryMethod === 'PICKUP') return { fee: 0, label: null, isLive: false };
         if (dispatchEnabled && liveDeliveryFee !== null) {
             return { fee: liveDeliveryFee, label: liveEta ? `DepMi Dispatch · ${liveEta}` : 'DepMi Dispatch', isLive: true };
@@ -225,13 +226,15 @@ export default function ClientCheckoutForm({
         e.preventDefault();
         setError('');
 
-        if (deliveryMethod === 'DELIVERY' && (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim())) {
-            setError('Please fill in all delivery details.');
-            return;
-        }
-        if (deliveryMethod === 'PICKUP' && !phone.trim()) {
-            setError('Please provide a phone number for the seller to contact you.');
-            return;
+        if (!isDigital) {
+            if (deliveryMethod === 'DELIVERY' && (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim())) {
+                setError('Please fill in all delivery details.');
+                return;
+            }
+            if (deliveryMethod === 'PICKUP' && !phone.trim()) {
+                setError('Please provide a phone number for the seller to contact you.');
+                return;
+            }
         }
 
         setStage('submitting');
@@ -289,6 +292,22 @@ export default function ClientCheckoutForm({
 
     return (
         <form onSubmit={handleSubmit} className={styles.formGroup} style={{ gap: '24px' }}>
+            {isDigital && (
+                <section className={styles.section}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(5,150,105,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>Digital Product</p>
+                            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>Your download link will appear in your orders immediately after payment.</p>
+                        </div>
+                    </div>
+                </section>
+            )}
+            {!isDigital && (
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -447,6 +466,7 @@ export default function ClientCheckoutForm({
                     </label>
                 </div>
             </section>
+            )}
 
             <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
@@ -474,7 +494,7 @@ export default function ClientCheckoutForm({
                             </span>
                         )}
                     </span>
-                    <span>{deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>
+                    <span>{isDigital ? 'Free' : deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>
                 </div>
                 <div className={styles.summaryRow}><span>Service &amp; escrow fee (5%)</span><span>₦{gatewayFee.toLocaleString()}</span></div>
 

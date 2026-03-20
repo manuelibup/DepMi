@@ -25,7 +25,7 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { id: true, title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             seller: { select: { name: true, ownerId: true } },
             review: { select: { id: true } }
@@ -38,7 +38,7 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { id: true, title: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             buyer: { select: { displayName: true, username: true } }
         }
@@ -58,8 +58,10 @@ export default async function OrdersPage() {
         product: o.items?.[0]?.product ? {
             id: o.items[0].product.id,
             title: o.items[0].product.title,
+            isDigital: o.items[0].product.isDigital,
+            fileUrl: o.items[0].product.fileUrl ?? null,
             images: o.items[0].product.images,
-        } : { id: '', title: 'Unknown', images: [] },
+        } : { id: '', title: 'Unknown', isDigital: false, fileUrl: null, images: [] },
         store: o.seller,
         seller: o.seller,
         buyer: o.buyer,

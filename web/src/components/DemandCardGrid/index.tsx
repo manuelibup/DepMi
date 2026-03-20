@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './DemandCardGrid.module.css';
 import type { DemandData } from '@/components/DemandCard';
+import { useTrackImpression } from '@/hooks/useTrackImpression';
 
 interface Props {
     data: DemandData;
@@ -12,9 +13,11 @@ interface Props {
 
 export default function DemandCardGrid({ data, index = 0 }: Props) {
     const router = useRouter();
+    const impressionRef = useTrackImpression(data.id ?? '', 'demand', { index });
 
     return (
         <article
+            ref={impressionRef as React.RefObject<HTMLElement>}
             className={styles.card}
             style={{ animationDelay: `${index * 40}ms` }}
             onClick={() => data.id && router.push(`/requests/${data.id}`)}

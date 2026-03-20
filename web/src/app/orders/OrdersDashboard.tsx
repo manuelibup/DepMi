@@ -12,7 +12,7 @@ interface OrderItem {
     escrowStatus: string;
     total: number;
     createdAt: string;
-    product: { id: string; title: string; images: { url: string }[] };
+    product: { id: string; title: string; isDigital?: boolean; fileUrl?: string | null; images: { url: string }[] };
     store?: { name: string; ownerId?: string };
     seller?: { name: string; ownerId: string };
     buyer?: { displayName: string; username: string };
@@ -338,7 +338,22 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                             </div>
                         )}
 
-                        {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && (
+                        {order.product.isDigital && order.product.fileUrl && ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(localStatus) && (
+                            <a
+                                href={order.product.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`${styles.btn} ${styles.btnPrimary}`}
+                                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Download Your File
+                            </a>
+                        )}
+
+                        {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && !order.product.isDigital && (
                             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 <div className={styles.infoBanner}>
                                     <p><strong>Payment confirmed.</strong> Seller notified. Chat to coordinate delivery.</p>
@@ -368,6 +383,9 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                                     </button>
                                 )}
                             </div>
+                        )}
+                        {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && order.product.isDigital && (
+                            <div className={styles.infoBanner}><p><strong>Payment confirmed.</strong> Your download link is ready above.</p></div>
                         )}
 
                         {localStatus === 'COMPLETED' && !hasReviewed && (
