@@ -133,8 +133,9 @@ export default function ClientCheckoutForm({
 
     function handleAddressSelect(result: NominatimResult) {
         const a = result.address;
-        const street = [a.house_number, a.road].filter(Boolean).join(' ')
-            || result.display_name.split(',')[0];
+        const street = (a.house_number && a.road)
+            ? `${a.house_number} ${a.road}`
+            : result.display_name.split(',')[0];
         const cityVal = a.city || a.town || a.village || a.suburb || a.county || '';
         const stateRaw = (a.state || '').replace(/\s*state$/i, '').trim();
         const stateMatch = NIGERIAN_STATES.find(s =>
