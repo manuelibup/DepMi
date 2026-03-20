@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { withWatermark } from '@/lib/cloudinaryWatermark';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -18,7 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     });
     if (!product) return {};
     const price = `${product.currency || '₦'}${Number(product.price).toLocaleString()}`;
-    const image = product.images[0]?.url;
+    const rawImage = product.images[0]?.url;
+    const ogImage = withWatermark(rawImage);
     const desc = product.description || `Buy ${product.title} from ${product.store.name} on DepMi`;
     return {
         title: `${product.title} — ${price} · DepMi`,
@@ -26,13 +28,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         openGraph: {
             title: `${product.title} — ${price}`,
             description: desc,
-            images: image ? [{ url: image, alt: product.title }] : undefined,
+            images: ogImage ? [{ url: ogImage, alt: product.title }] : undefined,
         },
         twitter: {
             card: 'summary_large_image',
             title: `${product.title} — ${price}`,
             description: desc,
-            images: image ? [image] : undefined,
+            images: ogImage ? [ogImage] : undefined,
         },
     };
 }

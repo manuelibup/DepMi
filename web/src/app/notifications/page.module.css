@@ -54,6 +54,16 @@
     color: #059669;
 }
 
+.card.socialCard {
+    background: rgba(245, 158, 11, 0.03);
+    border-color: rgba(245, 158, 11, 0.18);
+}
+
+.card.socialCard .iconBox {
+    background: rgba(245, 158, 11, 0.1);
+    color: #D97706;
+}
+
 .iconBox {
     width: 44px;
     height: 44px;

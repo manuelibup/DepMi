@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { withWatermark } from '@/lib/cloudinaryWatermark';
 
 interface ProductImage {
     id: string;
@@ -71,7 +70,7 @@ export default function ProductImageGallery({ images, title, videoUrl }: Props) 
                     />
                 ) : (
                     <Image
-                        src={withWatermark(current.url)}
+                        src={current.url}
                         alt={`${title} — photo ${idx + 1}`}
                         fill
                         style={{ objectFit: 'contain' }}

@@ -327,6 +327,8 @@ model Product {
   updatedAt       DateTime       @updatedAt
   videoUrl        String?
   isPortfolioItem Boolean        @default(false)
+  isDigital       Boolean        @default(false)
+  fileUrl         String?
   slug            String?        @unique
   currency        String         @default("₦")
   isFeatured      Boolean        @default(false)

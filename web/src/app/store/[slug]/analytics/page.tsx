@@ -55,6 +55,7 @@ export default async function StoreAnalyticsPage({
         topByViews,
         topBySaves,
         recentOrders,
+        storeVisitsAgg,
     ] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).productView.count({
@@ -118,7 +119,19 @@ export default async function StoreAnalyticsPage({
                 items: { take: 1, select: { product: { select: { title: true } } } },
             },
         }),
+        // Behavioral: store page visits from ViewTracker STORE_VIEW events
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (prisma as any).dailyEventSummary.aggregate({
+            where: {
+                type: 'STORE_VIEW',
+                targetId: store.id,
+                ...(dateFrom ? { date: { gte: dateFrom } } : {}),
+            },
+            _sum: { count: true },
+        }),
     ]);
+
+    const storePageVisits = storeVisitsAgg._sum?.count ?? 0;
 
     // Revenue & order calculations
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,6 +233,10 @@ export default async function StoreAnalyticsPage({
                 <div className={styles.kpi}>
                     <span className={styles.kpiValue}>{totalLikes.toLocaleString()}</span>
                     <span className={styles.kpiLabel}>Likes · {periodLabel}</span>
+                </div>
+                <div className={styles.kpi}>
+                    <span className={styles.kpiValue}>{storePageVisits.toLocaleString()}</span>
+                    <span className={styles.kpiLabel}>Store Page Visits · {periodLabel}</span>
                 </div>
                 <div className={styles.kpi}>
                     <span className={styles.kpiValue}>{productCount}</span>

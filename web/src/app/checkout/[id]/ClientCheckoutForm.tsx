@@ -80,6 +80,7 @@ export default function ClientCheckoutForm({
     const [showAddressList, setShowAddressList] = useState(false);
     const addressRef = useRef<HTMLDivElement>(null);
     const addressDebounceRef = useRef<NodeJS.Timeout | null>(null);
+    const addressSelectedRef = useRef(false);
 
     // Live dispatch quote state
     const [quoteState, setQuoteState] = useState<QuoteState>('idle');
@@ -105,6 +106,7 @@ export default function ClientCheckoutForm({
 
     // Nominatim address autocomplete — fetch suggestions as user types
     useEffect(() => {
+        if (addressSelectedRef.current) { addressSelectedRef.current = false; return; }
         if (address.length < 3) { setAddressSuggestions([]); return; }
         if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current);
         addressDebounceRef.current = setTimeout(async () => {
@@ -138,6 +140,7 @@ export default function ClientCheckoutForm({
             s.toLowerCase().includes(stateRaw.toLowerCase()) ||
             stateRaw.toLowerCase().includes(s.toLowerCase())
         );
+        addressSelectedRef.current = true;
         setAddress(street);
         if (cityVal) setCity(cityVal);
         if (stateMatch) setStateVal(stateMatch);

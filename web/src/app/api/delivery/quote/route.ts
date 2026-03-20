@@ -82,15 +82,13 @@ export async function POST(req: NextRequest) {
         const storeState = store.storeState ?? 'Unknown'
 
         // Register / reuse sender address code.
-        // Use city+state for quote zone detection — Shipbubble validates street
-        // addresses strictly; exact pickup address is only needed at booking time.
         let senderCode = store.shipbubbleAddrCode
         if (!senderCode) {
             senderCode = await registerAddress({
                 name: sanitizeName(store.name, 'DepMi Store'),
                 email: store.owner.email ?? `store-${store.id}@depmi.app`,
                 phone: store.owner.phoneNumber ?? '08000000000',
-                address: `${storeCity}, ${storeState}`,
+                address: `${store.pickupAddress}, ${storeCity}, ${storeState}`,
                 city: storeCity,
                 state: storeState,
             })
@@ -101,14 +99,12 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        // Register receiver address (buyer) — use city+state for quote zone detection.
-        // Shipbubble validates addresses strictly; the exact street isn't needed for pricing,
-        // only for the actual booking after payment.
+        // Register receiver address (buyer) — full address required by Shipbubble validator.
         const receiverCode = await registerAddress({
             name: sanitizeName(buyer?.displayName, 'DepMi Buyer'),
             email: buyer?.email ?? `buyer-${session.user.id}@depmi.app`,
             phone: buyer?.phoneNumber ?? '08000000000',
-            address: `${deliveryCity}, ${deliveryState}`,
+            address: `${deliveryAddress}, ${deliveryCity}, ${deliveryState}`,
             city: deliveryCity,
             state: deliveryState,
         })
