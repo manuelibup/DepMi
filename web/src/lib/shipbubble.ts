@@ -45,11 +45,15 @@ export async function registerAddress(data: ShipbubbleAddress): Promise<number> 
         ? `+234${data.phone.slice(1)}`
         : data.phone
 
+    // Shipbubble requires the address field to include city, state and country
+    // (per their validation error message), in addition to the separate city/state fields.
+    const fullAddress = `${data.address}, ${data.city}, ${data.state}, Nigeria`
+
     const payload = {
         name: data.name,
         email: data.email,
         phone,
-        address: data.address,
+        address: fullAddress,
         city: data.city,
         state: data.state,
         country: data.country ?? 'NG',
