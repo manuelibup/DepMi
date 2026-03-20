@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { registerAddress, getDeliveryQuote } from '@/lib/shipbubble'
+import { decrypt } from '@/lib/encryption'
 
 /**
  * Shipbubble requires names with only letters and spaces (e.g. "John Doe").
@@ -11,6 +12,21 @@ import { registerAddress, getDeliveryQuote } from '@/lib/shipbubble'
 function sanitizeName(raw: string | null | undefined, fallback: string): string {
     const clean = (raw ?? '').replace(/[^a-zA-Z\s]/g, '').replace(/\s+/g, ' ').trim()
     return clean || fallback
+}
+
+/**
+ * Decrypt a phone number and validate it looks like a real Nigerian number.
+ * Falls back to the provided fallback if the decrypted value is invalid.
+ * This ensures encrypted DB values are never sent raw to third-party APIs.
+ */
+function sanitizePhone(raw: string | null | undefined, fallback: string): string {
+    const decrypted = decrypt(raw ?? '')
+    const digits = decrypted.replace(/[^0-9+]/g, '')
+    // Valid Nigerian: 11 digits starting with 0, or +234 followed by 10 digits
+    if (/^0[789][01]\d{8}$/.test(digits) || /^\+?234[789][01]\d{8}$/.test(digits)) {
+        return digits
+    }
+    return fallback
 }
 
 /**
@@ -77,9 +93,11 @@ export async function POST(req: NextRequest) {
             }, { status: 422 })
         }
 
-        // Derive store city from location field (e.g. "Uyo, Akwa Ibom" → "Uyo")
-        const storeCity = (store.location ?? '').split(',')[0].trim() || 'Unknown'
+        // Derive store city from location field (e.g. "Uyo, Akwa Ibom" → "Uyo").
+        // Guard against free-text garbage (numbers, symbols) — fall back to the state name.
         const storeState = store.storeState ?? 'Unknown'
+        const rawCity = (store.location ?? '').split(',')[0].trim()
+        const storeCity = /^[a-zA-Z\s\-]+$/.test(rawCity) ? rawCity : storeState
 
         // Register / reuse sender address code.
         let senderCode = store.shipbubbleAddrCode
@@ -87,7 +105,7 @@ export async function POST(req: NextRequest) {
             senderCode = await registerAddress({
                 name: sanitizeName(store.name, 'DepMi Store'),
                 email: store.owner.email ?? `store-${store.id}@depmi.app`,
-                phone: store.owner.phoneNumber ?? '08000000000',
+                phone: sanitizePhone(store.owner.phoneNumber, '08000000000'),
                 address: store.pickupAddress,
                 city: storeCity,
                 state: storeState,
@@ -103,7 +121,7 @@ export async function POST(req: NextRequest) {
         const receiverCode = await registerAddress({
             name: sanitizeName(buyer?.displayName, 'DepMi Buyer'),
             email: buyer?.email ?? `buyer-${session.user.id}@depmi.app`,
-            phone: buyer?.phoneNumber ?? '08000000000',
+            phone: sanitizePhone(buyer?.phoneNumber, '08000000000'),
             address: deliveryAddress,
             city: deliveryCity,
             state: deliveryState,

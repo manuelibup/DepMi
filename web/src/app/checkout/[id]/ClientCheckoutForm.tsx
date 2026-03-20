@@ -84,6 +84,9 @@ export default function ClientCheckoutForm({
     const addressDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const addressSelectedRef = useRef(false);
 
+    // GPS location
+    const [gpsLoading, setGpsLoading] = useState(false);
+
     // Live dispatch quote state
     const [quoteState, setQuoteState] = useState<QuoteState>('idle');
     const [liveDeliveryFee, setLiveDeliveryFee] = useState<number | null>(null);
@@ -149,6 +152,39 @@ export default function ClientCheckoutForm({
         if (stateMatch) setStateVal(stateMatch);
         setAddressSuggestions([]);
         setShowAddressList(false);
+    }
+
+    async function handleUseMyLocation() {
+        if (!navigator.geolocation) return;
+        setGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            try {
+                const { latitude, longitude } = pos.coords;
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                const data = await res.json();
+                if (data?.address) {
+                    const a = data.address;
+                    const street = (a.house_number && a.road)
+                        ? `${a.house_number} ${a.road}`
+                        : (a.road || data.display_name.split(',')[0]);
+                    const cityVal = a.city || a.town || a.village || a.suburb || a.county || '';
+                    const stateRaw = (a.state || '').replace(/\s*state$/i, '').trim();
+                    const stateMatch = NIGERIAN_STATES.find(s =>
+                        s.toLowerCase() === stateRaw.toLowerCase() ||
+                        s.toLowerCase().includes(stateRaw.toLowerCase()) ||
+                        stateRaw.toLowerCase().includes(s.toLowerCase())
+                    );
+                    addressSelectedRef.current = true;
+                    if (street) setAddress(street);
+                    if (cityVal) setCity(cityVal);
+                    if (stateMatch) setStateVal(stateMatch);
+                }
+            } catch { /* silently ignore */ }
+            setGpsLoading(false);
+        }, () => setGpsLoading(false), { timeout: 8000 });
     }
 
     // Fetch live quote when address is complete and store has dispatch enabled
@@ -336,6 +372,31 @@ export default function ClientCheckoutForm({
                         <>
                             <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
                             <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                            <button
+                                type="button"
+                                onClick={handleUseMyLocation}
+                                disabled={gpsLoading}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    background: 'transparent',
+                                    border: '1px solid var(--card-border)',
+                                    borderRadius: 8,
+                                    color: 'var(--primary)',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 600,
+                                    padding: '6px 12px',
+                                    cursor: gpsLoading ? 'not-allowed' : 'pointer',
+                                    opacity: gpsLoading ? 0.6 : 1,
+                                    alignSelf: 'flex-start',
+                                }}
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                                </svg>
+                                {gpsLoading ? 'Detecting…' : 'Use my location'}
+                            </button>
                             <div ref={addressRef} style={{ position: 'relative' }}>
                                 <input
                                     className={styles.inputField}
