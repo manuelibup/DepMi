@@ -104,7 +104,7 @@ export async function getDeliveryQuote(
 
     const ratePayload = {
         sender_address_code: senderAddressCode,
-        receiver_address_code: receiverAddressCode,
+        recipient_address_code: receiverAddressCode,
         pickup_date: pickupDate,
         category_id: 1,
         package_items: [
