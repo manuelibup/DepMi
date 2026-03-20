@@ -93,10 +93,46 @@ export interface QuoteResult {
 /**
  * Fetch a live GIGL delivery quote via Shipbubble.
  */
+/**
+ * Live category IDs from GET /v1/shipping/labels/categories (as of Mar 2026).
+ * Map DepMi's Category enum values to Shipbubble category IDs.
+ */
+export const SHIPBUBBLE_CATEGORY_IDS = {
+    FASHION:    74794423,  // Fashion wears
+    ELECTRONICS: 77179563, // Electronics and gadgets
+    FOOD:       98190590,  // Hot food
+    DRY_FOOD:   24032950,  // Dry food and supplements
+    GROCERIES:  2178251,   // Groceries
+    HEALTH:     99652979,  // Health and beauty
+    FURNITURE:  25590994,  // Furniture and fittings
+    MEDICAL:    57487393,  // Medical supplies
+    MACHINERY:  67008831,  // Machinery
+    DOCUMENTS:  67658572,  // Sensitive items (ATM cards, documents)
+    DEFAULT:    20754594,  // Light weight items — books, courses, sport, general
+} as const
+
+/** Map a DepMi Category enum string to a Shipbubble category ID */
+export function depmiCategoryToShipbubble(category?: string | null): number {
+    switch (category) {
+        case 'FASHION':
+        case 'CLOTHING': return SHIPBUBBLE_CATEGORY_IDS.FASHION
+        case 'ELECTRONICS': return SHIPBUBBLE_CATEGORY_IDS.ELECTRONICS
+        case 'FOOD': return SHIPBUBBLE_CATEGORY_IDS.FOOD
+        case 'HEALTH':
+        case 'BEAUTY': return SHIPBUBBLE_CATEGORY_IDS.HEALTH
+        case 'FURNITURE':
+        case 'HOUSING': return SHIPBUBBLE_CATEGORY_IDS.FURNITURE
+        case 'BOOKS':
+        case 'COURSE':
+        case 'SPORT':
+        default: return SHIPBUBBLE_CATEGORY_IDS.DEFAULT
+    }
+}
+
 export async function getDeliveryQuote(
     senderAddressCode: number,
     receiverAddressCode: number,
-    item: { name: string; weightKg: number; valueNgn: number; quantity: number }
+    item: { name: string; weightKg: number; valueNgn: number; quantity: number; shipbubbleCategoryId?: number }
 ): Promise<QuoteResult> {
     const pickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
         .toISOString()
@@ -106,7 +142,7 @@ export async function getDeliveryQuote(
         sender_address_code: senderAddressCode,
         reciever_address_code: receiverAddressCode,  // Shipbubble typo — their API, their spelling
         pickup_date: pickupDate,
-        category_id: 98246239,  // Fashion wears — valid live Shipbubble category ID
+        category_id: item.shipbubbleCategoryId ?? 20754594,  // default: Light weight items
         package_items: [
             {
                 name: item.name,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { registerAddress, getDeliveryQuote } from '@/lib/shipbubble'
+import { registerAddress, getDeliveryQuote, depmiCategoryToShipbubble } from '@/lib/shipbubble'
 import { decrypt } from '@/lib/encryption'
 
 /**
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         deliveryState,
         productTitle,
         productPrice,
+        productCategory,   // DepMi Category enum string
         quantity = 1,
     } = body
 
@@ -139,6 +140,7 @@ export async function POST(req: NextRequest) {
             weightKg: 1,         // default 1kg — sellers can set this later
             valueNgn: Number(productPrice ?? 0) * quantity,
             quantity,
+            shipbubbleCategoryId: depmiCategoryToShipbubble(productCategory),
         })
 
         return NextResponse.json({
