@@ -40,7 +40,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           return { users: userCount, stores: storeCount, listings: listingCount };
         },
         ['platform-stats'],
-        { revalidate: 300 },
+        { revalidate: 3600 },
       );
       stats = await getLandingStats();
     } catch { /* DB unavailable — show landing page with zero stats */ }
