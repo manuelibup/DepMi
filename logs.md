@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 68 — Mar 20, 2026 — Shipbubble Live Quotes Working + Courier Picker](#session-68--mar-20-2026--shipbubble-live-quotes-working--courier-picker)
 - [Session 66 — Mar 18, 2026 — Shipbubble Dispatch Integration (GIG Logistics)](#session-66--mar-18-2026--shipbubble-dispatch-integration-gig-logistics)
 - [Session 65 — Mar 17, 2026 — Brand Color: Neon Green → Emerald Green](#session-65--mar-17-2026--brand-color-neon-green--emerald-green)
 - [Session 64 — Mar 17, 2026 — UX Polish: Carousels, Bid Replies, Nav Sync & Toast Notifications](#session-64--mar-17-2026--ux-polish-carousels-bid-replies-nav-sync--toast-notifications)
@@ -49,6 +50,70 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 68 — Mar 20, 2026 — Shipbubble Live Quotes Working + Courier Picker
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Shipbubble fetch_rates — all blocking bugs fixed:**
+- **Wrong field name:** `receiver_address_code` → `reciever_address_code` (Shipbubble's own typo in their API — matches their error message spelling "Receipient")
+- **Stale test-mode sender address codes:** Cleared `shipbubbleAddrCode` from all stores after switching to live API key. Test-mode codes are invalid on live API.
+- **`category_id` required:** `/v1/shipping/categories` returns 404 — correct endpoint is `/v1/shipping/labels/categories`. Fetched live IDs: Fashion wears=74794423, Light weight items=20754594, Electronics=77179563, Food=98190590, Health=99652979, Furniture=25590994, etc. Added `depmiCategoryToShipbubble()` mapping function. Hardcoded default=20754594.
+- **Response field:** API returns `data.couriers[]` not `data.rates[]`. Also provides `data.cheapest_courier` pre-calculated.
+- **GPS "Use my location" button:** Added to checkout form — calls Nominatim reverse geocode to fill street/city/state.
+- **Phone decryption:** `sanitizePhone()` decrypts AES-256-GCM encrypted phone numbers before sending to Shipbubble (was sending raw ciphertext). Normalises to +234 format.
+- **storeCity guard:** Regex `/^[a-zA-Z\s\-]+$/` rejects garbage values from `store.location` field; falls back to `storeState`.
+- **Full address string:** Shipbubble's address field must include city + state + country in the `address` string despite having separate `city`/`state` fields.
+
+**Courier picker UI:**
+- `getDeliveryQuote()` now returns all available couriers sorted cheapest-first, each with markup applied.
+- `QuoteResult` changed: `{ couriers[], cheapest, requestToken }`.
+- `CourierOption` interface: `{ courierId, courierName, courierImage, serviceCode, fee, rawFee, eta, trackingLabel, isOnDemand, compositeToken }`.
+- `compositeToken` = `requestToken::serviceCode` — stored in `Order.shipbubbleReqToken`, parsed at booking time.
+- `bookShipment()` updated to parse composite token and pass correct `service_code`.
+- Checkout form shows courier cards (logo, name, ETA, tracking label, fee) — cheapest auto-selected, buyer can switch.
+
+**Store settings UX:**
+- Added pickup address format hint: "Street, City, State — e.g. 12 Abak Road, Uyo, Akwa Ibom"
+- Auto-suggestion button pre-fills pickup address template from existing `location`/`storeState` data.
+
+**Other:**
+- Discussed DepMi Rider feature (local dispatch riders as Shipbubble alternative). Saved detailed plan to memory. Not building until 500 active users.
+- WordPress scanner bots hitting `/222.php`, `/wp-admin` etc. — confirmed harmless (Vercel returns 404). Suggested Cloudflare free tier for blocking.
+
+### Validations
+- Vercel build: passed on all commits
+- fetch_rates: confirmed 200 response with 3 couriers (Redstar ₦3,675, Routelift ₦4,223, Fez ₦7,087)
+
+### Key Learnings
+- Shipbubble has typos in their own API: field is `reciever_address_code` (not `receiver` or `recipient`). Error message says "Receipient". Match their spelling exactly.
+- Shipbubble docs URLs 404 when browsed directly — discoverable only via search (`docs.shipbubble.com/api-reference/rates/request-shipping-rates`).
+- Live API category IDs differ from what the docs describe. Always fetch from `/v1/shipping/labels/categories` and read `category_id` field (not `id`) from response.
+- Test-mode address codes are not valid on live API — clear `shipbubbleAddrCode` from all stores after switching keys.
+
+---
+
+## Session 67 — Mar 20, 2026 — Shipbubble Debug & OG/WhatsApp Fix
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+- **WhatsApp link preview fix:** OG meta was correct (`metadataBase`, `openGraph.images`). Root cause was Facebook/WhatsApp's cached stale data from the previous depmi.com domain owner. Fixed by running Facebook OG Debugger to force re-scrape. Also fixed www/non-www redirect conflict in Vercel Domains — set `depmi.com` as primary production domain, `www.depmi.com` as 301 redirect.
+- **Shipbubble address validation fix (street-only):** `api/delivery/quote/route.ts` was sending `"IBB Avenue, Uyo, Akwa Ibom"` in the `address` field *and* sending `city` + `state` as separate fields. Shipbubble's validator rejected the duplicated location data. Fixed by sending only the street address in `address`, leaving `city` and `state` as separate parameters (both sender and receiver).
+- **Cleared stale `shipbubbleAddrCode` cache:** Previously registered address codes were saved with the wrong format. Cleared via `prisma db execute` so stores re-register on next quote request.
+- **Address autocomplete fix — `useRef` flag:** `setAddress(street)` in `handleAddressSelect` was triggering the Nominatim `useEffect` again, opening the dropdown. Fixed with `addressSelectedRef = useRef(false)` — set to `true` before `setAddress()`, checked and cleared at the top of the effect.
+- **House number fix:** Nominatim often omits `a.house_number` for Nigerian addresses. Old code: `[a.house_number, a.road].filter(Boolean).join(' ')` returned just "IBB Avenue". Fixed to: `(a.house_number && a.road) ? \`${a.house_number} ${a.road}\` : result.display_name.split(',')[0]` — falls back to the first segment of `display_name` which usually contains the full street.
+- **Shipbubble webhook URL:** `https://depmi.com/api/webhooks/shipbubble` — set in Shipbubble dashboard → Settings → API Keys & Webhook → Live webhook URL.
+
+### Key Learnings
+- Sandbox Shipbubble API key rejects real Nigerian addresses — always test delivery quotes with a live/production key.
+- Shipbubble's address validation endpoint treats `address`, `city`, and `state` as distinct fields. Never concatenate city/state into the `address` string.
 
 ---
 
