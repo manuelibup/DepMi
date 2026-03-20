@@ -11,7 +11,9 @@ import { decrypt } from '@/lib/encryption'
  */
 function sanitizeName(raw: string | null | undefined, fallback: string): string {
     const clean = (raw ?? '').replace(/[^a-zA-Z\s]/g, '').replace(/\s+/g, ' ').trim()
-    return clean || fallback
+    const result = clean || fallback
+    // Shipbubble requires at least two words (e.g. "John Doe") — pad single-word names
+    return result.includes(' ') ? result : `${result} User`
 }
 
 /**
