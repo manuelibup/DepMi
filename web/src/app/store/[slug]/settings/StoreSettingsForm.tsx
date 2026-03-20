@@ -242,7 +242,36 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                             onChange={handleChange}
                             maxLength={300}
                         />
-                        <span className={styles.helpText}>Full address where riders will collect packages from your store.</span>
+                        <span className={styles.helpText}>
+                            Format: <strong>Street, City, State</strong> — e.g. <em>12 Abak Road, Uyo, Akwa Ibom</em>
+                        </span>
+                        {/* Suggest a template if they have location/state but no complete pickup address */}
+                        {(() => {
+                            const hasPickup = formData.pickupAddress.includes(',');
+                            const city = (formData.location || '').split(',')[0].trim();
+                            const state = formData.storeState;
+                            const suggestion = city && state ? `Your Street, ${city}, ${state}` : state ? `Your Street, ${state}` : null;
+                            if (hasPickup || !suggestion) return null;
+                            return (
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(p => ({ ...p, pickupAddress: suggestion }))}
+                                    style={{
+                                        marginTop: 6,
+                                        background: 'rgba(5,150,105,0.08)',
+                                        border: '1px solid rgba(5,150,105,0.3)',
+                                        borderRadius: 8,
+                                        color: 'var(--primary)',
+                                        fontSize: '0.8rem',
+                                        padding: '5px 10px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                    }}
+                                >
+                                    Use suggestion: <strong>{suggestion}</strong> — tap to fill, then add your street name
+                                </button>
+                            );
+                        })()}
                     </div>
                 </>
             )}
