@@ -33,6 +33,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         deliveryFee: '0',
         displayDeliveryFee: '0',
         isPortfolioItem: false,
+        isDigital: false,
+        fileUrl: '',
     });
 
     const [activeInput, setActiveInput] = useState<'price' | 'category' | 'stock' | 'deliveryFee' | null>(null);
@@ -131,8 +133,10 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             images: form.imageUrls,
             videoUrl: form.videoUrl || null,
             stock: Number(form.stock) || 1,
-            deliveryFee: Number(form.deliveryFee) || 0,
+            deliveryFee: form.isDigital ? 0 : (Number(form.deliveryFee) || 0),
             isPortfolioItem: form.isPortfolioItem,
+            isDigital: form.isDigital,
+            fileUrl: form.isDigital ? (form.fileUrl || null) : null,
         };
 
         try {
@@ -219,6 +223,23 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     onChange={handleChange}
                     onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); } }}
                 />
+
+                {form.isDigital && (
+                    <div style={{ margin: '8px 0' }}>
+                        <input
+                            type="url"
+                            name="fileUrl"
+                            className={styles.titleInput}
+                            placeholder="Paste file link (PDF, ZIP, Google Drive, etc.)"
+                            value={form.fileUrl}
+                            onChange={handleChange}
+                            style={{ fontSize: '0.9rem' }}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                            Buyers receive this link after payment. Use a permanent link.
+                        </p>
+                    </div>
+                )}
 
                 <div className={styles.mediaSection}>
                     {/* Image previews */}
@@ -403,15 +424,29 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                         {form.stock ? `${form.stock} In Stock` : 'Stock'}
                     </button>
 
+                    {!form.isDigital && (
+                        <button
+                            type="button"
+                            className={`${styles.pill} ${form.deliveryFee !== '0' ? styles.pillActive : ''}`}
+                            onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
+                                <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
+                            </svg>
+                            {form.deliveryFee && form.deliveryFee !== '0' ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                        </button>
+                    )}
+
                     <button
                         type="button"
-                        className={`${styles.pill} ${form.deliveryFee !== '0' ? styles.pillActive : ''}`}
-                        onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                        className={`${styles.pill} ${form.isDigital ? styles.pillActive : ''}`}
+                        onClick={() => setForm(f => ({ ...f, isDigital: !f.isDigital, fileUrl: '' }))}
+                        title="Digital products are delivered as a file link — no shipping required"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
-                            <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
-                        {form.deliveryFee && form.deliveryFee !== '0' ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                        {form.isDigital ? 'Digital' : 'Physical'}
                     </button>
 
                     <button

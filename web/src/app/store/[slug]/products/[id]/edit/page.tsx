@@ -42,6 +42,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         inStock: product.inStock,
         isPortfolioItem: product.isPortfolioItem,
         deliveryFee: Number(product.deliveryFee),
+        isDigital: product.isDigital,
+        fileUrl: product.fileUrl ?? null,
     };
 
     return (

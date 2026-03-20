@@ -18,6 +18,8 @@ const productSchema = z.object({
     stock: z.number().int().min(1, "Stock must be at least 1").default(1),
     deliveryFee: z.number().min(0, "Delivery fee cannot be negative").default(2500),
     images: z.array(z.string()).optional(),
+    isDigital: z.boolean().default(false),
+    fileUrl: z.string().nullable().optional(),
 });
 
 export async function POST(req: Request) {
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee } = parsed.data;
+        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee, isDigital, fileUrl } = parsed.data;
 
         // Verify ownership
         const store = await prisma.store.findUnique({
@@ -71,7 +73,9 @@ export async function POST(req: Request) {
                 category,
                 // inStock was removed from schema, so it's not passed here
                 stock,
-                deliveryFee,
+                deliveryFee: isDigital ? 0 : deliveryFee,
+                isDigital,
+                fileUrl: fileUrl || null,
                 videoUrl: videoUrl || null,
                 images: images && images.length > 0 ? {
                     create: images.map((url, index) => ({

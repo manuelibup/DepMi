@@ -32,7 +32,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         }
     });
 
-    if (!product || !product.inStock || product.isPortfolioItem) {
+    if (!product || (!product.isDigital && !product.inStock) || product.isPortfolioItem) {
         notFound();
     }
 
@@ -89,6 +89,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                     nationwideDeliveryFee={nationwideDeliveryFee}
                     storeState={storeState}
                     dispatchEnabled={dispatchEnabled}
+                    isDigital={product.isDigital}
                     defaultPhone={user?.phoneNumber || ''}
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}

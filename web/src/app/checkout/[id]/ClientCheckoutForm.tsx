@@ -25,6 +25,7 @@ interface Props {
     nationwideDeliveryFee: number;
     storeState: string;
     dispatchEnabled: boolean;
+    isDigital?: boolean;
     defaultPhone: string;
     defaultAddress: string;
     defaultCity: string;
@@ -53,6 +54,7 @@ export default function ClientCheckoutForm({
     nationwideDeliveryFee,
     storeState,
     dispatchEnabled,
+    isDigital = false,
     defaultPhone, defaultAddress, defaultCity, defaultState,
 }: Props) {
     const searchParams = useSearchParams();
@@ -467,7 +469,7 @@ export default function ClientCheckoutForm({
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Fetching live quote…</span>
                         )}
                         {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'error' && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#f59e0b', marginLeft: '6px' }}>
                                 {quoteHint ?? 'Using estimate'}
                             </span>
                         )}

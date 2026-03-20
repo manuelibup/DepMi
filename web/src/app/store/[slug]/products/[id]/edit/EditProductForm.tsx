@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
-import { X, Tag, FolderOpen, Package, Briefcase, Truck } from 'lucide-react';
+import { X, Tag, FolderOpen, Package, Briefcase, Truck, Download } from 'lucide-react';
 import styles from '../../new/CreateProductForm.module.css';
 
 const CATEGORIES = [
@@ -27,6 +27,8 @@ interface ProductData {
     inStock: boolean;
     isPortfolioItem: boolean;
     deliveryFee: number;
+    isDigital: boolean;
+    fileUrl: string | null;
 }
 
 export default function EditProductForm({ product, storeSlug }: { product: ProductData; storeSlug: string }) {
@@ -50,6 +52,8 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
         isPortfolioItem: product.isPortfolioItem,
         deliveryFee: String(product.deliveryFee),
         displayDeliveryFee: Number(product.deliveryFee).toLocaleString(),
+        isDigital: product.isDigital,
+        fileUrl: product.fileUrl ?? '',
     });
 
     const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | null>(null);
@@ -107,7 +111,9 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     videoUrl: form.videoUrl || null,
                     inStock: form.inStock,
                     isPortfolioItem: form.isPortfolioItem,
-                    deliveryFee: Number(form.deliveryFee) || 0,
+                    deliveryFee: form.isDigital ? 0 : (Number(form.deliveryFee) || 0),
+                    isDigital: form.isDigital,
+                    fileUrl: form.isDigital ? (form.fileUrl || null) : null,
                 }),
             });
 
@@ -182,6 +188,23 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     value={form.description}
                     onChange={handleChange}
                 />
+
+                {form.isDigital && (
+                    <div style={{ margin: '8px 0' }}>
+                        <input
+                            type="url"
+                            name="fileUrl"
+                            className={styles.titleInput}
+                            placeholder="Paste file link (PDF, ZIP, Google Drive, etc.)"
+                            value={form.fileUrl}
+                            onChange={handleChange}
+                            style={{ fontSize: '0.9rem' }}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                            Buyers receive this link after payment. Use a permanent link.
+                        </p>
+                    </div>
+                )}
 
                 <div className={styles.mediaSection}>
                     {form.imageUrls.length > 0 && (
@@ -385,13 +408,25 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                         {form.isPortfolioItem ? 'Portfolio' : 'For Sale'}
                     </button>
 
+                    {!form.isDigital && (
+                        <button
+                            type="button"
+                            className={`${styles.pill} ${form.deliveryFee ? styles.pillActive : ''}`}
+                            onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                        >
+                            <Truck size={16} className={styles.pillIcon} />
+                            {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                        </button>
+                    )}
+
                     <button
                         type="button"
-                        className={`${styles.pill} ${form.deliveryFee ? styles.pillActive : ''}`}
-                        onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
+                        className={`${styles.pill} ${form.isDigital ? styles.pillActive : ''}`}
+                        onClick={() => setForm(f => ({ ...f, isDigital: !f.isDigital, fileUrl: '' }))}
+                        title="Digital products are delivered as a file link — no shipping required"
                     >
-                        <Truck size={16} className={styles.pillIcon} />
-                        {form.deliveryFee ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                        <Download size={16} className={styles.pillIcon} />
+                        {form.isDigital ? 'Digital' : 'Physical'}
                     </button>
                 </div>
             </div>

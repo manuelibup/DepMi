@@ -126,9 +126,16 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
         console.error('[delivery/quote] Error:', err)
         const msg: string = err.message ?? ''
-        const userHint = msg.toLowerCase().includes('no rates')
-            ? 'No dispatch service available for this route — using estimate'
-            : 'Using estimate'
+        const lower = msg.toLowerCase()
+        const userHint = lower.includes('validate') || lower.includes('address')
+            ? 'Address check failed — courier couldn\'t verify the street/city/state'
+            : lower.includes('no') && lower.includes('rates')
+            ? 'No dispatch routes available for this location'
+            : lower.includes('auth') || lower.includes('unauthorized') || lower.includes('token')
+            ? 'Dispatch API auth error — check SHIPBUBBLE_API_KEY in Vercel env'
+            : lower.includes('network') || lower.includes('fetch')
+            ? 'Couldn\'t reach dispatch API — network error'
+            : `Dispatch error: ${msg.slice(0, 80)}`
         return NextResponse.json(
             { error: msg || 'Failed to fetch delivery quote', userHint },
             { status: 502 }
