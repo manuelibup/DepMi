@@ -79,15 +79,30 @@ export async function registerAddress(data: ShipbubbleAddress): Promise<number> 
 
 // ─── Delivery Quote ──────────────────────────────────────────────────────────
 
-export interface QuoteResult {
+export interface CourierOption {
+    courierId: string
+    courierName: string
+    courierImage: string
+    serviceCode: string
     /** Fee shown to buyer (includes DepMi markup) */
     fee: number
     /** Raw carrier fee before markup */
     rawFee: number
-    /** Token valid 7 days — save on Order for auto-booking after payment */
-    requestToken: string
-    /** Human-readable ETA e.g. "1-2 days" */
     eta: string | null
+    trackingLabel: string   // "Good", "Average", etc.
+    isOnDemand: boolean
+    /**
+     * Composite token stored on Order: "<requestToken>::<serviceCode>"
+     * Parse with bookShipment() helper.
+     */
+    compositeToken: string
+}
+
+export interface QuoteResult {
+    couriers: CourierOption[]
+    cheapest: CourierOption
+    /** Shared request token valid 7 days */
+    requestToken: string
 }
 
 /**
@@ -168,23 +183,35 @@ export async function getDeliveryQuote(
 
     if (!res.ok) throw new Error(json.message ?? 'Shipbubble: failed to fetch rates')
 
-    // Shipbubble returns couriers[] + cheapest_courier pre-calculated.
-    // Use cheapest_courier directly; fall back to scanning couriers array.
-    const couriers: any[] = json.data?.couriers ?? []
-    if (!couriers.length && !json.data?.cheapest_courier) {
-        throw new Error('Shipbubble: no rates available for this route')
+    const rawCouriers: any[] = json.data?.couriers ?? []
+    if (!rawCouriers.length) throw new Error('Shipbubble: no rates available for this route')
+
+    const requestToken: string = json.data.request_token
+
+    const toCourierOption = (r: any): CourierOption => {
+        const rawFee = Number(r.total ?? r.rate_card_amount)
+        return {
+            courierId: String(r.courier_id),
+            courierName: r.courier_name ?? r.courier_id,
+            courierImage: r.courier_image ?? '',
+            serviceCode: r.service_code ?? String(r.courier_id),
+            fee: applyMarkup(rawFee),
+            rawFee,
+            eta: r.delivery_eta ?? r.delivery_eta_time ?? null,
+            trackingLabel: r.tracking?.label ?? '',
+            isOnDemand: r.on_demand ?? false,
+            compositeToken: `${requestToken}::${r.service_code ?? r.courier_id}`,
+        }
     }
 
-    const rate = json.data.cheapest_courier ?? couriers.reduce((a: any, b: any) =>
-        Number(a.total ?? a.rate_card_amount) <= Number(b.total ?? b.rate_card_amount) ? a : b
-    )
+    const couriers = rawCouriers.map(toCourierOption)
+    // Sort: cheapest first
+    couriers.sort((a, b) => a.fee - b.fee)
 
-    const rawFee = Number(rate.total ?? rate.rate_card_amount)
     return {
-        fee: applyMarkup(rawFee),
-        rawFee,
-        requestToken: json.data.request_token,
-        eta: rate.delivery_eta ?? rate.delivery_eta_time ?? null,
+        couriers,
+        cheapest: couriers[0],
+        requestToken,
     }
 }
 
@@ -197,17 +224,17 @@ export interface BookingResult {
 }
 
 /**
- * Book a shipment using a saved request token (from getDeliveryQuote).
- * Call this after payment is confirmed.
+ * Book a shipment using a composite token "<requestToken>::<serviceCode>"
+ * (as stored in Order.shipbubbleReqToken). Call this after payment is confirmed.
  */
-export async function bookShipment(requestToken: string): Promise<BookingResult> {
+export async function bookShipment(compositeToken: string): Promise<BookingResult> {
+    const [requestToken, serviceCode = 'red_star_courier'] = compositeToken.split('::')
     const res = await fetch(`${BASE_URL}/shipping/labels`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
             request_token: requestToken,
-            service_code: 'gigl',
-            courier_id: 'gigl',
+            service_code: serviceCode,
         }),
     })
 

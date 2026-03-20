@@ -4,6 +4,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
+interface CourierOption {
+    courierId: string;
+    courierName: string;
+    courierImage: string;
+    serviceCode: string;
+    fee: number;
+    rawFee: number;
+    eta: string | null;
+    trackingLabel: string;
+    isOnDemand: boolean;
+    compositeToken: string;
+}
+
 const NIGERIAN_STATES = [
     'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
     'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu',
@@ -89,11 +102,15 @@ export default function ClientCheckoutForm({
 
     // Live dispatch quote state
     const [quoteState, setQuoteState] = useState<QuoteState>('idle');
-    const [liveDeliveryFee, setLiveDeliveryFee] = useState<number | null>(null);
-    const [liveEta, setLiveEta] = useState<string | null>(null);
-    const [shipbubbleReqToken, setShipbubbleReqToken] = useState<string | null>(null);
+    const [couriers, setCouriers] = useState<CourierOption[]>([]);
+    const [selectedCourier, setSelectedCourier] = useState<CourierOption | null>(null);
     const [quoteHint, setQuoteHint] = useState<string | null>(null);
     const quoteDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Derived from selected courier
+    const liveDeliveryFee = selectedCourier?.fee ?? null;
+    const liveEta = selectedCourier?.eta ?? null;
+    const shipbubbleReqToken = selectedCourier?.compositeToken ?? null;
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -195,8 +212,8 @@ export default function ClientCheckoutForm({
         if (quoteDebounceRef.current) clearTimeout(quoteDebounceRef.current);
         quoteDebounceRef.current = setTimeout(async () => {
             setQuoteState('loading');
-            setLiveDeliveryFee(null);
-            setShipbubbleReqToken(null);
+            setCouriers([]);
+            setSelectedCourier(null);
             setQuoteHint(null);
             try {
                 const res = await fetch('/api/delivery/quote', {
@@ -218,9 +235,9 @@ export default function ClientCheckoutForm({
                     setQuoteState('error');
                     return;
                 }
-                setLiveDeliveryFee(data.fee);
-                setLiveEta(data.eta ?? null);
-                setShipbubbleReqToken(data.requestToken);
+                const options: CourierOption[] = data.couriers ?? [];
+                setCouriers(options);
+                setSelectedCourier(data.cheapest ?? options[0] ?? null);
                 setQuoteState('done');
             } catch {
                 setQuoteState('error');
@@ -526,6 +543,57 @@ export default function ClientCheckoutForm({
                         <input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }} />
                         Save these delivery details for future orders
                     </label>
+
+                    {/* Courier picker — shown once rates are loaded */}
+                    {quoteState === 'done' && couriers.length > 0 && (
+                        <div style={{ marginTop: '16px' }}>
+                            <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Choose courier
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {couriers.map((c) => {
+                                    const selected = selectedCourier?.serviceCode === c.serviceCode;
+                                    return (
+                                        <button
+                                            key={c.serviceCode}
+                                            type="button"
+                                            onClick={() => setSelectedCourier(c)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '12px 14px',
+                                                borderRadius: '12px',
+                                                border: selected ? '2px solid var(--primary)' : '1.5px solid var(--card-border)',
+                                                background: selected ? 'rgba(5,150,105,0.06)' : 'var(--card-bg)',
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                                width: '100%',
+                                                transition: 'border-color 0.15s',
+                                            }}
+                                        >
+                                            {c.courierImage ? (
+                                                <img src={c.courierImage} alt={c.courierName} style={{ width: 36, height: 36, borderRadius: '8px', objectFit: 'contain', flexShrink: 0, background: '#fff' }} />
+                                            ) : (
+                                                <div style={{ width: 36, height: 36, borderRadius: '8px', background: 'var(--card-border)', flexShrink: 0 }} />
+                                            )}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>{c.courierName}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                    {c.eta ?? 'ETA unavailable'}
+                                                    {c.trackingLabel && ` · ${c.trackingLabel} tracking`}
+                                                    {c.isOnDemand && ' · On-demand'}
+                                                </div>
+                                            </div>
+                                            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: selected ? 'var(--primary)' : 'var(--text-main)', flexShrink: 0 }}>
+                                                ₦{c.fee.toLocaleString()}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
             )}

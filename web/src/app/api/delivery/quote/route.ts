@@ -145,10 +145,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             dispatchEnabled: true,
-            fee: quote.fee,
-            rawFee: quote.rawFee,
+            couriers: quote.couriers,
+            cheapest: quote.cheapest,
             requestToken: quote.requestToken,
-            eta: quote.eta,
         })
     } catch (err: any) {
         console.error('[delivery/quote] Error:', err)
