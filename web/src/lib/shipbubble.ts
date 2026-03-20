@@ -77,6 +77,38 @@ export async function registerAddress(data: ShipbubbleAddress): Promise<number> 
     return Number(code)
 }
 
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+/** Module-level cache so we only hit Shipbubble once per cold start */
+let _categoryId: number | null = null
+
+/**
+ * Fetch available package categories and return the ID of the first
+ * general/parcel-type category. Falls back to the raw numeric value of
+ * the first category if no "general" keyword is found.
+ */
+async function getDefaultCategoryId(): Promise<number> {
+    if (_categoryId !== null) return _categoryId
+
+    const res = await fetch(`${BASE_URL}/shipping/categories`, {
+        headers: authHeaders(),
+    })
+    const json = await res.json()
+    console.log('[shipbubble] categories:', res.status, JSON.stringify(json))
+
+    const cats: any[] = json.data ?? json.categories ?? []
+    if (!cats.length) throw new Error('Shipbubble: no package categories returned')
+
+    // Prefer a category whose name contains "general", "parcel", or "others"
+    const preferred = cats.find((c: any) => {
+        const n = (c.name ?? c.category_name ?? '').toLowerCase()
+        return n.includes('general') || n.includes('parcel') || n.includes('others')
+    })
+    const cat = preferred ?? cats[0]
+    _categoryId = Number(cat.id ?? cat.category_id)
+    return _categoryId!
+}
+
 // ─── Delivery Quote ──────────────────────────────────────────────────────────
 
 export interface QuoteResult {
@@ -98,15 +130,18 @@ export async function getDeliveryQuote(
     receiverAddressCode: number,
     item: { name: string; weightKg: number; valueNgn: number; quantity: number }
 ): Promise<QuoteResult> {
-    const pickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+    const [pickupDate, categoryId] = await Promise.all([
+        Promise.resolve(
+            new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        ),
+        getDefaultCategoryId(),
+    ])
 
     const ratePayload = {
         sender_address_code: senderAddressCode,
         recipient_address_code: receiverAddressCode,
         pickup_date: pickupDate,
-        category_id: 1,
+        category_id: categoryId,
         package_items: [
             {
                 name: item.name,
