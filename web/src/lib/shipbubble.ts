@@ -77,6 +77,38 @@ export async function registerAddress(data: ShipbubbleAddress): Promise<number> 
     return Number(code)
 }
 
+// ─── Package Categories ──────────────────────────────────────────────────────
+
+/** Known fallback category IDs from Shipbubble (GET /v1/shipping/labels/categories) */
+const FALLBACK_CATEGORY_ID = 98246239  // Fashion wears — broad enough for most DepMi goods
+
+let _categoryId: number | null = null
+
+async function getDefaultCategoryId(): Promise<number> {
+    if (_categoryId !== null) return _categoryId
+
+    try {
+        const res = await fetch(`${BASE_URL}/shipping/labels/categories`, {
+            headers: authHeaders(),
+        })
+        const json = await res.json()
+        const cats: any[] = json.data ?? []
+        if (cats.length) {
+            // Prefer "Fashion" or "Accessories" — most common DepMi product types
+            const preferred = cats.find((c: any) =>
+                /fashion|accessor|general|parcel/i.test(c.name ?? '')
+            )
+            _categoryId = Number((preferred ?? cats[0]).id)
+            return _categoryId!
+        }
+    } catch {
+        // ignore — use fallback
+    }
+
+    _categoryId = FALLBACK_CATEGORY_ID
+    return _categoryId
+}
+
 // ─── Delivery Quote ──────────────────────────────────────────────────────────
 
 export interface QuoteResult {
@@ -98,14 +130,18 @@ export async function getDeliveryQuote(
     receiverAddressCode: number,
     item: { name: string; weightKg: number; valueNgn: number; quantity: number }
 ): Promise<QuoteResult> {
-    const pickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+    const [pickupDate, categoryId] = await Promise.all([
+        Promise.resolve(
+            new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        ),
+        getDefaultCategoryId(),
+    ])
 
     const ratePayload = {
         sender_address_code: senderAddressCode,
-        recipient_address_code: receiverAddressCode,
+        reciever_address_code: receiverAddressCode,  // Shipbubble typo — their API, their spelling
         pickup_date: pickupDate,
+        category_id: categoryId,
         package_items: [
             {
                 name: item.name,
