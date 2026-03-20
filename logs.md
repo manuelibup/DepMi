@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 69 — Mar 21, 2026 — Analytics Hooks Wired + Checkout Funnel Tracking](#session-69--mar-21-2026--analytics-hooks-wired--checkout-funnel-tracking)
 - [Session 68 — Mar 20, 2026 — Shipbubble Live Quotes Working + Courier Picker](#session-68--mar-20-2026--shipbubble-live-quotes-working--courier-picker)
 - [Session 66 — Mar 18, 2026 — Shipbubble Dispatch Integration (GIG Logistics)](#session-66--mar-18-2026--shipbubble-dispatch-integration-gig-logistics)
 - [Session 65 — Mar 17, 2026 — Brand Color: Neon Green → Emerald Green](#session-65--mar-17-2026--brand-color-neon-green--emerald-green)
@@ -50,6 +51,48 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 69 — Mar 21, 2026 — Analytics Hooks Wired + Checkout Funnel Tracking
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Analytics hooks fully wired across the app:**
+- `ProductCard` — added `useTrackEvent`. Fires `LIKE` (on like), `SAVE` (on save), `SHARE` (on share sheet open). `FEED_IMPRESSION` via `useTrackImpression` was already wired.
+- `DemandCard` — same pattern. Added `LIKE`, `SAVE`, `SHARE`, `BID` (on "Place a Bid" click). `FEED_IMPRESSION` was already wired.
+- `SearchTracker` — new client component (`web/src/app/search/SearchTracker.tsx`). Fires `SEARCH` event with `{ q }` metadata when query changes. Mounted in `SearchPage` server component.
+- `ViewTracker` — already handled `PRODUCT_VIEW`, `DEMAND_VIEW`, `STORE_VIEW` with 2s dwell delay. No changes needed.
+
+**Checkout funnel tracking (5 events):**
+- `checkout_open` — fires on form mount. Shows how many users reach checkout.
+- `checkout_submit` — fires when Pay Now is clicked.
+- `checkout_redirect` — fires when Flutterwave redirect is triggered (successful order create).
+- `checkout_error` — fires with `{ reason }` when API returns an error or network fails.
+- `quote_error` — fires when Shipbubble live quote fetch fails, with `{ hint }`. Key signal for dispatch-related drop-off.
+
+All events stored in `Event` model via `/api/track` (rate-limited, opt-out aware). Visible in admin analytics.
+
+### Coverage Map
+| Event | Source |
+|---|---|
+| `FEED_IMPRESSION` | ProductCard, DemandCard (already wired) |
+| `PRODUCT_VIEW` | ViewTracker on /p/[id] (already wired) |
+| `DEMAND_VIEW` | ViewTracker on /requests/[id] (already wired) |
+| `STORE_VIEW` | ViewTracker on /store/[slug] (already wired) |
+| `LIKE` | ProductCard, DemandCard ✅ NEW |
+| `SAVE` | ProductCard, DemandCard ✅ NEW |
+| `SHARE` | ProductCard, DemandCard ✅ NEW |
+| `BID` | DemandCard ✅ NEW |
+| `SEARCH` | SearchTracker ✅ NEW |
+| `ORDER` (funnel) | ClientCheckoutForm ✅ NEW |
+
+### Key Learnings
+- Checkout funnel tracking using the existing `ORDER` event type with `metadata.step` field is the most efficient approach without schema changes.
+- Only fire LIKE/SAVE on the "on" state (not undo) to avoid noise in the analytics data.
 
 ---
 

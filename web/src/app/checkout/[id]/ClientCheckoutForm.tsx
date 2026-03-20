@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
 
 interface CourierOption {
     courierId: string;
@@ -72,6 +73,7 @@ export default function ClientCheckoutForm({
 }: Props) {
     const searchParams = useSearchParams();
     const resumeOrderId = searchParams.get('resume');
+    const track = useTrackEvent();
 
     const [stage, setStage] = useState<Stage>('form');
     const [name, setName] = useState('');
@@ -111,6 +113,12 @@ export default function ClientCheckoutForm({
     const liveDeliveryFee = selectedCourier?.fee ?? null;
     const liveEta = selectedCourier?.eta ?? null;
     const shipbubbleReqToken = selectedCourier?.compositeToken ?? null;
+
+    // Track checkout funnel open
+    useEffect(() => {
+        track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'checkout_open' } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -233,6 +241,7 @@ export default function ClientCheckoutForm({
                 if (!res.ok || !data.dispatchEnabled) {
                     setQuoteHint(data.userHint ?? null);
                     setQuoteState('error');
+                    track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'quote_error', hint: data.userHint ?? null } });
                     return;
                 }
                 const options: CourierOption[] = data.couriers ?? [];
@@ -292,6 +301,7 @@ export default function ClientCheckoutForm({
         }
 
         setStage('submitting');
+        track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'checkout_submit' } });
 
         try {
             const res = await fetch('/api/checkout/initialize', {
@@ -317,16 +327,20 @@ export default function ClientCheckoutForm({
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error ?? 'Something went wrong. Please try again.');
+                const reason = data.error ?? 'Something went wrong. Please try again.';
+                setError(reason);
                 setStage('form');
+                track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'checkout_error', reason } });
                 return;
             }
 
             setStage('redirecting');
+            track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'checkout_redirect', orderId: data.orderId } });
             window.location.href = data.paymentLink;
         } catch {
             setError('Network error. Please check your connection and try again.');
             setStage('form');
+            track('ORDER', { targetId: productId, targetType: 'product', metadata: { step: 'checkout_error', reason: 'network_error' } });
         }
     };
 

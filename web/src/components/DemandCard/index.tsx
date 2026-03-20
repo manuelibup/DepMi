@@ -7,6 +7,7 @@ import { useAuthGate } from '@/context/AuthGate';
 import { useSession } from 'next-auth/react';
 import styles from './DemandCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
 
 export interface DemandData {
     id?: string;
@@ -43,6 +44,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
     const { status } = useSession();
 
     const impressionRef = useTrackImpression(data.id ?? '', 'demand', { index });
+    const track = useTrackEvent();
 
     const [liked, setLiked] = useState(data.isLiked || false);
     const [likeCount, setLikeCount] = useState(data.likeCount ?? 0);
@@ -77,6 +79,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
         const next = !saved;
         setSaved(next);
         if (data.id) {
+            if (next) track('SAVE', { targetId: data.id, targetType: 'demand' });
             try {
                 const res = await fetch(`/api/demands/${data.id}/save`, { method: 'POST' });
                 if (!res.ok) throw new Error();
@@ -93,6 +96,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
         setLiked(next);
         setLikeCount(c => next ? c + 1 : Math.max(0, c - 1));
         if (data.id) {
+            if (next) track('LIKE', { targetId: data.id, targetType: 'demand' });
             try {
                 const res = await fetch(`/api/demands/${data.id}/like`, { method: 'POST' });
                 if (!res.ok) throw new Error();
@@ -111,7 +115,10 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
     const handleBid = (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
         if (status === 'unauthenticated') { openGate('Sign in to bid on requests'); return; }
-        if (data.id) router.push(`/requests/${data.id}`);
+        if (data.id) {
+            track('BID', { targetId: data.id, targetType: 'demand' });
+            router.push(`/requests/${data.id}`);
+        }
     };
 
     const handleCopyLink = (e: React.MouseEvent) => {
@@ -289,7 +296,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                     <button
                         type="button"
                         className={styles.actionBtn}
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); setShowShare(true); }}
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setShowShare(true); if (data.id) track('SHARE', { targetId: data.id, targetType: 'demand' }); }}
                         aria-label="Share"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

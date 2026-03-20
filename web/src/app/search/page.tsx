@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ClientNotifyButton from './ClientNotifyButton';
 import ClientRequestButton from './ClientRequestButton';
+import SearchTracker from './SearchTracker';
 
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
@@ -110,6 +111,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
     return (
         <main className={styles.main}>
+            {q && <SearchTracker query={q} />}
             <Header />
 
             {/* Sticky Search Bar */}
