@@ -98,35 +98,48 @@ export async function getDeliveryQuote(
         .toISOString()
         .split('T')[0]
 
-    const res = await fetch(`${BASE_URL}/shipping/fetch_rates/gigl`, {
+    const ratePayload = {
+        sender_address_code: senderAddressCode,
+        receiver_address_code: receiverAddressCode,
+        pickup_date: pickupDate,
+        category_id: 1,
+        package_items: [
+            {
+                name: item.name,
+                description: item.name,
+                unit_weight: item.weightKg,
+                unit_amount: item.valueNgn,
+                quantity: item.quantity,
+            },
+        ],
+        package_dimension: { length: 20, width: 15, height: 10 },
+    }
+
+    console.log('[shipbubble] fetch_rates payload:', JSON.stringify(ratePayload))
+
+    const res = await fetch(`${BASE_URL}/shipping/fetch_rates`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({
-            sender_address_code: senderAddressCode,
-            receiver_address_code: receiverAddressCode,
-            pickup_date: pickupDate,
-            category_id: 1,
-            package_items: [
-                {
-                    name: item.name,
-                    description: item.name,
-                    unit_weight: item.weightKg,
-                    unit_amount: item.valueNgn,
-                    quantity: item.quantity,
-                },
-            ],
-            package_dimension: { length: 20, width: 15, height: 10 },
-        }),
+        body: JSON.stringify(ratePayload),
     })
 
     const json = await res.json()
+    console.log('[shipbubble] fetch_rates response:', res.status, JSON.stringify(json))
+
     if (!res.ok) throw new Error(json.message ?? 'Shipbubble: failed to fetch rates')
 
-    const rates: any[] = json.data?.rates ?? []
-    if (!rates.length) throw new Error('Shipbubble: no GIGL rates available for this route')
+    // All available rates — filter for GIGL (GIG Logistics) if present, else take cheapest overall
+    const allRates: any[] = json.data?.rates ?? []
+    if (!allRates.length) throw new Error('Shipbubble: no rates available for this route')
+
+    const giglRates = allRates.filter((r: any) =>
+        (r.courier_id ?? r.courier ?? r.name ?? '').toString().toLowerCase().includes('gigl') ||
+        (r.courier_id ?? r.courier ?? r.name ?? '').toString().toLowerCase().includes('gig')
+    )
+    const rates = giglRates.length > 0 ? giglRates : allRates
 
     // Pick cheapest available rate
-    const rate = rates.reduce((a, b) =>
+    const rate = rates.reduce((a: any, b: any) =>
         Number(a.total ?? a.rate_card_amount) <= Number(b.total ?? b.rate_card_amount) ? a : b
     )
 
