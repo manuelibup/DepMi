@@ -3,7 +3,6 @@
  * Docs: https://docs.shipbubble.com
  *
  * Address endpoint: POST /v1/shipping/address/validate
- * NOTE: Verify this endpoint against Shipbubble docs if address registration fails.
  */
 
 const BASE_URL = 'https://api.shipbubble.com/v1'
@@ -37,21 +36,36 @@ export interface ShipbubbleAddress {
  * The code is used in subsequent rate/booking calls.
  */
 export async function registerAddress(data: ShipbubbleAddress): Promise<number> {
+    // Normalise phone to +234 format (Shipbubble requires international format)
+    const phone = data.phone.startsWith('+')
+        ? data.phone
+        : data.phone.startsWith('234')
+        ? `+${data.phone}`
+        : data.phone.startsWith('0')
+        ? `+234${data.phone.slice(1)}`
+        : data.phone
+
+    const payload = {
+        name: data.name,
+        email: data.email,
+        phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country ?? 'NG',
+    }
+
+    console.log('[shipbubble] registerAddress payload:', JSON.stringify(payload))
+
     const res = await fetch(`${BASE_URL}/shipping/address/validate`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            country: data.country ?? 'NG',
-        }),
+        body: JSON.stringify(payload),
     })
 
     const json = await res.json()
+    console.log('[shipbubble] registerAddress response:', res.status, JSON.stringify(json))
+
     if (!res.ok) throw new Error(json.message ?? 'Shipbubble: failed to register address')
 
     const code = json.data?.address_code ?? json.data?.id
