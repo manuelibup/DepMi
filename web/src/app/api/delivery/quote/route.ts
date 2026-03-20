@@ -93,10 +93,15 @@ export async function POST(req: NextRequest) {
             }, { status: 422 })
         }
 
-        // Derive store city from location field (e.g. "Uyo, Akwa Ibom" → "Uyo").
-        // Guard against free-text garbage (numbers, symbols) — fall back to the state name.
         const storeState = store.storeState ?? 'Unknown'
-        const rawCity = (store.location ?? '').split(',')[0].trim()
+
+        // pickupAddress may be "Street, City, State" or just "Street".
+        // Always send only the street to Shipbubble; derive city from the second segment.
+        const pickupParts = (store.pickupAddress ?? '').split(',').map(p => p.trim())
+        const pickupStreet = pickupParts[0]
+        const rawCity = pickupParts.length >= 2
+            ? pickupParts[1]                                          // from pickup address
+            : (store.location ?? '').split(',')[0].trim()            // fallback: location field
         const storeCity = /^[a-zA-Z\s\-]+$/.test(rawCity) ? rawCity : storeState
 
         // Register / reuse sender address code.
@@ -106,7 +111,7 @@ export async function POST(req: NextRequest) {
                 name: sanitizeName(store.name, 'DepMi Store'),
                 email: store.owner.email ?? `store-${store.id}@depmi.app`,
                 phone: sanitizePhone(store.owner.phoneNumber, '08000000000'),
-                address: store.pickupAddress,
+                address: pickupStreet,
                 city: storeCity,
                 state: storeState,
             })
