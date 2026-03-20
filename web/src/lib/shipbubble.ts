@@ -168,18 +168,14 @@ export async function getDeliveryQuote(
 
     if (!res.ok) throw new Error(json.message ?? 'Shipbubble: failed to fetch rates')
 
-    // All available rates — filter for GIGL (GIG Logistics) if present, else take cheapest overall
-    const allRates: any[] = json.data?.rates ?? []
-    if (!allRates.length) throw new Error('Shipbubble: no rates available for this route')
+    // Shipbubble returns couriers[] + cheapest_courier pre-calculated.
+    // Use cheapest_courier directly; fall back to scanning couriers array.
+    const couriers: any[] = json.data?.couriers ?? []
+    if (!couriers.length && !json.data?.cheapest_courier) {
+        throw new Error('Shipbubble: no rates available for this route')
+    }
 
-    const giglRates = allRates.filter((r: any) =>
-        (r.courier_id ?? r.courier ?? r.name ?? '').toString().toLowerCase().includes('gigl') ||
-        (r.courier_id ?? r.courier ?? r.name ?? '').toString().toLowerCase().includes('gig')
-    )
-    const rates = giglRates.length > 0 ? giglRates : allRates
-
-    // Pick cheapest available rate
-    const rate = rates.reduce((a: any, b: any) =>
+    const rate = json.data.cheapest_courier ?? couriers.reduce((a: any, b: any) =>
         Number(a.total ?? a.rate_card_amount) <= Number(b.total ?? b.rate_card_amount) ? a : b
     )
 
@@ -188,7 +184,7 @@ export async function getDeliveryQuote(
         fee: applyMarkup(rawFee),
         rawFee,
         requestToken: json.data.request_token,
-        eta: rate.delivery_eta_time ?? rate.eta ?? null,
+        eta: rate.delivery_eta ?? rate.delivery_eta_time ?? null,
     }
 }
 
