@@ -11,9 +11,9 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
     const { status } = useSession();
     const pathname = usePathname();
 
-    // Show sidebar if authenticated, unless explicitly on a guest page
+    // Show sidebar for all users (including guests) unless on auth-only pages
     const isGuestPage = GUEST_PAGES.includes(pathname || '');
-    const showSidebar = status === 'authenticated' && !isGuestPage;
+    const showSidebar = status !== 'loading' && !isGuestPage;
 
     return (
         <>
