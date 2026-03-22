@@ -16,11 +16,11 @@ export default function NavigationWrapper({ children }: { children: React.ReactN
     const showSidebar = status !== 'loading' && !isGuestPage;
 
     return (
-        <>
+        <div className={showSidebar ? "page-layout" : ""}>
             {showSidebar && <DesktopSidebar />}
             <div className={showSidebar ? "desktop-content" : ""}>
                 {children}
             </div>
-        </>
+        </div>
     );
 }

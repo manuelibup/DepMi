@@ -6,15 +6,17 @@
 @media (min-width: 640px) {
     .sidebar {
         display: flex;
-        position: fixed;
+        position: sticky;
         top: 0;
-        left: 0;
-        bottom: 0;
+        height: 100dvh;
         width: 72px;
+        flex-shrink: 0;
         border-right: 1px solid var(--card-border);
         background: var(--bg-base);
         z-index: 100;
         flex-direction: column;
+        overflow-y: auto;
+        scrollbar-width: none;
     }
 
     .inner {

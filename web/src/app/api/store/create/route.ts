@@ -33,6 +33,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Handle must be at least 3 characters long." }, { status: 400 });
         }
 
+        // One store per user — redirect to existing store if they already have one
+        const existingStore = await prisma.store.findFirst({
+            where: { ownerId: session.user.id },
+            select: { slug: true },
+        });
+        if (existingStore) {
+            return NextResponse.json({
+                message: "You already have a store.",
+                redirect: `/store/${existingStore.slug}`,
+            }, { status: 409 });
+        }
+
         // Collision Checks
         const storeConflict = await prisma.store.findFirst({
             where: {

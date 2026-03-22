@@ -121,6 +121,12 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     if (!store) notFound();
 
     const isOwner = currentUserId === store.ownerId;
+
+    // Check if the viewer already has their own store (to redirect instead of creating)
+    const viewerStore = (!isOwner && currentUserId)
+        ? await prisma.store.findFirst({ where: { ownerId: currentUserId }, select: { slug: true } })
+        : null;
+
     const visibleProducts = isOwner
         ? store.products
         : store.products.filter((p: any) => p.inStock || p.isPortfolioItem);
@@ -296,11 +302,11 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                         Secure checkout · Escrow protection · Tracked delivery
                     </p>
                     <Link
-                        href="/store/create"
+                        href={viewerStore ? `/store/${viewerStore.slug}` : '/store/create'}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(5,150,105,0.25)', background: 'rgba(5,150,105,0.06)' }}
                     >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9,22 9,12 15,12 15,22" /></svg>
-                        Open your own store on DepMi — free
+                        {viewerStore ? 'Go to your store' : 'Open your own store on DepMi — free'}
                     </Link>
                     <p style={{ margin: '10px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', opacity: 0.6 }}>
                         Powered by <Link href="/" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>DepMi</Link>

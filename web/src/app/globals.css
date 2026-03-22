@@ -105,16 +105,20 @@ img {
   display: block;
 }
 
-/* Desktop layout: offset content to the right of the fixed sidebar */
+/* Desktop layout: flex row — sidebar + content stay centered at any zoom level */
 @media (min-width: 640px) {
-  .desktop-content {
-    margin-left: 72px;
+  .page-layout {
+    display: flex;
+    align-items: flex-start;
+    max-width: 1300px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100dvh;
   }
-}
 
-@media (min-width: 1024px) {
   .desktop-content {
-    margin-left: 240px;
+    flex: 1;
+    min-width: 0;
   }
 }
 
