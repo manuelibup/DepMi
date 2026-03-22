@@ -568,3 +568,18 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 - **The Root Cause**: `EventSource` connections do not automatically pause when a tab goes inactive/backgrounded on mobile or desktop.
 - **The Fix**: Use the Page Visibility API (`document.visibilityState`) to explicitly `close()` the SSE connection when hidden, and `new EventSource()` when visible again. This allows the serverless polling loop to terminate, letting the database autosuspend via its 5-minute inactivity rule.
 - **Prevention**: Never use an unconditional `setInterval` for database polling behind an SSE or WebSocket stream without a visibility check on the client. For basic counts like unread notifications, prefer `SWR` with `refreshInterval`, which automatically pauses polling on tab blur out-of-the-box.
+
+---
+
+## 🖤 46. Flex Overflow "Black Screen" — Mobile Overlay Collapsing Sibling to 0 Width
+
+*This tip was added after diagnosing a black-screen bug on the Orders page desktop layout (Session 71).*
+
+- **The Pattern**: A two-panel desktop layout (`listPanel` + `detailPanel`) uses `display: flex; flex-wrap: nowrap; overflow: hidden`. A mobile-only overlay div (hidden via `display: none` at ≥900px *on its inner content*) is conditionally rendered inside the same flex row when `showMobileDetail = true`. On mobile this is correct — it covers the screen. On desktop, the wrapper itself is still rendered with `width: 100%`, consuming all available flex space and collapsing `detailPanel` to 0 width — a solid black rectangle.
+- **Why it's hard to spot**: The mobile overlay's *content* wrapper already has `display: none` at desktop breakpoint, so you never see the overlay's visual content. But the outer container still exists in the flex flow and claims `width: 100%` of free space (which is 0 because the list was hidden), leaving the detail panel with nothing.
+- **The Fix**: Apply `display: none` at the desktop breakpoint to the **outer wrapper** of the mobile overlay, not just its inner content. This removes it from flex flow entirely so it can never steal space from real panels.
+  ```css
+  .mobileOverlayWrap { width: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+  @media (min-width: 900px) { .mobileOverlayWrap { display: none; } }
+  ```
+- **Rule**: Any mobile-only element rendered inside a desktop flex row must be hidden at the desktop breakpoint on its **outermost wrapper** — hiding only inner content is not sufficient.

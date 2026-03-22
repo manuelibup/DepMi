@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 71 — Mar 22, 2026 — Multi-Store Profile, FilterBar Scope & Orders Black Screen Fix](#session-71--mar-22-2026--multi-store-profile-filterbar-scope--orders-black-screen-fix)
 - [Session 70 — Mar 22, 2026 — Codebase Audit, Guest Feed, Sidebar Fix & Comment/Mention Fixes](#session-70--mar-22-2026--codebase-audit-guest-feed-sidebar-fix--commentmention-fixes)
 - [Session 69 — Mar 21, 2026 — Analytics Hooks Wired + Checkout Funnel Tracking](#session-69--mar-21-2026--analytics-hooks-wired--checkout-funnel-tracking)
 - [Session 68 — Mar 20, 2026 — Shipbubble Live Quotes Working + Courier Picker](#session-68--mar-20-2026--shipbubble-live-quotes-working--courier-picker)
@@ -52,6 +53,36 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 71 — Mar 22, 2026 — Multi-Store Profile, FilterBar Scope & Orders Black Screen Fix
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Multi-store profile page:**
+- Removed `take: 1` limit from `stores` query in `u/[username]/page.tsx`.
+- Profile meta row now maps all user stores as clickable links.
+- Quick-action chips now render a chip for EACH store by name (not just "My Store").
+- Enables Manuel to navigate to and manage both `@store` and `@manuelstore` from his profile.
+
+**FilterBar + StoriesBar scoped to feed column:**
+- FilterBar and StoriesBar were placed OUTSIDE `.pageLayout` and spanned the full `desktop-content` width, bleeding into the right sidebar on wide screens.
+- Moved both components INSIDE `.feedCol` so they're naturally bounded by the feed column width.
+- Tabs horizontally scroll within the feed column; right sidebar is no longer overlapped.
+
+**Orders page black screen on desktop (root cause found and fixed):**
+- Root cause: `showMobileDetail = true` on order click rendered the mobile overlay div (`width: 100%`) in the same flex row as `detailPanel`. The overlay consumed all available flex space (free space = 0), leaving `detailPanel` at 0 width.
+- The overlay's content was also hidden via `.mobileDetailWrap { display: none }` at ≥900px.
+- Result: both panels invisible → pure black shell background.
+- Fix: added `.mobileOverlayWrap { display: none }` at ≥900px. Desktop never sees the mobile overlay; `detailPanel` always gets full flex space.
+
+### Validations
+- No schema changes.
+- No new dependencies.
 
 ---
 
