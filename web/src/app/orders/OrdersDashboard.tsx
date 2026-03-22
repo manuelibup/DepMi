@@ -664,9 +664,9 @@ export default function OrdersDashboard({ hasStore, storeName, storeSlug, purcha
                     )}
                 </div>
 
-                {/* Mobile detail overlay */}
+                {/* Mobile detail overlay — hidden on desktop via CSS (.mobileOverlayWrap) */}
                 {showMobileDetail && selectedOrder && (
-                    <div style={{ width: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    <div className={styles.mobileOverlayWrap}>
                         <OrderDetail
                             key={selectedOrder.id}
                             order={selectedOrder}

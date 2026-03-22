@@ -577,6 +577,18 @@
 .star { background: none; border: none; cursor: pointer; padding: 4px; color: #FFD700; transition: opacity 0.12s; }
 .star.off { opacity: 0.2; }
 
+/* ─── Mobile detail overlay wrapper ──────────────────────────────────────── */
+.mobileOverlayWrap {
+    width: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+@media (min-width: 900px) {
+    /* Desktop has a real detailPanel — never render the mobile overlay */
+    .mobileOverlayWrap { display: none; }
+}
+
 /* ─── Mobile back button ─────────────────────────────────────────────────── */
 .mobileBack {
     display: flex;
