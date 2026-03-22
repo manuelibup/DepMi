@@ -25,7 +25,7 @@ type SerializedBid = {
     store: { name: string; slug: string | null };
     ownerUserId: string | null;
     ownerUsername: string | null;
-    product: { title: string } | null;
+    product: { title: string; slug: string } | null;
     replies: SerializedComment[];
 };
 
@@ -298,7 +298,9 @@ export default function BidsCommentsTab({
                                                     <path d="M9 21v-6" />
                                                 </svg>
                                             </div>
-                                            <span>Attached: {bid.product.title}</span>
+                                            <Link href={`/p/${bid.product.slug}`} className={styles.attachedProductLink}>
+                                                Attached: {bid.product.title}
+                                            </Link>
                                         </div>
                                     )}
 

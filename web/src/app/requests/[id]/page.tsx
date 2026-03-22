@@ -71,7 +71,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 orderBy: { createdAt: 'desc' },
                 include: {
                     store: { select: { name: true, slug: true, depCount: true, depTier: true, owner: { select: { id: true, username: true } } } },
-                    product: { select: { title: true, images: { take: 1, select: { url: true } } } },
+                    product: { select: { title: true, slug: true, images: { take: 1, select: { url: true } } } },
                     replies: {
                         orderBy: { createdAt: 'asc' },
                         include: { author: { select: { displayName: true, username: true, avatarUrl: true } } }
@@ -129,7 +129,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         store: { name: bid.store.name, slug: bid.store.slug },
         ownerUserId: bid.store.owner?.id ?? null,
         ownerUsername: bid.store.owner?.username ?? null,
-        product: bid.product ? { title: bid.product.title } : null,
+        product: bid.product ? { title: bid.product.title, slug: bid.product.slug } : null,
         replies: (bid.replies ?? []).map((r: any) => ({
             id: r.id,
             text: r.text,

@@ -414,6 +414,17 @@
     font-weight: 600;
 }
 
+.attachedProductLink {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.attachedProductLink:hover {
+    text-decoration: underline;
+}
+
 .productIcon {
     color: var(--text-muted);
     display: flex;
