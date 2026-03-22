@@ -169,11 +169,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           </div>
         </div>
       )}
-      <FilterBar />
-      <StoriesBar stores={topStores} />
-
       <div className={styles.pageLayout}>
         <div className={styles.feedCol}>
+          <FilterBar />
+          <StoriesBar stores={topStores} />
           <div className={styles.feed}>
             {initialItems.length === 0 ? (
               <EmptyState
