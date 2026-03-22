@@ -70,7 +70,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             stores: {
                 select: { id: true, slug: true, name: true },
                 orderBy: { createdAt: 'asc' },
-                take: 1,
             },
             _count: {
                 select: {
@@ -217,15 +216,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <span className={styles.metaText}>Joined {joinDate}</span>
                     <span className={styles.metaSep}>·</span>
                     <span className={styles.metaText}>{user.depCount} deps</span>
-                    {userStore && (
-                        <>
+                    {user.stores.map((s: { id: string; slug: string; name: string }) => (
+                        <React.Fragment key={s.id}>
                             <span className={styles.metaSep}>·</span>
-                            <Link href={'/store/' + userStore.slug} className={styles.storeLink}>
-                                {userStore.name}
+                            <Link href={'/store/' + s.slug} className={styles.storeLink}>
+                                {s.name}
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: 3 }}><path d="M7 17L17 7M7 7h10v10" /></svg>
                             </Link>
-                        </>
-                    )}
+                        </React.Fragment>
+                    ))}
                 </div>
 
                 {/* Following / Followers counts */}
@@ -244,11 +243,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                             Orders
                         </Link>
-                        {userStore ? (
-                            <Link href={'/store/' + userStore.slug} className={styles.quickChip + ' ' + styles.quickChipPrimary}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                                My Store
-                            </Link>
+                        {user.stores.length > 0 ? (
+                            user.stores.map((s: { id: string; slug: string; name: string }) => (
+                                <Link key={s.id} href={'/store/' + s.slug} className={styles.quickChip + ' ' + styles.quickChipPrimary}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                                    {s.name}
+                                </Link>
+                            ))
                         ) : (
                             <Link href="/onboarding/store" className={styles.quickChip}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
