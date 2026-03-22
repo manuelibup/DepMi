@@ -33,6 +33,22 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt",
     },
+    // Explicit cookie config — fixes iOS Safari SameSite issues causing
+    // the first Google OAuth attempt to fail (CSRF cookie not persisted on iOS).
+    cookies: {
+        sessionToken: {
+            name: "next-auth.session-token",
+            options: { httpOnly: true, sameSite: 'lax', path: '/', secure: process.env.NODE_ENV === 'production' },
+        },
+        callbackUrl: {
+            name: "next-auth.callback-url",
+            options: { sameSite: 'lax', path: '/', secure: process.env.NODE_ENV === 'production' },
+        },
+        csrfToken: {
+            name: "next-auth.csrf-token",
+            options: { httpOnly: true, sameSite: 'lax', path: '/', secure: process.env.NODE_ENV === 'production' },
+        },
+    },
     pages: {
         signIn: "/login",
     },

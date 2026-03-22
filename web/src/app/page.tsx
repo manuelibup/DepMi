@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { unstable_cache } from 'next/cache';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 import WaitlistHome from '@/components/WaitlistHome';
@@ -12,7 +12,6 @@ import FilterBar from '@/components/FilterBar';
 import StoriesBar from '@/components/StoriesBar';
 import BottomNav from '@/components/BottomNav';
 import EmptyState from '@/components/EmptyState';
-import LandingPage from '@/components/LandingPage';
 import FeedInfiniteScroll from '@/components/FeedInfiniteScroll';
 import type { FeedItem } from '@/components/FeedInfiniteScroll';
 import RightSidebar from '@/components/RightSidebar';
@@ -27,38 +26,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    let stats = { users: 0, stores: 0, listings: 0 };
-    try {
-      const getLandingStats = unstable_cache(
-        async () => {
-          const [userCount, storeCount, listingCount] = await Promise.all([
-            prisma.user.count(),
-            prisma.store.count({ where: { isActive: true } }),
-            prisma.product.count({ where: { inStock: true } }),
-          ]);
-          return { users: userCount, stores: storeCount, listings: listingCount };
-        },
-        ['platform-stats'],
-        { revalidate: 3600 },
-      );
-      stats = await getLandingStats();
-    } catch { /* DB unavailable — show landing page with zero stats */ }
-    return <LandingPage stats={stats} />;
-  }
-
+  // Onboarding redirects — only for logged-in users
   if (session?.user && !session.user.username) {
     redirect('/onboarding');
   }
-
-  // Username Repair Gatekeeper
   if (session?.user?.username && /\s/.test(session.user.username)) {
     redirect('/onboarding?repair=1');
   }
 
   const sp = await searchParams;
   const category = sp.category;
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
   const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
   const demandWhere: Record<string, unknown> = { isActive: true };
@@ -182,6 +160,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   return (
     <main className={styles.main}>
       <Header />
+      {!session && (
+        <div className={styles.guestBanner}>
+          <span>You&apos;re browsing as a guest &mdash; sign up to buy, sell &amp; save</span>
+          <div className={styles.guestActions}>
+            <Link href="/register" className={styles.guestSignup}>Join free</Link>
+            <Link href="/login" className={styles.guestLogin}>Log in</Link>
+          </div>
+        </div>
+      )}
       <FilterBar />
       <StoriesBar stores={topStores} />
 

@@ -226,17 +226,28 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
 
                 {form.isDigital && (
                     <div style={{ margin: '8px 0' }}>
-                        <input
-                            type="url"
-                            name="fileUrl"
-                            className={styles.titleInput}
-                            placeholder="Paste file link (PDF, ZIP, Google Drive, etc.)"
-                            value={form.fileUrl}
-                            onChange={handleChange}
-                            style={{ fontSize: '0.9rem' }}
-                        />
+                        {form.fileUrl ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {decodeURIComponent(form.fileUrl.split('/').pop() ?? 'File uploaded')}
+                                </span>
+                                <button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: '' }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <CloudinaryUploader
+                                accept=".pdf,.doc,.docx,.zip,.epub,.mp3,.pptx,.xlsx,.txt"
+                                maxSizeMB={50}
+                                buttonText="Upload Digital File (PDF, ZIP, DOCX…)"
+                                onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, fileUrl: res.secure_url }))}
+                            />
+                        )}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                            Buyers receive this link after payment. Use a permanent link.
+                            Buyers get instant access after payment. Max 50 MB.
                         </p>
                     </div>
                 )}

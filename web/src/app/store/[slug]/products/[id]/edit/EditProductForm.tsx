@@ -191,17 +191,26 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
 
                 {form.isDigital && (
                     <div style={{ margin: '8px 0' }}>
-                        <input
-                            type="url"
-                            name="fileUrl"
-                            className={styles.titleInput}
-                            placeholder="Paste file link (PDF, ZIP, Google Drive, etc.)"
-                            value={form.fileUrl}
-                            onChange={handleChange}
-                            style={{ fontSize: '0.9rem' }}
-                        />
+                        {form.fileUrl ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--card-border)' }}>
+                                <Download size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {decodeURIComponent(form.fileUrl.split('/').pop() ?? 'File uploaded')}
+                                </span>
+                                <button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: '' }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <CloudinaryUploader
+                                accept=".pdf,.doc,.docx,.zip,.epub,.mp3,.pptx,.xlsx,.txt"
+                                maxSizeMB={50}
+                                buttonText="Upload Digital File (PDF, ZIP, DOCX…)"
+                                onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, fileUrl: res.secure_url }))}
+                            />
+                        )}
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                            Buyers receive this link after payment. Use a permanent link.
+                            Buyers get instant access after payment. Max 50 MB.
                         </p>
                     </div>
                 )}

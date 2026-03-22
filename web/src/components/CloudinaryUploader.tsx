@@ -121,7 +121,11 @@ export default function CloudinaryUploader({
     setProgress(10);
 
     try {
-      const resourceType = file.type.startsWith('video/') ? 'auto' : 'image';
+      const resourceType = file.type.startsWith('video/')
+        ? 'auto'
+        : file.type.startsWith('image/')
+          ? 'image'
+          : 'raw';
       // Step A: Fetch signature from our restricted backend
       const resSig = await fetch(`/api/upload/sign?resourceType=${resourceType}`);
       if (!resSig.ok) throw new Error('Failed to get secure upload signature. Are you logged in?');
@@ -142,7 +146,7 @@ export default function CloudinaryUploader({
 
       const xhr = new XMLHttpRequest();
 
-      const resourceTypeParam = resourceType === 'auto' ? 'auto' : 'image';
+      const resourceTypeParam = resourceType === 'auto' ? 'auto' : resourceType; // 'image', 'raw', or 'auto'
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceTypeParam}/upload`;
 
       xhr.open('POST', uploadUrl, true);
@@ -196,7 +200,7 @@ export default function CloudinaryUploader({
         if (fileInputRef.current) fileInputRef.current.value = '';
       };
 
-      // Ensure resource_type is in the body for auto/video uploads
+      // Ensure resource_type is in the body for non-image uploads
       if (resourceType !== 'image') {
         formData.append('resource_type', resourceType);
       }
