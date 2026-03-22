@@ -1,9 +1,17 @@
 .sidebar {
-    width: 360px;
+    width: 100%;
     flex-shrink: 0;
     position: sticky;
-    top: 72px;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
     padding-bottom: 40px;
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none;
 }
 
 .section {

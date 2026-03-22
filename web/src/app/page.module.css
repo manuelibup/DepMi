@@ -1,3 +1,43 @@
+/* Guest banner */
+.guestBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(5, 150, 105, 0.08);
+  border-bottom: 1px solid rgba(5, 150, 105, 0.2);
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+  flex-wrap: wrap;
+}
+
+.guestActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.guestSignup {
+  padding: 5px 14px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.guestLogin {
+  padding: 5px 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-main, #fff);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
 /* Feed page layout */
 .main {
   min-height: 100vh;
@@ -33,24 +73,42 @@
   }
 }
 
-@media (min-width: 1140px) {
+/* Tablet (1024px+): show condensed right sidebar, center layout */
+@media (min-width: 1024px) {
   .pageLayout {
     display: flex;
-    align-items: flex-start;
-    gap: 24px;
-    max-width: 1040px;
-    padding: 0;
+    gap: 20px;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 16px;
   }
 
   .feedCol {
     flex: 1;
     min-width: 0;
-    max-width: 600px;
+    max-width: none;
   }
 
   .sidebarCol {
     display: block;
-    padding-top: 8px;
+    width: 260px;
     flex-shrink: 0;
+  }
+}
+
+/* Full desktop (1280px+): wider sidebar + centered */
+@media (min-width: 1280px) {
+  .pageLayout {
+    max-width: 1060px;
+    gap: 24px;
+    padding: 0;
+  }
+
+  .feedCol {
+    max-width: 600px;
+  }
+
+  .sidebarCol {
+    width: 340px;
   }
 }
