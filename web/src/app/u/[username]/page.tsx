@@ -69,6 +69,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             createdAt: true,
             stores: {
                 select: { id: true, slug: true, name: true },
+                orderBy: { createdAt: 'asc' },
                 take: 1,
             },
             _count: {

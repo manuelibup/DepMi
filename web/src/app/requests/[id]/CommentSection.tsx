@@ -20,10 +20,15 @@ interface ProductResult {
     storeName: string;
 }
 
-// Renders comment text and turns [Title](/p/id) into styled product link chips
-// AND turns @username into stylized mention link
-function CommentText({ text }: { text: string }) {
-    const combinedRegex = /(\[([^\]]+)\]\(\/p\/([^)]+)\))|(@[a-zA-Z0-9_]+)/g;
+// Renders comment text and turns:
+//   [Title](/p/id)        → styled product link chip
+//   [@Name](/store/slug)  → store mention link
+//   @username             → user mention link
+export function CommentText({ text }: { text: string }) {
+    // Groups: 1=product-full, 2=product-title, 3=product-id,
+    //         4=store-full, 5=store-name, 6=store-slug,
+    //         7=@username
+    const combinedRegex = /(\[([^\]]+)\]\(\/p\/([^)]+)\))|(\[([^\]]+)\]\(\/store\/([^)]+)\))|(@[a-zA-Z0-9_]+)/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -34,7 +39,7 @@ function CommentText({ text }: { text: string }) {
         }
 
         if (match[1]) {
-            // Product match
+            // Product link [title](/p/id)
             parts.push(
                 <Link key={match.index} href={`/p/${match[3]}`} className={styles.productMention}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -45,15 +50,22 @@ function CommentText({ text }: { text: string }) {
                 </Link>
             );
         } else if (match[4]) {
-            // User match
-            const username = match[4].substring(1);
+            // Store mention [@Name](/store/slug)
+            parts.push(
+                <Link key={match.index} href={`/store/${match[6]}`} className={styles.userMention}>
+                    {match[5]}
+                </Link>
+            );
+        } else if (match[7]) {
+            // Plain @username → user profile
+            const username = match[7].substring(1);
             parts.push(
                 <Link key={match.index} href={`/u/${username}`} className={styles.userMention}>
-                    {match[4]}
+                    {match[7]}
                 </Link>
             );
         }
-        
+
         lastIndex = match.index + match[0].length;
     }
     if (lastIndex < text.length) parts.push(text.slice(lastIndex));
@@ -186,16 +198,21 @@ export default function CommentSection({
         checkMentionTrigger(val, e.target.selectionStart || val.length);
     };
 
-    const insertUserMention = (username: string) => {
+    const insertUserMention = (username: string, type?: string, displayName?: string) => {
+        // Stores: insert as markdown link so the renderer links to /store/slug
+        // Users: insert plain @username
+        const insertion = type === 'store'
+            ? `[@${displayName ?? username}](/store/${username}) `
+            : `@${username} `;
         const ta = textareaRef.current;
         if (ta) {
             const cursorPosition = ta.selectionStart || text.length;
             const textBeforeCursor = text.slice(0, cursorPosition);
             const textAfterCursor = text.slice(cursorPosition);
-            
+
             const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
             if (match) {
-                const newTextBefore = textBeforeCursor.slice(0, match.index) + `@${username} `;
+                const newTextBefore = textBeforeCursor.slice(0, match.index) + insertion;
                 setText(newTextBefore + textAfterCursor);
                 setTimeout(() => {
                     ta.focus();
@@ -399,7 +416,7 @@ export default function CommentSection({
                                     key={u.id}
                                     type="button"
                                     className={styles.userPickerItem}
-                                    onClick={() => insertUserMention(u.username)}
+                                    onClick={() => insertUserMention(u.username, u.type, u.displayName)}
                                 >
                                     {u.avatarUrl ? (
                                         <img src={u.avatarUrl} alt="" className={styles.userPickerAvatar} />

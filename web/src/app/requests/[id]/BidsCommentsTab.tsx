@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import BidActionGate from './BidActionGate';
 import BidForm from './BidForm';
 import AcceptBidButton from './AcceptBidButton';
-import CommentSection from './CommentSection';
+import CommentSection, { CommentText } from './CommentSection';
 import styles from './RequestDetail.module.css';
 
 type SerializedComment = {
@@ -139,7 +139,7 @@ function BidReplyThread({
                                     )}
                                     <span className={styles.bidReplyTime}>· {timeAgo(r.createdAt)}</span>
                                 </div>
-                                <p className={styles.bidReplyText}>{r.text}</p>
+                                <p className={styles.bidReplyText}><CommentText text={r.text} /></p>
                             </div>
                         </div>
                     ))}
@@ -288,7 +288,7 @@ export default function BidsCommentsTab({
                                         </div>
                                         <span className={styles.bidPrice}>₦{bid.amount.toLocaleString()}</span>
                                     </div>
-                                    {bid.proposal && <p className={styles.bidProposal}>{bid.proposal}</p>}
+                                    {bid.proposal && <p className={styles.bidProposal}><CommentText text={bid.proposal} /></p>}
                                     {bid.product && (
                                         <div className={styles.attachedProduct}>
                                             <div className={styles.productIcon}>

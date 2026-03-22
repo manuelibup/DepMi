@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 70 — Mar 22, 2026 — Codebase Audit, Guest Feed, Sidebar Fix & Comment/Mention Fixes](#session-70--mar-22-2026--codebase-audit-guest-feed-sidebar-fix--commentmention-fixes)
 - [Session 69 — Mar 21, 2026 — Analytics Hooks Wired + Checkout Funnel Tracking](#session-69--mar-21-2026--analytics-hooks-wired--checkout-funnel-tracking)
 - [Session 68 — Mar 20, 2026 — Shipbubble Live Quotes Working + Courier Picker](#session-68--mar-20-2026--shipbubble-live-quotes-working--courier-picker)
 - [Session 66 — Mar 18, 2026 — Shipbubble Dispatch Integration (GIG Logistics)](#session-66--mar-18-2026--shipbubble-dispatch-integration-gig-logistics)
@@ -51,6 +52,58 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 70 — Mar 22, 2026 — Codebase Audit, Guest Feed, Sidebar Fix & Comment/Mention Fixes
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Codebase audit & standards pass:**
+- Renamed `auto-follow.ts` → `autoFollow.ts` and `notify-watchers.ts` → `notifyWatchers.ts` (camelCase convention). Updated all import references.
+- Rewrote `web/README.md` with real documentation (stack, setup, env vars, project structure, scripts, deployment).
+- Added `.gitattributes` (`* text=auto eol=lf`) to normalize line endings.
+- Tightened `.gitignore` (root + web) — added `desktop.ini`, legal agreement folders, junk script patterns.
+- Removed committed junk files from git tracking via `git rm --cached`.
+- Fixed primary brand color: was `#0066FF` (blue) in tokens.css — corrected to `#059669` (emerald). Purged all remaining neon green (`#00C853`, `#00E676`, `rgba(0,200,83,...)`) from all TS/TSX/CSS files.
+- Fixed PWA status bar: `manifest.json` + `layout.tsx` viewport `themeColor` both set to `#059669`.
+
+**Guest feed (Option A):**
+- Removed early redirect to landing page for unauthenticated users — feed is now public.
+- Added guest banner ("You're browsing as a guest — sign up to buy, sell & save") with Join free / Log in links.
+- Fixed `NavigationWrapper` to show sidebar for guests (not just authenticated users).
+
+**Desktop sidebar & FilterBar centering fix:**
+- Converted sidebar from `position: fixed; left: 0` to `position: sticky; top: 0; height: 100dvh; flex-shrink: 0`.
+- Replaced `margin-left` offset pattern in `globals.css` with a flex container (`.page-layout` / `.desktop-content`). Sidebar and content now stay centered at all zoom levels.
+
+**One-store-per-user enforcement:**
+- API (`/api/store/create`) now checks for an existing store and returns `409` with redirect slug — blocks both UI and direct API calls.
+- Store detail page "Open your own store" button redirects existing owners to their store instead of the create form.
+
+**Critical bug fix — mass logout:**
+- Adding explicit `cookies: {}` config to `authOptions` overrode NextAuth's automatic `__Secure-` prefix in production, invalidating all sessions. Reverted immediately.
+
+**Comment/mention system fixes:**
+- Store @mentions in comments were linking to `/u/username` (404). Fixed:
+  - `CommentText` regex now handles `[@Name](/store/slug)` markdown links → routes to `/store/slug`.
+  - `insertUserMention` now accepts `type` + `displayName`. For stores, inserts `[@StoreName](/store/slug)` markdown. For users, keeps plain `@username`.
+  - Mention picker passes `u.type` and `u.displayName` to `insertUserMention`.
+- `CommentText` exported from `CommentSection.tsx` and used in `BidsCommentsTab` — bid reply text and bid proposals now render product links as clickable chips (not plain text).
+
+**Profile page wrong store fix:**
+- `stores` query in `u/[username]/page.tsx` lacked `orderBy` — returned indeterminate store when user has multiple. Added `orderBy: { createdAt: 'asc' }` so the original store is always shown.
+
+### Issues Encountered
+- Explicit NextAuth cookie config caused mass logout in production (see above). Rule: never override NextAuth cookie names.
+- Manuel accidentally created a second store (`@manuelstore`) via the "Open your own store" button on another user's store page — needs admin deletion. Original store is `@store`.
+
+### Validations
+- No schema changes — no `db:push` needed.
+- No build run this session (all changes are component/logic level, no new dependencies).
 
 ---
 
