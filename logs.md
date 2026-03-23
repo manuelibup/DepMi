@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching](#session-74--mar-23-2026--store-logo-fix-cloudinary-climit--api-caching)
 - [Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)](#session-73--mar-23-2026--pagespeed-insights-fixes-performance--accessibility)
 - [Session 72 — Mar 23, 2026 — Unified Handle Routing, Neon Compute Fix & SEO Analysis](#session-72--mar-23-2026--unified-handle-routing-neon-compute-fix--seo-analysis)
 - [Session 71 — Mar 22, 2026 — Multi-Store Profile, FilterBar Scope & Orders Black Screen Fix](#session-71--mar-22-2026--multi-store-profile-filterbar-scope--orders-black-screen-fix)
@@ -55,6 +56,40 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Bug fix — Store logo not showing in ProductCard:**
+- Root cause: `ProductData` interface had no `logoUrl` field. Prisma queries in `page.tsx` and `/api/feed/route.ts` never selected `store.logoUrl`. `ProductCard` always rendered a colored initial div.
+- Added `logoUrl?: string | null` to `ProductData` interface.
+- Updated Prisma store select in `page.tsx` and `api/feed/route.ts` to include `logoUrl: true`.
+- Added `logoUrl: p.store.logoUrl ?? null` to product serialization in both files.
+- Updated `ProductCard` avatar to render `<img>` with `cloudinaryTransform(data.logoUrl, 128)` when `logoUrl` is present, falling back to colored initial div.
+
+**Bug fix — Image slowness after Session 73 changes:**
+- Root cause: `cloudinaryTransform` used `w_800` without `c_limit` — Cloudinary was upscaling images smaller than 800px (e.g. a 400px image → 800px = larger file, more processing time on first request).
+- Added `c_limit` to transformation string: now `f_auto,q_auto,w_{n},c_limit` — prevents upscaling, caps at original size if already smaller than target.
+- Cold cache on first deployment (Cloudinary generates new transformation URLs on-demand) is expected and self-resolves within hours as images are viewed.
+
+**Performance — API caching:**
+- `/api/feed/featured`: Added `Cache-Control: public, s-maxage=120, stale-while-revalidate=300` — Vercel CDN now serves this for 2 minutes without hitting Neon.
+- `/api/stats`: Added `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` to complement existing `unstable_cache` — HTTP cache layer added for CDN.
+- ISR (`revalidate`) skipped for home page — incompatible with `getServerSession` (dynamic, per-user page).
+
+**Growth.md updates:**
+- Added "Web Performance & Core Web Vitals" resource table (Phase 1–2).
+- Added "Cost Optimisation Checklist" — monthly checklist covering Cloudinary, Neon, Vercel, Resend, Shipbubble.
+
+### Validations
+- No schema changes. No DB push needed.
+- Deploy via Vercel.
 
 ---
 

@@ -52,7 +52,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       orderBy: { createdAt: 'desc' },
       take: INITIAL_TAKE,
       include: {
-        store: { select: { name: true, slug: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
+        store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
         images: true,
         _count: { select: { likes: true, saves: true, comments: true } },
         ...(userId ? {
@@ -96,6 +96,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       storeSlug: p.store.slug,
       storeInitial: p.store.name.charAt(0).toUpperCase(),
       storeColor: STORE_COLORS[p.store.name.length % STORE_COLORS.length],
+      logoUrl: p.store.logoUrl ?? null,
       deps: p.store.depCount,
       depTier: p.store.depTier.toLowerCase(),
       title: p.title,

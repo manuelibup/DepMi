@@ -20,7 +20,9 @@ const getCachedStats = unstable_cache(
 export async function GET() {
     try {
         const stats = await getCachedStats();
-        return NextResponse.json(stats);
+        return NextResponse.json(stats, {
+            headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+        });
     } catch {
         return NextResponse.json({ users: 0, stores: 0, listings: 0 });
     }

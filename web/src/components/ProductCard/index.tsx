@@ -15,6 +15,7 @@ export interface ProductData {
     storeSlug: string;
     storeInitial: string;
     storeColor: string;
+    logoUrl?: string | null;
     deps: number;
     depTier: string;
     title: string;
@@ -206,8 +207,19 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                         aria-label={`Visit ${data.store} store`}
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className={styles.avatar} style={{ background: data.storeColor }}>
-                            <span className={styles.avatarInitial}>{data.storeInitial}</span>
+                        <div className={styles.avatar} style={{ background: data.logoUrl ? 'transparent' : data.storeColor }}>
+                            {data.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={cloudinaryTransform(data.logoUrl, 128)}
+                                    alt={data.store}
+                                    width={36}
+                                    height={36}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                />
+                            ) : (
+                                <span className={styles.avatarInitial}>{data.storeInitial}</span>
+                            )}
                         </div>
                     </Link>
                     <div className={styles.authorMeta}>
