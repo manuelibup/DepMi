@@ -455,6 +455,11 @@
     box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
 }
 
+.methodBtnDisabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .qtyContainer {
     display: flex;
     justify-content: space-between;

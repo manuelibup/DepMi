@@ -84,7 +84,7 @@ export default function ClientCheckoutForm({
     const [deliveryNote, setDeliveryNote] = useState('');
     const [saveDetails, setSaveDetails] = useState(true);
     const [quantity, setQuantity] = useState(1);
-    const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY');
+    const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP' | 'DISPATCH'>('DELIVERY');
     const [error, setError] = useState('');
 
     // State searchable dropdown
@@ -212,9 +212,9 @@ export default function ClientCheckoutForm({
         }, () => setGpsLoading(false), { timeout: 8000 });
     }
 
-    // Fetch live quote when address is complete and store has dispatch enabled
+    // Fetch live quote when user picks DepMi Dispatch tab and address is complete
     useEffect(() => {
-        if (!dispatchEnabled || deliveryMethod === 'PICKUP') return;
+        if (deliveryMethod !== 'DISPATCH') return;
         if (!address.trim() || !city.trim() || !stateVal.trim()) return;
 
         if (quoteDebounceRef.current) clearTimeout(quoteDebounceRef.current);
@@ -262,9 +262,13 @@ export default function ClientCheckoutForm({
     function getDeliveryFee(): { fee: number; label: string | null; isLive: boolean } {
         if (isDigital) return { fee: 0, label: 'Instant digital delivery', isLive: false };
         if (deliveryMethod === 'PICKUP') return { fee: 0, label: null, isLive: false };
-        if (dispatchEnabled && liveDeliveryFee !== null) {
-            return { fee: liveDeliveryFee, label: liveEta ? `DepMi Dispatch · ${liveEta}` : 'DepMi Dispatch', isLive: true };
+        if (deliveryMethod === 'DISPATCH') {
+            if (liveDeliveryFee !== null) {
+                return { fee: liveDeliveryFee, label: liveEta ? `DepMi Dispatch · ${liveEta}` : 'DepMi Dispatch', isLive: true };
+            }
+            return { fee: 0, label: 'Fetching quote…', isLive: false };
         }
+        // DELIVERY — seller's own fee
         if (productDeliveryFee !== null) return { fee: productDeliveryFee, label: null, isLive: false };
         if (storeState && stateVal) {
             if (isLocalDelivery(stateVal, storeState)) {
@@ -290,8 +294,12 @@ export default function ClientCheckoutForm({
         setError('');
 
         if (!isDigital) {
-            if (deliveryMethod === 'DELIVERY' && (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim())) {
+            if ((deliveryMethod === 'DELIVERY' || deliveryMethod === 'DISPATCH') && (!name.trim() || !phone.trim() || !address.trim() || !city.trim() || !stateVal.trim())) {
                 setError('Please fill in all delivery details.');
+                return;
+            }
+            if (deliveryMethod === 'DISPATCH' && quoteState !== 'done') {
+                setError('Please wait for the delivery quote to load before placing your order.');
                 return;
             }
             if (deliveryMethod === 'PICKUP' && !phone.trim()) {
@@ -310,7 +318,7 @@ export default function ClientCheckoutForm({
                 body: JSON.stringify({
                     productId,
                     quantity,
-                    deliveryMethod,
+                    deliveryMethod: deliveryMethod === 'DISPATCH' ? 'DELIVERY' : deliveryMethod,
                     deliveryAddress: deliveryMethod === 'PICKUP' ? 'PICKUP' : `${address}, ${city}, ${stateVal}`,
                     deliveryNote: deliveryNote.trim() || undefined,
                     phone: phone.trim(),
@@ -387,7 +395,20 @@ export default function ClientCheckoutForm({
                 <div className={styles.methodToggle}>
                     <button type="button" className={`${styles.methodBtn} ${deliveryMethod === 'DELIVERY' ? styles.methodBtnActive : ''}`} onClick={() => setDeliveryMethod('DELIVERY')}>Delivery</button>
                     <button type="button" className={`${styles.methodBtn} ${deliveryMethod === 'PICKUP' ? styles.methodBtnActive : ''}`} onClick={() => setDeliveryMethod('PICKUP')}>Pickup</button>
+                    <button
+                        type="button"
+                        className={`${styles.methodBtn} ${deliveryMethod === 'DISPATCH' ? styles.methodBtnActive : ''} ${!dispatchEnabled ? styles.methodBtnDisabled : ''}`}
+                        onClick={() => dispatchEnabled && setDeliveryMethod('DISPATCH')}
+                        title={!dispatchEnabled ? 'Seller hasn\'t enabled DepMi Dispatch yet' : undefined}
+                    >
+                        DepMi Dispatch
+                    </button>
                 </div>
+                {deliveryMethod === 'DISPATCH' && !dispatchEnabled && (
+                    <p style={{ fontSize: '0.82rem', color: '#f59e0b', margin: '4px 0 0' }}>
+                        This seller hasn&apos;t enabled DepMi Dispatch yet. Choose Delivery or Pickup.
+                    </p>
+                )}
 
                 <div className={styles.formGroup}>
                     <div className={styles.qtyContainer}>
@@ -399,7 +420,7 @@ export default function ClientCheckoutForm({
                         </div>
                     </div>
 
-                    {deliveryMethod === 'DELIVERY' ? (
+                    {(deliveryMethod === 'DELIVERY' || deliveryMethod === 'DISPATCH') ? (
                         <>
                             <input className={styles.inputField} placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
                             <input className={styles.inputField} placeholder="Phone Number" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
@@ -544,6 +565,62 @@ export default function ClientCheckoutForm({
                                     )}
                                 </div>
                             </div>
+                        {/* Courier picker — shown when DepMi Dispatch is selected and quote loads */}
+                        {deliveryMethod === 'DISPATCH' && quoteState === 'loading' && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Fetching live courier rates…</p>
+                        )}
+                        {deliveryMethod === 'DISPATCH' && quoteState === 'error' && (
+                            <p style={{ fontSize: '0.85rem', color: '#f59e0b', marginTop: '4px' }}>{quoteHint ?? 'Could not fetch dispatch rates. Try a different delivery option.'}</p>
+                        )}
+                        {deliveryMethod === 'DISPATCH' && quoteState === 'done' && couriers.length > 0 && (
+                            <div style={{ marginTop: '8px' }}>
+                                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Choose courier
+                                </p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {couriers.map((c) => {
+                                        const selected = selectedCourier?.serviceCode === c.serviceCode;
+                                        return (
+                                            <button
+                                                key={c.serviceCode}
+                                                type="button"
+                                                onClick={() => setSelectedCourier(c)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '12px 14px',
+                                                    borderRadius: '12px',
+                                                    border: selected ? '2px solid var(--primary)' : '1.5px solid var(--card-border)',
+                                                    background: selected ? 'rgba(5,150,105,0.06)' : 'var(--card-bg)',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left',
+                                                    width: '100%',
+                                                    transition: 'border-color 0.15s',
+                                                }}
+                                            >
+                                                {c.courierImage ? (
+                                                    <img src={c.courierImage} alt={c.courierName} style={{ width: 36, height: 36, borderRadius: '8px', objectFit: 'contain', flexShrink: 0, background: '#fff' }} />
+                                                ) : (
+                                                    <div style={{ width: 36, height: 36, borderRadius: '8px', background: 'var(--card-border)', flexShrink: 0 }} />
+                                                )}
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>{c.courierName}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                        {c.eta ?? 'ETA unavailable'}
+                                                        {c.trackingLabel && ` · ${c.trackingLabel} tracking`}
+                                                        {c.isOnDemand && ' · On-demand'}
+                                                    </div>
+                                                </div>
+                                                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: selected ? 'var(--primary)' : 'var(--text-main)', flexShrink: 0 }}>
+                                                    ₦{c.fee.toLocaleString()}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         </>
                     ) : (
                         <div className={styles.pickupNotice}>
@@ -557,57 +634,6 @@ export default function ClientCheckoutForm({
                         <input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }} />
                         Save these delivery details for future orders
                     </label>
-
-                    {/* Courier picker — shown once rates are loaded */}
-                    {quoteState === 'done' && couriers.length > 0 && (
-                        <div style={{ marginTop: '16px' }}>
-                            <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                Choose courier
-                            </p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {couriers.map((c) => {
-                                    const selected = selectedCourier?.serviceCode === c.serviceCode;
-                                    return (
-                                        <button
-                                            key={c.serviceCode}
-                                            type="button"
-                                            onClick={() => setSelectedCourier(c)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '12px',
-                                                padding: '12px 14px',
-                                                borderRadius: '12px',
-                                                border: selected ? '2px solid var(--primary)' : '1.5px solid var(--card-border)',
-                                                background: selected ? 'rgba(5,150,105,0.06)' : 'var(--card-bg)',
-                                                cursor: 'pointer',
-                                                textAlign: 'left',
-                                                width: '100%',
-                                                transition: 'border-color 0.15s',
-                                            }}
-                                        >
-                                            {c.courierImage ? (
-                                                <img src={c.courierImage} alt={c.courierName} style={{ width: 36, height: 36, borderRadius: '8px', objectFit: 'contain', flexShrink: 0, background: '#fff' }} />
-                                            ) : (
-                                                <div style={{ width: 36, height: 36, borderRadius: '8px', background: 'var(--card-border)', flexShrink: 0 }} />
-                                            )}
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>{c.courierName}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                                    {c.eta ?? 'ETA unavailable'}
-                                                    {c.trackingLabel && ` · ${c.trackingLabel} tracking`}
-                                                    {c.isOnDemand && ' · On-demand'}
-                                                </div>
-                                            </div>
-                                            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: selected ? 'var(--primary)' : 'var(--text-main)', flexShrink: 0 }}>
-                                                ₦{c.fee.toLocaleString()}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </section>
             )}
@@ -629,16 +655,22 @@ export default function ClientCheckoutForm({
                                 ({deliveryLabel})
                             </span>
                         )}
-                        {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'loading' && (
+                        {deliveryMethod === 'DISPATCH' && quoteState === 'loading' && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>Fetching live quote…</span>
                         )}
-                        {deliveryMethod === 'DELIVERY' && dispatchEnabled && quoteState === 'error' && (
+                        {deliveryMethod === 'DISPATCH' && quoteState === 'error' && (
                             <span style={{ fontSize: '0.75rem', color: '#f59e0b', marginLeft: '6px' }}>
-                                {quoteHint ?? 'Using estimate'}
+                                {quoteHint ?? 'Quote unavailable'}
                             </span>
                         )}
                     </span>
-                    <span>{isDigital ? 'Free' : deliveryMethod === 'PICKUP' ? 'Free' : `₦${currentDeliveryFee.toLocaleString()}`}</span>
+                    <span>
+                        {isDigital || deliveryMethod === 'PICKUP'
+                            ? 'Free'
+                            : deliveryMethod === 'DISPATCH' && quoteState !== 'done'
+                            ? '—'
+                            : `₦${currentDeliveryFee.toLocaleString()}`}
+                    </span>
                 </div>
                 <div className={styles.summaryRow}><span>Service &amp; escrow fee (5%)</span><span>₦{gatewayFee.toLocaleString()}</span></div>
 
