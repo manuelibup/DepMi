@@ -364,7 +364,7 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         <div className={styles.container}>
             <header className={styles.header}>
                 <BackButton className={styles.backBtn} />
-                <Link href={`/u/${otherUser.username}`} className={styles.headerInfo}>
+                <Link href={`/${otherUser.username}`} className={styles.headerInfo}>
                     {otherUser.avatarUrl ? (
                         <div className={styles.headerAvatar}>
                             <img src={otherUser.avatarUrl} alt={otherUser.displayName} />

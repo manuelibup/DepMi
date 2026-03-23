@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
     const { username } = await params;
@@ -80,7 +80,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         },
     }) as any);
 
-    if (!user) notFound();
+    if (!user) {
+        const store = await prisma.store.findFirst({
+            where: { slug: { equals: username, mode: 'insensitive' } },
+            select: { slug: true },
+        });
+        if (store) redirect(`/store/${store.slug}`);
+        notFound();
+    }
 
     // Check if current user follows this profile
     let isFollowing = false;

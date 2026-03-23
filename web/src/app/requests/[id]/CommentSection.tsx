@@ -57,10 +57,10 @@ export function CommentText({ text }: { text: string }) {
                 </Link>
             );
         } else if (match[7]) {
-            // Plain @username → user profile
+            // Plain @username → unified handle resolver
             const username = match[7].substring(1);
             parts.push(
-                <Link key={match.index} href={`/u/${username}`} className={styles.userMention}>
+                <Link key={match.index} href={`/${username}`} className={styles.userMention}>
                     {match[7]}
                 </Link>
             );
@@ -264,7 +264,7 @@ export default function CommentSection({
                         <div key={c.id} className={styles.commentCard}>
                             <div className={styles.commentHeader}>
                                 {c.author.username ? (
-                                    <Link href={`/u/${c.author.username}`} className={styles.commentAvatar} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <Link href={`/${c.author.username}`} className={styles.commentAvatar} style={{ textDecoration: 'none', color: 'inherit' }}>
                                         {c.author.avatarUrl ? (
                                             <img src={c.author.avatarUrl} alt={c.author.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                         ) : (
@@ -282,7 +282,7 @@ export default function CommentSection({
                                 )}
                                 <div className={styles.commentMeta}>
                                     {c.author.username ? (
-                                        <Link href={`/u/${c.author.username}`} className={styles.commentAuthor} style={{ textDecoration: 'none' }}>{c.author.displayName}</Link>
+                                        <Link href={`/${c.author.username}`} className={styles.commentAuthor} style={{ textDecoration: 'none' }}>{c.author.displayName}</Link>
                                     ) : (
                                         <span className={styles.commentAuthor}>{c.author.displayName}</span>
                                     )}

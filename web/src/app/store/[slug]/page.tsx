@@ -230,7 +230,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
 
                 <p className={styles.handle}>@{store.slug}</p>
 
-                <Link href={`/u/${store.owner.username}`} className={styles.ownerLink}>
+                <Link href={`/${store.owner.username}`} className={styles.ownerLink}>
                     <span>Owned by <strong>{store.owner.displayName || store.owner.username}</strong></span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M7 7h10v10" /></svg>
                 </Link>

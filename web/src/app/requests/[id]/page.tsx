@@ -161,7 +161,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 {/* Demand Overview */}
                 <div className={styles.demandHeader}>
                     <Link
-                        href={demand.user.username ? `/u/${demand.user.username}` : '#'}
+                        href={demand.user.username ? `/${demand.user.username}` : '#'}
                         className={styles.posterInfo}
                         style={{ textDecoration: 'none' }}
                     >

@@ -140,7 +140,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                 {/* ── Header — same layout as ProductCard / PostCard ── */}
                 <div className={styles.header}>
                     <Link
-                        href={data.username ? `/u/${data.username}` : '#'}
+                        href={data.username ? `/${data.username}` : '#'}
                         className={styles.avatarLink}
                         onClick={e => e.stopPropagation()}
                     >
@@ -156,7 +156,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                     <div className={styles.authorMeta}>
                         <div className={styles.authorNameRow}>
                             <Link
-                                href={data.username ? `/u/${data.username}` : '#'}
+                                href={data.username ? `/${data.username}` : '#'}
                                 className={styles.authorName}
                                 onClick={e => e.stopPropagation()}
                             >

@@ -133,7 +133,7 @@ function BidReplyThread({
                             <div className={styles.bidReplyContent}>
                                 <div className={styles.bidReplyMeta}>
                                     {r.author.username ? (
-                                        <Link href={`/u/${r.author.username}`} className={styles.bidReplyAuthor}>{r.author.displayName}</Link>
+                                        <Link href={`/${r.author.username}`} className={styles.bidReplyAuthor}>{r.author.displayName}</Link>
                                     ) : (
                                         <span className={styles.bidReplyAuthor}>{r.author.displayName}</span>
                                     )}
@@ -281,7 +281,7 @@ export default function BidsCommentsTab({
                                                 <strong>{bid.store.name}</strong>
                                             )}
                                             {bid.ownerUsername && (
-                                                <Link href={`/u/${bid.ownerUsername}`} className={styles.bidOwnerHandle}>
+                                                <Link href={`/${bid.ownerUsername}`} className={styles.bidOwnerHandle}>
                                                     @{bid.ownerUsername}
                                                 </Link>
                                             )}

@@ -150,7 +150,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                         {people.map(person => (
                             <Link
                                 key={person.username}
-                                href={`/u/${person.username}`}
+                                href={`/${person.username}`}
                                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--card-bg)', borderBottom: '1px solid var(--card-border)', textDecoration: 'none' }}
                             >
                                 <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--bg-elevated)', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
