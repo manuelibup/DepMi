@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import styles from './ProductCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
 import { useTrackEvent } from '@/hooks/useTrackEvent';
+import { cloudinaryTransform } from '@/lib/cloudinary';
 
 export interface ProductData {
     store: string;
@@ -202,6 +203,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                     <Link
                         href={`/store/${data.storeSlug}`}
                         className={styles.avatarLink}
+                        aria-label={`Visit ${data.store} store`}
                         onClick={e => e.stopPropagation()}
                     >
                         <div className={styles.avatar} style={{ background: data.storeColor }}>
@@ -240,10 +242,13 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                     {data.image ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                            src={data.image}
+                            src={cloudinaryTransform(data.image, 800)}
                             alt={data.title}
                             className={styles.productImage}
-                            loading="lazy"
+                            width={800}
+                            height={800}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            fetchPriority={index === 0 ? 'high' : 'auto'}
                         />
                     ) : (
                         <div className={styles.imagePlaceholder}>

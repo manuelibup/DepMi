@@ -34,6 +34,12 @@
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
+  "browserslist": [
+    "Chrome >= 90",
+    "Firefox >= 88",
+    "Safari >= 14",
+    "Edge >= 90"
+  ],
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",

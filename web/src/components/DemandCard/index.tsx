@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import styles from './DemandCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
 import { useTrackEvent } from '@/hooks/useTrackEvent';
+import { cloudinaryTransform } from '@/lib/cloudinary';
 
 export interface DemandData {
     id?: string;
@@ -147,7 +148,14 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                         <div className={styles.avatar}>
                             {data.avatarUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={data.avatarUrl} alt={data.user} className={styles.avatarImg} />
+                                <img
+                                    src={cloudinaryTransform(data.avatarUrl, 128)}
+                                    alt={data.user}
+                                    className={styles.avatarImg}
+                                    width={36}
+                                    height={36}
+                                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                                />
                             ) : (
                                 <span className={styles.avatarInitial}>{data.initials}</span>
                             )}
@@ -206,7 +214,13 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                                 {data.images.slice(0, 3).map((img, i) => (
                                     <div key={i} className={styles.imageItem}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={img} alt="Request reference" />
+                                        <img
+                                            src={cloudinaryTransform(img, 600)}
+                                            alt="Request reference"
+                                            width={600}
+                                            height={400}
+                                            loading={index === 0 && i === 0 ? 'eager' : 'lazy'}
+                                        />
                                         {i === 2 && data.images!.length > 3 && (
                                             <div className={styles.imageOverlay}>+{data.images!.length - 2}</div>
                                         )}

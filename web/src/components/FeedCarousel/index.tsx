@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './FeedCarousel.module.css';
+import { cloudinaryTransform } from '@/lib/cloudinary';
 
 interface CarouselProduct {
     id: string;
@@ -45,7 +46,7 @@ export default function FeedCarousel() {
                         <div className={styles.imageWrap}>
                             {p.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={p.image} alt={p.title} className={styles.image} loading="lazy" />
+                                <img src={cloudinaryTransform(p.image, 300)} alt={p.title} className={styles.image} width={300} height={300} loading="lazy" />
                             ) : (
                                 <div className={styles.imageFallback} style={{ background: p.storeColor }}>
                                     <span className={styles.fallbackInitial}>{p.storeInitial}</span>

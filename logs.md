@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)](#session-73--mar-23-2026--pagespeed-insights-fixes-performance--accessibility)
+- [Session 72 — Mar 23, 2026 — Unified Handle Routing, Neon Compute Fix & SEO Analysis](#session-72--mar-23-2026--unified-handle-routing-neon-compute-fix--seo-analysis)
 - [Session 71 — Mar 22, 2026 — Multi-Store Profile, FilterBar Scope & Orders Black Screen Fix](#session-71--mar-22-2026--multi-store-profile-filterbar-scope--orders-black-screen-fix)
 - [Session 70 — Mar 22, 2026 — Codebase Audit, Guest Feed, Sidebar Fix & Comment/Mention Fixes](#session-70--mar-22-2026--codebase-audit-guest-feed-sidebar-fix--commentmention-fixes)
 - [Session 69 — Mar 21, 2026 — Analytics Hooks Wired + Checkout Funnel Tracking](#session-69--mar-21-2026--analytics-hooks-wired--checkout-funnel-tracking)
@@ -53,6 +55,88 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Performance — Image optimisation (biggest win: ~2.8 MB savings):**
+- Created `web/src/lib/cloudinary.ts` — `cloudinaryTransform(url, width)` injects `f_auto,q_auto,w_{n}` into Cloudinary upload URLs, enabling auto WebP/AVIF conversion and correct resizing at the CDN level.
+- Wired transform into `ProductCard` (product images → w_800), `DemandCard` (avatars → w_128, grid images → w_600), `FeedCarousel` (thumbnail → w_300).
+
+**Performance — LCP element:**
+- First card at `index === 0` in ProductCard/DemandCard now renders with `fetchPriority="high"` and `loading="eager"` so the browser discovers and fetches the LCP image immediately.
+- All `<img>` elements now have explicit `width`/`height` attrs to eliminate CLS from unsized images.
+
+**Performance — Preconnect hints:**
+- Added `<link rel="preconnect">` for `res.cloudinary.com`, `fonts.googleapis.com`, `fonts.gstatic.com` in root `layout.tsx`.
+
+**Performance — Legacy JS polyfills (saves ~14 KiB):**
+- Added `browserslist` to `package.json` targeting Chrome ≥ 90, Firefox ≥ 88, Safari ≥ 14, Edge ≥ 90 — removes polyfills for `Array.at`, `flat`, `flatMap`, `Object.fromEntries`, `Object.hasOwn`, `trimStart/End` that are natively supported.
+
+**Accessibility:**
+- Removed `maximumScale: 1` from viewport export in `layout.tsx` — users can now pinch-zoom (WCAG 1.4.4).
+- Darkened `--text-muted` in light mode from `#8A8F9C` → `#5E6370` (~6.5:1 contrast ratio on white) — fixes contrast failures across FilterBar tabs, card metadata, action buttons, sort pills.
+- Guest banner text changed from `var(--text-muted)` → `var(--text-secondary)` (~9:1 contrast).
+- DEMAND badge text: `#B8860B` → `#7A5500` (light mode, ~5.2:1) with dark mode override `#F0C060`.
+- Added `aria-label="Visit {store} store"` to ProductCard avatar links (fixes "Identical links" audit).
+
+### Scores (before → expected after)
+- Performance: 96 (LCP 2.8s → targeting sub-2s once images are transformed)
+- Accessibility: 90 → targeting 97+
+- Best Practices / SEO: 100 / 100 (unchanged)
+
+### Validations
+- No schema changes. No prisma db push needed.
+- No build run (style/logic-only changes, deploy via Vercel).
+
+---
+
+## Session 72 — Mar 23, 2026 — Unified Handle Routing, Neon Compute Fix & SEO Analysis
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### What Was Done
+
+**Neon compute usage investigation & fixes:**
+- Diagnosed 84+ CU-hr usage: keepalive cron hitting `www.depmi.com` (301 redirect = failure), dev branch accumulating compute.
+- Deleted Neon `dev` branch → halved potential compute.
+- Confirmed Neon free tier is 100 CU-hrs/month (resets monthly). DB IS auto-suspending correctly.
+- `/api/ping` no longer hits DB with `SELECT 1` — now returns `{ ok: true }` instantly. Saves compute on any future ping calls.
+- Keepalive cron left disabled. At current traffic, natural auto-suspend is the right tradeoff.
+- Expire-orders cron (`/api/cron/expire-orders`) confirmed to need setup via cron-job.org (not Vercel Cron — requires Pro plan).
+
+**Google Search Console analysis:**
+- 7 clicks, 27 impressions, 25.93% CTR, avg position 2 (Mar 16–20).
+- Homepage ranks #1.35 for "depmi" — excellent.
+- 145 pages "Discovered — not indexed" (normal for new site, resolves in 3–4 weeks).
+- 1 page returning 404 in coverage report.
+
+**Unified handle routing (Option A + B):**
+- **Option A:** `/u/[username]/page.tsx` now checks stores as fallback — redirects to `/store/[slug]` if no user found.
+- **Option B:** Created `web/src/app/[handle]/page.tsx` — universal resolver. `depmi.com/[handle]` routes to user profile (`/u/username`) or store (`/store/slug`). Named routes always take priority (Next.js behavior).
+- Reserved username list added to `check-username` API — blocks `admin`, `blog`, `store`, `api`, etc.
+- `check-username` also checks store slugs to prevent conflicts.
+- All `@mention` and profile links updated from `/u/${username}` to `/${username}` across: CommentSection, BidsCommentsTab, DemandCard, ChatClient, requests page, store owner link, search results.
+
+### Files Changed
+- `web/src/app/api/ping/route.ts` — removed DB query
+- `web/src/app/[handle]/page.tsx` — new universal resolver
+- `web/src/app/u/[username]/page.tsx` — store redirect fallback
+- `web/src/app/api/user/check-username/route.ts` — reserved words + store slug check
+- `web/src/app/requests/[id]/CommentSection.tsx` — mention links
+- `web/src/app/requests/[id]/BidsCommentsTab.tsx` — profile links
+- `web/src/app/requests/[id]/page.tsx` — poster link
+- `web/src/app/store/[slug]/page.tsx` — owner link
+- `web/src/app/messages/[id]/ChatClient.tsx` — chat header link
+- `web/src/components/DemandCard/index.tsx` — author links
+- `web/src/app/search/page.tsx` — people results links
 
 ---
 

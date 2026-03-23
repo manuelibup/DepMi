@@ -108,7 +108,7 @@
     align-items: center;
     gap: 4px;
     background: var(--accent-gold-light, rgba(184, 134, 11, 0.12));
-    color: #B8860B;
+    color: #7A5500;
     padding: 4px 9px;
     border-radius: var(--radius-full);
     font-size: 10px;
@@ -116,6 +116,12 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .badge {
+        color: #F0C060;
+    }
 }
 
 /* ── Body ── */
