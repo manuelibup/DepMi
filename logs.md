@@ -1,7 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
-- [Session 76 — Mar 24, 2026 — SEO Deep Fix & Growth Strategy](#session-76--mar-24-2026--seo-deep-fix--growth-strategy)
+- [Session 76 — Mar 24, 2026 — SEO Deep Fix, Demand Slugs & Clean URL Architecture](#session-76--mar-24-2026--seo-deep-fix--demand-slugs--clean-url-architecture)
 - [Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization](#session-75--mar-24-2026--neon-compute-analysis--chat-sse-poll-optimization)
 - [Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching](#session-74--mar-23-2026--store-logo-fix-cloudinary-climit--api-caching)
 - [Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)](#session-73--mar-23-2026--pagespeed-insights-fixes-performance--accessibility)
@@ -61,7 +61,7 @@
 
 ---
 
-## Session 76 — Mar 24, 2026 — SEO Deep Fix & Growth Strategy
+## Session 76 — Mar 24, 2026 — SEO Deep Fix, Demand Slugs & Clean URL Architecture
 
 **Agent:** Claude Sonnet 4.6 (Claude Code)
 **Human:** Manuel
@@ -89,13 +89,25 @@ Strategic discussion on DepMi's positioning ("the map, not the store"), seller p
 - `web/src/components/DemandCardGrid/index.tsx` — Added `<Link href>` on request text (same fix as DemandCard)
 - `web/src/components/ProductCardGrid/index.tsx` — Added `<Link href>` on product title (same fix as ProductCard)
 
+### Part 2 — Clean URL Architecture & Demand Slugs (same session, continued)
+- `web/prisma/schema.prisma` — `Demand.slug String? @unique @index` — set once at creation, never overwritten on edit
+- `web/src/app/api/demands/create/route.ts` — pre-generate UUID, derive slug from demand text; both `id` and `slug` set atomically at creation
+- `web/scripts/backfill-demand-slugs.js` — one-time script; ran against prod, generated slugs for all 20 existing demands
+- `web/src/app/requests/[id]/page.tsx` — resolves by slug OR id (backwards compat); redirects UUID visits to slug URL; canonical uses slug
+- `web/next.config.ts` — permanent 301 redirects: `/store/:slug → /:slug`, `/u/:username → /:username`
+- `web/src/app/[handle]/page.tsx` — renders `StorefrontPage` or `UserProfilePage` directly (no redirect); user wins over store on same slug
+- `web/src/app/store/[slug]/page.tsx` — canonical URL fixed from `/store/${slug}` to `/${slug}`
+- `web/src/app/sitemap.ts` — store URLs updated from `/store/${slug}` to `/${slug}`
+- `web/src/app/api/webhooks/flutterwave/route.ts` — TypeScript fix: `confirmedOrder.buyerId` captured via `const orderForDM` to appease narrowing
+
 ### Validations
-- No schema changes — no db push needed
-- No new env vars needed
-- Build not run — deploy to Vercel to validate
+- `npm run db:push` run with backup — `Demand.slug @unique` constraint applied with `--accept-data-loss` (all existing nulls)
+- Backfill ran: 20 demands updated successfully
+- Pushed to git (commit `e4a7f9e`); Vercel deploy triggered
 
 ### Still Needed
-- Deploy to Vercel then submit sitemap in Google Search Console → Request Indexing on key pages
+- Deploy to Vercel, then submit sitemap in Google Search Console → Request Indexing on key pages
+- Profile CTA improvements (empty profile state: no upload nudge, no request CTA, no share/invite)
 
 ---
 
