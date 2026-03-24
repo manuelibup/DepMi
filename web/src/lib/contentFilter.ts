@@ -9,20 +9,30 @@ const PATTERNS: { regex: RegExp; reason: string }[] = [
     { regex: /\+\d{1,3}[\s\-]?\(?\d{2,4}\)?[\s\-]?\d{3,5}[\s\-]?\d{3,5}/, reason: 'phone number' },
     // Email addresses
     { regex: /\b[a-zA-Z0-9._%+\-]+@(?!depmi\.com)[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b/, reason: 'email address' },
-    // WhatsApp solicitation
-    { regex: /\b(chat|talk|message|reach|contact|hit)\s+(me\s+)?(on|via|through|at)\s+whatsapp\b/i, reason: 'off-platform contact solicitation' },
+    // WhatsApp — full name, short "wa", "wp"
+    { regex: /\b(chat|talk|message|reach|contact|hit|hmu)\s+(me\s+)?(on|via|through|at)\s+(whatsapp|wa|wp)\b/i, reason: 'off-platform contact solicitation' },
     { regex: /\bwa\.me\/\d+\b/i, reason: 'WhatsApp link' },
-    { regex: /\bmy\s+whatsapp\b/i, reason: 'off-platform contact solicitation' },
-    // Telegram
+    { regex: /\bmy\s+(whatsapp|wa|wp)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\b(whatsapp|wa|wp)\s+(num(ber)?|no\.?|#)\b/i, reason: 'off-platform contact solicitation' },
+    // Telegram — full name and "tg"
     { regex: /\bt\.me\/\S+/i, reason: 'Telegram link' },
-    { regex: /\b(chat|talk|message|reach|contact)\s+(me\s+)?(on|via|through|at)\s+telegram\b/i, reason: 'off-platform contact solicitation' },
-    // Snapchat
-    { regex: /\b(my\s+)?snap(chat)?(\s+is|\s*:|\s+id)?\s*[@:]?\s*\S+/i, reason: 'Snapchat handle' },
-    { regex: /\badd\s+me\s+on\s+snap(chat)?\b/i, reason: 'off-platform contact solicitation' },
-    // TikTok
-    { regex: /\b(dm|follow|find|add)\s+(me\s+)?on\s+tiktok\b/i, reason: 'off-platform contact solicitation' },
-    // Instagram off-platform redirect
-    { regex: /\b(dm|message|follow|find|contact)\s+(me\s+)?on\s+(ig|insta(gram)?)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\b(chat|talk|message|reach|contact|hmu)\s+(me\s+)?(on|via|through|at)\s+(telegram|tg)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\bmy\s+(telegram|tg)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\b(telegram|tg)\s+(user(name)?|id|handle|@)\b/i, reason: 'off-platform contact solicitation' },
+    // Snapchat — full name and "sc"
+    { regex: /\b(my\s+)?(snap(chat)?|sc)(\s+is|\s*:|\s+id)?\s*[@:]?\s*\S+/i, reason: 'Snapchat handle' },
+    { regex: /\badd\s+me\s+on\s+(snap(chat)?|sc)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\b(snap(chat)?|sc)\s+(user(name)?|id|handle)\b/i, reason: 'off-platform contact solicitation' },
+    // TikTok — full name and "tt"
+    { regex: /\b(dm|follow|find|add|hmu)\s+(me\s+)?on\s+(tiktok|tt)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\bmy\s+(tiktok|tt)\b/i, reason: 'off-platform contact solicitation' },
+    // Instagram — full name, "ig", "insta"
+    { regex: /\b(dm|message|follow|find|contact|hmu)\s+(me\s+)?on\s+(ig|insta(gram)?)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\bmy\s+(ig|insta(gram)?)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\b(ig|insta(gram)?)\s+(user(name)?|id|handle|@)\b/i, reason: 'off-platform contact solicitation' },
+    // Twitter/X
+    { regex: /\b(dm|message|follow|find|contact|hmu)\s+(me\s+)?on\s+(twitter|x\.com)\b/i, reason: 'off-platform contact solicitation' },
+    { regex: /\bmy\s+(twitter|x)\s+(handle|@|dm)\b/i, reason: 'off-platform contact solicitation' },
 ];
 
 export function detectViolation(text: string): { blocked: true; reason: string; match: string } | { blocked: false } {
