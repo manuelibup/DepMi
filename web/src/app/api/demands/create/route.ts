@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
 import { notifyStoreOwnersOfDemand } from '@/lib/notifyWatchers';
+
+function generateDemandSlug(text: string, id: string): string {
+    const base = text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50)
+        .replace(/-$/, '');
+    return `${base}-${id.slice(0, 8)}`;
+}
 
 const demandSchema = z.object({
     text: z.string().min(10, "Request must be at least 10 characters").max(500, "Request is too long"),
@@ -43,8 +56,13 @@ export async function POST(req: Request) {
         // NOTE: We do not limit buyers from creating demands based on KYC alone,
         // UNVERIFIED users can browse and create demands (from agent.md).
 
+        const id = randomUUID();
+        const slug = generateDemandSlug(text, id);
+
         const demand = await prisma.demand.create({
             data: {
+                id,
+                slug,
                 userId: session.user.id,
                 text,
                 category,

@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         select: { slug: true, updatedAt: true },
     });
     const storeRoutes: MetadataRoute.Sitemap = stores.map((store) => ({
-        url: `${BASE_URL}/store/${store.slug}`,
+        url: `${BASE_URL}/${store.slug}`,
         lastModified: store.updatedAt,
         changeFrequency: 'weekly',
         priority: 0.7,
@@ -41,10 +41,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Dynamic: demand/request pages
     const demands = await prisma.demand.findMany({
-        select: { id: true, updatedAt: true },
+        select: { id: true, slug: true, updatedAt: true },
     });
     const demandRoutes: MetadataRoute.Sitemap = demands.map((demand) => ({
-        url: `${BASE_URL}/requests/${demand.id}`,
+        url: `${BASE_URL}/requests/${demand.slug ?? demand.id}`,
         lastModified: demand.updatedAt,
         changeFrequency: 'weekly',
         priority: 0.7,

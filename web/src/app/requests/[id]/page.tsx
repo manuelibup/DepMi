@@ -2,14 +2,15 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const demand = await (prisma.demand as any).findUnique({
-        where: { id },
+    const demand = await (prisma.demand as any).findFirst({
+        where: { OR: [{ slug: id }, { id }] },
         select: {
+            slug: true,
             text: true,
             budget: true,
             budgetMin: true,
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!demand) return {};
     const image = demand.images?.[0]?.url;
     const title = demand.text.length > 60 ? demand.text.slice(0, 57) + '…' : demand.text;
+    const canonicalId = demand.slug ?? id;
 
     // Build a keyword-rich description so Google indexes location + budget terms
     const descParts: string[] = [
@@ -38,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return {
         title: `${title} · DepMi`,
         description: desc,
-        alternates: { canonical: `https://depmi.com/requests/${id}` },
+        alternates: { canonical: `https://depmi.com/requests/${canonicalId}` },
         openGraph: {
             title,
             description: desc,
@@ -74,8 +76,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         userKycTier = u?.kycTier ?? 'UNVERIFIED';
     }
 
-    const demand = (await (prisma.demand as any).findUnique({
-        where: { id },
+    const demand = (await (prisma.demand as any).findFirst({
+        where: { OR: [{ slug: id }, { id }] },
         include: {
             user: { select: { displayName: true, username: true, avatarUrl: true } },
             images: { orderBy: { order: 'asc' }, select: { url: true } },
@@ -105,6 +107,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     }) as any);
 
     if (!demand) notFound();
+
+    // If accessed by UUID and a slug exists, 301 redirect to the clean slug URL
+    if (demand.slug && id !== demand.slug) {
+        redirect(`/requests/${demand.slug}`);
+    }
 
     // Fire-and-forget view count increment (same pattern as product detail)
     // (prisma.demand as any).update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => { });

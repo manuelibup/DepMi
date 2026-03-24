@@ -245,6 +245,7 @@ model Demand {
   id         String        @id @default(uuid())
   userId     String
   text       String
+  slug       String?       @unique
   budget     Decimal       @db.Decimal(10, 2)
   budgetMin  Decimal?      @db.Decimal(10, 2)
   category      Category      @default(OTHER)
@@ -268,6 +269,7 @@ model Demand {
 
   @@index([isActive, category])
   @@index([userId])
+  @@index([slug])
 }
 
 model DemandLike {

@@ -163,8 +163,10 @@ export async function POST(req: NextRequest) {
             }
         })
         // Auto-DM the seller with the order card (fire-and-forget, non-blocking)
-        if (confirmedOrder) {
-            void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
+        // Capture in const so TypeScript can narrow the type after the async transaction
+        const orderForDM = confirmedOrder;
+        if (orderForDM !== null) {
+            void sendOrderAutoDM(orderForDM.buyerId, orderForDM.sellerOwnerId, orderId)
         }
     } catch (err) {
         console.error('[flutterwave-webhook] DB error:', err)
