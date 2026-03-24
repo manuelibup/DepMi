@@ -71,11 +71,17 @@ Diagnosed Neon DB compute spike (92.9/100 CU-hrs). Analyzed Neon Operations log 
 ### Changes
 - `web/src/app/api/messages/stream/route.ts` — SSE poll interval: 3000ms → 8000ms
 
-### Identified Gaps (not yet built)
-- Post-payment success page showing order ID + "Message Seller" button
-- Auto-DM to seller on confirmed order
-- Tracking number visible in order detail UI
-- Seller email notification on new order
+### Also built this session
+- `sendOrderAutoDM()` in `notifyWatchers.ts` — finds/creates buyer↔seller conversation and inserts `[order:id]` card on payment confirmation
+- Callback + webhook both call `sendOrderAutoDM` (webhook is fallback if callback is missed)
+- Callback now redirects to `/orders?success=true&orderId=[id]`
+- `OrdersDashboard` reads `orderId` param, auto-selects that order, opens mobile detail panel automatically
+- Celebration banner shows order short ID + chat hint
+- Tracking number UI and seller email were already built (confirmed existing) ✅
+
+### WhatsApp — plan (not yet built)
+- Already have Termii for SMS. WhatsApp = same API, `channel: 'whatsapp'`, different sender number
+- Steps: enable WhatsApp on Termii dashboard → register message templates → add `TERMII_WHATSAPP_SENDER` env var → add `sendWhatsApp()` alongside `sendSms()`
 
 ### Compute status
 - Neon free tier: 92.9/100 CU-hrs used as of Mar 24. Resets Apr 1. Should last with ~1.5 CU-hrs to spare.
