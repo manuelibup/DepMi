@@ -124,6 +124,46 @@ export async function notifySearchWatchers({
 }
 
 /**
+ * Creates or finds a DM conversation between buyer and seller owner,
+ * then inserts an [order:id] card message so the seller sees the order in chat.
+ */
+export async function sendOrderAutoDM(buyerId: string, sellerOwnerId: string, orderId: string) {
+    if (buyerId === sellerOwnerId) return; // seller bought their own product
+    try {
+        const existing = await prisma.conversation.findFirst({
+            where: {
+                AND: [
+                    { participants: { some: { id: buyerId } } },
+                    { participants: { some: { id: sellerOwnerId } } },
+                ],
+            },
+            select: { id: true, participants: { select: { id: true } } },
+        });
+
+        let conversationId: string;
+        if (existing && existing.participants.length === 2) {
+            conversationId = existing.id;
+        } else {
+            const conv = await prisma.conversation.create({
+                data: { participants: { connect: [{ id: buyerId }, { id: sellerOwnerId }] } },
+            });
+            conversationId = conv.id;
+        }
+
+        const shortId = orderId.slice(-6).toUpperCase();
+        await prisma.message.create({
+            data: { conversationId, senderId: buyerId, text: `[order:${orderId}]`, type: 'TEXT' },
+        });
+        await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { lastMessageAt: new Date(), lastMessagePreview: `New order #${shortId}` },
+        });
+    } catch (err) {
+        console.error('[sendOrderAutoDM] Error:', err);
+    }
+}
+
+/**
  * Called when a product is restocked (inStock: false → true). Finds all
  * ProductWatch records for that specific product and notifies each watcher.
  */

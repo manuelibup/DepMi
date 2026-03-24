@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyTransaction } from '@/lib/flutterwave'
-import { notifyOrderUpdate } from '@/lib/notifyWatchers'
+import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
 
 /**
  * GET /api/checkout/callback
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
         // Idempotency check
         if (order.status === 'CONFIRMED') {
-            return NextResponse.redirect(`${baseUrl}/orders?success=true`)
+            return NextResponse.redirect(`${baseUrl}/orders?success=true&orderId=${orderId}`)
         }
 
         const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.05 * 100) / 100
@@ -114,7 +114,10 @@ export async function GET(req: NextRequest) {
             })
         }
 
-        return NextResponse.redirect(`${baseUrl}/orders?success=true`)
+        // Auto-DM: sends [order:id] card into buyer↔seller conversation
+        void sendOrderAutoDM(order.buyer.id, order.seller.ownerId, orderId)
+
+        return NextResponse.redirect(`${baseUrl}/orders?success=true&orderId=${orderId}`)
     } catch (err) {
         console.error('[checkout/callback] Error:', err)
         return NextResponse.redirect(`${baseUrl}/orders?payment=failed`)

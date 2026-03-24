@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
-import { notifyOrderUpdate } from '@/lib/notifyWatchers'
+import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
 import { bookShipment } from '@/lib/shipbubble'
 
 /**
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
     }
 
-    let confirmedOrder: { storeId: string; storeName: string; productTitle: string; storeSlug: string } | null = null
+    let confirmedOrder: { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string } | null = null
 
     try {
         await prisma.$transaction(async (tx) => {
@@ -124,12 +124,14 @@ export async function POST(req: NextRequest) {
                 })
             }
 
-            // Capture for post-transaction social notifications
+            // Capture for post-transaction notifications
             confirmedOrder = {
                 storeId: order.seller.id,
                 storeName: order.seller.name,
                 productTitle: order.items[0]?.product?.title ?? 'a product',
                 storeSlug: order.seller.slug,
+                buyerId: order.buyer.id,
+                sellerOwnerId: order.seller.ownerId,
             }
 
             // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved
@@ -160,6 +162,10 @@ export async function POST(req: NextRequest) {
                 }
             }
         })
+        // Auto-DM the seller with the order card (fire-and-forget, non-blocking)
+        if (confirmedOrder) {
+            void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
+        }
     } catch (err) {
         console.error('[flutterwave-webhook] DB error:', err)
     }

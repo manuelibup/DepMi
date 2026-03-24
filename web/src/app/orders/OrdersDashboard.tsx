@@ -535,8 +535,9 @@ export default function OrdersDashboard({ hasStore, storeName, storeSlug, purcha
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'purchases' | 'sales'>('purchases');
     const [activeFilter, setActiveFilter] = useState(0);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [showMobileDetail, setShowMobileDetail] = useState(false);
+    const newOrderId = searchParams?.get('orderId') ?? null;
+    const [selectedId, setSelectedId] = useState<string | null>(newOrderId);
+    const [showMobileDetail, setShowMobileDetail] = useState(!!newOrderId);
     const [localPurchases, setLocalPurchases] = useState(purchases);
     const [localSales, setLocalSales] = useState(sales);
     const [earnings, setEarnings] = useState<{ totalEarned: number; pendingEscrow: number; orderCount: number; pendingCount: number } | null>(null);
@@ -628,6 +629,14 @@ export default function OrdersDashboard({ hasStore, storeName, storeSlug, purcha
                                 <div>
                                     <h3>Order Placed!</h3>
                                     <p>Funds locked in DepMi Escrow. Seller has been notified.</p>
+                                    {newOrderId && (
+                                        <p style={{ fontFamily: 'monospace', fontWeight: 700, marginTop: 4, fontSize: '0.85rem' }}>
+                                            Order #{newOrderId.slice(-6).toUpperCase()}
+                                        </p>
+                                    )}
+                                    <p style={{ fontSize: '0.8rem', marginTop: 4, opacity: 0.8 }}>
+                                        A chat with the seller has been started — tap the order below to message them.
+                                    </p>
                                 </div>
                             </div>
                         )}
