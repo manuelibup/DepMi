@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization](#session-75--mar-24-2026--neon-compute-analysis--chat-sse-poll-optimization)
 - [Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching](#session-74--mar-23-2026--store-logo-fix-cloudinary-climit--api-caching)
 - [Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)](#session-73--mar-23-2026--pagespeed-insights-fixes-performance--accessibility)
 - [Session 72 — Mar 23, 2026 — Unified Handle Routing, Neon Compute Fix & SEO Analysis](#session-72--mar-23-2026--unified-handle-routing-neon-compute-fix--seo-analysis)
@@ -56,6 +57,29 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Summary
+Diagnosed Neon DB compute spike (92.9/100 CU-hrs). Analyzed Neon Operations log and Query Performance data to identify top DB consumers. Chat SSE stream was polling every 3s generating 2,660+ message queries. Reduced poll interval to 8s (~60% reduction). Reviewed full post-order UX flow and DepMi Dispatch chain — identified gaps (no post-payment success screen, seller only notified via in-app bell, no buyer order ID shown, tracking number stored but not displayed).
+
+### Changes
+- `web/src/app/api/messages/stream/route.ts` — SSE poll interval: 3000ms → 8000ms
+
+### Identified Gaps (not yet built)
+- Post-payment success page showing order ID + "Message Seller" button
+- Auto-DM to seller on confirmed order
+- Tracking number visible in order detail UI
+- Seller email notification on new order
+
+### Compute status
+- Neon free tier: 92.9/100 CU-hrs used as of Mar 24. Resets Apr 1. Should last with ~1.5 CU-hrs to spare.
+- Top DB consumers: User email lookup (auth, 3,391 calls), message polling (2,660), feed queries (~2,600 each). Notification/message badge counts are one-shot on mount — not polling.
 
 ---
 

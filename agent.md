@@ -1,5 +1,9 @@
 # DepMi (Buy Here) - Project Blueprint
 
+> **Growth playbook → [`growth.md`](./growth.md)**
+> Contains: Manuel's engineering skill ladder, DepMi business milestones & likelihood chart, hiring strategy.
+> Update live stats section every session. Re-read at the start of every month.
+
 ## Table of Contents
 - [1. Core Vision](#1-core-vision)
 - [2. Foundational Features](#2-foundational-features) *(A–H)*
@@ -267,10 +271,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Message** — `{ id, conversationId, senderId, text?, type, mediaUrl?, read, createdAt }`. Supports multi-media: TEXT, IMAGE, AUDIO, STICKER.
 - **Event** — Behavioral analytics. `{ id, type (EventType enum), userId?, sessionId, targetId?, targetType?, metadata (Json?), createdAt }`. Fire-and-forget via `POST /api/track`. Rate-limited (60 events/session/min). `User.analyticsOptOut Boolean @default(false)` for GDPR-style opt-out.
 - **DailyEventSummary** — Aggregated daily counts per event type + target. Used by seller analytics dashboard.
-- **EventType** enum: `FEED_IMPRESSION | PRODUCT_VIEW | DEMAND_VIEW | STORE_VIEW | SEARCH | LIKE | SAVE | BID | ORDER | SHARE`.# DepMi (Buy Here) - Project Blueprint
-
-## Table of Contents
-- [1. Core Vision](#1-core-vision)
+- **EventType** enum: `FEED_IMPRESSION | PRODUCT_VIEW | DEMAND_VIEW | STORE_VIEW | SEARCH | LIKE | SAVE | BID | ORDER | SHARE`.
 - [2. Foundational Features](#2-foundational-features) *(A–H)*
 - [3. Brand Identity (Tech + Culture)](#3-brand-identity-tech--culture)
 - [4. Financial & Regulatory Model (Phase 1)](#4-financial--regulatory-model-phase-1)

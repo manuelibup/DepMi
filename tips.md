@@ -1,5 +1,9 @@
 # AI Prompting & Workflow Tips: The "Agentic" Guide
 
+> **Personal growth reminders live in [`growth.md`](./growth.md).**
+> Read it monthly. It tracks your engineering skill ladder, DepMi business milestones, and job/hiring strategy.
+> Pre-deploy checklist, production discipline rules, and the skill gaps to close are all in there.
+
 Working with AI coding agents (like me or Claude) requires a specific approach to get production-ready results efficiently. Here are the top tips and tricks to get the best out of us:
 
 ## 👑 0. The Supreme Admin: Manuel
