@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${BASE_URL}/requests/${demand.id}`,
         lastModified: demand.updatedAt,
         changeFrequency: 'weekly',
-        priority: 0.5,
+        priority: 0.7,
     }));
 
     return [...staticRoutes, ...storeRoutes, ...productRoutes, ...demandRoutes];

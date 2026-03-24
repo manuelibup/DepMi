@@ -11,6 +11,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         where: { id },
         select: {
             text: true,
+            budget: true,
+            budgetMin: true,
+            location: true,
             images: { take: 1, orderBy: { order: 'asc' }, select: { url: true } },
             user: { select: { displayName: true } },
         },
@@ -18,10 +21,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!demand) return {};
     const image = demand.images?.[0]?.url;
     const title = demand.text.length > 60 ? demand.text.slice(0, 57) + '…' : demand.text;
-    const desc = `${demand.user.displayName} is looking for this on DepMi`;
+
+    // Build a keyword-rich description so Google indexes location + budget terms
+    const descParts: string[] = [
+        `${demand.user.displayName} is looking for: ${demand.text.slice(0, 100)}`,
+    ];
+    if (demand.location) descParts.push(`in ${demand.location}`);
+    if (demand.budgetMin && demand.budget) {
+        descParts.push(`Budget ₦${Number(demand.budgetMin).toLocaleString()}–₦${Number(demand.budget).toLocaleString()}`);
+    } else if (demand.budget) {
+        descParts.push(`Budget up to ₦${Number(demand.budget).toLocaleString()}`);
+    }
+    descParts.push('Sellers can bid on DepMi.');
+    const desc = descParts.join('. ');
+
     return {
         title: `${title} · DepMi`,
         description: desc,
+        alternates: { canonical: `https://depmi.com/requests/${id}` },
         openGraph: {
             title,
             description: desc,
@@ -147,8 +164,29 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
     const timeAgo = new Date(demand.createdAt).toLocaleDateString();
 
+    const demandJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WantedAd',
+        name: demand.text.length > 80 ? demand.text.slice(0, 77) + '…' : demand.text,
+        description: demand.text,
+        url: `https://depmi.com/requests/${demand.id}`,
+        datePosted: demand.createdAt.toISOString(),
+        ...(demand.location && { areaServed: demand.location }),
+        offers: {
+            '@type': 'Offer',
+            priceCurrency: 'NGN',
+            priceSpecification: {
+                '@type': 'PriceSpecification',
+                priceCurrency: 'NGN',
+                maxPrice: Number(demand.budget),
+                ...(demand.budgetMin && { minPrice: Number(demand.budgetMin) }),
+            },
+        },
+    };
+
     return (
         <main className={styles.container}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(demandJsonLd) }} />
             <ViewTracker demandId={demand.id} />
             {/* Minimal back-button header — no global nav so bid/comment buttons aren't obscured */}
             <div className={styles.backHeader}>

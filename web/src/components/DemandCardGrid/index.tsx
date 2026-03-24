@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './DemandCardGrid.module.css';
 import type { DemandData } from '@/components/DemandCard';
@@ -40,8 +41,15 @@ export default function DemandCardGrid({ data, index = 0 }: Props) {
                 </span>
             </div>
 
-            {/* Request text */}
-            <p className={styles.text}>{data.text}</p>
+            {/* Request text — Link gives Google a real anchor to follow */}
+            <Link
+                href={`/requests/${data.id}`}
+                className={styles.text}
+                style={{ display: 'block', textDecoration: 'none' }}
+                onClick={e => e.stopPropagation()}
+            >
+                {data.text}
+            </Link>
 
             {/* Reference image if available */}
             {data.images && data.images.length > 0 && (

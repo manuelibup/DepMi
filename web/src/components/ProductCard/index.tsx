@@ -369,7 +369,15 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                 {/* ── Product info ── */}
                 <div className={styles.body}>
                     <div className={styles.titleRow}>
-                        <h3 className={styles.title}>{data.title}</h3>
+                        {/* Link gives Google a real anchor to follow from the feed */}
+                        <Link
+                            href={`/p/${data.id}`}
+                            className={styles.title}
+                            style={{ textDecoration: 'none' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {data.title}
+                        </Link>
                         <span className={styles.price}>{data.price}</span>
                     </div>
                     <p className={styles.location}>

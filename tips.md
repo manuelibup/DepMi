@@ -587,3 +587,26 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   @media (min-width: 900px) { .mobileOverlayWrap { display: none; } }
   ```
 - **Rule**: Any mobile-only element rendered inside a desktop flex row must be hidden at the desktop breakpoint on its **outermost wrapper** — hiding only inner content is not sufficient.
+
+---
+
+## 🔍 47. SEO: `router.push()` onClick cards are invisible to Google
+
+*Discovered during the Session 76 SEO audit.*
+
+- **The Pattern**: Clickable feed cards built as `<article onClick={() => router.push('/p/123')}>` navigate correctly for users but are completely invisible to Google's crawler. Googlebot does not execute `onClick` JavaScript — it only follows real `<a href>` elements.
+- **The Fix**: Make the card's primary text (title or body) a `<Link href="...">` with `onClick={e => e.stopPropagation()}` to prevent the article-level click from double-firing. The full-card click still works for users; the `<a>` gives Googlebot a real link to follow and index.
+  ```tsx
+  // ❌ Invisible to Google
+  <article onClick={() => router.push(`/p/${data.id}`)}>
+    <h3>{data.title}</h3>
+  </article>
+
+  // ✅ Google can crawl this
+  <article onClick={() => router.push(`/p/${data.id}`)}>
+    <Link href={`/p/${data.id}`} style={{ textDecoration: 'none' }} onClick={e => e.stopPropagation()}>
+      <h3>{data.title}</h3>
+    </Link>
+  </article>
+  ```
+- **Rule**: Every clickable card that navigates to a detail page must have at least one real `<a href>` anchor (via Next.js `<Link>`) pointing to that page. The home feed is the entry point for Googlebot — if links don't exist in the HTML, the entire content graph is invisible to search engines.

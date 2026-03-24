@@ -198,8 +198,15 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                     </span>
                 </div>
 
-                {/* ── Body — request text ── */}
-                <p className={styles.body}>{data.text}</p>
+                {/* ── Body — request text (Link gives Google a real anchor to follow) ── */}
+                <Link
+                    href={`/requests/${data.id}`}
+                    className={styles.body}
+                    style={{ display: 'block', textDecoration: 'none' }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {data.text}
+                </Link>
 
                 {/* ── Media — bleed to edges ── */}
                 {((data.images && data.images.length > 0) || data.videoUrl) && (

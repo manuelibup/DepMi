@@ -12,21 +12,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params;
     const store = await prisma.store.findUnique({
         where: { slug },
-        select: { name: true, description: true, logoUrl: true },
+        select: { name: true, description: true, logoUrl: true, location: true, depCount: true, rating: true, reviewCount: true },
     });
     if (!store) return {};
-    const desc = store.description || `Shop ${store.name} on DepMi`;
+
+    const locationSuffix = store.location ? ` — ${store.location}` : '';
+    const title = `${store.name}${locationSuffix} · DepMi`;
+    const descParts: string[] = [store.description || `Shop ${store.name} on DepMi`];
+    if (store.location) descParts.push(`Based in ${store.location}.`);
+    if (store.depCount > 0) descParts.push(`${store.depCount} deps earned.`);
+    const desc = descParts.join(' ');
+
     return {
-        title: `${store.name} · DepMi`,
+        title,
         description: desc,
+        alternates: { canonical: `https://depmi.com/store/${slug}` },
         openGraph: {
-            title: `${store.name} · DepMi`,
+            title,
             description: desc,
             images: store.logoUrl ? [{ url: store.logoUrl, alt: store.name }] : undefined,
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${store.name} · DepMi`,
+            title,
             description: desc,
             images: store.logoUrl ? [store.logoUrl] : undefined,
         },
@@ -34,6 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 import FollowButton from '@/components/FollowButton';
 import StoreTabBar from './StoreTabBar';
+import StoreShareButton from './StoreShareButton';
 import ViewTracker from '@/components/ViewTracker';
 
 interface StorePageProps {
@@ -153,8 +162,32 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     const isPremium = store.owner.kycTier === 'TIER_3' || store.owner.kycTier === 'BUSINESS';
     const isVerified = isBvnVerified(store.owner.kycTier);
 
+    const storeJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Store',
+        name: store.name,
+        ...(store.description && { description: store.description }),
+        url: `https://depmi.com/store/${store.slug}`,
+        ...(store.logoUrl && { logo: store.logoUrl, image: store.logoUrl }),
+        ...(store.location && {
+            address: {
+                '@type': 'PostalAddress',
+                addressLocality: store.location,
+                addressCountry: 'NG',
+            },
+        }),
+        ...(store.reviewCount > 0 && {
+            aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: Number(store.rating).toFixed(1),
+                reviewCount: store.reviewCount,
+            },
+        }),
+    };
+
     return (
         <main className={styles.container}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(storeJsonLd) }} />
             <ViewTracker storeId={store.id} />
 
             {/* ── Cover ─────────────────────────────────── */}
@@ -168,6 +201,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 <div className={styles.topActions}>
                     <StoreBackButton />
                     <div className={styles.rightActions}>
+                        <StoreShareButton storeName={store.name} storeSlug={store.slug} location={store.location} />
                         <Link href={`/search?store=${store.slug}`} className={styles.iconBtn} aria-label="Search">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                         </Link>

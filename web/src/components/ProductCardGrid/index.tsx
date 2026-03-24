@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './ProductCardGrid.module.css';
 import type { ProductData } from '@/components/ProductCard';
@@ -37,7 +38,15 @@ export default function ProductCardGrid({ data, index = 0 }: Props) {
             </div>
             <div className={styles.body}>
                 <p className={styles.store}>{data.store}</p>
-                <p className={styles.title}>{data.title}</p>
+                {/* Link gives Google a real anchor to follow */}
+                <Link
+                    href={`/p/${data.id}`}
+                    className={styles.title}
+                    style={{ textDecoration: 'none' }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {data.title}
+                </Link>
                 <p className={styles.price}>{data.price}</p>
             </div>
         </article>

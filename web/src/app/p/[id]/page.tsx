@@ -22,9 +22,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const rawImage = product.images[0]?.url;
     const ogImage = withWatermark(rawImage);
     const desc = product.description || `Buy ${product.title} from ${product.store.name} on DepMi`;
+    const canonicalId = product.slug ?? product.id;
     return {
         title: `${product.title} — ${price} · DepMi`,
         description: desc,
+        alternates: { canonical: `https://depmi.com/p/${canonicalId}` },
         openGraph: {
             title: `${product.title} — ${price}`,
             description: desc,

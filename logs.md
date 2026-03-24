@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 76 — Mar 24, 2026 — SEO Deep Fix & Growth Strategy](#session-76--mar-24-2026--seo-deep-fix--growth-strategy)
 - [Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization](#session-75--mar-24-2026--neon-compute-analysis--chat-sse-poll-optimization)
 - [Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching](#session-74--mar-23-2026--store-logo-fix-cloudinary-climit--api-caching)
 - [Session 73 — Mar 23, 2026 — PageSpeed Insights Fixes (Performance + Accessibility)](#session-73--mar-23-2026--pagespeed-insights-fixes-performance--accessibility)
@@ -57,6 +58,44 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 76 — Mar 24, 2026 — SEO Deep Fix & Growth Strategy
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Summary
+Strategic discussion on DepMi's positioning ("the map, not the store"), seller pitch, and distribution. Followed by a full SEO audit and implementation sprint to make DepMi's content discoverable by Google.
+
+### SEO Audit Findings
+- All key pages already public + had `generateMetadata` ✅
+- Sitemap + robots.txt already existed ✅
+- Critical gap: feed cards used `router.push()` only — no `<a href>` anchors, so Google couldn't follow links from the home feed into individual posts ❌ (fixed)
+- Demand metadata description was generic ("X is looking for this") with no keywords ❌ (fixed)
+- Store metadata didn't include location in title/description ❌ (fixed)
+- No JSON-LD on store or demand pages ❌ (fixed)
+- No share button on store pages ❌ (fixed)
+
+### Changes
+- `web/src/app/requests/[id]/page.tsx` — `generateMetadata` now fetches `location`, `budgetMin`, `budget`; description includes actual text + city + budget range. Added canonical. Added `WantedAd` JSON-LD (text, datePosted, areaServed, priceSpecification min/max NGN)
+- `web/src/app/store/[slug]/page.tsx` — `generateMetadata` now includes location in title ("StoreName — Lagos · DepMi"), description includes city + deps count. Added canonical. Added `Store` JSON-LD (name, URL, logo, address, aggregateRating). Added `StoreShareButton` to top-right actions
+- `web/src/app/p/[id]/page.tsx` — Added canonical pointing to slug-based URL (prevents duplicate indexing ID vs slug)
+- `web/src/components/DemandCard/index.tsx` — Demand body text `<p>` → `<Link href="/requests/[id]">` — real anchor for Google to follow from feed
+- `web/src/components/ProductCard/index.tsx` — Product title `<h3>` → `<Link href="/p/[id]">` — real anchor for Google to follow from feed
+- `web/src/app/store/[slug]/StoreShareButton.tsx` — New client component. `navigator.share()` on mobile, clipboard copy with green flash on desktop
+- `web/src/app/sitemap.ts` — Demand post priority: 0.5 → 0.7
+- `web/src/components/DemandCardGrid/index.tsx` — Added `<Link href>` on request text (same fix as DemandCard)
+- `web/src/components/ProductCardGrid/index.tsx` — Added `<Link href>` on product title (same fix as ProductCard)
+
+### Validations
+- No schema changes — no db push needed
+- No new env vars needed
+- Build not run — deploy to Vercel to validate
+
+### Still Needed
+- Deploy to Vercel then submit sitemap in Google Search Console → Request Indexing on key pages
 
 ---
 
