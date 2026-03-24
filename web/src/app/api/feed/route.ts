@@ -80,6 +80,7 @@ export async function GET(req: Request) {
             price: `₦${Number(p.price).toLocaleString()}`,
             location: 'Nationwide',
             image: p.images?.[0]?.url ?? '',
+            images: (p.images ?? []).map((img: { url: string }) => img.url),
             viewers: p.viewCount,
             ownerId: p.store.ownerId,
             ownerUsername: p.store.owner.username,

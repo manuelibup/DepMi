@@ -34,7 +34,7 @@ export default function FeedCarousel() {
         <div className={styles.section}>
             <div className={styles.heading}>
                 <span className={styles.label}>Trending Now</span>
-                <Link href="/explore" className={styles.seeAll}>See all →</Link>
+                <Link href="/search" className={styles.seeAll}>See all →</Link>
             </div>
             <div className={styles.track}>
                 {products.map(p => (

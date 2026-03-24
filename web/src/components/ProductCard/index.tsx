@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthGate } from '@/context/AuthGate';
@@ -22,6 +22,7 @@ export interface ProductData {
     price: string;
     location: string;
     image: string;
+    images?: string[];
     viewers?: number;
     id?: string;
     ownerId?: string;
@@ -90,6 +91,118 @@ function getDepLabel(tier: string): string {
     }
 }
 
+function haptic(ms = 8) {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+}
+
+function ImageCarousel({ images, title, inStock, stock }: {
+    images: string[];
+    title: string;
+    inStock?: boolean;
+    stock?: number;
+}) {
+    const [idx, setIdx] = useState(0);
+    const touchStartX = useRef<number | null>(null);
+    const touchStartY = useRef<number | null>(null);
+
+    const goTo = useCallback((next: number, e?: React.MouseEvent) => {
+        e?.preventDefault(); e?.stopPropagation();
+        setIdx(Math.max(0, Math.min(next, images.length - 1)));
+    }, [images.length]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null || touchStartY.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+        // Only trigger on horizontal swipes, ignore vertical scrolls
+        if (Math.abs(dx) > 40 && Math.abs(dx) > dy) {
+            dx < 0 ? goTo(idx + 1) : goTo(idx - 1);
+        }
+        touchStartX.current = null;
+        touchStartY.current = null;
+    };
+
+    if (!images.length) {
+        return (
+            <div className={styles.imagePlaceholder}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className={styles.carousel}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onClick={e => e.stopPropagation()}
+        >
+            {/* Sliding track — all images rendered so browser preloads them */}
+            <div
+                className={styles.carouselTrack}
+                style={{ transform: `translateX(-${idx * 100}%)` }}
+            >
+                {images.map((src, i) => (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                        key={src}
+                        src={cloudinaryTransform(src, 800)}
+                        alt={i === 0 ? title : ''}
+                        className={styles.carouselImg}
+                        width={800}
+                        height={800}
+                        loading={i === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={i === 0 ? 'high' : 'auto'}
+                        draggable={false}
+                    />
+                ))}
+            </div>
+
+            {/* Prev / Next arrows — only show when multiple images */}
+            {images.length > 1 && idx > 0 && (
+                <button className={`${styles.carouselArrow} ${styles.carouselArrowPrev}`} onClick={e => goTo(idx - 1, e)} aria-label="Previous image">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+            )}
+            {images.length > 1 && idx < images.length - 1 && (
+                <button className={`${styles.carouselArrow} ${styles.carouselArrowNext}`} onClick={e => goTo(idx + 1, e)} aria-label="Next image">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+            )}
+
+            {/* Dot indicators */}
+            {images.length > 1 && (
+                <div className={styles.carouselDots}>
+                    {images.map((_, i) => (
+                        <button
+                            key={i}
+                            className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
+                            onClick={e => goTo(i, e)}
+                            aria-label={`Image ${i + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Stock badges */}
+            {inStock === false && (
+                <div className={styles.stockBadge} style={{ background: 'var(--error)' }}>Out of Stock</div>
+            )}
+            {inStock !== false && typeof stock === 'number' && stock > 0 && (
+                <div className={styles.stockBadge}>{stock} Left</div>
+            )}
+        </div>
+    );
+}
+
 export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     const { openGate } = useAuthGate();
     const { status } = useSession();
@@ -127,6 +240,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     const handleLike = async (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
         if (status === 'unauthenticated') { openGate(); return; }
+        haptic();
         const next = !liked;
         setLiked(next);
         setLikeCount(c => next ? c + 1 : Math.max(0, c - 1));
@@ -145,6 +259,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
     const handleSave = async (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
         if (status === 'unauthenticated') { openGate(); return; }
+        haptic();
         const next = !saved;
         setSaved(next);
         if (data.id) {
@@ -243,35 +358,13 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                     </div>
                 </div>
 
-                {/* ── Image — bleed to card edges like PostCard ── */}
-                <div className={styles.imageWrap}>
-                    {data.inStock === false && (
-                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--error)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>Out of Stock</div>
-                    )}
-                    {data.inStock !== false && typeof data.stock === 'number' && data.stock > 0 && (
-                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, zIndex: 10 }}>{data.stock} Left</div>
-                    )}
-                    {data.image ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                            src={cloudinaryTransform(data.image, 800)}
-                            alt={data.title}
-                            className={styles.productImage}
-                            width={800}
-                            height={800}
-                            loading={index === 0 ? 'eager' : 'lazy'}
-                            fetchPriority={index === 0 ? 'high' : 'auto'}
-                        />
-                    ) : (
-                        <div className={styles.imagePlaceholder}>
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <rect width="18" height="18" x="3" y="3" rx="2" />
-                                <circle cx="9" cy="9" r="2" />
-                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                            </svg>
-                        </div>
-                    )}
-                </div>
+                {/* ── Image carousel ── */}
+                <ImageCarousel
+                    images={data.images?.length ? data.images : (data.image ? [data.image] : [])}
+                    title={data.title}
+                    inStock={data.inStock}
+                    stock={data.stock}
+                />
 
                 {/* ── Product info ── */}
                 <div className={styles.body}>
