@@ -138,9 +138,15 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
     useEffect(() => {
         if (localStatus === 'PENDING') {
             const age = Date.now() - new Date(order.createdAt).getTime();
-            if (age > 15 * 60 * 1000) setLocalStatus(order.paystackRef ? 'PAYMENT_VERIFYING' : 'EXPIRED');
+            if (age > 15 * 60 * 1000) {
+                const next = order.paystackRef ? 'PAYMENT_VERIFYING' : 'EXPIRED';
+                setLocalStatus(next);
+                if (next === 'EXPIRED') {
+                    fetch(`/api/orders/${order.id}/expire`, { method: 'POST' }).catch(() => {});
+                }
+            }
         }
-    }, [localStatus, order.createdAt, order.paystackRef]);
+    }, [localStatus, order.createdAt, order.paystackRef, order.id]);
 
     const push = (s: string) => { setLocalStatus(s); onStatusChange(order.id, s); };
 
