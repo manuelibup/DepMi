@@ -73,8 +73,21 @@ model User {
   events            Event[]
 
   analyticsOptOut   Boolean          @default(false)
+  strikeCount       Int              @default(0)
+  strikes           Strike[]
 
   @@index([lastActiveAt])
+}
+
+model Strike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String
+  context   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Account {

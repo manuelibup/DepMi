@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sendPushToUser } from '@/lib/webpush';
+import { applyContentFilter } from '@/lib/contentFilter';
 
 export async function GET(
     req: NextRequest,
@@ -67,6 +68,11 @@ export async function POST(
 
     if (!text && !mediaUrl) {
         return NextResponse.json({ message: 'Message content required' }, { status: 400 });
+    }
+
+    if (text) {
+        const violation = await applyContentFilter(session.user.id, text);
+        if (violation) return NextResponse.json({ message: violation }, { status: 403 });
     }
 
     // Security check

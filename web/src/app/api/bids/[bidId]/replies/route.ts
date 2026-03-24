@@ -24,6 +24,10 @@ export async function POST(
         return NextResponse.json({ message: 'Reply must be 500 characters or less' }, { status: 400 });
     }
 
+    const { applyContentFilter } = await import('@/lib/contentFilter');
+    const violation = await applyContentFilter(session.user.id, text);
+    if (violation) return NextResponse.json({ message: violation }, { status: 403 });
+
     const bid = await (prisma.bid as any).findUnique({
         where: { id: bidId },
         include: {

@@ -137,7 +137,14 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.postman.com)",
       "Bash(gh run list --limit 5)",
-      "Bash(xargs grep -l \"useTrackEvent\\\\|useTrackImpression\\\\|track\\\\|analytics\")"
+      "Bash(xargs grep -l \"useTrackEvent\\\\|useTrackImpression\\\\|track\\\\|analytics\")",
+      "Bash(git diff web/src/app/store/[slug]/products/[id]/edit/EditProductForm.tsx web/src/app/store/[slug]/products/new/CreateProductForm.tsx web/src/components/CloudinaryUploader.tsx)",
+      "Bash(grep -n \"^import\" web/src/app/store/[slug]/products/[id]/edit/EditProductForm.tsx)",
+      "Bash(git add web/src/app/store/[slug]/products/[id]/edit/EditProductForm.tsx web/src/app/store/[slug]/products/new/CreateProductForm.tsx web/src/components/CloudinaryUploader.tsx)",
+      "Read(//c/Users/web5Manuel/Downloads/https___depmi.com_-Coverage-2026-03-22/**)",
+      "Read(//c/Users/web5Manuel/Downloads/https___depmi.com_-Performance-on-Search-2026-03-22/**)",
+      "WebFetch(domain:depmi.com)",
+      "Bash(xargs -I{} env DIRECT_URL=\"{}\" npx prisma db push)"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",
@@ -148,7 +155,9 @@
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\u\\[username]",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]\\products",
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\store\\[slug]",
-      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\bids\\[bidId]"
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\bids\\[bidId]",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\lib",
+      "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\admin\\messages"
     ]
   }
 }

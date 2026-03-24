@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getBankList, resolveAccountName } from '@/lib/flutterwave';
+import { getBankList, resolveAccountName, initiatePayout } from '@/lib/flutterwave';
 import { z } from 'zod';
 
 const payoutSchema = z.object({
@@ -84,7 +84,48 @@ export async function PATCH(
             data: { bankCode, bankAccountNo, bankAccountName },
         });
 
-        return NextResponse.json({ message: 'Payout account saved' });
+        // Release any orders stuck in RELEASING state (buyer confirmed but seller had no bank details)
+        const pendingOrders = await prisma.order.findMany({
+            where: { sellerId: store.id, escrowStatus: 'RELEASING', status: 'COMPLETED' },
+            select: { id: true, totalAmount: true, platformFeeNgn: true },
+        });
+
+        if (pendingOrders.length > 0) {
+            // Fire-and-forget — don't block the response
+            Promise.allSettled(pendingOrders.map(async (order) => {
+                const sellerAmount = Number(order.totalAmount) - Number(order.platformFeeNgn ?? 0);
+                try {
+                    await initiatePayout({
+                        amount: sellerAmount,
+                        bankCode,
+                        accountNumber: bankAccountNo,
+                        accountName: bankAccountName,
+                        narration: `DepMi payout - Order #${order.id.slice(-6).toUpperCase()}`,
+                        reference: `payout-${order.id}`,
+                    });
+                    await prisma.order.update({
+                        where: { id: order.id },
+                        data: { escrowStatus: 'RELEASED' },
+                    });
+                    await prisma.notification.create({
+                        data: {
+                            userId: session.user.id,
+                            type: 'PAYMENT_RELEASED',
+                            title: 'Pending payment sent',
+                            body: `₦${sellerAmount.toLocaleString()} for Order #${order.id.slice(-6).toUpperCase()} is on its way to your bank.`,
+                            link: '/orders',
+                        },
+                    });
+                } catch (err) {
+                    console.error(`[payout] Failed to release order ${order.id}:`, err);
+                }
+            })).catch(() => {});
+        }
+
+        return NextResponse.json({
+            message: 'Payout account saved',
+            pendingPayouts: pendingOrders.length,
+        });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Payout PATCH error:', error);
