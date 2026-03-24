@@ -162,18 +162,14 @@ export async function POST(req: NextRequest) {
                 }
             }
         })
-        // Auto-DM the seller with the order card (fire-and-forget, non-blocking)
-        // Capture in const so TypeScript can narrow the type after the async transaction
-        const orderForDM = confirmedOrder;
-        if (orderForDM !== null) {
-            void sendOrderAutoDM(orderForDM.buyerId, orderForDM.sellerOwnerId, orderId)
-        }
     } catch (err) {
         console.error('[flutterwave-webhook] DB error:', err)
     }
 
-    // Fire social notifications after transaction — never block payment confirmation
+    // Fire social notifications + auto-DM after transaction — never block payment confirmation
     if (confirmedOrder) {
+        // Auto-DM buyer with order card (fire-and-forget)
+        void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
         const { storeId, storeName, productTitle, storeSlug } = confirmedOrder
         try {
             // Notify store followers: "Someone just bought X from [Store]"
