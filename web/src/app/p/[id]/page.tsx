@@ -9,6 +9,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const product = await prisma.product.findFirst({
         where: { OR: [{ slug: id }, { id }] },
         select: {
+            id: true,
+            slug: true,
             title: true,
             description: true,
             price: true,
