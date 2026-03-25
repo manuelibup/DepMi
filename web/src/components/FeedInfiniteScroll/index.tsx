@@ -70,7 +70,7 @@ export default function FeedInfiniteScroll({
         setLoading(true);
 
         try {
-            const params = new URLSearchParams({ take: '10' });
+            const params = new URLSearchParams({ take: '20' });
             if (productCursor) params.set('productCursor', productCursor);
             if (demandCursor) params.set('demandCursor', demandCursor);
             if (category) params.set('category', category);
