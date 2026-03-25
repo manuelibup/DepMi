@@ -167,10 +167,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Fire social notifications + auto-DM after transaction — never block payment confirmation
-    if (confirmedOrder) {
+    // Cast to typed const: TS narrows `let` assigned in async callbacks to null; this preserves the full type
+    type ConfirmedOrderData = { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string };
+    const finalOrder = confirmedOrder as ConfirmedOrderData | null;
+    if (finalOrder) {
         // Auto-DM buyer with order card (fire-and-forget)
-        void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
-        const { storeId, storeName, productTitle, storeSlug } = confirmedOrder
+        void sendOrderAutoDM(finalOrder.buyerId, finalOrder.sellerOwnerId, orderId)
+        const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
             // Notify store followers: "Someone just bought X from [Store]"
             const followers = await prisma.storeFollow.findMany({
