@@ -37,6 +37,7 @@ import { authOptions } from '@/lib/auth';
 import ProfileMessageButton from './ProfileMessageButton';
 import ProfileFollowButton from './ProfileFollowButton';
 import ProfileTabs from './ProfileTabs';
+import ShareButton from '@/components/ShareButton';
 
 interface ProfilePageProps {
     params: Promise<{ username: string }>;
@@ -210,6 +211,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                                 <ProfileFollowButton targetUserId={user.id} initialFollowing={isFollowing} />
                             </>
                         )}
+                        <ShareButton
+                            url={`https://depmi.com/${user.username}`}
+                            title={user.displayName}
+                            text={`Check out @${user.username} on DepMi`}
+                        />
                     </div>
                 </div>
 

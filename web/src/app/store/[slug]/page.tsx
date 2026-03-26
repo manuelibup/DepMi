@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 import FollowButton from '@/components/FollowButton';
 import StoreTabBar from './StoreTabBar';
-import StoreShareButton from './StoreShareButton';
+import ShareButton from '@/components/ShareButton';
 import ViewTracker from '@/components/ViewTracker';
 
 interface StorePageProps {
@@ -201,7 +201,6 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 <div className={styles.topActions}>
                     <StoreBackButton />
                     <div className={styles.rightActions}>
-                        <StoreShareButton storeName={store.name} storeSlug={store.slug} location={store.location} />
                         <Link href={`/search?store=${store.slug}`} className={styles.iconBtn} aria-label="Search">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                         </Link>
@@ -305,12 +304,17 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>No reviews yet</p>
                 )}
 
-                {/* Follow button for non-owners */}
-                {!isOwner && (
-                    <div className={styles.followWrap}>
+                {/* Action buttons — Follow (non-owners) + Share (everyone) */}
+                <div className={styles.followWrap} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {!isOwner && (
                         <FollowButton storeSlug={store.slug} initialFollowersCount={store._count.followers} />
-                    </div>
-                )}
+                    )}
+                    <ShareButton
+                        url={`https://depmi.com/${store.slug}`}
+                        title={store.name}
+                        text={`Check out ${store.name} on DepMi${store.location ? ` (${store.location})` : ''}`}
+                    />
+                </div>
 
                 {/* Owner inventory notice */}
                 {isOwner && store.products.length > visibleProducts.length && (
