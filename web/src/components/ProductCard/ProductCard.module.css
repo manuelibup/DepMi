@@ -143,6 +143,15 @@
     -webkit-user-drag: none;
 }
 
+.carouselVideo {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+}
+
 .carouselArrow {
     position: absolute;
     top: 50%;
@@ -159,11 +168,11 @@
     justify-content: center;
     cursor: pointer;
     z-index: 5;
-    opacity: 0;
+    opacity: 0.75;
     transition: opacity 180ms ease;
 }
 
-.carousel:hover .carouselArrow {
+.carouselArrow:hover {
     opacity: 1;
 }
 

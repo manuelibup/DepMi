@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 import FollowButton from '@/components/FollowButton';
 import StoreTabBar from './StoreTabBar';
 import ShareButton from '@/components/ShareButton';
+import QRCodeButton from '@/components/QRCodeButton';
 import ViewTracker from '@/components/ViewTracker';
 
 interface StorePageProps {
@@ -313,6 +314,10 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                         url={`https://depmi.com/${store.slug}`}
                         title={store.name}
                         text={`Check out ${store.name} on DepMi${store.location ? ` (${store.location})` : ''}`}
+                    />
+                    <QRCodeButton
+                        url={`https://depmi.com/${store.slug}`}
+                        label={store.name}
                     />
                 </div>
 

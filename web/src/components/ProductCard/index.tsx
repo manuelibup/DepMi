@@ -23,6 +23,8 @@ export interface ProductData {
     location: string;
     image: string;
     images?: string[];
+    slug?: string | null;
+    videoUrl?: string | null;
     viewers?: number;
     id?: string;
     ownerId?: string;
@@ -95,20 +97,26 @@ function haptic(ms = 8) {
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
 }
 
-function ImageCarousel({ images, title, inStock, stock }: {
+function ImageCarousel({ images, videoUrl, title, inStock, stock }: {
     images: string[];
+    videoUrl?: string | null;
     title: string;
     inStock?: boolean;
     stock?: number;
 }) {
+    const media: { type: 'image' | 'video'; src: string }[] = [
+        ...(videoUrl ? [{ type: 'video' as const, src: videoUrl }] : []),
+        ...images.map(src => ({ type: 'image' as const, src })),
+    ];
+
     const [idx, setIdx] = useState(0);
     const touchStartX = useRef<number | null>(null);
     const touchStartY = useRef<number | null>(null);
 
     const goTo = useCallback((next: number, e?: React.MouseEvent) => {
         e?.preventDefault(); e?.stopPropagation();
-        setIdx(Math.max(0, Math.min(next, images.length - 1)));
-    }, [images.length]);
+        setIdx(Math.max(0, Math.min(next, media.length - 1)));
+    }, [media.length]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
@@ -119,7 +127,6 @@ function ImageCarousel({ images, title, inStock, stock }: {
         if (touchStartX.current === null || touchStartY.current === null) return;
         const dx = e.changedTouches[0].clientX - touchStartX.current;
         const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-        // Only trigger on horizontal swipes, ignore vertical scrolls
         if (Math.abs(dx) > 40 && Math.abs(dx) > dy) {
             dx < 0 ? goTo(idx + 1) : goTo(idx - 1);
         }
@@ -127,7 +134,7 @@ function ImageCarousel({ images, title, inStock, stock }: {
         touchStartY.current = null;
     };
 
-    if (!images.length) {
+    if (!media.length) {
         return (
             <div className={styles.imagePlaceholder}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -145,48 +152,59 @@ function ImageCarousel({ images, title, inStock, stock }: {
             onTouchEnd={handleTouchEnd}
             onClick={e => e.stopPropagation()}
         >
-            {/* Sliding track — all images rendered so browser preloads them */}
+            {/* Sliding track */}
             <div
                 className={styles.carouselTrack}
                 style={{ transform: `translateX(-${idx * 100}%)` }}
             >
-                {images.map((src, i) => (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                        key={src}
-                        src={cloudinaryTransform(src, 800)}
-                        alt={i === 0 ? title : ''}
-                        className={styles.carouselImg}
-                        width={800}
-                        height={800}
-                        loading={i === 0 ? 'eager' : 'lazy'}
-                        fetchPriority={i === 0 ? 'high' : 'auto'}
-                        draggable={false}
-                    />
+                {media.map((item, i) => (
+                    item.type === 'video' ? (
+                        <video
+                            key={item.src}
+                            src={item.src}
+                            className={styles.carouselVideo}
+                            controls
+                            playsInline
+                            preload="metadata"
+                        />
+                    ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                            key={item.src}
+                            src={cloudinaryTransform(item.src, 800)}
+                            alt={i === 0 ? title : ''}
+                            className={styles.carouselImg}
+                            width={800}
+                            height={800}
+                            loading={i === 0 ? 'eager' : 'lazy'}
+                            fetchPriority={i === 0 ? 'high' : 'auto'}
+                            draggable={false}
+                        />
+                    )
                 ))}
             </div>
 
-            {/* Prev / Next arrows — only show when multiple images */}
-            {images.length > 1 && idx > 0 && (
-                <button className={`${styles.carouselArrow} ${styles.carouselArrowPrev}`} onClick={e => goTo(idx - 1, e)} aria-label="Previous image">
+            {/* Prev / Next arrows */}
+            {media.length > 1 && idx > 0 && (
+                <button className={`${styles.carouselArrow} ${styles.carouselArrowPrev}`} onClick={e => goTo(idx - 1, e)} aria-label="Previous">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
             )}
-            {images.length > 1 && idx < images.length - 1 && (
-                <button className={`${styles.carouselArrow} ${styles.carouselArrowNext}`} onClick={e => goTo(idx + 1, e)} aria-label="Next image">
+            {media.length > 1 && idx < media.length - 1 && (
+                <button className={`${styles.carouselArrow} ${styles.carouselArrowNext}`} onClick={e => goTo(idx + 1, e)} aria-label="Next">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
                 </button>
             )}
 
             {/* Dot indicators */}
-            {images.length > 1 && (
+            {media.length > 1 && (
                 <div className={styles.carouselDots}>
-                    {images.map((_, i) => (
+                    {media.map((_, i) => (
                         <button
                             key={i}
                             className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
                             onClick={e => goTo(i, e)}
-                            aria-label={`Image ${i + 1}`}
+                            aria-label={`Slide ${i + 1}`}
                         />
                     ))}
                 </div>
@@ -230,8 +248,9 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
         return () => window.removeEventListener('keydown', onKey);
     }, [showShare]);
 
+    const productHandle = data.slug ?? data.id;
     const postUrl = typeof window !== 'undefined' && data.id
-        ? `${window.location.origin}/p/${data.id}`
+        ? `${window.location.origin}/p/${productHandle}`
         : '';
     const shareText = encodeURIComponent(`Check out ${data.title} for ${data.price} by ${data.store} on DepMi`);
     const sharePayload = encodeURIComponent(`${decodeURIComponent(shareText)}\n\n${postUrl}`);
@@ -275,7 +294,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
 
     const handleComment = (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
-        if (data.id) router.push(`/p/${data.id}`);
+        if (data.id) router.push(`/p/${productHandle}`);
     };
 
     const handleAction = async (e: React.MouseEvent, action: string) => {
@@ -312,7 +331,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                 ref={impressionRef as React.RefObject<HTMLElement>}
                 className={styles.card}
                 style={{ animationDelay: `${index * 80 + 100}ms` }}
-                onClick={() => data.id && router.push(`/p/${data.id}`)}
+                onClick={() => data.id && router.push(`/p/${data.slug ?? data.id}`)}
             >
                 {/* ── Header — identical layout to PostCard ── */}
                 <div className={styles.header}>
@@ -361,6 +380,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                 {/* ── Image carousel ── */}
                 <ImageCarousel
                     images={data.images?.length ? data.images : (data.image ? [data.image] : [])}
+                    videoUrl={data.videoUrl}
                     title={data.title}
                     inStock={data.inStock}
                     stock={data.stock}
@@ -371,7 +391,7 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                     <div className={styles.titleRow}>
                         {/* Link gives Google a real anchor to follow from the feed */}
                         <Link
-                            href={`/p/${data.id}`}
+                            href={`/p/${data.slug ?? data.id}`}
                             className={styles.title}
                             style={{ textDecoration: 'none' }}
                             onClick={e => e.stopPropagation()}

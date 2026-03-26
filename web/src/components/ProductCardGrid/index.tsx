@@ -18,7 +18,7 @@ export default function ProductCardGrid({ data, index = 0 }: Props) {
         <article
             className={styles.card}
             style={{ animationDelay: `${index * 40}ms` }}
-            onClick={() => data.id && router.push(`/p/${data.id}`)}
+            onClick={() => data.id && router.push(`/p/${data.slug ?? data.id}`)}
         >
             <div className={styles.imageWrap}>
                 {data.inStock === false && (
@@ -40,7 +40,7 @@ export default function ProductCardGrid({ data, index = 0 }: Props) {
                 <p className={styles.store}>{data.store}</p>
                 {/* Link gives Google a real anchor to follow */}
                 <Link
-                    href={`/p/${data.id}`}
+                    href={`/p/${data.slug ?? data.id}`}
                     className={styles.title}
                     style={{ textDecoration: 'none' }}
                     onClick={e => e.stopPropagation()}

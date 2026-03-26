@@ -69,6 +69,8 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
                 location: 'Nationwide',
                 image: p.images?.[0]?.url ?? '',
                 images: (p.images ?? []).map((img: { url: string }) => img.url),
+                slug: p.slug ?? null,
+                videoUrl: p.videoUrl ?? null,
                 viewers: p.viewCount,
                 ownerId: p.store.ownerId,
                 ownerUsername: p.store.owner.username,
