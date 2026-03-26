@@ -63,6 +63,16 @@ export async function POST(req: Request) {
             }
         }
 
+        // Block slug if it matches an existing username — clean URLs require uniqueness across both
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const usernameConflict = await (prisma.user as any).findFirst({
+            where: { username: { equals: normalizedSlug, mode: 'insensitive' } },
+            select: { id: true },
+        });
+        if (usernameConflict) {
+            return NextResponse.json({ message: "Store handle is already taken." }, { status: 409 });
+        }
+
         // Create the Store — grant 90-day fee waiver for all new sellers
         const feeWaiverUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
         const store = await prisma.store.create({
