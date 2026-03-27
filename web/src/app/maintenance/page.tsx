@@ -1,5 +1,25 @@
 export const metadata = { title: 'Back soon — DepMi' };
 
+const socialCardStyle = `
+.social-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #1a1a1a;
+    background: #111;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 13px;
+    transition: border-color 0.2s, color 0.2s;
+}
+.social-card:hover {
+    border-color: #059669;
+    color: #fff;
+}
+`;
+
 const socials = [
     {
         name: 'Instagram',
@@ -37,6 +57,8 @@ const socials = [
 
 export default function MaintenancePage() {
     return (
+        <>
+        <style>{socialCardStyle}</style>
         <div style={{
             minHeight: '100vh',
             background: '#0a0a0a',
@@ -83,27 +105,7 @@ export default function MaintenancePage() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            border: '1px solid #1a1a1a',
-                            background: '#111',
-                            color: '#aaa',
-                            textDecoration: 'none',
-                            fontSize: '13px',
-                            transition: 'border-color 0.2s, color 0.2s',
-                        }}
-                        onMouseEnter={e => {
-                            (e.currentTarget as HTMLAnchorElement).style.borderColor = '#059669';
-                            (e.currentTarget as HTMLAnchorElement).style.color = '#fff';
-                        }}
-                        onMouseLeave={e => {
-                            (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1a1a1a';
-                            (e.currentTarget as HTMLAnchorElement).style.color = '#aaa';
-                        }}
+                        className="social-card"
                     >
                         {icon}
                         <span>{handle}</span>
@@ -156,5 +158,6 @@ export default function MaintenancePage() {
                 </a>
             </p>
         </div>
+        </>
     );
 }
