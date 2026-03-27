@@ -27,7 +27,7 @@ const USERNAME_EXEMPT = [
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    if (MAINTENANCE_MODE && pathname !== '/maintenance' && !pathname.startsWith('/api/')) {
+    if (MAINTENANCE_MODE && pathname !== '/maintenance' && !pathname.startsWith('/api/') && !pathname.startsWith('/blog')) {
         return NextResponse.redirect(new URL('/maintenance', req.url));
     }
 

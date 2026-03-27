@@ -111,6 +111,24 @@ export default function MaintenancePage() {
                 ))}
             </div>
 
+            {/* Blog link */}
+            <a
+                href="/blog"
+                style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    color: '#059669',
+                    textDecoration: 'none',
+                    marginBottom: '32px',
+                    borderBottom: '1px solid #059669',
+                    paddingBottom: '2px',
+                }}
+            >
+                Read our blog while you wait →
+            </a>
+
             {/* Notify me CTA */}
             <a
                 href="mailto:manuel@depmi.com?subject=Notify me when DepMi is back&body=Please notify me when DepMi is back online."
