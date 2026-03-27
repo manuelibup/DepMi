@@ -55,6 +55,7 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const products = rawProducts.map((p: any) => ({
                 id: p.id,
+                slug: p.slug ?? null,
                 createdAt: p.createdAt.toISOString(),
                 type: 'product' as const,
                 store: p.store.name,
@@ -69,7 +70,6 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
                 location: 'Nationwide',
                 image: p.images?.[0]?.url ?? '',
                 images: (p.images ?? []).map((img: { url: string }) => img.url),
-                slug: p.slug ?? null,
                 videoUrl: p.videoUrl ?? null,
                 viewers: p.viewCount,
                 ownerId: p.store.ownerId,
@@ -136,8 +136,8 @@ export async function GET(req: Request) {
     const savedDemandIds = new Set<string>();
 
     if (userId && (products.length > 0 || demands.length > 0)) {
-        const productIds = products.map(p => p.id);
-        const demandIds = demands.map(d => d.id);
+        const productIds = products.map((p: { id: string }) => p.id);
+        const demandIds = demands.map((d: { id: string }) => d.id);
 
         const [pLikes, pSaves, dLikes, dSaves] = await Promise.all([
             prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }),
@@ -155,13 +155,13 @@ export async function GET(req: Request) {
     }
 
     // Merge personalization and build feed items
-    const productItems = products.map(p => ({
+    const productItems = products.map((p: { id: string; createdAt: string }) => ({
         type: 'product' as const,
         createdAt: p.createdAt,
         data: { ...p, isLiked: likedProductIds.has(p.id), isSaved: savedProductIds.has(p.id) },
     }));
 
-    const demandItems = demands.map(d => ({
+    const demandItems = demands.map((d: { id: string; createdAt: string }) => ({
         type: 'demand' as const,
         createdAt: d.createdAt,
         data: { ...d, isLiked: likedDemandIds.has(d.id), isSaved: savedDemandIds.has(d.id) },
