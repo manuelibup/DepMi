@@ -27,8 +27,8 @@ export default function MaintenancePage() {
             </p>
             <p style={{ fontSize: '13px', color: '#555' }}>
                 Questions? DM us on Instagram{' '}
-                <a href="https://instagram.com/depmi.ng" style={{ color: '#059669', textDecoration: 'none' }}>
-                    @depmi.ng
+                <a href="https://instagram.com/depmidotcom" style={{ color: '#059669', textDecoration: 'none' }}>
+                    @depmidotcom
                 </a>
             </p>
         </div>
