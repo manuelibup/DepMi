@@ -113,7 +113,7 @@ export default function MaintenancePage() {
 
             {/* Notify me CTA */}
             <a
-                href="mailto:hello@depmi.com?subject=Notify me when DepMi is back&body=Please notify me when DepMi is back online."
+                href="mailto:manuel@depmi.com?subject=Notify me when DepMi is back&body=Please notify me when DepMi is back online."
                 style={{
                     display: 'inline-block',
                     padding: '12px 28px',
