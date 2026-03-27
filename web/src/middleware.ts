@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+const MAINTENANCE_MODE = true;
+
 // Routes that require authentication (unauthenticated users → /login)
 const AUTH_REQUIRED = [
     '/orders',
@@ -24,6 +26,10 @@ const USERNAME_EXEMPT = [
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
+
+    if (MAINTENANCE_MODE && pathname !== '/maintenance' && !pathname.startsWith('/api/')) {
+        return NextResponse.redirect(new URL('/maintenance', req.url));
+    }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
