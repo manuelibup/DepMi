@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 78 — Mar 28, 2026 — OG Images for Profile & Store Sharing](#session-78--mar-28-2026--og-images-for-profile--store-sharing)
 - [Session 76 — Mar 24, 2026 — SEO Deep Fix, Demand Slugs & Clean URL Architecture](#session-76--mar-24-2026--seo-deep-fix--demand-slugs--clean-url-architecture)
 - [Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization](#session-75--mar-24-2026--neon-compute-analysis--chat-sse-poll-optimization)
 - [Session 74 — Mar 23, 2026 — Store Logo Fix, Cloudinary c_limit & API Caching](#session-74--mar-23-2026--store-logo-fix-cloudinary-climit--api-caching)
@@ -58,6 +59,28 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 78 — Mar 28, 2026 — OG Images for Profile & Store Sharing
+
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+**Human:** Manuel
+
+### Summary
+Fixed social share previews for clean handle URLs (`depmi.com/[handle]`).
+
+### What Was Done
+- Added `generateMetadata` to `web/src/app/[handle]/page.tsx`
+- Resolves user-first then store, returns per-entity OG title/description/image
+- User profiles: avatar, `DisplayName (@username)`, bio as description
+- Stores: logo, `StoreName — Location · DepMi`, dep count + location in description
+- Falls back to root layout generic OG if handle not found (404 path)
+- Previously the generic DepMi logo appeared for all handle shares (e.g. WhatsApp preview showed cart logo instead of store logo)
+
+### Validations
+- No schema changes, no DB push needed
+- Committed to `main` (90ef645), push blocked by GitHub auth — push manually
 
 ---
 
