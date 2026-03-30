@@ -9,7 +9,7 @@ interface Props {
     label: string;
 }
 
-const CORAL = 'var(--primary)';
+const CORAL = '#FF5C38';
 const QR_SIZE = 280;
 
 function drawBrandedQR(canvas: HTMLCanvasElement, url: string): Promise<void> {
