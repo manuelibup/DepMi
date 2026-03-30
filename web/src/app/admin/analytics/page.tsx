@@ -134,7 +134,7 @@ export default async function AnalyticsPage() {
         LIKE: '#ef4444',
         SAVE: '#FF5C38',
         BID: '#FF6B35',
-        ORDER: '#10b981',
+        ORDER: '#FF5C38',
         SHARE: '#6366f1',
     };
 

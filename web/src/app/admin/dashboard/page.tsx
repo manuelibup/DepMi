@@ -106,7 +106,7 @@ export default async function AdminDashboard() {
                     color="#ef4444" />
                 <KpiCard label="Total Spent (₦)" value={fmt(totalSpent)} href="/admin/commerce"
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>}
-                    color="#10b981" />
+                    color="#FF5C38" />
                 <KpiCard label="Product Worth (₦)" value={fmt(productWorth)}
                     icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>}
                     color="#8b5cf6" />

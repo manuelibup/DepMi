@@ -160,7 +160,7 @@ export default function DesktopSidebar() {
                     {/* Logo */}
                     <Link href="/" className={styles.logo}>
                         <Image src="/depmi-logo.svg" alt="DepMi" width={36} height={36} />
-                        <span className={styles.logoText}>DepMi</span>
+                        <Image src="/depmi-wordmark.svg" alt="depmi" width={100} height={50} style={{ marginLeft: '2px' }} />
                     </Link>
 
                     {/* Nav items */}
