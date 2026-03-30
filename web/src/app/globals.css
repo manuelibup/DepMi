@@ -183,7 +183,9 @@ img {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+/* Mobile Utils */
+@media (max-width: 639px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
 }

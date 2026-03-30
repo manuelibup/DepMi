@@ -117,7 +117,7 @@ export default function QRCodeButton({ url, label }: Props) {
                     <rect x="3" y="14" width="7" height="7" rx="1" />
                     <path d="M14 14h.01M14 18h.01M18 14h.01M18 18h.01M18 21v-3M21 18h-3" />
                 </svg>
-                QR Code
+                <span className="hide-on-mobile">QR Code</span>
             </button>
 
             {open && mounted && createPortal(

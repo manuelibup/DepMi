@@ -41,10 +41,16 @@ export default function ProfileMessageButton({ targetUserId }: { targetUserId: s
                 color: '#000', 
                 border: 'none',
                 opacity: loading ? 0.7 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
             }}
         >
-            {loading ? 'Opening...' : 'Message'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="hide-on-mobile">{loading ? 'Opening...' : 'Message'}</span>
         </button>
     );
 }
