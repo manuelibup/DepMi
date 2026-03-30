@@ -634,3 +634,13 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   4. Use `<polygon>` objects for any angled slashes or terminals (e.g. `d` ascending right slashes).
   5. Use `<mask fill="black">` rectangles to slice perfectly vertical or horizontal gaps (e.g. slicing out the right-half of the `e` mouth or the bottom of `m` rings to form perfect arches).
 This guarantees an export that is literally pixel-for-pixel flawless without distorted curvatures.
+
+---
+
+## 🛑 49. CSS Circular References (The Danger of Global Sweeps)
+
+*Added after a global color hex-replacement script destroyed the UI layout by replacing a CSS variable definition with itself.*
+
+- **The Problem**: When running global search-and-replace sweepers (e.g., `make-flexible.js`) to migrate hardcoded Hex/RGBA colors to CSS variables, you must explicitly exclude `globals.css` or the specific block where the root variable is defined.
+- **The Crash**: If your script replaces `--primary: #FF5C38;` with `--primary: var(--primary);`, it creates an immediate infinite CSS circular reference. The browser rendering engine drops the variable entirely, rendering it invalid (often falling back to transparent or black) and instantly breaking all buttons, backgrounds, and text linked to that variable.
+- **The Fix**: Always explicitly skip standard `globals.css` variable declarations when running auto-refactor regex scripts, or manually verify root tokens post-sweep.
