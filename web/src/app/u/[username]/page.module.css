@@ -556,6 +556,22 @@
     overflow: hidden;
 }
 
+/* ── Mobile Layout Fixes ─────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .avatarRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-top: -40px;
+    }
+    .profileActions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}
+
 /* ══ DESKTOP — X/Twitter style ═════════════════════════════
    The profile column sits inside the .desktop-content div
    which already has margin-left: 240px (sidebar offset).
