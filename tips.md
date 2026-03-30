@@ -38,7 +38,17 @@ Working with AI coding agents (like me or Claude) requires a specific approach t
 
 ---
 
-## 🚨 5. Deployment Debugging Protocol (Vercel)
+## 💾 5. Neon Compute — Staying in Budget
+
+- **DATABASE_URL must use the pooler URL** (`-pooler.` in hostname). Direct connections are expensive on serverless — each cold start holds compute awake longer.
+- **Auto-suspend is correct.** Do NOT add a keepalive cron. Compute should sleep between requests.
+- **Watch the Neon Monitoring tab** after every major feature — look for slow queries as tables grow.
+- **Free tier = 100 CU-hrs/month.** Upgraded to Pro after compute exhaustion (Sessions 75–83). Triggered by unoptimized queries + too many concurrent DB wake-ups.
+- **Caching in place (do not remove):** `/api/stats` 5 min, `/api/feed` 30s guest-only, `/api/feed/featured` 2 min, exchange rates 1hr ISR.
+
+---
+
+## 🚨 6. Deployment Debugging Protocol (Vercel)
 
 *This section was written after a 14-hour debugging session on a Vercel 404 that had a simple fix.*
 
@@ -610,3 +620,17 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
   </article>
   ```
 - **Rule**: Every clickable card that navigates to a detail page must have at least one real `<a href>` anchor (via Next.js `<Link>`) pointing to that page. The home feed is the entry point for Googlebot — if links don't exist in the HTML, the entire content graph is invisible to search engines.
+
+## 📐 48. Agentic AI Vector Logo & Wordmark Generation (The O-on-a-stick Methodology)
+
+*Added after replacing a distorted Bezier-curve wordmark with pure geometric primitives.*
+
+- **The Problem**: AI models natively struggle to draw clean SVG typography. When asked to draw letters or logos, agents naturally attempt to use complex bezier paths (`C` or `Q`), leading to "distorted", wobbly, or mismatched arcs that lack the precision of professional typographical tools like Illustrator.
+- **The Fix**: **The Pure Math Approach**. Instruct the AI model to build shapes ONLY using pure mathematical combinations of `<circle>` and `<rect>` elements through `fill-rule="evenodd"` boolean operations and `<mask>` tags. 
+- **The Process for teaching a new model**:
+  1. Define a giant viewBox (e.g. `viewBox="0 0 2200 1000"`) so you can work with clean round pixel numbers.
+  2. Implement an "o on a stick" approach for geometric fonts (like Futura or Gilroy): Use dual perfectly concentric circles (`Outer=200`, `Inner=140`) on a single `path` with `fill-rule="evenodd"` to flawlessly punch out the bowls. No beziers.
+  3. Overlay `<rect>` tags to construct all stems (`width=60`), ensuring they intercept the circles directly at their equators so they merge seamlessly without overlapping glitches.
+  4. Use `<polygon>` objects for any angled slashes or terminals (e.g. `d` ascending right slashes).
+  5. Use `<mask fill="black">` rectangles to slice perfectly vertical or horizontal gaps (e.g. slicing out the right-half of the `e` mouth or the bottom of `m` rings to form perfect arches).
+This guarantees an export that is literally pixel-for-pixel flawless without distorted curvatures.

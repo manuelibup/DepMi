@@ -1,6 +1,11 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 83 — Mar 30, 2026 — Coral Rebrand Live + UX Cleanup](#session-83--mar-30-2026--coral-rebrand-live--ux-cleanup)
+- [Session 82 — Mar 30, 2026 — Wordmark Finetuning](#session-82--mar-30-2026--wordmark-finetuning)
+- [Session 81 — Mar 30, 2026 — Exact Wordmark Vectorization](#session-81--mar-30-2026--exact-wordmark-vectorization)
+- [Session 80 — Mar 30, 2026 — Wordmark SVG Geometric Precision](#session-80--mar-30-2026--wordmark-svg-geometric-precision)
+- [Session 79 — Mar 29, 2026 — Brand Identity Overhaul (The Coral Era)](#session-79--mar-29-2026--brand-identity-overhaul-the-coral-era)
 - [Session 78 — Mar 28, 2026 — OG Images for Profile & Store Sharing](#session-78--mar-28-2026--og-images-for-profile--store-sharing)
 - [Session 76 — Mar 24, 2026 — SEO Deep Fix, Demand Slugs & Clean URL Architecture](#session-76--mar-24-2026--seo-deep-fix--demand-slugs--clean-url-architecture)
 - [Session 75 — Mar 24, 2026 — Neon Compute Analysis & Chat SSE Poll Optimization](#session-75--mar-24-2026--neon-compute-analysis--chat-sse-poll-optimization)
@@ -59,6 +64,67 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 83 — Mar 30, 2026 — Coral Rebrand Live + UX Cleanup
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What Was Done
+- **Maintenance mode disabled** — Neon Pro purchased, compute restored, app live again
+- **Full color palette applied:** `--primary: #FF5C38`, `--primary-dark: #E04420`, `--primary-light: #FF8264`, `--primary-glow: rgba(255,92,56,0.25)`, light bg `#FFF8F6`, dark bg `#0F0F0F`
+- **Tested burgundy (#8B1A2F)** as alternative — reverted, user chose Electric Coral
+- **SVG wordmark viewBox fixed** from `0 0 640 640` to tight crop `70 191 500 250` — letterforms now fill rendered size
+- **Desktop header hidden** at ≥640px — DesktopSidebar handles branding, FilterBar snaps to `top:0` (Twitter/X pattern)
+- **Mobile header:** pin mark removed, wordmark-only at 108px
+- **DesktopSidebar:** plain text "DepMi" replaced with SVG wordmark image
+- **EmptyState button:** fixed `color: #000` → `#fff`, stale green hover glow → coral
+- **Admin chart greens** (#10b981) replaced with coral in analytics + dashboard pages
+- **Branded QR codes:** coral dots, `errorCorrectionLevel: H`, depmi-logo.svg centered with white circle + coral ring, coral glow on container
+- **All green remnants swept** — #059669, #34d399, #10b981 across 36+ files
+
+### Commits
+- `021b3d3` — feat: rebrand DepMi from emerald green to Electric Coral
+- `49a5b01` — fix: tighten wordmark viewBox, replace sidebar text, purge green chart colors
+- `14646c6` — feat: wordmark-only mobile header, hide header on desktop, category tabs take top
+- `03b8265` — feat: disable maintenance mode
+- `15b3919` — feat: branded QR codes
+
+### Pending
+- Expire-orders cron on cron-job.org (hourly, `/api/cron/expire-orders`, Bearer CRON_SECRET)
+- OG/social PNG assets need regenerating with coral branding
+- Behavioral analytics hooks not yet wired to feed cards / product detail
+
+---
+
+## Session 80 — Mar 30, 2026 — Wordmark SVG Geometric Precision
+
+**Agent:** Antigravity (Deepmind)
+**Human:** Manuel
+
+### What Was Done
+- **Brand Wordmark:** Refactored the `depmi-wordmark.svg` mathematically to precisely match the provided image reference and brand guidelines.
+- **Letter Slants (`d`, `p`):** Inverted the ascender/descender slants from `/` to `\` by moving the highest peak of `d` to the top-left corner, and the deepest point of `p` to the bottom-right corner.
+- **Letter Mouth (`e`):** Handled the horizontal crossbar to not protrude beyond the outer circle on the right. Refined the right-side cut mask to strictly cut down from `y=530` so that it flawlessly seals the circle's exterior curve right up to the crossbar, resulting in a perfectly clean downward-facing geometrically horizontal terminal.
+- **Spacing:** The inter-letter geometric offsets remain at a flawless 60 units between all strokes, guaranteeing exact kerning spacing.
+
+---
+
+## Session 79 — Mar 29, 2026 — Brand Identity Overhaul (The Coral Era)
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+- **Brand Strategy:** Conducted a comprehensive review of the new DepMi logo and brand colors.
+- **Color Migration:** Officially finalized the migration from Emerald Green to Electric Coral/Depmi Coral (`#FF5C38`). The dark background is Midnight (`#0F0F0F`) and accent is Soft Coral (`#FF8264`). This positioning gives DepMi distinct visual ownership in the Nigerian ecommerce space, standing apart from Jumia (orange), Konga (red), and OPay/PalmPay (green).
+- **Logo Icon:** Approved the geometric 'd' pin logo (fusion of location pin "Here" and circular arrow "Buy").
+- **Typography Rules established:** 
+  1. The wordmark uses a lowercase, geometric sans-serif font.
+  2. The vertical stems of the letters 'd' and 'p' feature identical sharp, angular slants pointing up and to the right, echoing the sharp point of the logo icon.
+  3. The letters 'm', 'e', and 'i' (and its dot) remain perfectly normal, flat, and round to maintain a friendly, approachable tech aesthetic.
 
 ---
 
@@ -3294,3 +3360,7 @@ Continuation of Session 66. Tackled growth/retention backlog: dispatch badge, an
 - Seller analytics dashboard UI (models ready).
 - Telegram bot / Mini App (roadmap).
 - Course/digital product selling.
+- [Session 80 — Mar 30, 2026 — Pure Geometric Wordmark & Arrow Logo Logic]
+  - Executed a major overhaul of the DepMi SVGs. Discarded the optically-distorted typography approach and implemented the "o-on-a-stick" perfectly round geometric method for the typography (`depmi-wordmark.svg`).
+  - Added structural boolean `<mask`> systems and `fill-rule="evenodd"` on a massive 2200x1000 canvas to ensure vector fidelity across all browsers.
+  - Documented the SVG boolean methodology extensively in `tips.md` and `MEMORY.md` so future agent instances can emulate strict mathematical typography creation natively.
