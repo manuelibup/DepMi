@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthGate } from '@/context/AuthGate';
@@ -9,6 +9,7 @@ import styles from './DemandCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
 import { useTrackEvent } from '@/hooks/useTrackEvent';
 import { cloudinaryTransform } from '@/lib/cloudinary';
+import { useScrollPause } from '@/hooks/useScrollPause';
 
 export interface DemandData {
     id?: string;
@@ -43,6 +44,9 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
     const router = useRouter();
     const { openGate } = useAuthGate();
     const { status } = useSession();
+
+    const videoRef = useRef<HTMLVideoElement>(null);
+    useScrollPause(videoRef);
 
     const impressionRef = useTrackImpression(data.id ?? '', 'demand', { index });
     const track = useTrackEvent();
@@ -213,7 +217,7 @@ export default function DemandCard({ data, index = 0 }: DemandCardProps) {
                     <div className={styles.mediaWrap} onClick={e => e.stopPropagation()}>
                         {data.videoUrl ? (
                             <div className={styles.videoWrapper}>
-                                <video src={data.videoUrl} muted playsInline onClick={e => (e.target as HTMLVideoElement).play()} />
+                                <video ref={videoRef} src={data.videoUrl} muted playsInline onClick={e => (e.target as HTMLVideoElement).play()} />
                                 <div className={styles.videoBadge}>VIDEO</div>
                             </div>
                         ) : data.images && data.images.length > 0 ? (

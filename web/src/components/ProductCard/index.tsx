@@ -9,6 +9,7 @@ import styles from './ProductCard.module.css';
 import { useTrackImpression } from '@/hooks/useTrackImpression';
 import { useTrackEvent } from '@/hooks/useTrackEvent';
 import { cloudinaryTransform } from '@/lib/cloudinary';
+import { useScrollPause } from '@/hooks/useScrollPause';
 
 export interface ProductData {
     store: string;
@@ -113,6 +114,8 @@ function ImageCarousel({ images, videoUrl, title, inStock, stock }: {
     const [idx, setIdx] = useState(0);
     const touchStartX = useRef<number | null>(null);
     const touchStartY = useRef<number | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    useScrollPause(videoRef);
 
     const goTo = useCallback((next: number, e?: React.MouseEvent) => {
         e?.preventDefault(); e?.stopPropagation();
@@ -162,6 +165,7 @@ function ImageCarousel({ images, videoUrl, title, inStock, stock }: {
                     item.type === 'video' ? (
                         <video
                             key={item.src}
+                            ref={videoRef}
                             src={item.src}
                             className={styles.carouselVideo}
                             controls
