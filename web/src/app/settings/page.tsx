@@ -451,7 +451,7 @@ export default function SettingsPage() {
                                     <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-main)' }}>{session?.user?.email}</p>
                                 </div>
                                 {emailVerified ? (
-                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(5,150,105,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(var(--primary-rgb),0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
                                 ) : (
                                     <button
                                         type="button"
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                                     </p>
                                 </div>
                                 {phoneVerified ? (
-                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(5,150,105,0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
+                                    <span style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '20px', background: 'rgba(var(--primary-rgb),0.12)', color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700 }}>✓ Verified</span>
                                 ) : (
                                     <button
                                         type="button"

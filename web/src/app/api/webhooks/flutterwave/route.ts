@@ -102,12 +102,15 @@ export async function POST(req: NextRequest) {
                 });
             }
 
+            const isDigitalOrder = order.isDigital || (order.items[0]?.product?.isDigital ?? false)
             await tx.notification.create({
                 data: {
                     userId: order.seller.ownerId,
                     type: 'ORDER_CONFIRMED',
                     title: 'New order payment received',
-                    body: `Order #${orderId.slice(-6).toUpperCase()} has been paid (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`,
+                    body: isDigitalOrder
+                        ? `Order #${orderId.slice(-6).toUpperCase()} paid (₦${Number(order.totalAmount).toLocaleString()}). Digital product — escrow auto-releases in 48h.`
+                        : `Order #${orderId.slice(-6).toUpperCase()} has been paid (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`,
                     link: '/orders',
                 },
             })
@@ -134,8 +137,8 @@ export async function POST(req: NextRequest) {
                 sellerOwnerId: order.seller.ownerId,
             }
 
-            // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved
-            if (order.seller.dispatchEnabled && order.shipbubbleReqToken) {
+            // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved (skip for digital)
+            if (!isDigitalOrder && order.seller.dispatchEnabled && order.shipbubbleReqToken) {
                 try {
                     const booking = await bookShipment(order.shipbubbleReqToken)
                     await tx.order.update({

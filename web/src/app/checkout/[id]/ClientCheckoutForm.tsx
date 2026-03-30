@@ -318,8 +318,9 @@ export default function ClientCheckoutForm({
                 body: JSON.stringify({
                     productId,
                     quantity,
-                    deliveryMethod: deliveryMethod === 'DISPATCH' ? 'DELIVERY' : deliveryMethod,
-                    deliveryAddress: deliveryMethod === 'PICKUP' ? 'PICKUP' : `${address}, ${city}, ${stateVal}`,
+                    isDigital,
+                    deliveryMethod: isDigital ? 'DIGITAL' : (deliveryMethod === 'DISPATCH' ? 'DELIVERY' : deliveryMethod),
+                    deliveryAddress: isDigital ? 'DIGITAL' : (deliveryMethod === 'PICKUP' ? 'PICKUP' : `${address}, ${city}, ${stateVal}`),
                     deliveryNote: deliveryNote.trim() || undefined,
                     phone: phone.trim(),
                     addressLine: address.trim(),
@@ -371,7 +372,7 @@ export default function ClientCheckoutForm({
             {isDigital && (
                 <section className={styles.section}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(5,150,105,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(var(--primary-rgb),0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
@@ -550,7 +551,7 @@ export default function ClientCheckoutForm({
                                                         width: '100%',
                                                         textAlign: 'left',
                                                         padding: '10px 14px',
-                                                        background: stateVal === state ? 'rgba(5,150,105,0.08)' : 'transparent',
+                                                        background: stateVal === state ? 'rgba(var(--primary-rgb),0.08)' : 'transparent',
                                                         border: 'none',
                                                         color: stateVal === state ? 'var(--primary)' : 'var(--text-main)',
                                                         fontWeight: stateVal === state ? 600 : 400,
@@ -592,7 +593,7 @@ export default function ClientCheckoutForm({
                                                     padding: '12px 14px',
                                                     borderRadius: '12px',
                                                     border: selected ? '2px solid var(--primary)' : '1.5px solid var(--card-border)',
-                                                    background: selected ? 'rgba(5,150,105,0.06)' : 'var(--card-bg)',
+                                                    background: selected ? 'rgba(var(--primary-rgb),0.06)' : 'var(--card-bg)',
                                                     cursor: 'pointer',
                                                     textAlign: 'left',
                                                     width: '100%',

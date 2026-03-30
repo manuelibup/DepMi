@@ -40,7 +40,7 @@ export default function ClientNotifyButton({ searchQuery }: { searchQuery: strin
     };
 
     if (fetchStatus === 'success') {
-        return <p style={{ color: '#00B894', fontWeight: 600, margin: 0 }}>✓ We&apos;ll notify you!</p>;
+        return <p style={{ color: 'var(--primary)', fontWeight: 600, margin: 0 }}>✓ We&apos;ll notify you!</p>;
     }
 
     return (

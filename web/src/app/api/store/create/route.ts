@@ -73,8 +73,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Store handle is already taken." }, { status: 409 });
         }
 
-        // Create the Store — grant 90-day fee waiver for all new sellers
-        const feeWaiverUntil = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+        // Create the Store — grant 30-day fee waiver for all new sellers
+        const feeWaiverUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         const store = await prisma.store.create({
             data: {
                 ownerId: session.user.id,

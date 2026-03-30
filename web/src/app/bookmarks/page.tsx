@@ -52,7 +52,7 @@ export default async function BookmarksPage() {
         }),
     ]);
 
-    const colors = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+    const colors = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productItems = savedProducts.map((s: any) => {

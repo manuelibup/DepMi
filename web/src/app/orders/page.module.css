@@ -119,7 +119,7 @@
     position: relative;
 }
 .orderRow:hover { background: rgba(255,255,255,0.03); }
-.orderRow.selected { background: rgba(5,150,105,0.06); }
+.orderRow.selected { background: rgba(var(--primary-rgb),0.06); }
 .orderRow.selected::before {
     content: '';
     position: absolute;
@@ -194,12 +194,12 @@
 .badge_CANCELLED { background: rgba(150,150,150,.12); color:#999;    border:1px solid rgba(150,150,150,.25); }
 .badge_CONFIRMED { background: rgba(9,132,227,.15);   color:#0984E3; border:1px solid rgba(9,132,227,.3); }
 .badge_SHIPPED   { background: rgba(9,132,227,.15);   color:#0984E3; border:1px solid rgba(9,132,227,.3); }
-.badge_DELIVERED { background: rgba(0,184,148,.15);   color:#00B894; border:1px solid rgba(0,184,148,.3); }
-.badge_COMPLETED { background: rgba(0,184,148,.15);   color:#00B894; border:1px solid rgba(0,184,148,.3); }
+.badge_DELIVERED { background: rgba(var(--primary-rgb),.15);   color:var(--primary); border:1px solid rgba(var(--primary-rgb),.3); }
+.badge_COMPLETED { background: rgba(var(--primary-rgb),.15);   color:var(--primary); border:1px solid rgba(var(--primary-rgb),.3); }
 .badge_DISPUTED  { background: rgba(231,76,60,.12);   color:#e74c3c; border:1px solid rgba(231,76,60,.25); }
 .badge_PAYMENT_VERIFYING { background: rgba(253,203,110,.15); color:#FDCB6E; border:1px solid rgba(253,203,110,.3); }
-.badge_RESOLVED_BUYER  { background: rgba(0,184,148,.15);   color:#00B894; border:1px solid rgba(0,184,148,.3); }
-.badge_RESOLVED_VENDOR { background: rgba(0,184,148,.15);   color:#00B894; border:1px solid rgba(0,184,148,.3); }
+.badge_RESOLVED_BUYER  { background: rgba(var(--primary-rgb),.15);   color:var(--primary); border:1px solid rgba(var(--primary-rgb),.3); }
+.badge_RESOLVED_VENDOR { background: rgba(var(--primary-rgb),.15);   color:var(--primary); border:1px solid rgba(var(--primary-rgb),.3); }
 .badge_REFUNDED  { background: rgba(150,150,150,.12); color:#999;    border:1px solid rgba(150,150,150,.25); }
 
 /* ─── Right detail panel ──────────────────────────────────────────────────── */
@@ -299,7 +299,7 @@
 }
 .timelineDot.current {
     border-color: var(--primary);
-    background: rgba(5,150,105,0.12);
+    background: rgba(var(--primary-rgb),0.12);
     color: var(--primary);
 }
 .timelineLabel {
@@ -541,13 +541,13 @@
 
 /* ─── Inline instructions banner ────────────────────────────────────────── */
 .infoBanner {
-    background: rgba(0,184,148,0.07);
-    border: 1px solid rgba(0,184,148,0.2);
+    background: rgba(var(--primary-rgb),0.07);
+    border: 1px solid rgba(var(--primary-rgb),0.2);
     border-radius: 10px;
     padding: 12px 14px;
 }
 .infoBanner p { margin: 0; font-size: 0.83rem; color: var(--text-secondary); line-height: 1.5; }
-.infoBanner strong { color: #00B894; }
+.infoBanner strong { color: var(--primary); }
 
 .warnBanner {
     background: rgba(253,203,110,0.08);
@@ -560,8 +560,8 @@
 
 /* ─── Celebration banner ─────────────────────────────────────────────────── */
 .celebration {
-    background: rgba(0,184,148,0.1);
-    border: 1px solid #00B894;
+    background: rgba(var(--primary-rgb),0.1);
+    border: 1px solid var(--primary);
     padding: 16px;
     border-radius: 12px;
     display: flex;
@@ -569,7 +569,7 @@
     gap: 16px;
     margin-bottom: 20px;
 }
-.celebration h3 { margin: 0 0 4px; color: #00B894; font-size: 1rem; }
+.celebration h3 { margin: 0 0 4px; color: var(--primary); font-size: 1rem; }
 .celebration p { margin: 0; color: var(--text-secondary); font-size: 0.85rem; }
 
 /* ─── Star rating ────────────────────────────────────────────────────────── */

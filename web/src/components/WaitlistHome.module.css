@@ -31,7 +31,7 @@
     left: -10%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(5, 150, 105, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
     border-radius: 50%;
     filter: blur(80px);
     z-index: 0;
@@ -72,7 +72,7 @@
 }
 
 .brandLogo {
-    filter: drop-shadow(0 0 15px rgba(5, 150, 105, 0.3));
+    filter: drop-shadow(0 0 15px rgba(var(--primary-rgb), 0.3));
 }
 
 .brandName {
@@ -210,7 +210,7 @@
 .submitBtn:hover:not(:disabled) {
     background: #00e676;
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.4);
 }
 
 .submitBtn:active:not(:disabled) {
@@ -264,14 +264,14 @@
 
 .featureCard:hover {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(5, 150, 105, 0.2);
+    border-color: rgba(var(--primary-rgb), 0.2);
     transform: translateY(-5px);
 }
 
 .featureIconWrapper {
     width: 64px;
     height: 64px;
-    background: rgba(5, 150, 105, 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
     border-radius: 20px;
     display: flex;
     align-items: center;

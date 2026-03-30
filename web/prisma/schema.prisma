@@ -200,8 +200,9 @@ model Store {
   bankAccountName     String?
   bankAccountNo       String?
   bankCode            String?
-  cryptoWalletAddr    String?
-  preferredPayoutRail PaymentRail             @default(NAIRA)
+  cryptoWalletAddr      String?
+  cryptoPaymentsEnabled Boolean               @default(false)
+  preferredPayoutRail   PaymentRail           @default(NAIRA)
   cacDocUrl           String?
   rcNumber            String?
   tin                 String?
@@ -400,6 +401,7 @@ model Order {
   dispatchOrderId   String?
   dispatchProvider  String?
   shipbubbleReqToken String?
+  isDigital         Boolean      @default(false)
   bid               Bid?         @relation("BidOrder", fields: [bidId], references: [id])
   buyer             User         @relation("BuyerOrders", fields: [buyerId], references: [id])
   demand            Demand?      @relation("DemandOrders", fields: [demandId], references: [id])

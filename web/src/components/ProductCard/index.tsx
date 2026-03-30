@@ -36,6 +36,7 @@ export interface ProductData {
     commentCount?: number;
     stock?: number;
     inStock?: boolean;
+    isDigital?: boolean;
 }
 
 interface ProductCardProps {
@@ -65,7 +66,7 @@ function NotifyMeButton({ productId }: { productId?: string }) {
     };
 
     if (state === 'done') {
-        return <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#00B894' }}>✓ We&apos;ll notify you!</span>;
+        return <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>✓ We&apos;ll notify you!</span>;
     }
     return (
         <button
@@ -406,6 +407,12 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
                         </svg>
                         {data.location}
                     </p>
+
+                    {data.isDigital && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', background: 'rgba(255,92,56,0.08)', border: '1px solid rgba(255,92,56,0.2)', padding: '3px 8px', borderRadius: '999px', marginBottom: 6 }}>
+                            ⚡ Instant Delivery
+                        </span>
+                    )}
 
                     {/* CTA — part of the content body, not a separate action bar */}
                     <div className={styles.cta}>

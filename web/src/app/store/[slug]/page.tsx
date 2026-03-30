@@ -346,7 +346,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                     </p>
                     <Link
                         href={viewerStore ? `/store/${viewerStore.slug}` : '/store/create'}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(5,150,105,0.25)', background: 'rgba(5,150,105,0.06)' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none', padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(var(--primary-rgb),0.25)', background: 'rgba(var(--primary-rgb),0.06)' }}
                     >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9,22 9,12 15,12 15,22" /></svg>
                         {viewerStore ? 'Go to your store' : 'Open your own store on DepMi — free'}

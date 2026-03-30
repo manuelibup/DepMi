@@ -45,7 +45,7 @@
 }
 
 .actionBtn {
-    background: var(--primary, #FF5C38);
+    background: var(--primary, var(--primary));
     color: #fff;
     border: none;
     padding: 8px 16px;
@@ -62,7 +62,7 @@
 
 .actionBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 92, 56, 0.35);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
 }
 
 .actionBtn:active {

@@ -43,7 +43,7 @@
 .logoMark {
     display: block;
     /* Updated drop shadow to match brand emerald green */
-    filter: drop-shadow(0px 2px 4px rgba(5, 150, 105, 0.2));
+    filter: drop-shadow(0px 2px 4px rgba(var(--primary-rgb), 0.2));
 }
 
 .logoText {

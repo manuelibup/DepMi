@@ -67,7 +67,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--primary);
-    background: rgba(5,150,105,0.1);
+    background: rgba(var(--primary-rgb),0.1);
     padding: 2px 8px;
     border-radius: 999px;
 }

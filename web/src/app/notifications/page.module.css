@@ -45,13 +45,13 @@
 }
 
 .card.announcement {
-    background: rgba(255, 92, 56, 0.04);
-    border-color: rgba(255, 92, 56, 0.25);
+    background: rgba(var(--primary-rgb), 0.04);
+    border-color: rgba(var(--primary-rgb), 0.25);
 }
 
 .card.announcement .iconBox {
-    background: rgba(255, 92, 56, 0.1);
-    color: #FF5C38;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
 }
 
 .card.socialCard {

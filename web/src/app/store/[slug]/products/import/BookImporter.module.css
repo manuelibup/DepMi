@@ -100,7 +100,7 @@
 }
 .dropzone:hover, .dropzone.dragging {
     border-color: var(--primary);
-    background: rgba(5,150,105,0.04);
+    background: rgba(var(--primary-rgb),0.04);
 }
 .dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .dropzoneIcon { opacity: 0.3; margin-bottom: 10px; }
@@ -199,7 +199,7 @@
     align-items: flex-start;
     transition: border-color 0.15s;
 }
-.bookRow.selected { border-color: var(--primary); background: rgba(5,150,105,0.04); }
+.bookRow.selected { border-color: var(--primary); background: rgba(var(--primary-rgb),0.04); }
 .bookRow.importing { opacity: 0.6; }
 
 .bookCheck {
@@ -282,7 +282,7 @@
     font-size: 0.72rem;
     font-weight: 700;
 }
-.chipSuccess { background: rgba(0,184,148,.15); color:#00B894; }
+.chipSuccess { background: rgba(var(--primary-rgb),.15); color:var(--primary); }
 .chipError   { background: rgba(231,76,60,.12); color:#e74c3c; }
 .chipPending { background: rgba(253,203,110,.15); color:#FDCB6E; }
 

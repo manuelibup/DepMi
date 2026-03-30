@@ -152,7 +152,7 @@
     margin-top: 12px;
 }
 
-.success { color: #00B894; }
+.success { color: var(--primary); }
 .error { color: #D63031; }
 
 .sectionDivider {

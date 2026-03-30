@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-const STORE_COLORS = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
 // Cache base feed pages (no user personalization) for 30 seconds
 function getCachedFeedPage(productCursor: string | null, demandCursor: string | null, category: string | undefined, take: number) {
@@ -79,6 +79,7 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
                 commentCount: p._count.comments,
                 stock: p.stock,
                 inStock: p.inStock,
+                isDigital: p.isDigital ?? false,
             }));
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

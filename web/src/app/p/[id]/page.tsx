@@ -217,9 +217,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             )}
                         </div>
 
-                        {/* Dispatch badge */}
-                        {product.store.dispatchEnabled && product.store.pickupAddress && (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(5,150,105,0.9)', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.18)', padding: '4px 10px', borderRadius: '999px' }} title="Tracked delivery via DepMi Dispatch">
+                        {/* Digital / Dispatch badge */}
+                        {product.isDigital ? (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', background: 'rgba(255,92,56,0.08)', border: '1px solid rgba(255,92,56,0.2)', padding: '4px 10px', borderRadius: '999px' }} title="Digital product — delivered instantly after payment">
+                                ⚡ Instant Delivery
+                            </div>
+                        ) : product.store.dispatchEnabled && product.store.pickupAddress && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(var(--primary-rgb),0.9)', background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.18)', padding: '4px 10px', borderRadius: '999px' }} title="Tracked delivery via DepMi Dispatch">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="1" /><path d="M16 8h4l3 5v4h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
                                 DepMi Dispatch available
                             </div>

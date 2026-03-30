@@ -96,12 +96,12 @@ export async function notifySearchWatchers({
                     subject: `We found it: ${productTitle}`,
                     html: `
                         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-                            <h2 style="color:#FF5C38">Good news, ${escHtml(user.displayName)}!</h2>
+                            <h2 style="color:var(--primary)">Good news, ${escHtml(user.displayName)}!</h2>
                             <p>A product matching your search just dropped on DepMi:</p>
                             <h3 style="margin:0">${escHtml(productTitle)}</h3>
                             <p style="color:#666;margin:4px 0">by <strong>${escHtml(storeName)}</strong></p>
                             <p style="font-size:1.4rem;font-weight:bold;color:#111">${priceFormatted}</p>
-                            <a href="${productUrl}" style="display:inline-block;background:#FF5C38;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">View Product →</a>
+                            <a href="${productUrl}" style="display:inline-block;background:var(--primary);color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">View Product →</a>
                             <p style="margin-top:24px;color:#999;font-size:12px">You're receiving this because you set a watch on DepMi. <a href="${BASE_URL}/notifications">Manage alerts</a></p>
                         </div>
                     `,
@@ -219,10 +219,10 @@ export async function notifyRestockWatchers({
                     subject: `${productTitle} is back in stock!`,
                     html: `
                         <div style="font-family:sans-serif;max-width:480px;margin:auto">
-                            <h2 style="color:#FF5C38">It's back, ${escHtml(user.displayName)}!</h2>
+                            <h2 style="color:var(--primary)">It's back, ${escHtml(user.displayName)}!</h2>
                             <p><strong>${escHtml(productTitle)}</strong> by <strong>${escHtml(storeName)}</strong> is back in stock on DepMi.</p>
                             <p style="color:#999;font-size:13px">Don't wait — stock may go fast.</p>
-                            <a href="${productUrl}" style="display:inline-block;background:#FF5C38;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">Buy Now →</a>
+                            <a href="${productUrl}" style="display:inline-block;background:var(--primary);color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">Buy Now →</a>
                             <p style="margin-top:24px;color:#999;font-size:12px">You're receiving this because you set a watch on DepMi. <a href="${BASE_URL}/notifications">Manage alerts</a></p>
                         </div>
                     `,

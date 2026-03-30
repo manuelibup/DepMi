@@ -144,7 +144,15 @@
       "Read(//c/Users/web5Manuel/Downloads/https___depmi.com_-Coverage-2026-03-22/**)",
       "Read(//c/Users/web5Manuel/Downloads/https___depmi.com_-Performance-on-Search-2026-03-22/**)",
       "WebFetch(domain:depmi.com)",
-      "Bash(xargs -I{} env DIRECT_URL=\"{}\" npx prisma db push)"
+      "Bash(xargs -I{} env DIRECT_URL=\"{}\" npx prisma db push)",
+      "Bash(gh auth status)",
+      "Bash(git config --system credential.helper)",
+      "Bash(git config --global credential.helper)",
+      "Bash(git config --local credential.helper)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(len\\(data\\)\\)\")",
+      "Bash(sed -i 's/#FF5C38/#D9502A/g' \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/public/manifest.json\")",
+      "Bash(sed -i 's/#FF5C38/#D9502A/g' \"c:/Users/web5Manuel/OneDrive/Documents/DepMi/web/src/app/layout.tsx\")",
+      "Bash(xargs sed -i 's/#FF5C38/#C0472A/g; s/#FF8264/#D4694A/g; s/#D9502A/#C0472A/g; s/#E87050/#D4694A/g; s/#E04420/#A03520/g')"
     ],
     "additionalDirectories": [
       "c:\\Users\\web5Manuel\\OneDrive\\Documents\\DepMi\\web\\src\\app\\api\\demands\\[id]",

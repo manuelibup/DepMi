@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY', shipbubbleReqToken, shipbubbleDeliveryFee } = body
+  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY', shipbubbleReqToken, shipbubbleDeliveryFee, isDigital = false } = body
 
-  if (!productId || !deliveryAddress) {
+  if (!productId || (!isDigital && !deliveryAddress)) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
@@ -43,10 +43,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You can't buy from your own store" }, { status: 400 })
     }
 
+    const productIsDigital = isDigital || product.isDigital
     const itemPrice = Number(product.price)
     const totalItemsAmount = itemPrice * quantity
-    // Use live Shipbubble quote if provided, otherwise fall back to static product fee
-    const deliveryFee = deliveryMethod === 'PICKUP'
+    // Digital products have no delivery fee; pickup is also free
+    const deliveryFee = productIsDigital || deliveryMethod === 'PICKUP'
       ? 0
       : (shipbubbleDeliveryFee ? Number(shipbubbleDeliveryFee) : Number(product.deliveryFee || 2500))
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
@@ -93,13 +94,14 @@ export async function POST(req: NextRequest) {
           status: 'PENDING',
           escrowStatus: 'HELD',
           paymentRail: 'NAIRA',
-          deliveryAddress,
-          deliveryMethod,
+          isDigital: productIsDigital,
+          deliveryAddress: productIsDigital ? 'DIGITAL' : (deliveryAddress ?? ''),
+          deliveryMethod: productIsDigital ? 'DIGITAL' : deliveryMethod,
           deliveryNote: deliveryNote ?? null,
           demandId: demandId ?? null,
           bidId: bidId ?? null,
-          shipbubbleReqToken: shipbubbleReqToken ?? null,
-          dispatchProvider: shipbubbleReqToken ? 'shipbubble/gigl' : null,
+          shipbubbleReqToken: productIsDigital ? null : (shipbubbleReqToken ?? null),
+          dispatchProvider: (productIsDigital || !shipbubbleReqToken) ? null : 'shipbubble/gigl',
           items: {
             create: {
               productId: product.id,

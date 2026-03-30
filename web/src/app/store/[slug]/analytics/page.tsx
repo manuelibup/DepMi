@@ -160,7 +160,7 @@ export default async function StoreAnalyticsPage({
     };
     const STATUS_COLOR: Record<string, string> = {
         PENDING: '#888', CONFIRMED: '#0066FF', SHIPPED: '#FF6B35',
-        DELIVERED: '#00B894', COMPLETED: 'var(--primary)', CANCELLED: '#636E72',
+        DELIVERED: 'var(--primary)', COMPLETED: 'var(--primary)', CANCELLED: '#636E72',
         DISPUTED: '#D63031', REFUNDED: '#888',
     };
 

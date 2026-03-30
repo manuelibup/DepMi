@@ -185,8 +185,8 @@
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--primary);
-    background: rgba(5, 150, 105, 0.1);
-    border: 1px solid rgba(5, 150, 105, 0.2);
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
     padding: 3px 9px;
     border-radius: 999px;
 }
@@ -244,11 +244,11 @@
 .quickChipPrimary {
     border-color: var(--primary);
     color: var(--primary);
-    background: rgba(5, 150, 105, 0.06);
+    background: rgba(var(--primary-rgb), 0.06);
 }
 
 .quickChipPrimary:hover {
-    background: rgba(5, 150, 105, 0.12);
+    background: rgba(var(--primary-rgb), 0.12);
 }
 
 /* ── Follow row ─────────────────────────────────────────── */

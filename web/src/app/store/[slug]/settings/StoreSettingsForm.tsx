@@ -258,8 +258,8 @@ export default function StoreSettingsForm({ store }: { store: StoreData }) {
                                     onClick={() => setFormData(p => ({ ...p, pickupAddress: suggestion }))}
                                     style={{
                                         marginTop: 6,
-                                        background: 'rgba(5,150,105,0.08)',
-                                        border: '1px solid rgba(5,150,105,0.3)',
+                                        background: 'rgba(var(--primary-rgb),0.08)',
+                                        border: '1px solid rgba(var(--primary-rgb),0.3)',
                                         borderRadius: 8,
                                         color: 'var(--primary)',
                                         fontSize: '0.8rem',

@@ -22,7 +22,7 @@ export default function NotFound() {
                 <div style={{
                     fontSize: '4rem',
                     fontWeight: 900,
-                    color: 'var(--primary, #FF5C38)',
+                    color: 'var(--primary, var(--primary))',
                     lineHeight: 1,
                 }}>
                     404
@@ -50,7 +50,7 @@ export default function NotFound() {
                     <Link
                         href="/"
                         style={{
-                            background: 'var(--primary, #FF5C38)',
+                            background: 'var(--primary, var(--primary))',
                             color: '#000',
                             border: 'none',
                             padding: '12px 28px',

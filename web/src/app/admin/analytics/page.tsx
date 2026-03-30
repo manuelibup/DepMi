@@ -132,9 +132,9 @@ export default async function AnalyticsPage() {
         STORE_VIEW: '#22c55e',
         SEARCH: '#f59e0b',
         LIKE: '#ef4444',
-        SAVE: '#FF5C38',
+        SAVE: 'var(--primary)',
         BID: '#FF6B35',
-        ORDER: '#FF5C38',
+        ORDER: 'var(--primary)',
         SHARE: '#6366f1',
     };
 

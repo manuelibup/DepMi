@@ -16,7 +16,7 @@ import ProductCard from '@/components/ProductCard';
 import DemandCard from '@/components/DemandCard';
 
 const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
-const COLORS = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+const COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string, category?: string }> }) {
     const sp = await searchParams;

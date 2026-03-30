@@ -10,8 +10,10 @@ interface OrderItem {
     id: string;
     status: string;
     escrowStatus: string;
+    isDigital?: boolean;
     total: number;
     createdAt: string;
+    paidAt?: string | null;
     product: { id: string; title: string; isDigital?: boolean; fileUrl?: string | null; images: { url: string }[] };
     store?: { name: string; ownerId?: string };
     seller?: { name: string; ownerId: string };
@@ -45,6 +47,36 @@ const STATUS_LABELS: Record<string, string> = {
     REFUNDED: 'Refunded',
 };
 
+function getStatusLabel(status: string, isDigital?: boolean) {
+    if (isDigital && status === 'CONFIRMED') return 'Paid — Download Ready';
+    return STATUS_LABELS[status] ?? status;
+}
+
+function DigitalCountdown({ paidAt }: { paidAt: string | null | undefined }) {
+    const [label, setLabel] = React.useState('');
+    React.useEffect(() => {
+        if (!paidAt) return;
+        const update = () => {
+            const expiresAt = new Date(paidAt).getTime() + 48 * 60 * 60 * 1000;
+            const remaining = expiresAt - Date.now();
+            if (remaining <= 0) { setLabel('Auto-releasing now…'); return; }
+            const h = Math.floor(remaining / (1000 * 60 * 60));
+            const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            setLabel(`Auto-releases in ${h}h ${m}m`);
+        };
+        update();
+        const t = setInterval(update, 60000);
+        return () => clearInterval(t);
+    }, [paidAt]);
+    if (!label) return null;
+    return (
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {label}
+        </div>
+    );
+}
+
 const FILTER_GROUPS = [
     { label: 'All', values: [] as string[] },
     { label: 'Active', values: ['CONFIRMED', 'SHIPPED', 'DELIVERED'] },
@@ -73,9 +105,9 @@ function getStepState(stepKey: string, stepIdx: number, currentStatus: string): 
     return 'pending';
 }
 
-function Badge({ status }: { status: string }) {
+function Badge({ status, isDigital }: { status: string; isDigital?: boolean }) {
     const cls = (styles as Record<string, string>)[`badge_${status}`] || '';
-    return <span className={`${styles.badge} ${cls}`}>{STATUS_LABELS[status] ?? status}</span>;
+    return <span className={`${styles.badge} ${cls}`}>{getStatusLabel(status, isDigital)}</span>;
 }
 
 function OrderRow({ order, selected, role, onClick }: {
@@ -104,7 +136,7 @@ function OrderRow({ order, selected, role, onClick }: {
                 <p className={styles.rowMeta}>#{shortId} · {who}</p>
                 <div className={styles.rowBottom}>
                     <span className={styles.rowAmount}>₦{order.total.toLocaleString()}</span>
-                    <Badge status={order.status} />
+                    <Badge status={order.status} isDigital={order.isDigital || order.product.isDigital} />
                     <span className={styles.rowDate}>{new Date(order.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}</span>
                 </div>
             </div>
@@ -344,6 +376,10 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                             </div>
                         )}
 
+                        {(order.isDigital || order.product.isDigital) && localStatus === 'CONFIRMED' && (
+                            <DigitalCountdown paidAt={order.paidAt} />
+                        )}
+
                         {order.product.isDigital && order.product.fileUrl && ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(localStatus) && (
                             <a
                                 href={order.product.fileUrl}
@@ -391,7 +427,14 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                             </div>
                         )}
                         {['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(localStatus) && order.product.isDigital && (
-                            <div className={styles.infoBanner}><p><strong>Payment confirmed.</strong> Your download link is ready above.</p></div>
+                            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                <div className={styles.infoBanner}><p><strong>Payment confirmed.</strong> Your download link is ready above. Escrow auto-releases in 48h.</p></div>
+                                {localStatus === 'CONFIRMED' && (
+                                    <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => setModal('dispute')} disabled={loading} style={{ width: '100%' }}>
+                                        Open Dispute
+                                    </button>
+                                )}
+                            </div>
                         )}
 
                         {localStatus === 'COMPLETED' && !hasReviewed && (
@@ -406,7 +449,12 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                 {/* Seller actions */}
                 {role === 'seller' && (
                     <div className={styles.actionZone}>
-                        {localStatus === 'CONFIRMED' && (
+                        {localStatus === 'CONFIRMED' && (order.isDigital || order.product.isDigital) && (
+                            <div className={styles.infoBanner}>
+                                <p><strong>Digital product sold.</strong> Buyer has download access. Escrow auto-releases in 48h if no dispute.</p>
+                            </div>
+                        )}
+                        {localStatus === 'CONFIRMED' && !(order.isDigital || order.product.isDigital) && (
                             <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setModal('ship')} disabled={loading}>
                                 Mark as Shipped
                             </button>

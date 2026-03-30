@@ -123,7 +123,7 @@
 
 .budgetValue {
     font-size: 1.2rem;
-    color: #00B894;
+    color: var(--primary);
     font-weight: 800;
 }
 
@@ -199,7 +199,7 @@
 }
 
 .tabBadgeActive {
-    background: rgba(5, 150, 105, 0.12);
+    background: rgba(var(--primary-rgb), 0.12);
     color: var(--primary);
 }
 
@@ -347,10 +347,10 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #00B894;
+    color: var(--primary);
     font-weight: 600;
     font-size: 0.95rem;
-    background: rgba(0, 184, 148, 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
     padding: 16px;
     border-radius: var(--radius-md);
 }
@@ -392,7 +392,7 @@
 
 .bidPrice {
     font-weight: 800;
-    color: #00B894;
+    color: var(--primary);
 }
 
 .bidProposal {
@@ -529,9 +529,9 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: rgba(5, 150, 105, 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
     color: var(--primary);
-    border: 1px solid rgba(5, 150, 105, 0.25);
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
     border-radius: 6px;
     padding: 1px 7px 1px 5px;
     font-size: 0.8rem;
@@ -541,7 +541,7 @@
 }
 
 .productMention:hover {
-    background: rgba(5, 150, 105, 0.18);
+    background: rgba(var(--primary-rgb), 0.18);
 }
 
 /* Inline user mention */
@@ -725,7 +725,7 @@
 }
 
 .pickerItem:hover {
-    background: rgba(5, 150, 105, 0.08);
+    background: rgba(var(--primary-rgb), 0.08);
 }
 
 .pickerTitle {
@@ -900,7 +900,7 @@
 .bidAskBtn:hover {
     color: var(--primary);
     border-color: var(--primary);
-    background: rgba(5, 150, 105, 0.06);
+    background: rgba(var(--primary-rgb), 0.06);
 }
 
 .bidMsgBtn:hover {

@@ -80,8 +80,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(5, 150, 105, 0.12);
-    border: 1px solid rgba(5, 150, 105, 0.3);
+    background: rgba(var(--primary-rgb), 0.12);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
     color: var(--primary);
     font-size: 0.75rem;
     font-weight: 700;
@@ -203,7 +203,7 @@
     transform: translate(-50%, -50%);
     width: 480px;
     height: 480px;
-    background: radial-gradient(circle, rgba(5,150,105,0.18) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-rgb),0.18) 0%, transparent 70%);
     filter: blur(30px);
     z-index: 1;
     pointer-events: none;
@@ -300,15 +300,15 @@
 }
 
 .stepCard:hover {
-    border-color: rgba(5,150,105,0.3);
+    border-color: rgba(var(--primary-rgb),0.3);
 }
 
 .stepNumber {
     font-size: 0.7rem;
     font-weight: 800;
     color: var(--primary);
-    background: rgba(5,150,105,0.12);
-    border: 1px solid rgba(5,150,105,0.25);
+    background: rgba(var(--primary-rgb),0.12);
+    border: 1px solid rgba(var(--primary-rgb),0.25);
     border-radius: 999px;
     width: 28px;
     height: 28px;
@@ -357,15 +357,15 @@
 }
 
 .splitCardSeller {
-    background: rgba(5,150,105,0.06);
-    border: 1px solid rgba(5,150,105,0.2);
+    background: rgba(var(--primary-rgb),0.06);
+    border: 1px solid rgba(var(--primary-rgb),0.2);
 }
 
 .splitIcon {
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: rgba(5,150,105,0.12);
+    background: rgba(var(--primary-rgb),0.12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -422,8 +422,8 @@
 
 /* ── Escrow section ── */
 .escrowSection {
-    background: rgba(5,150,105,0.06);
-    border: 1px solid rgba(5,150,105,0.2);
+    background: rgba(var(--primary-rgb),0.06);
+    border: 1px solid rgba(var(--primary-rgb),0.2);
     border-radius: 28px;
     padding: 64px 60px;
     display: flex;
@@ -437,7 +437,7 @@
     width: 80px;
     height: 80px;
     border-radius: 999px;
-    background: rgba(5,150,105,0.12);
+    background: rgba(var(--primary-rgb),0.12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -491,7 +491,7 @@
 }
 
 .escrowArrow {
-    color: rgba(5,150,105,0.6);
+    color: rgba(var(--primary-rgb),0.6);
     font-size: 1.2rem;
     font-weight: 700;
 }
@@ -521,7 +521,7 @@
 }
 
 .categoryChip:hover {
-    border-color: rgba(5,150,105,0.4);
+    border-color: rgba(var(--primary-rgb),0.4);
     color: #fff;
 }
 

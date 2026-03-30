@@ -28,6 +28,7 @@ export default async function OrdersPage() {
                 include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             seller: { select: { name: true, ownerId: true } },
+            payment: { select: { paidAt: true } },
             review: { select: { id: true } }
         }
     });
@@ -40,7 +41,8 @@ export default async function OrdersPage() {
             items: {
                 include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
-            buyer: { select: { displayName: true, username: true } }
+            buyer: { select: { displayName: true, username: true } },
+            payment: { select: { paidAt: true } },
         }
     }) : [];
 
@@ -50,8 +52,10 @@ export default async function OrdersPage() {
         id: o.id,
         status: o.status,
         escrowStatus: o.escrowStatus,
+        isDigital: o.isDigital ?? false,
         total: Number(o.totalAmount),
         createdAt: o.createdAt.toISOString(),
+        paidAt: o.payment?.paidAt ? o.payment.paidAt.toISOString() : null,
         paystackRef: o.paystackRef || null,
         trackingNo: o.trackingNo || undefined,
         deliveryMethod: o.deliveryMethod || undefined,

@@ -16,7 +16,7 @@ import FeedInfiniteScroll from '@/components/FeedInfiniteScroll';
 import type { FeedItem } from '@/components/FeedInfiniteScroll';
 import RightSidebar from '@/components/RightSidebar';
 
-const STORE_COLORS = ['#1A1D1F', '#0984E3', '#00B894', '#D63031', '#6C5CE7', '#E17055'];
+const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 const INITIAL_TAKE = 10;
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {

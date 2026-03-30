@@ -40,7 +40,7 @@ export default function StoreShareButton({ storeName, storeSlug, location }: Pro
             title={flash ? 'Link copied!' : 'Share store'}
             style={{
                 color: flash ? 'var(--primary)' : '#fff',
-                background: flash ? 'rgba(5,150,105,0.2)' : 'rgba(0,0,0,0.3)',
+                background: flash ? 'rgba(var(--primary-rgb),0.2)' : 'rgba(0,0,0,0.3)',
                 padding: '6px',
                 borderRadius: '50%',
                 display: 'flex',

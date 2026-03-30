@@ -81,7 +81,7 @@
 .btn {
     width: 100%;
     padding: 12px;
-    background: var(--primary, #FF5C38);
+    background: var(--primary, var(--primary));
     color: #fff;
     border: none;
     border-radius: 8px;
