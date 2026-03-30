@@ -24,6 +24,7 @@ export default async function StoreSettingsPage({ params }: { params: Promise<{ 
             location: true, logoUrl: true, bannerUrl: true, isActive: true,
             localDeliveryFee: true, nationwideDeliveryFee: true,
             dispatchEnabled: true, pickupAddress: true,
+            storeState: true,
             feeWaiverUntil: true,
         },
     });
