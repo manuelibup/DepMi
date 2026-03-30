@@ -74,7 +74,7 @@ export default function PushPrompt() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <button onClick={subscribe} style={{
-                    background: '#059669', color: '#000', border: 'none', borderRadius: 8,
+                    background: '#FF5C38', color: '#000', border: 'none', borderRadius: 8,
                     padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
                 }}>Allow</button>
                 <button onClick={dismiss} style={{

@@ -40,9 +40,9 @@ const labelStyle: React.CSSProperties = {
 function StatusBanner({ status }: { status: string }) {
     if (status === 'VERIFIED') return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.25)', borderRadius: '12px', padding: '14px 16px' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF5C38" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
             <div>
-                <p style={{ margin: 0, fontWeight: 700, color: '#059669', fontSize: '0.95rem' }}>Verified Store</p>
+                <p style={{ margin: 0, fontWeight: 700, color: '#FF5C38', fontSize: '0.95rem' }}>Verified Store</p>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your store displays the verified badge on your storefront.</p>
             </div>
         </div>
@@ -128,7 +128,7 @@ export default function VerificationForm({ slug, initial }: Props) {
                 </p>
                 {cacDocUrl ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: '10px', padding: '10px 14px' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5C38" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, flex: 1 }}>Document uploaded</span>
                         {!isLocked && (
                             <button onClick={() => setCacDocUrl('')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 6px' }}>

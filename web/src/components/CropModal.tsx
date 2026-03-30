@@ -66,7 +66,7 @@ export default function CropModal({ imageSrc, aspectRatio, onDone, onCancel, tit
                     onClick={handleDone}
                     disabled={processing}
                     style={{
-                        background: 'var(--primary, #059669)', border: 'none',
+                        background: 'var(--primary, #FF5C38)', border: 'none',
                         color: '#000', fontSize: '0.95rem', fontWeight: 700,
                         cursor: processing ? 'not-allowed' : 'pointer',
                         padding: '6px 16px', borderRadius: '20px',
@@ -91,7 +91,7 @@ export default function CropModal({ imageSrc, aspectRatio, onDone, onCancel, tit
                         onCropComplete={onCropComplete}
                         style={{
                             containerStyle: { background: '#000' },
-                            cropAreaStyle: { borderColor: 'var(--primary, #059669)' },
+                            cropAreaStyle: { borderColor: 'var(--primary, #FF5C38)' },
                         }}
                     />
                 </div>
@@ -113,7 +113,7 @@ export default function CropModal({ imageSrc, aspectRatio, onDone, onCancel, tit
                         min={1} max={3} step={0.01}
                         value={zoom}
                         onChange={(e) => setZoom(Number(e.target.value))}
-                        style={{ flex: 1, accentColor: 'var(--primary, #059669)', cursor: 'pointer' }}
+                        style={{ flex: 1, accentColor: 'var(--primary, #FF5C38)', cursor: 'pointer' }}
                     />
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                 </div>
@@ -140,7 +140,7 @@ export default function CropModal({ imageSrc, aspectRatio, onDone, onCancel, tit
                     <button
                         type="button"
                         onClick={() => setFlipH(f => !f)}
-                        style={{ ...btnStyle, ...(flipH ? { color: 'var(--primary, #059669)' } : {}) }}
+                        style={{ ...btnStyle, ...(flipH ? { color: 'var(--primary, #FF5C38)' } : {}) }}
                         title="Flip horizontal"
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

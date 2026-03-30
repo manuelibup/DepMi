@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
-  --primary: #059669;
-  --primary-dark: #047857;
-  --primary-light: #10b981;
-  --primary-glow: rgba(5, 150, 105, 0.25);
+  --primary: #FF5C38;
+  --primary-dark: #E04420;
+  --primary-light: #FF8264;
+  --primary-glow: rgba(255, 92, 56, 0.25);
   --accent-gold: #FFD600;
   --accent-gold-light: rgba(255, 214, 0, 0.15);
 
-  --bg-color: #F4F5F7;
+  --bg-color: #FFF8F6;
   --bg-elevated: #FFFFFF;
   --card-bg: #FFFFFF;
   --card-bg-glass: rgba(255, 255, 255, 0.72);
@@ -42,7 +42,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #000000;
+    --bg-color: #0F0F0F;
     --bg-elevated: #0F1116;
     --card-bg: #0F1116;
     --card-bg-glass: rgba(15, 17, 22, 0.78);

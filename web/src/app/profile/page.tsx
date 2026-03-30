@@ -12,15 +12,20 @@ export default async function ProfileRedirectPage() {
     }
 
     // Look up username in case session token is stale
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { username: true }
-    });
+    let username = session.user.username ?? null;
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { username: true }
+        });
+        username = user?.username ?? username;
+    } catch {
+        // DB unavailable — fall back to session token value
+    }
 
-    if (!user?.username) {
-        // Username not set yet — send to onboarding
+    if (!username) {
         redirect('/onboarding');
     }
 
-    redirect(`/u/${user.username}`);
+    redirect(`/u/${username}`);
 }

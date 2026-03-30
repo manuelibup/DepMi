@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#FF5C38">
+  <defs>
+    <!-- Geometric mask for e mouth slice -->
+    <mask id="e-cut">
+      <rect width="1000" height="1000" fill="white"/>
+      <rect x="229.5" y="331" width="100" height="8" fill="black"/> 
+    </mask>
+    <!-- Geometric mask for m arches -->
+    <mask id="m-cut">
+      <rect width="1000" height="1000" fill="white"/>
+      <rect x="350" y="319.5" width="250" height="100" fill="black"/> 
+    </mask>
+  </defs>
+
+  <!-- d (Geometric O on a stick) -->
+  <path fill-rule="evenodd" d="M 124.5,275 A 44.5,44.5 0 1,0 124.5,364 A 44.5,44.5 0 1,0 124.5,275 Z M 124.5,298 A 21.5,21.5 0 1,1 124.5,341 A 21.5,21.5 0 1,1 124.5,298 Z"/>
+  <polygon points="146,224 169,201 169,319.5 146,319.5"/>
+
+  <!-- e -->
+  <g mask="url(#e-cut)">
+    <path fill-rule="evenodd" d="M 229.5,275 A 44.5,44.5 0 1,0 229.5,364 A 44.5,44.5 0 1,0 229.5,275 Z M 229.5,298 A 21.5,21.5 0 1,1 229.5,341 A 21.5,21.5 0 1,1 229.5,298 Z"/>
+    <rect x="208" y="308" width="43" height="23"/>
+  </g>
+
+  <!-- p (Geometric O on a stick) -->
+  <path fill-rule="evenodd" d="M 333.5,275 A 44.5,44.5 0 1,0 333.5,364 A 44.5,44.5 0 1,0 333.5,275 Z M 333.5,298 A 21.5,21.5 0 1,1 333.5,341 A 21.5,21.5 0 1,1 333.5,298 Z"/>
+  <polygon points="289,319.5 312,319.5 312,414 289,437"/>
+
+  <!-- m -->
+  <g mask="url(#m-cut)">
+    <path fill-rule="evenodd" d="M 431.25,281.25 A 38.25,38.25 0 1,0 431.25,357.75 A 38.25,38.25 0 1,0 431.25,281.25 Z M 431.25,304.25 A 15.25,15.25 0 1,1 431.25,334.75 A 15.25,15.25 0 1,1 431.25,304.25 Z"/>
+    <path fill-rule="evenodd" d="M 484.75,281.25 A 38.25,38.25 0 1,0 484.75,357.75 A 38.25,38.25 0 1,0 484.75,281.25 Z M 484.75,304.25 A 15.25,15.25 0 1,1 484.75,334.75 A 15.25,15.25 0 1,1 484.75,304.25 Z"/>
+  </g>
+  <rect x="393" y="319.5" width="23" height="44.5"/>
+  <rect x="446.5" y="319.5" width="23" height="44.5"/>
+  <rect x="500" y="319.5" width="23" height="44.5"/>
+
+  <!-- i -->
+  <rect x="537" y="275" width="23" height="89"/>
+  <circle cx="548.5" cy="253.5" r="11.5"/>
+</svg>

@@ -60,7 +60,7 @@ const TIER_COLOR: Record<string, string> = {
     SEEDLING: '#aaa',
     RISING: '#FFD700',
     TRUSTED: '#FF6B35',
-    ELITE: '#059669',
+    ELITE: '#FF5C38',
     LEGEND: '#A855F7',
 };
 

@@ -230,7 +230,7 @@ export default function PayoutForm({ slug, initial }: Props) {
                     <span style={{ fontSize: '0.9rem', color: '#e74c3c' }}>{resolveError}</span>
                 ) : accountName ? (
                     <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5C38" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>{accountName}</span>

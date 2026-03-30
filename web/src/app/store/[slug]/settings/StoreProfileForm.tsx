@@ -126,8 +126,8 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
                     {bannerUrl ? (
                         <Image src={bannerUrl} alt="Banner" fill style={{ objectFit: 'cover' }} sizes="440px" />
                     ) : (
-                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '0.8rem', color: 'rgba(0,0,0,0.4)', fontWeight: 600 }}>No banner</span>
+                        <div style={{ width: '100%', height: '100%', background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>No banner</span>
                         </div>
                     )}
                 </div>

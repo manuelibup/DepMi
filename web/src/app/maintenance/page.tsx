@@ -15,7 +15,7 @@ const socialCardStyle = `
     transition: border-color 0.2s, color 0.2s;
 }
 .social-card:hover {
-    border-color: #059669;
+    border-color: #FF5C38;
     color: #fff;
 }
 `;
@@ -73,9 +73,9 @@ export default function MaintenancePage() {
         }}>
             {/* Warning icon */}
             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ marginBottom: '24px' }}>
-                <path d="M24 4L44 40H4L24 4Z" fill="#059669" opacity="0.15" stroke="#059669" strokeWidth="2"/>
-                <path d="M24 18V26" stroke="#059669" strokeWidth="2.5" strokeLinecap="round"/>
-                <circle cx="24" cy="32" r="1.5" fill="#059669"/>
+                <path d="M24 4L44 40H4L24 4Z" fill="#FF5C38" opacity="0.15" stroke="#FF5C38" strokeWidth="2"/>
+                <path d="M24 18V26" stroke="#FF5C38" strokeWidth="2.5" strokeLinecap="round"/>
+                <circle cx="24" cy="32" r="1.5" fill="#FF5C38"/>
             </svg>
 
             {/* Headline */}
@@ -87,7 +87,7 @@ export default function MaintenancePage() {
             </p>
 
             {/* Divider */}
-            <div style={{ width: '40px', height: '2px', background: '#059669', borderRadius: '2px', marginBottom: '40px', opacity: 0.6 }} />
+            <div style={{ width: '40px', height: '2px', background: '#FF5C38', borderRadius: '2px', marginBottom: '40px', opacity: 0.6 }} />
 
             {/* Mission statement */}
             <p style={{ fontSize: '13px', color: '#555', maxWidth: '300px', lineHeight: 1.7, margin: '0 0 40px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -121,10 +121,10 @@ export default function MaintenancePage() {
                     alignItems: 'center',
                     gap: '6px',
                     fontSize: '13px',
-                    color: '#059669',
+                    color: '#FF5C38',
                     textDecoration: 'none',
                     marginBottom: '32px',
-                    borderBottom: '1px solid #059669',
+                    borderBottom: '1px solid #FF5C38',
                     paddingBottom: '2px',
                 }}
             >
@@ -138,7 +138,7 @@ export default function MaintenancePage() {
                     display: 'inline-block',
                     padding: '12px 28px',
                     borderRadius: '10px',
-                    background: '#059669',
+                    background: '#FF5C38',
                     color: '#fff',
                     textDecoration: 'none',
                     fontSize: '14px',
@@ -153,7 +153,7 @@ export default function MaintenancePage() {
             {/* Footer note */}
             <p style={{ fontSize: '12px', color: '#333' }}>
                 Questions? DM us on Instagram{' '}
-                <a href="https://instagram.com/depmidotcom" style={{ color: '#059669', textDecoration: 'none' }}>
+                <a href="https://instagram.com/depmidotcom" style={{ color: '#FF5C38', textDecoration: 'none' }}>
                     @depmidotcom
                 </a>
             </p>

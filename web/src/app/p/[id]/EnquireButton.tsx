@@ -45,7 +45,7 @@ export default function EnquireButton({ productId, targetUserId, style, text }: 
             style={{
                 display: 'block', width: '100%', padding: '16px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)',
+                background: 'linear-gradient(135deg, var(--primary) 0%, #FF8264 100%)',
                 color: '#000', fontWeight: 700, fontSize: '1rem',
                 border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
                 textAlign: 'center', opacity: loading ? 0.7 : 1,

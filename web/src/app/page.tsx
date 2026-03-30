@@ -45,7 +45,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     demandWhere.category = category as string;
   }
 
-  const [rawProducts, rawDemands, topStores] = await Promise.all([
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let rawProducts: any[] = [], rawDemands: any[] = [], topStores: any[] = [];
+  try {
+  [rawProducts, rawDemands, topStores] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma.product as any).findMany({
       where: productWhere,
@@ -84,6 +87,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       select: { id: true, name: true, slug: true, logoUrl: true, depCount: true },
     }),
   ]);
+  } catch { /* DB unavailable — render empty feed */ }
 
   // Serialize products → FeedItem[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -186,7 +186,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             ) : product.inStock ? (
                                 <Link
                                     href={'/checkout/' + product.id}
-                                    style={{ display: 'block', width: '100%', padding: '16px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--primary) 0%, #34d399 100%)', color: '#000', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', textAlign: 'center' }}
+                                    style={{ display: 'block', width: '100%', padding: '16px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--primary) 0%, #FF8264 100%)', color: '#000', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', textAlign: 'center' }}
                                 >
                                     Buy via Escrow
                                 </Link>
