@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 // Routes that require authentication (unauthenticated users → /login)
 const AUTH_REQUIRED = [
