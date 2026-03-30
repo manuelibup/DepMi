@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
                 destination: '/:username',
                 permanent: true,
             },
+            // /home is not a valid route — redirect to homepage
+            {
+                source: '/home',
+                destination: '/',
+                permanent: true,
+            },
         ];
     },
     images: {
