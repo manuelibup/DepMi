@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 :root {
-  --primary: #FF5C38;
+  --primary: var(--primary);
+  --primary-rgb: 255, 92, 56;
   --primary-dark: #E04420;
   --primary-light: #FF8264;
-  --primary-glow: rgba(255, 92, 56, 0.25);
+  --primary-glow: rgba(var(--primary-rgb), 0.25);
   --accent-gold: #FFD600;
   --accent-gold-light: rgba(255, 214, 0, 0.15);
 

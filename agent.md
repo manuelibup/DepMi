@@ -218,7 +218,9 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ### **Phase 3+ Extensions (Sessions 52–58)** ✅ *Complete.*
 *   **Admin Dashboard** (`/admin/*`): Role-based access control via `adminRole` JWT field. Roles: `SUPER_ADMIN`, `ADMIN`, `MODERATOR`. Features: metrics overview, DAU chart (via `ActivityPing` + `lastActiveAt`), signups chart, commerce KPIs, GMV, escrow balance (DB-aggregate), dispute queue with inline resolution, user/store management (ban/verify/suspend), referral system (global + per-user toggle, reward %, duration), admin management.
 *   **Referral System**: `ReferralConfig` (singleton), `ReferralCode`, `ReferralTransaction` models. Code captured at registration (`?ref=CODE`), qualified on first completed order, payout stub wired to Flutterwave (Phase 4).
-*   **Seller Fee Waiver**: `Store.feeWaiverUntil DateTime?`. New stores get 90 days at 0% platform fee automatically. Order confirm route checks waiver before applying 5% fee.
+*   **Seller Fee Waiver**: `Store.feeWaiverUntil DateTime?`. New stores get **30 days** at 0% platform fee automatically (reduced from 90 days, Session 85). Countdown banner on settings page. Order confirm route checks waiver before applying 5% fee.
+*   **Digital Products (Session 85)**: `Order.isDigital Boolean @default(false)`. Checkout bypasses address/dispatch for digital orders. 48h escrow auto-release via `/api/cron/auto-release-digital` (hourly, `Bearer CRON_SECRET` — **register on cron-job.org**). Orders UI: "Paid — Download Ready" status + live countdown. ProductCard + product detail show "⚡ Instant Delivery" badge.
+*   **OG Images (Session 85)**: Dynamic `/api/og` edge route (1200×630 coral `ImageResponse`). Used for all OG + Twitter card meta images.
 *   **Orders UI Redesign**: Two-panel layout at ≥900px (order list + detail with timeline). Mobile: tap-to-detail with back button. Filter chips by status group.
 *   **Bookstore Importer** (`/store/[slug]/products/import`): ISBN lookup (Open Library + Google Books), AI catalog parse (Claude Haiku via `/api/catalog/ai-parse`), bulk create via `/api/catalog/import`. Merges and supersedes the older `/store/[slug]/ai-import` and `/store/[slug]/import` pages.
 *   **DAU Tracking**: `ActivityPing` client component fires on mount → `POST /api/activity/ping` → updates `User.lastActiveAt` (rate-limited to once/hour).
@@ -377,7 +379,8 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 ## 3. Brand Identity (Tech + Culture)
 
 ### Visual Strategy
-- **Primary Color:** Vibrant Green (#00C853) — Represents money, growth, and trust.
+- **Primary Color:** Electric Coral (#FF5C38) — Represents vibrant energy, speed, and modern African commerce.
+- **Dark Mode Background:** Midnight (#0F0F0F) — Premium, deep contrast standard.
 - **Accent Color:** Gold (#FFD600) — Reserved for Legend/Premium status.
 - **Design Motif:** "Tech-Weave" — Geometric, sharp UI with subtle African basket-weave patterns.
 
@@ -557,3 +560,10 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 8. **Webhook endpoints must always validate the provider signature** (e.g., `verif-hash` for Flutterwave) before touching the database.
 9. **User-generated content in emails must be HTML-escaped.** Use `escHtml()` for display names, product titles, and any user-controlled strings in email templates.
 10. **Never remove safety fallback lookups in payment code** without explicit approval. Payment reconciliation must be resilient to format changes.
+### Visual Identity Rules
+- **Logo System**: The app uses two fundamental SVG assets residing in `web/public`:
+  - `depmi-logo.svg`: The isolated map-pin/arrow icon. Features a transparent open gap at the top right, created using strict geometrical mask booleans.
+  - `depmi-wordmark.svg`: The full spelled out lowercase brand typography. It must STRICTLY use the "o-on-a-stick" methodology (perfect circular bowls constructed via evenodd circular paths, fused with straight geometric rectangles and polygon slants). DO NOT use manual bezier curves for these elements; they lead to distortion.
+    - **Monolinear Purity**: Stems MUST terminate exactly at the bowl equators to ensure the round components are exclusively formed by the un-intersected circle strokes (ensuring perfect roundness inside and out).
+    - **Arch Geometries**: Arches (like the `m`) use ellipses (`ry=44.5`, `rx=38.25`) to bridge x-heights without deep structural V-notches.
+    - **e Terminal**: Use a clean horizontal wedge cut (`8px` gap) to ensure the lower mouth blooms naturally without fat vertical chunking.

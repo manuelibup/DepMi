@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   description:
     "Buy Here. Build Here. Grow Here. DepMi is the social commerce platform for African entrepreneurs.",
   icons: {
-    icon: '/depmi-logo.svg',
+    icon: '/depmi-app-icon.png',
+    apple: '/depmi-app-icon.png',
   },
   manifest: '/manifest.json',
   alternates: {
@@ -27,13 +28,13 @@ export const metadata: Metadata = {
     siteName: "DepMi",
     type: "website",
     url: 'https://depmi.com',
-    images: [{ url: '/depmi-logo-text-dark.png', width: 1200, height: 630, alt: 'DepMi logo' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'DepMi — Social Commerce for Africa' }],
   },
   twitter: {
     card: "summary_large_image",
     title: "DepMi — Social Commerce for Africa",
     description: "The social commerce platform for African entrepreneurs.",
-    images: ['/depmi-logo-text-dark.png'],
+    images: ['/api/og'],
   },
   verification: {
     google: 'OMgUtc-qD_n_okTc01Tjs-i-5swsdYK0qif7NH7H-jU',
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FF5C38",
+  themeColor: "var(--primary)",
   width: "device-width",
   initialScale: 1,
 };
@@ -71,9 +72,9 @@ export default function RootLayout({
                   "url": "https://depmi.com",
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://depmi.com/depmi-logo.png",
-                    "width": 512,
-                    "height": 512
+                    "url": "https://depmi.com/depmi-app-icon.png",
+                    "width": 1000,
+                    "height": 1000
                   },
                   "image": "https://depmi.com/depmi-logo-text-dark.png",
                   "description": "DepMi is Nigeria's social commerce marketplace. Buy, sell and discover products with built-in escrow, demand-driven bidding, and trust scores for buyers and sellers.",

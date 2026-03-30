@@ -1,4 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 191 500 250" fill="#FF5C38">
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1200" fill="none">
+  <!-- Map Pin Center Top -->
+  <g transform="translate(70.72, 90.58) scale(0.8)">
+    
+  <defs>
+    <!-- Mask to create the "arrow" gap at the top right -->
+    <mask id="gap-cut">
+      <rect width="1000" height="1000" fill="white" />
+      <rect x="550" y="0" width="90" height="500" fill="black" />
+    </mask>
+  </defs>
+
+  <g fill="#FF5C38">
+    <path mask="url(#gap-cut)" fill-rule="evenodd" d="
+      M 323.22 676.78
+      L 500 853.55
+      L 676.78 676.78
+      A 250 250 0 1 0 323.22 676.78
+      Z
+      
+      M 500 360
+      A 140 140 0 0 1 500 640
+      A 140 140 0 0 1 500 360
+      Z
+    "/>
+    
+    <!-- Vertical Ascender Stem: EXTENDED from y=150 to y=50 so it's incredibly prominent -->
+    <rect x="640" y="50" width="110" height="450"/>
+    
+    <circle cx="500" cy="500" r="55"/>
+  </g>
+
+  </g>
+  <!-- Wordmark Center Bottom -->
+  <g transform="translate(179, 632.42)" fill="#FFFFFF">
+    
   <defs>
     <!-- Geometric mask for e mouth slice -->
     <mask id="e-cut">
@@ -38,4 +74,6 @@
   <!-- i -->
   <rect x="537" y="285" width="23" height="79"/>
   <circle cx="548.5" cy="253.5" r="13.5"/>
+
+  </g>
 </svg>

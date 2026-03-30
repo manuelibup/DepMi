@@ -1,6 +1,9 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 85 — Mar 30, 2026 — Digital Products, OG Images & Fee Waiver](#session-85--mar-30-2026--digital-products-og-images--fee-waiver)
+- [Session 85 — Mar 30, 2026 — Monolinear Typography Sync](#session-85--mar-30-2026--monolinear-typography-sync)
+- [Session 84 — Mar 30, 2026 — Hardcoded Green Purge & UI Flexibility](#session-84--mar-30-2026--hardcoded-green-purge--ui-flexibility)
 - [Session 83 — Mar 30, 2026 — Coral Rebrand Live + UX Cleanup](#session-83--mar-30-2026--coral-rebrand-live--ux-cleanup)
 - [Session 82 — Mar 30, 2026 — Wordmark Finetuning](#session-82--mar-30-2026--wordmark-finetuning)
 - [Session 81 — Mar 30, 2026 — Exact Wordmark Vectorization](#session-81--mar-30-2026--exact-wordmark-vectorization)
@@ -64,6 +67,62 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 85 — Mar 30, 2026 — Digital Products, OG Images & Fee Waiver
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What Was Done
+- **Dynamic OG image** — Created `/api/og` edge route (`ImageResponse`, 1200×630) with coral brand; updated `layout.tsx` to use it for OG + Twitter card images
+- **Fee waiver reduced** — New store fee waiver window: 90 days → **30 days** in `api/store/create/route.ts`
+- **Fee waiver countdown banner** — Settings page shows coral banner "🎁 Free selling active · X days remaining" when waiver is active
+- **Digital product UX — full end-to-end:**
+  - `Order.isDigital Boolean @default(false)` + `Store.cryptoPaymentsEnabled` recovered → schema pushed via `npm run db:push`
+  - Checkout: skips address validation for digital, zero delivery fee, sets `deliveryMethod: 'DIGITAL'`
+  - Flutterwave webhook: digital-aware seller notification + skips Shipbubble dispatch booking
+  - `/api/cron/auto-release-digital` cron handler: finds CONFIRMED digital orders 48h+ old, initiates Flutterwave payout, awards Dep to buyer+seller, sends notifications — auth: `Bearer CRON_SECRET`
+  - Orders dashboard: `getStatusLabel()` shows "Paid — Download Ready" for digital CONFIRMED; `DigitalCountdown` live countdown (1-min interval) from `paidAt + 48h`; seller hides "Mark as Shipped", shows "escrow auto-releases in 48h" info banner
+  - ProductCard: "⚡ Instant Delivery" coral pill badge when `isDigital === true`
+  - Product detail page: "⚡ Instant Delivery" badge replaces Dispatch badge for digital products
+
+### Pending / Next
+- Register new cron on cron-job.org: `GET https://depmi.com/api/cron/auto-release-digital`, hourly, `Authorization: Bearer <CRON_SECRET>`
+- Analytics confirmed fully wired since Session 69 — nothing to do
+- DepMi Rider feature deferred (post-500 users)
+
+---
+
+## Session 85 — Mar 30, 2026 — Monolinear Typography Sync
+
+**Agent:** Antigravity (Deepmind)
+**Human:** Manuel
+
+### What Was Done
+- **Absolute Round Bowls (`d` & `p`):** The stems for `d` and `p` had previously protruded downwards to the baseline and upwards to the x-height respectively. Fully retracted the stems so they terminate *exactly* at the bowl equator (`y=319.5`), allowing the inner and outer circles of the bowl to round out perfectly organically without jutting artifacts.
+- **Terminal Slant Correction:** Inverted the slant angles back into their proper `left is higher` matching orientations (`/`). The `d` now slants down from left to right at the top tip, and the `p` slants up from right to left at the bottom tip.
+- **`e` Blooming Terminal:** Handled the `e`'s horizontal geometric base by replacing the stilted vertical cutoff with an elongated horizontal wedge cutout mask (`y=331` to `y=339`) that leaves a beautiful, long blooming lower lip terminating horizontally inline with classic geometric monolinear sans-serif conventions.
+- **`m` Arch Ellipses:** Transformed the strictly circular `m` arches into pure ellipses (`ry=44.5`) to perfectly reach the x-height (`y=275`) while naturally flattening out the overly-deep structural V-notch where the arches meet.
+- **`i` Dot Readability:** Reduced the `i` stem height by 10px and expanded the dot radius to 13.5 to create essential visual breathing room.
+- **Asset Export:** Regenerated `public/depmi-wordmark.png` locally via `sharp` utilizing the perfected geometric SVGs.
+
+---
+
+## Session 84 — Mar 30, 2026 — Hardcoded Green Purge & UI Flexibility
+
+**Agent:** Antigravity (Deepmind)
+**Human:** Manuel
+
+### What Was Done
+- **Brand Complete Purge (RGBA & Hex):** Tracked down massive residual legacy Green (`#00B894`, `#059669`) that was hiding as low-opacity RGBA variants (`rgba(5, 150, 105, x)`) inside localized React styles and CSS modules.
+- **Dynamic CSS Variables Core:** Rewrote the entire front-end ecosystem (45+ files) using a specialized Node script to completely map all hardcoded RGBA and Hex brand strings directly to `var(--primary)` and `rgba(var(--primary-rgb), X)`.
+- **Global `globals.css` Upgrade:** Introduced `--primary-rgb: 255, 92, 56;` to `globals.css` to allow all dynamic opacity layers across components (like "DepMi Dispatch", "Seedling" badges, and Request Dashboards) to inherit the central brand color natively.
+- **Z-Index Unblocking:** Upgraded the QR Code Share modal (`QRCodeButton/index.tsx`) to utilize React `createPortal()`, successfully breaking it out of the local fixed stacking contexts (like Profile Tabs) so it always renders on the absolute top of the screen un-obstructed.
+
+### Validations
+- Git committed and pushed the UI refactoring cleanly to origin.
 
 ---
 

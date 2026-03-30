@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 
 interface Props {
@@ -8,7 +9,7 @@ interface Props {
     label: string;
 }
 
-const CORAL = '#FF5C38';
+const CORAL = 'var(--primary)';
 const QR_SIZE = 280;
 
 function drawBrandedQR(canvas: HTMLCanvasElement, url: string): Promise<void> {
@@ -56,7 +57,12 @@ function drawBrandedQR(canvas: HTMLCanvasElement, url: string): Promise<void> {
 
 export default function QRCodeButton({ url, label }: Props) {
     const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const renderQR = useCallback(async () => {
         if (!canvasRef.current) return;
@@ -114,7 +120,7 @@ export default function QRCodeButton({ url, label }: Props) {
                 QR Code
             </button>
 
-            {open && (
+            {open && mounted && createPortal(
                 <div
                     onClick={() => setOpen(false)}
                     style={{
@@ -156,7 +162,7 @@ export default function QRCodeButton({ url, label }: Props) {
                             borderRadius: 16,
                             padding: 12,
                             lineHeight: 0,
-                            boxShadow: '0 4px 24px rgba(255,92,56,0.15)',
+                            boxShadow: '0 4px 24px rgba(var(--primary-rgb),0.15)',
                         }}>
                             <canvas ref={canvasRef} />
                         </div>
@@ -200,7 +206,8 @@ export default function QRCodeButton({ url, label }: Props) {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

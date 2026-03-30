@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 1000" fill="none">
+  <defs>
+    <!-- Map Pin Full scale -->
+    <mask id="gap-cut-full">
+      <rect width="1000" height="1000" fill="white" />
+      <rect x="550" y="0" width="90" height="500" fill="black" />
+    </mask>
+
+    <!-- Map Pin Type scale (centered at 400) -->
+    <mask id="gap-cut-type">
+      <rect width="3000" height="3000" fill="white" />
+      <rect x="470" y="0" width="70" height="500" fill="black" />
+    </mask>
+
+    <!-- e Mouth Hole -->
+    <mask id="e-cut">
+      <rect width="3000" height="2000" fill="white"/>
+      <rect x="960" y="500" width="150" height="250" fill="black"/> 
+    </mask>
+
+    <!-- m Upper Arches -->
+    <mask id="m-cut">
+      <rect width="3000" height="2000" fill="white"/>
+      <rect x="1500" y="420" width="600" height="600" fill="black"/> 
+    </mask>
+  </defs>
+<g fill="#FFFFFF">
+  <!-- Typographic-scale map pin replacing the normal letter 'd' -->
+  <path mask="url(#gap-cut-type)" fill-rule="evenodd" d="
+    M 258.58 641.42 L 400 782.84 L 541.42 641.42
+    A 200 200 0 1 0 258.58 641.42 Z
+    M 400 360 A 140 140 0 0 1 400 640 A 140 140 0 0 1 400 360 Z
+  "/>
+  <rect x="540" y="140" width="60" height="360"/>
+  <circle cx="400" cy="500" r="44"/>
+
+  <g transform="translate(0, 0)">
+    <!-- e -->
+    <g mask="url(#e-cut)">
+      <path fill-rule="evenodd" d="M 860,300 A 200,200 0 1,0 860,700 A 200,200 0 1,0 860,300 Z M 860,360 A 140,140 0 1,1 860,640 A 140,140 0 1,1 860,360 Z"/>
+    </g>
+    <rect x="720" y="470" width="330" height="60"/>
+    <!-- p -->
+    <path fill-rule="evenodd" d="M 1320,300 A 200,200 0 1,0 1320,700 A 200,200 0 1,0 1320,300 Z M 1320,360 A 140,140 0 1,1 1320,640 A 140,140 0 1,1 1320,360 Z"/>
+    <polygon points="1120,300 1180,300 1180,800 1120,860"/>
+    <!-- m -->
+    <g mask="url(#m-cut)">
+      <path fill-rule="evenodd" d="M 1700,300 A 120,120 0 1,0 1700,540 A 120,120 0 1,0 1700,300 Z M 1700,360 A 60,60 0 1,1 1700,480 A 60,60 0 1,1 1700,360 Z"/>
+      <path fill-rule="evenodd" d="M 1880,300 A 120,120 0 1,0 1880,540 A 120,120 0 1,0 1880,300 Z M 1880,360 A 60,60 0 1,1 1880,480 A 60,60 0 1,1 1880,360 Z"/>
+    </g>
+    <rect x="1580" y="420" width="60" height="280"/>
+    <rect x="1760" y="420" width="60" height="280"/>
+    <rect x="1940" y="420" width="60" height="280"/>
+    <!-- i -->
+    <rect x="2060" y="300" width="60" height="400"/>
+    <circle cx="2090" cy="200" r="35"/>
+  </g>
+</g></svg>

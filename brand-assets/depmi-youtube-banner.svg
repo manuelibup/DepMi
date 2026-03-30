@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 191 500 250" fill="#FF5C38">
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 1152" fill="none">
+  <!-- YouTube Dark Mode Base Background -->
+  <rect width="2048" height="1152" fill="#0F0F0F" />
+  
+  <!-- Centered Scaled Wordmark -->
+  <g transform="translate(724, 426) scale(1.2)" fill="#FF5C38">
+    <g transform="translate(-70, -191)">
+      
   <defs>
     <!-- Geometric mask for e mouth slice -->
     <mask id="e-cut">
@@ -38,4 +46,7 @@
   <!-- i -->
   <rect x="537" y="285" width="23" height="79"/>
   <circle cx="548.5" cy="253.5" r="13.5"/>
+
+    </g>
+  </g>
 </svg>

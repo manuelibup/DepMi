@@ -1,5 +1,5 @@
 :root {
-    --primary: #FF5C38;
+    --primary: var(--primary);
     --primary-light: #FF8264;
     --accent-gold: #FFD600;
     --text-main: #212121;
