@@ -19,9 +19,11 @@
     transform: translateY(-100%);
 }
 
-/* Mobile-optimized header, but visible everywhere */
+/* Hide header on desktop — sidebar handles branding, FilterBar takes top position */
 @media (min-width: 640px) {
-    /* Desktop-specific adjustments can go here */
+    .header {
+        display: none;
+    }
 }
 
 .logoWrap {

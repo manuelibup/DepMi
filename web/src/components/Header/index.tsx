@@ -31,8 +31,7 @@ export default function Header() {
         <>
             <header className={`${styles.header} ${!isVisible ? styles.headerHidden : ''}`}>
                 <Link href="/" className={styles.logoWrap}>
-                    <Image src="/depmi-logo.svg" alt="DepMi logo" priority width={48} height={48} className={styles.logoMark} />
-                    <Image src="/depmi-wordmark.svg" alt="depmi" priority width={140} height={70} style={{ marginLeft: '-2px', marginTop: '4px' }} />
+                    <Image src="/depmi-wordmark.svg" alt="depmi" priority width={108} height={54} />
                 </Link>
 
                 {/* Hamburger button */}
