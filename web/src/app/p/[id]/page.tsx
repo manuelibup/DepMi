@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { withWatermark } from '@/lib/cloudinaryWatermark';
 import { notFound } from 'next/navigation';
+import VariantPicker from './VariantPicker';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
@@ -78,7 +79,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             comments: {
                 include: { author: { select: { displayName: true, username: true, avatarUrl: true } } },
                 orderBy: { createdAt: 'asc' }
-            }
+            },
+            variants: { orderBy: { price: 'asc' } },
         }
     });
 
@@ -174,12 +176,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                             <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 12px', lineHeight: 1.3 }}>
                                 {product.title}
                             </h1>
-                            <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
-                                &#x20A6;{Number(product.price).toLocaleString()}
-                            </p>
+                            {product.variants.length > 0 ? (
+                                <VariantPicker
+                                    productId={product.id}
+                                    variants={product.variants.map(v => ({ id: v.id, name: v.name, price: Number(v.price), stock: v.stock }))}
+                                    currency={product.currency || '₦'}
+                                />
+                            ) : (
+                                <p style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>
+                                    &#x20A6;{Number(product.price).toLocaleString()}
+                                </p>
+                            )}
                         </div>
 
-                        {/* CTAs */}
+                        {/* CTAs — only shown when no variants (variants have their own buy button) */}
+                        {product.variants.length === 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {product.isPortfolioItem ? (
                                 <EnquireButton productId={product.id} targetUserId={product.store.ownerId} />
@@ -216,6 +227,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Digital / Dispatch badge */}
                         {product.isDigital ? (

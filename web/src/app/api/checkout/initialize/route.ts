@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY', shipbubbleReqToken, shipbubbleDeliveryFee, isDigital = false } = body
+  const { productId, quantity = 1, deliveryAddress, deliveryNote, demandId, bidId, deliveryMethod = 'DELIVERY', shipbubbleReqToken, shipbubbleDeliveryFee, isDigital = false, variantId } = body
 
   if (!productId || (!isDigital && !deliveryAddress)) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
   try {
-    const [buyer, product] = await Promise.all([
+    const [buyer, product, variant] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
         select: { id: true, displayName: true, email: true, kycTier: true },
@@ -32,6 +32,10 @@ export async function POST(req: NextRequest) {
         where: { id: productId },
         include: { store: { select: { id: true, name: true, ownerId: true } } },
       }),
+      variantId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? (prisma as any).productVariant.findUnique({ where: { id: variantId }, select: { id: true, name: true, price: true, stock: true } })
+        : Promise.resolve(null),
     ])
 
     if (!buyer) return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -43,8 +47,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You can't buy from your own store" }, { status: 400 })
     }
 
+    if (variantId && !variant) return NextResponse.json({ error: 'Variant not found' }, { status: 404 })
+    if (variant && variant.stock === 0) return NextResponse.json({ error: 'This variant is out of stock' }, { status: 400 })
+
     const productIsDigital = isDigital || product.isDigital
-    const itemPrice = Number(product.price)
+    const itemPrice = variant ? Number(variant.price) : Number(product.price)
     const totalItemsAmount = itemPrice * quantity
     // Digital products have no delivery fee; pickup is also free
     const deliveryFee = productIsDigital || deliveryMethod === 'PICKUP'
@@ -107,6 +114,8 @@ export async function POST(req: NextRequest) {
               productId: product.id,
               quantity,
               price: itemPrice,
+              variantId: variant?.id ?? null,
+              variantName: variant?.name ?? null,
             },
           },
         },

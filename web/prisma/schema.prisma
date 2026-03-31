@@ -361,6 +361,7 @@ model Product {
   store           Store          @relation("StoreProducts", fields: [storeId], references: [id])
   images          ProductImage[]
   productWatches  ProductWatch[]
+  variants        ProductVariant[]
 
   @@index([category, inStock])
   @@index([storeId])
@@ -434,17 +435,33 @@ model Payment {
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
-  orderId   String
-  productId String
-  quantity  Int      @default(1)
-  price     Decimal  @db.Decimal(10, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  order     Order    @relation(fields: [orderId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  id          String          @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Int             @default(1)
+  price       Decimal         @db.Decimal(10, 2)
+  variantId   String?
+  variantName String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  order       Order           @relation(fields: [orderId], references: [id])
+  product     Product         @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@index([orderId])
+}
+
+model ProductVariant {
+  id         String      @id @default(uuid())
+  productId  String
+  name       String
+  price      Decimal     @db.Decimal(10, 2)
+  stock      Int         @default(1)
+  createdAt  DateTime    @default(now())
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId])
 }
 
 model Notification {

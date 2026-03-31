@@ -7,19 +7,26 @@ import { Category } from '@prisma/client';
 import { generateProductSlug } from '@/lib/slugify';
 import { notifySearchWatchers } from '@/lib/notifyWatchers';
 
+const variantSchema = z.object({
+    name: z.string().min(1).max(60),
+    price: z.number().min(1),
+    stock: z.number().int().min(0).default(1),
+});
+
 const productSchema = z.object({
     storeId: z.string().min(1, "Store ID is required"),
     title: z.string().min(3, "Title must be at least 3 characters").max(100),
     description: z.string().optional(),
-    price: z.number().min(1, "Price must be at least 1"),
+    price: z.number().min(0).default(0),
     currency: z.string().default("₦"),
     category: z.nativeEnum(Category),
     videoUrl: z.string().url().nullable().optional(),
-    stock: z.number().int().min(1, "Stock must be at least 1").default(1),
+    stock: z.number().int().min(0).default(1),
     deliveryFee: z.number().min(0, "Delivery fee cannot be negative").default(2500),
     images: z.array(z.string()).optional(),
     isDigital: z.boolean().default(false),
     fileUrl: z.string().nullable().optional(),
+    variants: z.array(variantSchema).optional(),
 });
 
 export async function POST(req: Request) {
@@ -40,7 +47,12 @@ export async function POST(req: Request) {
             );
         }
 
-        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee, isDigital, fileUrl } = parsed.data;
+        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee, isDigital, fileUrl, variants } = parsed.data;
+
+        // If variants provided, derive product-level price from cheapest variant
+        const hasVariants = variants && variants.length >= 1;
+        const effectivePrice = hasVariants ? Math.min(...variants!.map(v => v.price)) : price;
+        const effectiveStock = hasVariants ? variants!.reduce((sum, v) => sum + v.stock, 0) : stock;
 
         // Verify ownership
         const store = await prisma.store.findUnique({
@@ -68,25 +80,22 @@ export async function POST(req: Request) {
                 title,
                 slug,
                 description,
-                price,
+                price: effectivePrice,
                 currency,
                 category,
-                // inStock was removed from schema, so it's not passed here
-                stock,
+                stock: effectiveStock,
                 deliveryFee: isDigital ? 0 : deliveryFee,
                 isDigital,
                 fileUrl: fileUrl || null,
                 videoUrl: videoUrl || null,
                 images: images && images.length > 0 ? {
-                    create: images.map((url, index) => ({
-                        url,
-                        order: index
-                    }))
-                } : undefined
+                    create: images.map((url, index) => ({ url, order: index }))
+                } : undefined,
+                variants: hasVariants ? {
+                    create: variants!.map(v => ({ name: v.name, price: v.price, stock: v.stock }))
+                } : undefined,
             },
-            include: {
-                images: true
-            }
+            include: { images: true, variants: true }
         });
 
         // Fetch active followers who want notifications

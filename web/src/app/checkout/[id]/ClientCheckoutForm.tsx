@@ -73,6 +73,7 @@ export default function ClientCheckoutForm({
 }: Props) {
     const searchParams = useSearchParams();
     const resumeOrderId = searchParams.get('resume');
+    const variantId = searchParams.get('variantId');
     const track = useTrackEvent();
 
     const [stage, setStage] = useState<Stage>('form');
@@ -319,6 +320,7 @@ export default function ClientCheckoutForm({
                     productId,
                     quantity,
                     isDigital,
+                    variantId: variantId ?? undefined,
                     deliveryMethod: isDigital ? 'DIGITAL' : (deliveryMethod === 'DISPATCH' ? 'DELIVERY' : deliveryMethod),
                     deliveryAddress: isDigital ? 'DIGITAL' : (deliveryMethod === 'PICKUP' ? 'PICKUP' : `${address}, ${city}, ${stateVal}`),
                     deliveryNote: deliveryNote.trim() || undefined,

@@ -32,6 +32,7 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                     include: {
                         store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
                         images: true,
+                        variants: { select: { price: true }, orderBy: { price: 'asc' } },
                         _count: { select: { likes: true, saves: true, comments: true } },
                     },
                 }),
@@ -64,7 +65,9 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                 deps: p.store.depCount,
                 depTier: p.store.depTier.toLowerCase(),
                 title: p.title,
-                price: `₦${Number(p.price).toLocaleString()}`,
+                price: p.variants?.length
+                    ? `from ₦${Number(p.variants[0].price).toLocaleString()}`
+                    : `₦${Number(p.price).toLocaleString()}`,
                 location: 'Nationwide',
                 image: p.images?.[0]?.url ?? '',
                 images: (p.images ?? []).map((img: { url: string }) => img.url),
