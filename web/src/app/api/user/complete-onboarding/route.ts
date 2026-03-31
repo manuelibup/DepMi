@@ -12,12 +12,16 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         const interests: string[] = Array.isArray(body.interests) ? body.interests : [];
+        const referralSource: string | undefined = typeof body.referralSource === 'string' && body.referralSource.trim()
+            ? body.referralSource.trim()
+            : undefined;
 
         await prisma.user.update({
             where: { id: session.user.id },
             data: {
                 interests,
                 onboardingComplete: true,
+                ...(referralSource && { referralSource }),
             },
         });
 

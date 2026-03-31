@@ -9,7 +9,7 @@ import styles from './page.module.css';
 
 type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
-type Step = 0 | 1 | 2 | 3 | 4 | 'done';
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 'done';
 
 interface SuggestedUser {
     id: string;
@@ -74,6 +74,11 @@ export default function OnboardingPage() {
     const [interests, setInterests] = useState<Set<string>>(new Set());
     const [step4Loading, setStep4Loading] = useState(false);
     const [step4Error, setStep4Error] = useState('');
+
+    // ── Step 5 (referral source) state ──
+    const [referralSource, setReferralSource] = useState('');
+    const [referralOther, setReferralOther] = useState('');
+    const [step5Loading, setStep5Loading] = useState(false);
 
     const minFollows = Math.min(MIN_FOLLOWS, suggestedUsers.length);
 
@@ -249,27 +254,37 @@ export default function OnboardingPage() {
         });
     };
 
-    // ── Step 4 submit (complete onboarding) ──
+    // ── Step 4 submit → advance to step 5 ──
     const handleFinish = async () => {
         if (interests.size < MIN_INTERESTS) return;
-        setStep4Loading(true);
-        setStep4Error('');
+        setStep(5);
+    };
+
+    // ── Step 5 submit (complete onboarding + save referral source) ──
+    const handleStep5Submit = async (source: string) => {
+        setStep5Loading(true);
+        const finalSource = source === 'Other' ? referralOther.trim() || 'Other' : source;
 
         try {
             const res = await fetch('/api/user/complete-onboarding', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ interests: Array.from(interests) }),
+                body: JSON.stringify({
+                    interests: Array.from(interests),
+                    referralSource: finalSource,
+                }),
             });
 
             if (!res.ok) throw new Error('Failed to complete onboarding');
 
             await update({ onboardingComplete: true });
             setStep('done');
-        } catch (e: unknown) {
-            setStep4Error(e instanceof Error ? e.message : 'Something went wrong');
+        } catch {
+            // non-blocking — still complete onboarding
+            await update({ onboardingComplete: true });
+            setStep('done');
         } finally {
-            setStep4Loading(false);
+            setStep5Loading(false);
         }
     };
 
@@ -440,7 +455,7 @@ export default function OnboardingPage() {
                 {/* Step indicator — steps 1–4 only, not repair */}
                 {!isRepair && (
                     <div className={styles.stepIndicator}>
-                        {([1, 2, 3, 4] as (1|2|3|4)[]).map(s => (
+                        {([1, 2, 3, 4, 5] as (1|2|3|4|5)[]).map(s => (
                             <div
                                 key={s}
                                 className={`${styles.stepDot} ${step === s ? styles.stepDotActive : ''} ${(step as number) > s ? styles.stepDotDone : ''}`}
@@ -737,6 +752,80 @@ export default function OnboardingPage() {
                     </>
                 )}
 
+                {/* ── STEP 5: Where did you hear about us ── */}
+                {step === 5 && (() => {
+                    const OPTIONS = [
+                        { value: 'Friend / Word of mouth', emoji: '🗣️' },
+                        { value: 'Twitter / X', emoji: '𝕏' },
+                        { value: 'Instagram', emoji: '📸' },
+                        { value: 'TikTok', emoji: '🎵' },
+                        { value: 'WhatsApp / Telegram', emoji: '💬' },
+                        { value: 'Google Search', emoji: '🔍' },
+                        { value: 'School / University', emoji: '🎓' },
+                        { value: 'Other', emoji: '✏️' },
+                    ];
+                    return (
+                        <>
+                            <div className={styles.header}>
+                                <h1 className={styles.title}>One last thing 🙏</h1>
+                                <p className={styles.subtitle}>How did you hear about DepMi? This helps us know where to focus.</p>
+                            </div>
+
+                            <div className={styles.interestGrid}>
+                                {OPTIONS.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        disabled={step5Loading}
+                                        onClick={() => {
+                                            setReferralSource(opt.value);
+                                            if (opt.value !== 'Other') handleStep5Submit(opt.value);
+                                        }}
+                                        className={`${styles.interestChip} ${referralSource === opt.value ? styles.interestChipSelected : ''}`}
+                                    >
+                                        <span>{opt.emoji}</span>
+                                        <span>{opt.value}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {referralSource === 'Other' && (
+                                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="Tell us where…"
+                                        value={referralOther}
+                                        onChange={e => setReferralOther(e.target.value)}
+                                        autoFocus
+                                        onKeyDown={e => { if (e.key === 'Enter' && referralOther.trim()) handleStep5Submit('Other'); }}
+                                        style={{ flex: 1, padding: '12px 16px', borderRadius: 12, border: '1.5px solid var(--card-border)', background: 'var(--bg-elevated)', color: 'var(--text-main)', fontSize: '0.95rem' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.submitBtn}
+                                        style={{ width: 'auto', padding: '0 20px' }}
+                                        disabled={!referralOther.trim() || step5Loading}
+                                        onClick={() => handleStep5Submit('Other')}
+                                    >
+                                        {step5Loading ? '…' : 'Go'}
+                                    </button>
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                className={styles.ghostBtn}
+                                style={{ marginTop: 8 }}
+                                disabled={step5Loading}
+                                onClick={() => handleStep5Submit('')}
+                            >
+                                Skip
+                            </button>
+                        </>
+                    );
+                })()}
+
                 {/* ── STEP 4: Interests ── */}
                 {step === 4 && (
                     <>
@@ -778,14 +867,12 @@ export default function OnboardingPage() {
                             type="button"
                             className={styles.submitBtn}
                             onClick={handleFinish}
-                            disabled={!canFinish || step4Loading}
+                            disabled={!canFinish}
                         >
-                            {step4Loading ? 'Setting up your feed...' : 'Finish & Explore DepMi'}
-                            {!step4Loading && (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M5 12h14m-7-7 7 7-7 7" />
-                                </svg>
-                            )}
+                            Continue
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
                         </button>
                     </>
                 )}
