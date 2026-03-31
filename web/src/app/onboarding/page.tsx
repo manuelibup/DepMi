@@ -813,15 +813,6 @@ export default function OnboardingPage() {
                                 </div>
                             )}
 
-                            <button
-                                type="button"
-                                className={styles.ghostBtn}
-                                style={{ marginTop: 8 }}
-                                disabled={step5Loading}
-                                onClick={() => handleStep5Submit('')}
-                            >
-                                Skip
-                            </button>
                         </>
                     );
                 })()}
