@@ -38,7 +38,7 @@ export async function middleware(req: NextRequest) {
     // Dual check: onboardingComplete (new) OR username (legacy fallback for existing users
     // before the onboardingComplete column existed). Remove !token.username after backfill.
     const isExempt = USERNAME_EXEMPT.some(p => pathname.startsWith(p));
-    if (token && !token.onboardingComplete && !token.username && !isExempt) {
+    if (token && !token.onboardingComplete && !isExempt) {
         return NextResponse.redirect(new URL('/onboarding', req.url));
     }
 
