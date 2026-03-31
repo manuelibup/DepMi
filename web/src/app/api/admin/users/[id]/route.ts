@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
-    const check = requireAdmin(session, 'ADMIN');
+    const check = requireAdmin(session, 'MODERATOR');
     if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
     const { id } = await params;

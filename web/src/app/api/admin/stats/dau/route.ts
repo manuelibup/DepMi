@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     const session = await getServerSession(authOptions);
-    const check = requireAdmin(session, 'ADMIN');
+    const check = requireAdmin(session, 'MODERATOR');
     if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
     const rows = await prisma.$queryRawUnsafe<{ date: Date; dau: bigint }[]>(`
