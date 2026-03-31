@@ -6,7 +6,8 @@ const nextConfig: NextConfig = {
         return [
             // Canonical URLs: /store/[slug] and /u/[username] redirect to /[handle]
             {
-                source: '/store/:slug',
+                // Exclude /store/create (reserved page) from the handle redirect
+                source: '/store/:slug((?!create)[^/]+)',
                 destination: '/:slug',
                 permanent: true,
             },
