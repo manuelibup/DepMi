@@ -37,18 +37,22 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/', req.url), 308); // 308 Permanent Redirect
     }
 
+    // /u/[username] → /[username] — only redirect the base profile, not nested paths
+    // (e.g. /u/manuel/followers must stay at /u/manuel/followers so that route works)
     if (pathname.startsWith('/u/')) {
-        const username = pathname.substring(3);
-        if (username) {
+        const rest = pathname.substring(3); // "manuel" or "manuel/followers"
+        const username = rest.split('/')[0];
+        if (username && !rest.includes('/')) {
             return NextResponse.redirect(new URL(`/${username}`, req.url), 308);
         }
     }
 
+    // /store/[slug] → /[slug] — only redirect the base store profile, not nested routes
+    // Nested routes like /store/[slug]/products/new must remain intact
     if (pathname.startsWith('/store/')) {
-        const slug = pathname.substring(7);
-        // Exclude reserved routes explicitly
-        if (slug && !slug.startsWith('create')) {
-            // Keep nested paths intact, e.g. /store/foo/products -> /foo/products
+        const rest = pathname.substring(7); // "foo" or "foo/products/new"
+        const slug = rest.split('/')[0];
+        if (slug && slug !== 'create' && !rest.includes('/')) {
             return NextResponse.redirect(new URL(`/${slug}`, req.url), 308);
         }
     }
