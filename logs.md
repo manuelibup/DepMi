@@ -1,6 +1,10 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 89 — Mar 31, 2026 — Admin Fixes & MODERATOR Permissions](#session-89--mar-31-2026--admin-fixes--moderator-permissions)
+- [Session 88 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions](#session-88--mar-31-2026--mobile-ui-optimization--route-exclusions)
+- [Session 87 — Mar 31, 2026 — Feed Video Scroll-Pause, Onboarding Fix & Referral Source](#session-87--mar-31-2026--feed-video-scroll-pause-onboarding-fix--referral-source)
+- [Session 86 — Mar 31, 2026 — Admin Nav Bug Fix](#session-86--mar-31-2026--admin-nav-bug-fix)
 - [Session 85 — Mar 30, 2026 — Digital Products, OG Images & Fee Waiver](#session-85--mar-30-2026--digital-products-og-images--fee-waiver)
 - [Session 85 — Mar 30, 2026 — Monolinear Typography Sync](#session-85--mar-30-2026--monolinear-typography-sync)
 - [Session 84 — Mar 30, 2026 — Hardcoded Green Purge & UI Flexibility](#session-84--mar-30-2026--hardcoded-green-purge--ui-flexibility)
@@ -67,6 +71,71 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 88 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions
+
+**Agent:** Antigravity / Claude
+**Human:** Manuel
+
+### What Was Done
+- **Mobile Action Bar Refinement:** The action row (Follow, Message, Share, QR Code) was overflowing horizontally on user and store profiles on small mobile screens. Created a global `.hide-on-mobile` utility class (hidden at `<=480px`). 
+- **Icon-Only UI:** Refactored `QRCodeButton`, `ShareButton`, and `ProfileMessageButton` to use `.hide-on-mobile` on their inner text spans, elegantly compressing them to square, icon-only buttons on small devices. Added a chat-bubble SVG to the Message button.
+- **Next.js Regex Edge Failure Diagnosis:** Confirmed that the Vercel edge router silently fails to parse Next.js `next.config.ts` regex negative lookaheads (e.g., `/store/:slug((?!create)[^/]+)`), causing the redirect engine to aggressively trap `/store/create` and dump the user at a 404 `/create` URL.
+- **Middleware Migration:** Completely erased the broken wildcard alias from `next.config.ts`. Migrated both store and user profile handle routing (`/store/:slug`, `/u/:username`) into programmatic blocks inside `middleware.ts`. Now, `if (slug && !slug.startsWith('create'))` actively guarantees `/store/create` safely bypasses the redirect without ever touching Next.js regex internals.
+
+---
+
+## Session 87 — Mar 31, 2026 — Feed Video Scroll-Pause, Onboarding Fix & Referral Source
+
+### What was done
+
+#### Feed Video Scroll-Pause
+- Created `web/src/hooks/useScrollPause.ts` — `IntersectionObserver` hook that pauses a video element when less than 25% of it is visible in the viewport.
+- Wired into `ProductCard` `ImageCarousel` (product feed video) and `DemandCard` (demand card video) via `videoRef`.
+
+#### Google Onboarding Bug Fix
+- **Root cause:** Google OAuth signup auto-assigns a random username (e.g. `john4x7b`) at account creation. The middleware condition `!token.onboardingComplete && !token.username` was always false for Google users (username already set), so they bypassed onboarding entirely.
+- **Fix:** Middleware condition simplified to `!token.onboardingComplete` only.
+- **Backfill:** Ran `scripts/backfill-onboarding-complete.js` — set `onboardingComplete = true` for 133 existing users with a username so they are not wrongly redirected to /onboarding.
+
+#### "Where did you hear about us" — Onboarding Step 5
+- Added `referralSource String?` to `User` model. Pushed to DB (`npm run db:push`, 32 tables backed up).
+- `complete-onboarding` API now accepts and saves `referralSource` alongside interests.
+- Onboarding extended from 4 to 5 steps: step 4 (interests) now advances to step 5 instead of completing.
+- Step 5 shows 8 source options (Friend, Twitter/X, Instagram, TikTok, WhatsApp/Telegram, Google Search, School, Other). Selecting any option immediately completes onboarding. "Other" reveals a free-text input. Answer is required — no skip button.
+- Step indicator updated to 5 dots.
+
+### Schema changes
+- `User`: added `referralSource String?`. Pushed to DB.
+
+### Validations
+- ✅ `npm run db:push` — schema synced, 133 users backfilled.
+- ✅ `npx tsc --noEmit` — no errors in onboarding or related files (pre-existing thirdweb errors on feature branch files unrelated).
+- ✅ All changes committed and pushed to `origin/main`.
+
+### Commits
+- `0366833` — feat: pause feed videos automatically when scrolled out of view
+- `4e3176d` — fix: enforce onboarding for Google sign-ups (backfill + middleware)
+- `35f2a12` — feat: add 'where did you hear about us' step to onboarding
+- `6c27af3` — fix: remove skip button from referral source step — answer required
+
+---
+
+## Session 86 — Mar 31, 2026 — Admin Nav & Store Create 404 Fixes
+
+**Fix 1 — Admin nav unresponsive**
+- **Problem:** All admin sidebar nav links (Overview, Engagement, etc.) were unresponsive on click.
+- **Root cause:** `NavigationWrapper` was injecting the app's `DesktopSidebar` (z-index: 100) and `page-layout` flex wrapper on `/admin/*` routes, conflicting with the admin layout's own full-page shell and breaking client-side navigation.
+- **Fix:** `NavigationWrapper.tsx` now detects `/admin` or `/secure-admin` paths and renders children bare. Regular user access still blocked by middleware (`!adminRole` → `/`) and admin layout `requireAdmin()`.
+- **Commit:** `7e52f26`
+
+**Fix 2 — "Open a Store" / "+ Create" → 404 at `/create`**
+- **Problem:** Clicking "Open a Store" on a user profile navigated to `/create` (404).
+- **Root cause:** `next.config.ts` had a blanket `/store/:slug` → `/:slug` redirect. Since Next.js redirects run before the filesystem, `/store/create` was caught and sent to `/create`, which has no route.
+- **Fix:** Moved all canonical redirects (`/home`, `/u/:username`, `/store/:slug`) out of `next.config.ts` and into `middleware.ts`, with an explicit `!slug.startsWith('create')` guard. This avoids regex lookahead issues and gives full control over exclusions.
+- **Commits:** `8c93130` (next.config scope) + middleware update
 
 ---
 

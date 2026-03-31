@@ -644,3 +644,22 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 - **The Problem**: When running global search-and-replace sweepers (e.g., `make-flexible.js`) to migrate hardcoded Hex/RGBA colors to CSS variables, you must explicitly exclude `globals.css` or the specific block where the root variable is defined.
 - **The Crash**: If your script replaces `--primary: #FF5C38;` with `--primary: var(--primary);`, it creates an immediate infinite CSS circular reference. The browser rendering engine drops the variable entirely, rendering it invalid (often falling back to transparent or black) and instantly breaking all buttons, backgrounds, and text linked to that variable.
 - **The Fix**: Always explicitly skip standard `globals.css` variable declarations when running auto-refactor regex scripts, or manually verify root tokens post-sweep.
+
+---
+
+## 🚫 50. Next.js Static Regex Redirects Fail on Vercel Edge
+
+*Added after a cryptic 404 bug where clicking `+ Open a Store` dumped users into `/create`.*
+
+- **The Problem**: Next.js allows advanced path-to-regexp parsing inside `next.config.ts`, including negative lookaheads like `source: '/store/:slug((?!create)[^/]+)'`. However, Vercel's edge network often silently mishandles these complex lookaheads, causing the redirect to ignore the exception and aggressively capture reserved sub-routes (intercepting `/store/create` and routing to `/:slug`).
+- **The Fix**: Never use negative lookaheads for excluding routes in `next.config.ts` if they collide with primary app flow logic. Instead, do **Programmatic Routing inside `middleware.ts`**.
+  ```typescript
+  if (pathname.startsWith('/store/')) {
+      const slug = pathname.substring(7);
+      if (slug && !slug.startsWith('create')) {
+          // Now it safely bypasses 'create' using bulletproof string checking.
+          return NextResponse.redirect(new URL(`/${slug}`, req.url), 308);
+      }
+  }
+  ```
+- **The Rule**: Wildcard vanity URLs (like `/:handle`) should ALWAYS be excluded from reserved paths via strict programmatic JavaScript logic in middleware, not via static configuration files.
