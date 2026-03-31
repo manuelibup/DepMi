@@ -32,6 +32,27 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/maintenance', req.url));
     }
 
+    // Canonical Redirects: Migrate from next.config.ts to avoid regex lookahead failures.
+    if (pathname === '/home') {
+        return NextResponse.redirect(new URL('/', req.url), 308); // 308 Permanent Redirect
+    }
+
+    if (pathname.startsWith('/u/')) {
+        const username = pathname.substring(3);
+        if (username) {
+            return NextResponse.redirect(new URL(`/${username}`, req.url), 308);
+        }
+    }
+
+    if (pathname.startsWith('/store/')) {
+        const slug = pathname.substring(7);
+        // Exclude reserved routes explicitly
+        if (slug && !slug.startsWith('create')) {
+            // Keep nested paths intact, e.g. /store/foo/products -> /foo/products
+            return NextResponse.redirect(new URL(`/${slug}`, req.url), 308);
+        }
+    }
+
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     // 1. Force onboarding for logged-in users who haven't completed setup.

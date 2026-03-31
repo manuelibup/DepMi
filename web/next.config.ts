@@ -2,28 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-    async redirects() {
-        return [
-            // Canonical URLs: /store/[slug] and /u/[username] redirect to /[handle]
-            {
-                // Exclude /store/create (reserved page) from the handle redirect
-                source: '/store/:slug((?!create)[^/]+)',
-                destination: '/:slug',
-                permanent: true,
-            },
-            {
-                source: '/u/:username',
-                destination: '/:username',
-                permanent: true,
-            },
-            // /home is not a valid route — redirect to homepage
-            {
-                source: '/home',
-                destination: '/',
-                permanent: true,
-            },
-        ];
-    },
+    // Static redirects have been removed; handle normalization is now performed securely via middleware.ts
     images: {
         remotePatterns: [
             {
