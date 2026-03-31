@@ -2,7 +2,9 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export async function GET() {
+export async function GET(req: Request) {
+    const origin = new URL(req.url).origin;
+
     return new ImageResponse(
         (
             <div
@@ -43,52 +45,32 @@ export async function GET() {
                     }}
                 />
 
-                {/* Logo mark — D letterform in coral */}
+                {/* Logo lockup: pin mark + wordmark */}
                 <div
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '24px',
-                        marginBottom: '28px',
+                        gap: '28px',
+                        marginBottom: '32px',
                     }}
                 >
-                    {/* Pin / dot mark */}
-                    <div
-                        style={{
-                            width: '72px',
-                            height: '72px',
-                            borderRadius: '50% 50% 50% 0',
-                            background: 'linear-gradient(135deg, #FF5C38 0%, #FF8264 100%)',
-                            transform: 'rotate(-45deg)',
-                            boxShadow: '0 0 32px rgba(255,92,56,0.5)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                background: '#0D0D0D',
-                                transform: 'rotate(45deg)',
-                            }}
-                        />
-                    </div>
+                    {/* Pin mark SVG */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={`${origin}/depmi-logo.svg`}
+                        width={88}
+                        height={88}
+                        alt=""
+                    />
 
-                    {/* Wordmark */}
-                    <span
-                        style={{
-                            fontSize: '80px',
-                            fontWeight: 900,
-                            color: '#FFFFFF',
-                            letterSpacing: '-2px',
-                            lineHeight: 1,
-                        }}
-                    >
-                        Dep<span style={{ color: '#FF5C38' }}>Mi</span>
-                    </span>
+                    {/* Wordmark SVG — viewBox 70 191 500 250 → ~2:1 ratio */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={`${origin}/depmi-wordmark.svg`}
+                        width={180}
+                        height={90}
+                        alt="depmi"
+                    />
                 </div>
 
                 {/* Tagline */}
