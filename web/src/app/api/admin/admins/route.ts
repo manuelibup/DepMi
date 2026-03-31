@@ -37,12 +37,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'userId and valid role required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, isBanned: true } });
+    const user = await prisma.user.findFirst({
+        where: { OR: [{ id: userId }, { username: userId }, { email: userId }] },
+        select: { id: true, isBanned: true },
+    });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
     if (user.isBanned) return NextResponse.json({ error: 'Cannot grant admin role to a banned user' }, { status: 403 });
 
     const updated = await prisma.user.update({
-        where: { id: userId },
+        where: { id: user.id },
         data: { adminRole: role as never },
         select: { id: true, displayName: true, adminRole: true },
     });
