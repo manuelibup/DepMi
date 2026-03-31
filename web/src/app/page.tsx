@@ -146,20 +146,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     },
   }));
 
-  // Interleave (1 demand, 1 product pattern matching existing behavior)
-  const initialItems: FeedItem[] = [];
-  const maxLen = Math.max(products.length, demands.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (demands[i]) initialItems.push(demands[i]);
-    if (products[i]) initialItems.push(products[i]);
-  }
+  // Merge and sort chronologically (newest first)
+  const initialItems: FeedItem[] = [...products, ...demands]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, INITIAL_TAKE);
 
-  // Cursors for the client to request the next page
-  const initialProductCursor = rawProducts.length === INITIAL_TAKE
-    ? rawProducts[rawProducts.length - 1].createdAt.toISOString()
-    : null;
-  const initialDemandCursor = rawDemands.length === INITIAL_TAKE
-    ? rawDemands[rawDemands.length - 1].createdAt.toISOString()
+  // Single cursor — the oldest item's timestamp
+  const initialCursor = initialItems.length === INITIAL_TAKE
+    ? initialItems[initialItems.length - 1].createdAt
     : null;
 
   return (
@@ -189,8 +183,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             ) : (
               <FeedInfiniteScroll
                 initialItems={initialItems}
-                initialProductCursor={initialProductCursor}
-                initialDemandCursor={initialDemandCursor}
+                initialCursor={initialCursor}
                 category={category}
                 topStores={topStores}
               />

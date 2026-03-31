@@ -27,8 +27,7 @@ interface TopStore {
 
 interface Props {
     initialItems: FeedItem[];
-    initialProductCursor: string | null;
-    initialDemandCursor: string | null;
+    initialCursor: string | null;
     category?: string;
     topStores: TopStore[];
 }
@@ -37,16 +36,14 @@ const STORAGE_KEY = 'depmi_feed_view';
 
 export default function FeedInfiniteScroll({
     initialItems,
-    initialProductCursor,
-    initialDemandCursor,
+    initialCursor,
     category,
     topStores,
 }: Props) {
     const [items, setItems] = useState<FeedItem[]>(initialItems);
-    const [productCursor, setProductCursor] = useState<string | null>(initialProductCursor);
-    const [demandCursor, setDemandCursor] = useState<string | null>(initialDemandCursor);
+    const [cursor, setCursor] = useState<string | null>(initialCursor);
     const [loading, setLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(initialProductCursor !== null || initialDemandCursor !== null);
+    const [hasMore, setHasMore] = useState(initialCursor !== null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [sortMode, setSortMode] = useState<SortMode>('new');
     const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -71,8 +68,7 @@ export default function FeedInfiniteScroll({
 
         try {
             const params = new URLSearchParams({ take: '20' });
-            if (productCursor) params.set('productCursor', productCursor);
-            if (demandCursor) params.set('demandCursor', demandCursor);
+            if (cursor) params.set('cursor', cursor);
             if (category) params.set('category', category);
 
             const res = await fetch(`/api/feed?${params}`);
@@ -83,15 +79,14 @@ export default function FeedInfiniteScroll({
             if (data.items.length > 0) {
                 setItems(prev => [...prev, ...data.items]);
             }
-            setProductCursor(data.nextProductCursor);
-            setDemandCursor(data.nextDemandCursor);
+            setCursor(data.nextCursor);
             setHasMore(data.hasMore);
         } catch {
             // silent — don't break the feed on network errors
         } finally {
             setLoading(false);
         }
-    }, [loading, hasMore, productCursor, demandCursor, category]);
+    }, [loading, hasMore, cursor, category]);
 
     useEffect(() => {
         if (observerRef.current) observerRef.current.disconnect();
@@ -110,9 +105,8 @@ export default function FeedInfiniteScroll({
     // Re-sync on category change
     useEffect(() => {
         setItems(initialItems);
-        setProductCursor(initialProductCursor);
-        setDemandCursor(initialDemandCursor);
-        setHasMore(initialProductCursor !== null || initialDemandCursor !== null);
+        setCursor(initialCursor);
+        setHasMore(initialCursor !== null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [category]);
 

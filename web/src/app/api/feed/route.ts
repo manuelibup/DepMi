@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
 // Cache base feed pages (no user personalization) for 30 seconds
-function getCachedFeedPage(productCursor: string | null, demandCursor: string | null, category: string | undefined, take: number) {
+function getCachedFeedPage(cursor: string | null, category: string | undefined, take: number) {
     return unstable_cache(
         async () => {
             const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
@@ -17,11 +17,9 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
                 productWhere.category = category;
                 demandWhere.category = category;
             }
-            if (productCursor) {
-                productWhere.createdAt = { lt: new Date(productCursor) };
-            }
-            if (demandCursor) {
-                demandWhere.createdAt = { lt: new Date(demandCursor) };
+            if (cursor) {
+                productWhere.createdAt = { lt: new Date(cursor) };
+                demandWhere.createdAt = { lt: new Date(cursor) };
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,32 +101,32 @@ function getCachedFeedPage(productCursor: string | null, demandCursor: string | 
                 images: d.images.map((img: { url: string }) => img.url),
             }));
 
-            const nextProductCursor = rawProducts.length === take
-                ? rawProducts[rawProducts.length - 1].createdAt.toISOString()
-                : null;
-            const nextDemandCursor = rawDemands.length === take
-                ? rawDemands[rawDemands.length - 1].createdAt.toISOString()
-                : null;
+            // Merge both lists and sort chronologically (newest first), then page
+            const productItems = products.map((p: typeof products[0]) => ({ type: 'product' as const, createdAt: p.createdAt, data: p }));
+            const demandItems = demands.map((d: typeof demands[0]) => ({ type: 'demand' as const, createdAt: d.createdAt, data: d }));
+            const merged = [...productItems, ...demandItems]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, take);
 
-            return { products, demands, nextProductCursor, nextDemandCursor };
+            const nextCursor = merged.length === take ? merged[merged.length - 1].createdAt : null;
+
+            return { items: merged, nextCursor };
         },
-        [`feed-${productCursor}-${demandCursor}-${category ?? 'all'}-${take}`],
+        [`feed-v2-${cursor}-${category ?? 'all'}-${take}`],
         { revalidate: 30 }
     )();
 }
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    const productCursor = searchParams.get('productCursor');
-    const demandCursor = searchParams.get('demandCursor');
+    const cursor = searchParams.get('cursor');
     const category = searchParams.get('category') || undefined;
     const take = Math.min(Number(searchParams.get('take') || '10'), 20);
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id ?? null;
 
-    const { products, demands, nextProductCursor, nextDemandCursor } =
-        await getCachedFeedPage(productCursor, demandCursor, category, take);
+    const { items, nextCursor } = await getCachedFeedPage(cursor, category, take);
 
     // Fetch user personalization — lightweight ID lookups only
     const likedProductIds = new Set<string>();
@@ -136,17 +134,17 @@ export async function GET(req: Request) {
     const likedDemandIds = new Set<string>();
     const savedDemandIds = new Set<string>();
 
-    if (userId && (products.length > 0 || demands.length > 0)) {
-        const productIds = products.map((p: { id: string }) => p.id);
-        const demandIds = demands.map((d: { id: string }) => d.id);
+    if (userId && items.length > 0) {
+        const productIds = items.filter(i => i.type === 'product').map(i => i.data.id);
+        const demandIds = items.filter(i => i.type === 'demand').map(i => i.data.id);
 
         const [pLikes, pSaves, dLikes, dSaves] = await Promise.all([
-            prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }),
-            prisma.savedProduct.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }),
+            productIds.length ? prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
+            productIds.length ? prisma.savedProduct.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (prisma.demandLike as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }),
+            demandIds.length ? (prisma.demandLike as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (prisma.savedDemand as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }),
+            demandIds.length ? (prisma.savedDemand as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
         ]);
 
         pLikes.forEach((l: { productId: string }) => likedProductIds.add(l.productId));
@@ -155,36 +153,22 @@ export async function GET(req: Request) {
         dSaves.forEach((s: { demandId: string }) => savedDemandIds.add(s.demandId));
     }
 
-    // Merge personalization and build feed items
-    const productItems = products.map((p: { id: string; createdAt: string }) => ({
-        type: 'product' as const,
-        createdAt: p.createdAt,
-        data: { ...p, isLiked: likedProductIds.has(p.id), isSaved: savedProductIds.has(p.id) },
+    // Merge personalization
+    const personalizedItems = items.map(item => ({
+        ...item,
+        data: item.type === 'product'
+            ? { ...item.data, isLiked: likedProductIds.has(item.data.id), isSaved: savedProductIds.has(item.data.id) }
+            : { ...item.data, isLiked: likedDemandIds.has(item.data.id), isSaved: savedDemandIds.has(item.data.id) },
     }));
-
-    const demandItems = demands.map((d: { id: string; createdAt: string }) => ({
-        type: 'demand' as const,
-        createdAt: d.createdAt,
-        data: { ...d, isLiked: likedDemandIds.has(d.id), isSaved: savedDemandIds.has(d.id) },
-    }));
-
-    // Interleave
-    const items = [];
-    const maxLen = Math.max(productItems.length, demandItems.length);
-    for (let i = 0; i < maxLen; i++) {
-        if (demandItems[i]) items.push(demandItems[i]);
-        if (productItems[i]) items.push(productItems[i]);
-    }
 
     const cacheHeader = userId
         ? 'private, max-age=15'
         : 'public, s-maxage=30, stale-while-revalidate=60';
 
     return NextResponse.json({
-        items,
-        nextProductCursor,
-        nextDemandCursor,
-        hasMore: nextProductCursor !== null || nextDemandCursor !== null,
+        items: personalizedItems,
+        nextCursor,
+        hasMore: nextCursor !== null,
     }, {
         headers: { 'Cache-Control': cacheHeader },
     });
