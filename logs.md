@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [Session 89 — Mar 31, 2026 — Admin Fixes & MODERATOR Permissions](#session-89--mar-31-2026--admin-fixes--moderator-permissions)
-- [Session 88 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions](#session-88--mar-31-2026--mobile-ui-optimization--route-exclusions)
+- [Session 90 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions](#session-90--mar-31-2026--mobile-ui-optimization--route-exclusions)
 - [Session 87 — Mar 31, 2026 — Feed Video Scroll-Pause, Onboarding Fix & Referral Source](#session-87--mar-31-2026--feed-video-scroll-pause-onboarding-fix--referral-source)
 - [Session 86 — Mar 31, 2026 — Admin Nav Bug Fix](#session-86--mar-31-2026--admin-nav-bug-fix)
 - [Session 85 — Mar 30, 2026 — Digital Products, OG Images & Fee Waiver](#session-85--mar-30-2026--digital-products-og-images--fee-waiver)
@@ -74,7 +74,20 @@
 
 ---
 
-## Session 88 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions
+## Session 89 — Mar 31, 2026 — Admin Fixes & MODERATOR Permissions
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What Was Done
+- **Settings page build fix** — `storeState` missing from Prisma select in `store/[slug]/settings/page.tsx` caused TypeScript build error; added to select
+- **Add Admin "User not found" fix** — `admins/route.ts` POST now uses `findFirst` with `OR: [id, username, email]` so you can type a username instead of a raw UUID
+- **Bulk-follow Unauthorized fix** — `bulk-follow/route.ts` had typo `'SUPERADMIN'` → corrected to `'SUPER_ADMIN'`
+- **MODERATOR role expanded** — lowered `requireAdmin` threshold from `'ADMIN'` to `'MODERATOR'` on: users list, user detail, signups chart, DAU chart, commerce stats. Ban, modify, store management, invites, and referral config remain ADMIN+
+
+---
+
+## Session 90 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions
 
 **Agent:** Antigravity / Claude
 **Human:** Manuel
