@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
                     // Ignore transient fetch errors during polling
                     console.error('[SSE] Polling error:', e);
                 }
-            }, 8000);
+            }, 15000);
 
             // Clean up intervals when the client disconnects
             req.signal.addEventListener('abort', () => {

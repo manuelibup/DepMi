@@ -116,7 +116,7 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
             return { items: merged, nextCursor };
         },
         [`feed-v2-${cursor}-${category ?? 'all'}-${take}`],
-        { revalidate: 30 }
+        { revalidate: 60 }
     )();
 }
 

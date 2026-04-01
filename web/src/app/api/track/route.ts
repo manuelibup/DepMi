@@ -18,13 +18,70 @@ function isRateLimited(sessionId: string): boolean {
     return false;
 }
 
-// Clean up old entries every 5 minutes to avoid memory leak
+// ── Batched write queue ────────────────────────────────────────────────────────
+// Events are queued in memory and flushed to DB every 30 seconds.
+// This prevents one DB write per scroll impression, which was keeping Neon awake.
+interface QueuedEvent {
+    type: string;
+    sessionId: string;
+    userId: string | null;
+    targetId: string | null;
+    targetType: string | null;
+    metadata: Record<string, unknown> | undefined;
+}
+
+const eventQueue: QueuedEvent[] = [];
+
+async function flushQueue() {
+    if (eventQueue.length === 0) return;
+    const batch = eventQueue.splice(0, eventQueue.length);
+    try {
+        await prisma.event.createMany({ data: batch });
+    } catch {
+        // If flush fails, drop the batch rather than block the queue indefinitely
+    }
+}
+
+// Flush every 30 seconds — only fires when the serverless function is warm
+setInterval(flushQueue, 30_000);
+
+// Clean up old rate limit entries every 5 minutes
 setInterval(() => {
     const now = Date.now();
     for (const [key, val] of rateLimitMap) {
         if (now > val.resetAt) rateLimitMap.delete(key);
     }
 }, 5 * 60 * 1000);
+
+// Cache opted-out user IDs to avoid a DB lookup on every event
+const optOutCache = new Set<string>();
+const optOutCacheExpiry = new Map<string, number>();
+const OPT_OUT_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function isOptedOut(userId: string): Promise<boolean> {
+    const expiry = optOutCacheExpiry.get(userId);
+    if (expiry && Date.now() < expiry) {
+        return optOutCache.has(userId);
+    }
+    // Cache miss — check DB
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { analyticsOptOut: true },
+    });
+    const opted = user?.analyticsOptOut ?? false;
+    if (opted) {
+        optOutCache.add(userId);
+    } else {
+        optOutCache.delete(userId);
+    }
+    optOutCacheExpiry.set(userId, Date.now() + OPT_OUT_TTL);
+    return opted;
+}
+
+const validTypes = [
+    'FEED_IMPRESSION', 'PRODUCT_VIEW', 'DEMAND_VIEW', 'STORE_VIEW',
+    'SEARCH', 'LIKE', 'SAVE', 'BID', 'ORDER', 'SHARE',
+];
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,46 +92,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const validTypes = [
-            'FEED_IMPRESSION', 'PRODUCT_VIEW', 'DEMAND_VIEW', 'STORE_VIEW',
-            'SEARCH', 'LIKE', 'SAVE', 'BID', 'ORDER', 'SHARE',
-        ];
         if (!validTypes.includes(type)) {
             return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
         }
 
         if (isRateLimited(sessionId)) {
-            return NextResponse.json({ ok: true }); // silently drop — don't error client
+            return NextResponse.json({ ok: true });
         }
 
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id ?? null;
 
-        // Check opt-out
-        if (userId) {
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { analyticsOptOut: true },
-            });
-            if (user?.analyticsOptOut) {
-                return NextResponse.json({ ok: true });
-            }
+        if (userId && await isOptedOut(userId)) {
+            return NextResponse.json({ ok: true });
         }
 
-        await prisma.event.create({
-            data: {
-                type,
-                sessionId,
-                userId,
-                targetId: targetId ?? null,
-                targetType: targetType ?? null,
-                metadata: metadata ?? undefined,
-            },
+        // Queue instead of writing immediately
+        eventQueue.push({
+            type,
+            sessionId,
+            userId,
+            targetId: targetId ?? null,
+            targetType: targetType ?? null,
+            metadata: metadata ?? undefined,
         });
 
         return NextResponse.json({ ok: true });
     } catch {
-        // Fire-and-forget — never surface errors to client
         return NextResponse.json({ ok: true });
     }
 }
