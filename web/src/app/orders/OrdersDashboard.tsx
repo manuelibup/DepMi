@@ -308,7 +308,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                 )}
 
                 {/* Product */}
-                <Link href={order.product.id ? `/p/${order.product.id}` : '#'} className={styles.detailProduct}>
+                <Link href={order.product.id ? `/p/${order.product.slug ?? order.product.id}` : '#'} className={styles.detailProduct}>
                     <div className={styles.detailProductImg}>
                         {img
                             ? <Image src={img} alt={order.product.title} width={72} height={72} style={{ objectFit: 'cover' }} />

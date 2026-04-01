@@ -2,7 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { withWatermark } from '@/lib/cloudinaryWatermark';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import VariantPicker from './VariantPicker';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -85,6 +85,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     });
 
     if (!product) notFound();
+
+    // If accessed by UUID and a slug exists, 301 redirect to the clean slug URL
+    if (product.slug && id !== product.slug) {
+        redirect(`/p/${product.slug}`);
+    }
 
     // prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
 

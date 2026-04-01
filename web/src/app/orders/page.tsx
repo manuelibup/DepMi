@@ -25,7 +25,7 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, slug: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             seller: { select: { name: true, ownerId: true } },
             payment: { select: { paidAt: true } },
@@ -39,7 +39,7 @@ export default async function OrdersPage() {
         orderBy: { createdAt: 'desc' },
         include: {
             items: {
-                include: { product: { select: { id: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
+                include: { product: { select: { id: true, slug: true, title: true, isDigital: true, fileUrl: true, images: { take: 1, orderBy: { order: 'asc' } } } } }
             },
             buyer: { select: { displayName: true, username: true } },
             payment: { select: { paidAt: true } },
