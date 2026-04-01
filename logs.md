@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 93 — Apr 1, 2026 — Neon Compute Optimizations](#session-93--apr-1-2026--neon-compute-optimizations)
 - [Session 92 — Mar 31, 2026 — Product Variants & Digital Delivery Badges](#session-92--mar-31-2026--product-variants--digital-delivery-badges)
 - [Session 91 — Mar 31, 2026 — Chronological Feed & Bug Fixes](#session-91--mar-31-2026--chronological-feed--bug-fixes)
 - [Session 89 — Mar 31, 2026 — Admin Fixes & MODERATOR Permissions](#session-89--mar-31-2026--admin-fixes--moderator-permissions)
@@ -73,6 +74,29 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 93 — Apr 1, 2026 — Neon Compute Optimizations
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Problem:** Neon DB hitting ~6 CU-hrs/day on the free 100 CU-hr/month tier. Compute was nearly always awake, preventing auto-suspend.
+
+**Root causes identified:**
+1. Messages SSE stream polled DB every **8s** per open chat connection
+2. `/api/track` (behavioral analytics) wrote one DB row + one `user.findUnique` per impression event — up to dozens/minute during active browsing
+3. Feed `unstable_cache` revalidated every **30s**, triggering fresh DB queries on any traffic
+
+**Changes:**
+- `web/src/app/api/messages/stream/route.ts` — SSE poll interval 8s → **15s** (halves DB hits per open conversation)
+- `web/src/app/api/feed/route.ts` — `unstable_cache` revalidate 30 → **60** seconds
+- `web/src/app/api/track/route.ts` — full rewrite:
+  - Events queued in memory, flushed to DB via `createMany` every **30s** (batch instead of per-event inserts)
+  - Analytics opt-out now checked from a **5-min in-memory cache** instead of a DB lookup on every event
+  - Expected: eliminates the primary cause of constant DB wakeups from scroll activity
+
+**Commit:** `b597b83`
 
 ---
 
