@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 92 — Mar 31, 2026 — Product Variants & Digital Delivery Badges](#session-92--mar-31-2026--product-variants--digital-delivery-badges)
+- [Session 91 — Mar 31, 2026 — Chronological Feed & Bug Fixes](#session-91--mar-31-2026--chronological-feed--bug-fixes)
 - [Session 89 — Mar 31, 2026 — Admin Fixes & MODERATOR Permissions](#session-89--mar-31-2026--admin-fixes--moderator-permissions)
 - [Session 90 — Mar 31, 2026 — Mobile UI Optimization & Route Exclusions](#session-90--mar-31-2026--mobile-ui-optimization--route-exclusions)
 - [Session 87 — Mar 31, 2026 — Feed Video Scroll-Pause, Onboarding Fix & Referral Source](#session-87--mar-31-2026--feed-video-scroll-pause-onboarding-fix--referral-source)
@@ -71,6 +73,51 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 92 — Mar 31, 2026 — Product Variants & Digital Delivery Badges
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What Was Done
+
+#### Product Variants (Multi-Price Listings)
+Sellers can now list multiple variants (e.g. sizes, colours, editions) under a single product — each with its own price and stock count.
+
+- **Schema** — Added `ProductVariant` model (id, productId, name, price, stock, createdAt) with cascade delete from Product. Added `variantId String?` + `variantName String?` to `OrderItem` for audit trail. `npm run db:push` completed (backup taken). Commit `631b1b4`.
+- **Create product API** (`/api/products/create`) — Added `variantSchema` + `variants[]` to Zod schema. If variants present, derives product-level `effectivePrice` (min) and `effectiveStock` (sum). Nested Prisma write creates all variants atomically.
+- **CreateProductForm** — Added "Variants" pill (cart icon) in action bar. Opens expandable panel with add/remove rows (name · price · qty). Price pill hidden when variants active. Validation: requires at least one valid variant OR a single price.
+- **Feed route** — Includes variant prices, shows "from ₦X" for products with variants.
+- **VariantPicker client component** (`web/src/app/p/[id]/VariantPicker.tsx`) — Pill selector updates displayed price live. Disabled + faded pills for out-of-stock variants. Buy button links to `/checkout/[id]?variantId=<id>`.
+- **Product detail page** — Renders `<VariantPicker>` in place of static price + CTA when `product.variants.length > 0`. Static CTA guarded to only show when no variants.
+- **Checkout form** — Reads `variantId` from `useSearchParams`, passes to initialize API.
+- **Checkout initialize API** — Fetches variant server-side, uses variant price for amount calculation, stores `variantId` + `variantName` on `OrderItem`. Returns 404/400 for missing/OOS variants.
+
+#### Digital Product Badges
+- **ProductCard** — Added coral "⚡ Instant Delivery" pill badge on cards where `data.isDigital === true`.
+- **Product detail page** — Replaced Shipbubble dispatch badge with "⚡ Instant Delivery" badge for digital products.
+
+### Schema Changes
+- `ProductVariant` model added
+- `OrderItem.variantId String?`, `OrderItem.variantName String?` added
+
+### Validations
+- `npm run db:push` — backup taken, schema synced
+- Vercel build passed
+
+---
+
+## Session 91 — Mar 31, 2026 — Chronological Feed & Bug Fixes
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What Was Done
+- **Admin nav unresponsive** — `NavigationWrapper` was injecting `DesktopSidebar` + `page-layout` wrapper into `/admin/*` routes, conflicting with the admin layout's own shell. Fixed by rendering children bare for `/admin` and `/secure-admin` paths. Commit `7e52f26`.
+- **"Open a Store" → 404** — `/store/:slug` → `/:slug` redirect in `next.config.ts` was catching `/store/create` and sending to `/create` (no route). All canonical redirects moved to `middleware.ts` with explicit `!rest.includes('/')` guard so only bare slug paths redirect, not nested routes like `/store/foo/products/new`. Commit `8c93130`.
+- **Feed chronological sort** — Feed was alternating (1 demand, 1 product) from two separate sorted lists, making timestamps feel random. Replaced with a true chronological merge: both lists fetched with the same `cursor`, merged, sorted by `createdAt` desc, sliced to page size. Single `nextCursor` replaces the old `nextProductCursor`/`nextDemandCursor` pair. Affects `api/feed/route.ts`, `page.tsx`, and `FeedInfiniteScroll`. Commit `28317b1`.
 
 ---
 
