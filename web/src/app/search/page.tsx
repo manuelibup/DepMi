@@ -18,21 +18,33 @@ import DemandCard from '@/components/DemandCard';
 const CATEGORIES = ['All', 'FASHION', 'GADGETS', 'BEAUTY', 'FOOD', 'FURNITURE', 'VEHICLES', 'SERVICES', 'OTHER'];
 const COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
+/** Returns the query plus common singular/root forms so "laptops" also matches "laptop". */
+function stemVariants(q: string): string[] {
+    const terms = [q];
+    const l = q.toLowerCase();
+    if (l.endsWith('ies') && l.length > 4) terms.push(q.slice(0, -3) + 'y');
+    else if (l.endsWith('ves') && l.length > 4) terms.push(q.slice(0, -3) + 'f');
+    else if (/(?:ses|xes|zes|ches|shes)$/.test(l) && l.length > 4) terms.push(q.slice(0, -2));
+    else if (l.endsWith('s') && !l.endsWith('ss') && l.length > 3) terms.push(q.slice(0, -1));
+    return [...new Set(terms)];
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string, category?: string }> }) {
     const sp = await searchParams;
     const q = sp.q || '';
     const cat = sp.category;
+    const terms = q.length >= 2 ? stemVariants(q) : [];
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
     // People search — only when query is present
-    const people = q.length >= 2 ? await prisma.user.findMany({
+    const people = terms.length > 0 ? await prisma.user.findMany({
         where: {
-            OR: [
-                { username: { contains: q, mode: 'insensitive' } },
-                { displayName: { contains: q, mode: 'insensitive' } },
-            ]
+            OR: terms.flatMap(t => [
+                { username: { contains: t, mode: 'insensitive' as const } },
+                { displayName: { contains: t, mode: 'insensitive' as const } },
+            ]),
         },
         select: { username: true, displayName: true, depCount: true, depTier: true, avatarUrl: true },
         take: 5,
@@ -50,12 +62,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     const products = await prisma.product.findMany({
         where: {
             inStock: true,
-            ...(q ? {
-                OR: [
-                    { title: { contains: q, mode: 'insensitive' } },
-                    { description: { contains: q, mode: 'insensitive' } },
-                    { store: { name: { contains: q, mode: 'insensitive' } } }
-                ]
+            ...(terms.length > 0 ? {
+                OR: terms.flatMap(t => [
+                    { title: { contains: t, mode: 'insensitive' as const } },
+                    { description: { contains: t, mode: 'insensitive' as const } },
+                    { store: { name: { contains: t, mode: 'insensitive' as const } } },
+                ]),
             } : {}),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ...(cat && cat !== 'All' ? { category: cat as any } : {})
@@ -77,10 +89,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     const demands = await prisma.demand.findMany({
         where: {
             isActive: true,
-            ...(q ? {
-                OR: [
-                    { text: { contains: q, mode: 'insensitive' } },
-                ]
+            ...(terms.length > 0 ? {
+                OR: terms.map(t => ({ text: { contains: t, mode: 'insensitive' as const } })),
             } : {}),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ...(cat && cat !== 'All' ? { category: cat as any } : {})
