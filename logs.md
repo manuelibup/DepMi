@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 95 — Apr 1, 2026 — Multi-Image Upload, Crop Removal & Variant Seller Notification](#session-95--apr-1-2026--multi-image-upload-crop-removal--variant-seller-notification)
 - [Session 94 — Apr 1, 2026 — Store Profile: Horizontal Feed, Interactive Actions & Sold Out](#session-94--apr-1-2026--store-profile-horizontal-feed-interactive-actions--sold-out)
 - [Session 93 — Apr 1, 2026 — Neon Compute Optimizations](#session-93--apr-1-2026--neon-compute-optimizations)
 - [Session 92 — Mar 31, 2026 — Product Variants & Digital Delivery Badges](#session-92--mar-31-2026--product-variants--digital-delivery-badges)
@@ -75,6 +76,24 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 95 — Apr 1, 2026 — Multi-Image Upload, Crop Removal & Variant Seller Notification
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Changes:**
+- `web/src/app/store/[slug]/products/new/CreateProductForm.tsx` — added `multiple` prop to product image `CloudinaryUploader`; removed `cropAspectRatio`/`cropTitle` (forced crop was blocking uploads for users)
+- `web/src/app/store/[slug]/products/[id]/edit/EditProductForm.tsx` — same multi-image and crop removal changes for the edit form
+- `web/src/app/api/webhooks/flutterwave/route.ts` — seller ORDER_CONFIRMED notification now includes variant name when present (e.g. *"Order #A1B2C3 paid — Blue / XL (₦15,000). Prepare to ship."*)
+
+**Notes:**
+- `CloudinaryUploader` already had `multiple` support — it uploads sequentially and calls `onUploadSuccess` once per file; only needed to pass the prop
+- Avatar/banner uploaders in settings and onboarding retain their crop (intentional for consistent profile image dimensions)
+- `variantName` is a direct field on `OrderItem` so no query change needed in the webhook
+
+**Commit:** `4cfe0e5`
 
 ---
 
