@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 94 — Apr 1, 2026 — Store Profile: Horizontal Feed, Interactive Actions & Sold Out](#session-94--apr-1-2026--store-profile-horizontal-feed-interactive-actions--sold-out)
 - [Session 93 — Apr 1, 2026 — Neon Compute Optimizations](#session-93--apr-1-2026--neon-compute-optimizations)
 - [Session 92 — Mar 31, 2026 — Product Variants & Digital Delivery Badges](#session-92--mar-31-2026--product-variants--digital-delivery-badges)
 - [Session 91 — Mar 31, 2026 — Chronological Feed & Bug Fixes](#session-91--mar-31-2026--chronological-feed--bug-fixes)
@@ -74,6 +75,24 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 94 — Apr 1, 2026 — Store Profile: Horizontal Feed, Interactive Actions & Sold Out
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Changes:**
+- `web/src/app/store/[slug]/StoreTabBar.tsx` — full rewrite:
+  - Products tab now renders as a **horizontal scroll feed** (scroll-snap, hidden scrollbar, 200px cards) replacing the 2-column grid
+  - **Like and save buttons are now interactive** — optimistic toggle with rollback on error, disabled with tooltip for guests
+  - Comments button is a link to the product detail page
+  - **3-dot menu (`⋮`)** added for store owners on every card: "Edit product", "Mark as sold out" / "Mark as in stock" toggle with instant UI feedback
+  - Extracted `StoreProductCard` as an internal component managing its own like/save/menu state
+- `web/src/app/store/[slug]/StoreTabBar.module.css` — full rewrite for new layout
+- `web/src/app/api/products/[id]/sold-out/route.ts` — new owner-only POST endpoint: sets `inStock=false` + `stock=0`; mirrors the existing `/restock` route
+
+**Commit:** `8d32ce4`
 
 ---
 
