@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { EventType } from '@prisma/client';
 
 // Simple in-memory rate limiter: max 60 events per sessionId per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -22,7 +23,7 @@ function isRateLimited(sessionId: string): boolean {
 // Events are queued in memory and flushed to DB every 30 seconds.
 // This prevents one DB write per scroll impression, which was keeping Neon awake.
 interface QueuedEvent {
-    type: string;
+    type: EventType;
     sessionId: string;
     userId: string | null;
     targetId: string | null;
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
 
         // Queue instead of writing immediately
         eventQueue.push({
-            type,
+            type: type as EventType,
             sessionId,
             userId,
             targetId: targetId ?? null,
