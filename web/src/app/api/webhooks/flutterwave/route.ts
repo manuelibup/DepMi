@@ -103,14 +103,16 @@ export async function POST(req: NextRequest) {
             }
 
             const isDigitalOrder = order.isDigital || (order.items[0]?.product?.isDigital ?? false)
+            const variantName = order.items[0]?.variantName
+            const variantSuffix = variantName ? ` — ${variantName}` : ''
             await tx.notification.create({
                 data: {
                     userId: order.seller.ownerId,
                     type: 'ORDER_CONFIRMED',
                     title: 'New order payment received',
                     body: isDigitalOrder
-                        ? `Order #${orderId.slice(-6).toUpperCase()} paid (₦${Number(order.totalAmount).toLocaleString()}). Digital product — escrow auto-releases in 48h.`
-                        : `Order #${orderId.slice(-6).toUpperCase()} has been paid (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`,
+                        ? `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Digital product — escrow auto-releases in 48h.`
+                        : `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`,
                     link: '/orders',
                 },
             })

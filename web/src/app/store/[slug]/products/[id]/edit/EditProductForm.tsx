@@ -238,9 +238,8 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
+                            multiple
                             buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
-                            cropAspectRatio={1}
-                            cropTitle="Crop Photo"
                         />
                     )}
 

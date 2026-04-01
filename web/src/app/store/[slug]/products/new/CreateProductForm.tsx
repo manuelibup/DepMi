@@ -286,9 +286,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             onUploadSuccess={(res: CloudinaryUploadResult) => setForm(f => ({ ...f, imageUrls: [...f.imageUrls, res.secure_url] }))}
                             accept="image/*"
                             maxSizeMB={10}
+                            multiple
                             buttonText={form.imageUrls.length === 0 ? 'Add Photos (Min 3)' : form.imageUrls.length < 3 ? `Add More Photos (${3 - form.imageUrls.length} more needed)` : 'Add More Photos'}
-                            cropAspectRatio={1}
-                            cropTitle="Crop Photo"
                         />
                     )}
 
