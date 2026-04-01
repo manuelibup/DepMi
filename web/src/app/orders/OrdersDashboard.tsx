@@ -14,7 +14,7 @@ interface OrderItem {
     total: number;
     createdAt: string;
     paidAt?: string | null;
-    product: { id: string; title: string; isDigital?: boolean; fileUrl?: string | null; images: { url: string }[] };
+    product: { id: string; slug?: string | null; title: string; isDigital?: boolean; fileUrl?: string | null; images: { url: string }[] };
     store?: { name: string; ownerId?: string };
     seller?: { name: string; ownerId: string };
     buyer?: { displayName: string; username: string };
