@@ -52,7 +52,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.footer}>
-                Don&apos;t have an account? <Link href="/register" className={styles.link}>Sign up</Link>
+                Don&apos;t have an account? <Link href="/" className={styles.link}>Sign up</Link>
             </div>
         </div>
     );

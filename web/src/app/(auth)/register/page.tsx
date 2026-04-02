@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -10,6 +10,10 @@ import styles from '@/components/Auth/Auth.module.css';
 
 export default function RegisterPage() {
     const router = useRouter();
+
+    // Redirect /register → landing page
+    useEffect(() => { router.replace('/'); }, [router]);
+    return null;
 
     const [formData, setFormData] = useState({
         username: '',
