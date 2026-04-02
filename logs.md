@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 96 — Apr 2, 2026 — Right Sidebar on Profile, Notifications & Bookmarks](#session-96--apr-2-2026--right-sidebar-on-profile-notifications--bookmarks)
 - [Session 95 — Apr 1, 2026 — Multi-Image Upload, Crop Removal & Variant Seller Notification](#session-95--apr-1-2026--multi-image-upload-crop-removal--variant-seller-notification)
 - [Session 94 — Apr 1, 2026 — Store Profile: Horizontal Feed, Interactive Actions & Sold Out](#session-94--apr-1-2026--store-profile-horizontal-feed-interactive-actions--sold-out)
 - [Session 93 — Apr 1, 2026 — Neon Compute Optimizations](#session-93--apr-1-2026--neon-compute-optimizations)
@@ -76,6 +77,28 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 96 — Apr 2, 2026 — Right Sidebar on Profile, Notifications & Bookmarks
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Changes:**
+- Extended the home page 2-column desktop layout (`feedCol` + `RightSidebar`) to 4 more pages:
+  - `web/src/app/u/[username]/page.tsx` + `page.module.css` — user profile: wrapped `<main>` in an `outerWrapper` flex container; sidebar sits alongside the profile column at ≥1024px
+  - `web/src/app/store/[slug]/page.tsx` + `page.module.css` — store profile: same pattern
+  - `web/src/app/notifications/page.tsx` + `page.module.css` — notifications: `<div className={styles.content}>` placed in `pageLayout` flex container alongside sidebar
+  - `web/src/app/bookmarks/page.tsx` + `page.module.css` — bookmarks: same pattern
+- Sidebar hidden (`display: none`) on mobile/tablet; shown at 260px wide on `≥1024px`
+- `max-width: 980px` on the outer container keeps the layout centered on wide screens
+
+**Notes:**
+- `RightSidebar` already uses `unstable_cache` (5-min revalidation) — no extra DB load
+- Profile pages use `outerWrapper` div as the flex parent (keeps `<main>` semantics intact for the profile content)
+- Notifications/bookmarks use `pageLayout` inside `<main>` alongside the existing `.content` div
+
+**Commit:** `454399b`
 
 ---
 
