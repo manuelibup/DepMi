@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { NotificationType } from '@prisma/client';
 import styles from './page.module.css';
+import RightSidebar from '@/components/RightSidebar';
 
 function timeAgo(date: Date) {
     const diff = Date.now() - date.getTime();
@@ -150,6 +151,7 @@ export default async function NotificationsPage() {
     return (
         <main className={styles.container}>
             <Header />
+            <div className={styles.pageLayout}>
             <div className={styles.content}>
                 <h1 className={styles.pageTitle}>Notifications</h1>
 
@@ -189,6 +191,10 @@ export default async function NotificationsPage() {
                 {ownsStore && (
                     <NotifPrefsForm initial={notifDemandCategories} />
                 )}
+            </div>
+            <div className={styles.sidebarCol}>
+                <RightSidebar />
+            </div>
             </div>
             <BottomNav />
         </main>

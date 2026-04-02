@@ -39,6 +39,7 @@ import ProfileFollowButton from './ProfileFollowButton';
 import ProfileTabs from './ProfileTabs';
 import ShareButton from '@/components/ShareButton';
 import QRCodeButton from '@/components/QRCodeButton';
+import RightSidebar from '@/components/RightSidebar';
 
 interface ProfilePageProps {
     params: Promise<{ username: string }>;
@@ -159,6 +160,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     }));
 
     return (
+        <div className={styles.outerWrapper}>
         <main className={styles.container}>
 
             {/* ── Cover ─────────────────────────────────── */}
@@ -316,5 +318,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             />
 
         </main>
+        <div className={styles.sidebarCol}>
+            <RightSidebar />
+        </div>
+        </div>
     );
 }

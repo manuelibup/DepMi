@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import StoreBackButton from './StoreBackButton';
+import RightSidebar from '@/components/RightSidebar';
 import { authOptions } from '@/lib/auth';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -187,6 +188,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     };
 
     return (
+        <div className={styles.outerWrapper}>
         <main className={styles.container}>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(storeJsonLd) }} />
             <ViewTracker storeId={store.id} />
@@ -357,6 +359,10 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 </div>
             )}
         </main>
+        <div className={styles.sidebarCol}>
+            <RightSidebar />
+        </div>
+        </div>
     );
 }
 

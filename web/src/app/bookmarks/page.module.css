@@ -10,6 +10,34 @@
     margin: 0 auto;
 }
 
+/* Desktop 2-column layout */
+.sidebarCol {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .pageLayout {
+        display: flex;
+        gap: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 16px;
+        align-items: flex-start;
+    }
+    .content {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+        margin: 0;
+    }
+    .sidebarCol {
+        display: block;
+        width: 260px;
+        flex-shrink: 0;
+        padding-top: 16px;
+    }
+}
+
 .pageTitle {
     font-size: 1.4rem;
     font-weight: 800;

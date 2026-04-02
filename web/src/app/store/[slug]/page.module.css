@@ -405,11 +405,46 @@
     .ownerActions {
         justify-content: flex-start;
         width: 100%;
-        padding-bottom: 0;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .ownerActions::-webkit-scrollbar {
+        display: none;
     }
 
     .actionChip {
         padding: 8px 12px;
         font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+}
+
+/* Desktop 2-column layout with right sidebar */
+.sidebarCol {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .outerWrapper {
+        display: flex;
+        gap: 24px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 16px;
+        align-items: flex-start;
+    }
+    .container {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+        margin: 0;
+    }
+    .sidebarCol {
+        display: block;
+        width: 260px;
+        flex-shrink: 0;
+        padding-top: 16px;
     }
 }

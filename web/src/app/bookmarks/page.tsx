@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import styles from './page.module.css';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import RightSidebar from '@/components/RightSidebar';
 import ProductCard from '@/components/ProductCard';
 import DemandCard from '@/components/DemandCard';
 import EmptyState from '@/components/EmptyState';
@@ -114,6 +115,7 @@ export default async function BookmarksPage() {
     return (
         <main className={styles.main}>
             <Header />
+            <div className={styles.pageLayout}>
             <div className={styles.content}>
                 <h1 className={styles.pageTitle}>Bookmarks</h1>
 
@@ -151,6 +153,10 @@ export default async function BookmarksPage() {
                         )}
                     </>
                 )}
+            </div>
+            <div className={styles.sidebarCol}>
+                <RightSidebar />
+            </div>
             </div>
             <BottomNav />
         </main>

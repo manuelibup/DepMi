@@ -103,6 +103,15 @@
     gap: 8px;
     align-items: center;
     margin-bottom: 4px;
+    overflow-x: auto;
+    max-width: calc(100vw - 128px); /* Accommodate avatar (88) + padding (36) */
+    padding-bottom: 4px; /* Scrollbar padding */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.profileActions::-webkit-scrollbar {
+    display: none;
 }
 
 .avatar {
@@ -558,25 +567,7 @@
 
 /* ── Mobile Layout Fixes ─────────────────────────────────── */
 
-@media (max-width: 480px) {
-    .avatarRow {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        margin-top: -40px;
-    }
-    .profileActions {
-        width: 100%;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-    }
-}
-
-/* ══ DESKTOP — X/Twitter style ═════════════════════════════
-   The profile column sits inside the .desktop-content div
-   which already has margin-left: 240px (sidebar offset).
-   We just need to widen and style it properly.
-═══════════════════════════════════════════════════════════ */
+/* ── Removed Mobile Flex-Column Wrapper ── */
 
 @media (min-width: 640px) {
     .container {
@@ -642,5 +633,33 @@
     /* Bigger product grid on desktop */
     .productsGrid {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Desktop 2-column layout with right sidebar */
+.sidebarCol {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .outerWrapper {
+        display: flex;
+        gap: 24px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 16px;
+        align-items: flex-start;
+    }
+    .container {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+        margin: 0;
+    }
+    .sidebarCol {
+        display: block;
+        width: 260px;
+        flex-shrink: 0;
+        padding-top: 16px;
     }
 }
