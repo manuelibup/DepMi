@@ -46,9 +46,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let rawProducts: any[] = [], rawDemands: any[] = [], topStores: any[] = [];
+  let rawProducts: any[] = [], rawDemands: any[] = [], rawPosts: any[] = [], topStores: any[] = [];
   try {
-  [rawProducts, rawDemands, topStores] = await Promise.all([
+  [rawProducts, rawDemands, rawPosts, topStores] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma.product as any).findMany({
       where: productWhere,
@@ -78,6 +78,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           likes: { where: { userId }, select: { id: true } },
           saves: { where: { userId }, select: { id: true } },
         } : {}),
+      },
+    }),
+    prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: INITIAL_TAKE,
+      include: {
+        store: { select: { slug: true } },
+        author: { select: { displayName: true, username: true, avatarUrl: true } },
+        images: { select: { url: true } },
+        ...(userId ? { likes: { where: { userId }, select: { id: true } } } : {}),
       },
     }),
     prisma.store.findMany({
@@ -150,8 +160,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     },
   }));
 
+  // Serialize posts → FeedItem[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const posts: FeedItem[] = rawPosts.map((p: any) => ({
+    type: 'post' as const,
+    createdAt: p.createdAt.toISOString(),
+    data: {
+      id: p.id,
+      body: p.body,
+      type: p.type as 'POST' | 'ANNOUNCEMENT',
+      likeCount: p.likeCount,
+      commentCount: p.commentCount,
+      createdAt: p.createdAt.toISOString(),
+      storeSlug: p.store.slug,
+      author: {
+        displayName: p.author.displayName ?? null,
+        username: p.author.username ?? null,
+        avatarUrl: p.author.avatarUrl ?? null,
+      },
+      images: p.images.map((img: { url: string }) => ({ url: img.url })),
+      isLiked: userId ? (p.likes?.length > 0) : false,
+    },
+  }));
+
   // Merge and sort chronologically (newest first)
-  const initialItems: FeedItem[] = [...products, ...demands]
+  const initialItems: FeedItem[] = [...products, ...demands, ...posts]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, INITIAL_TAKE);
 
@@ -190,6 +223,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 initialCursor={initialCursor}
                 category={category}
                 topStores={topStores}
+                sessionUserId={userId ?? undefined}
               />
             )}
           </div>

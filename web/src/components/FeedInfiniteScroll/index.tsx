@@ -5,14 +5,17 @@ import DemandCard from '@/components/DemandCard';
 import DemandCardGrid from '@/components/DemandCardGrid';
 import ProductCard from '@/components/ProductCard';
 import ProductCardGrid from '@/components/ProductCardGrid';
+import PostCard from '@/components/PostCard';
 import SuggestedProfiles from '@/components/SuggestedProfiles';
 import FeedCarousel from '@/components/FeedCarousel';
 import type { ProductData } from '@/components/ProductCard';
 import type { DemandData } from '@/components/DemandCard';
+import type { PostData } from '@/components/PostCard';
 
 export type FeedItem =
     | { type: 'product'; createdAt: string; data: ProductData }
-    | { type: 'demand'; createdAt: string; data: DemandData };
+    | { type: 'demand'; createdAt: string; data: DemandData }
+    | { type: 'post'; createdAt: string; data: PostData };
 
 type ViewMode = 'list' | 'grid';
 type SortMode = 'new' | 'popular';
@@ -30,6 +33,7 @@ interface Props {
     initialCursor: string | null;
     category?: string;
     topStores: TopStore[];
+    sessionUserId?: string;
 }
 
 const STORAGE_KEY = 'depmi_feed_view';
@@ -39,6 +43,7 @@ export default function FeedInfiniteScroll({
     initialCursor,
     category,
     topStores,
+    sessionUserId,
 }: Props) {
     const [items, setItems] = useState<FeedItem[]>(initialItems);
     const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -114,8 +119,8 @@ export default function FeedInfiniteScroll({
 
     const sortedItems = sortMode === 'popular'
         ? [...items].sort((a, b) => {
-            const viewsA = a.type === 'demand' ? (a.data.viewCount ?? 0) : (a.data.viewers ?? 0);
-            const viewsB = b.type === 'demand' ? (b.data.viewCount ?? 0) : (b.data.viewers ?? 0);
+            const viewsA = a.type === 'demand' ? (a.data.viewCount ?? 0) : a.type === 'product' ? (a.data.viewers ?? 0) : 0;
+            const viewsB = b.type === 'demand' ? (b.data.viewCount ?? 0) : b.type === 'product' ? (b.data.viewers ?? 0) : 0;
             const scoreA = (a.data.likeCount ?? 0) + viewsA;
             const scoreB = (b.data.likeCount ?? 0) + viewsB;
             return scoreB - scoreA;
@@ -219,7 +224,14 @@ export default function FeedInfiniteScroll({
 
                     let card: React.ReactNode;
 
-                    if (item.type === 'demand') {
+                    if (item.type === 'post') {
+                        // Posts always render full-width regardless of view mode
+                        card = (
+                            <div key={`post-${item.data.id}-${index}`} style={fullWidth}>
+                                <PostCard data={item.data} sessionUserId={sessionUserId} />
+                            </div>
+                        );
+                    } else if (item.type === 'demand') {
                         card = isGrid ? (
                             <DemandCardGrid key={`dg-${item.data.id}-${index}`} data={item.data} index={index} />
                         ) : (

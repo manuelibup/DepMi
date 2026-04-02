@@ -6,24 +6,27 @@ import { prisma } from '@/lib/prisma';
 
 const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
-// Cache base feed pages (no user personalization) for 30 seconds
+// Cache base feed pages (no user personalization) for 60 seconds
 function getCachedFeedPage(cursor: string | null, category: string | undefined, take: number) {
     return unstable_cache(
         async () => {
             const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
             const demandWhere: Record<string, unknown> = { isActive: true };
+            const postWhere: Record<string, unknown> = {};
 
             if (category) {
                 productWhere.category = category;
                 demandWhere.category = category;
+                // Posts have no category — always included regardless of filter
             }
             if (cursor) {
                 productWhere.createdAt = { lt: new Date(cursor) };
                 demandWhere.createdAt = { lt: new Date(cursor) };
+                postWhere.createdAt = { lt: new Date(cursor) };
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const [rawProducts, rawDemands] = await Promise.all([
+            const [rawProducts, rawDemands, rawPosts] = await Promise.all([
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (prisma.product as any).findMany({
                     where: productWhere,
@@ -46,6 +49,16 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         _count: { select: { bids: true, comments: true, likes: true } as any },
                         images: { orderBy: { order: 'asc' }, take: 3, select: { url: true } },
+                    },
+                }),
+                prisma.post.findMany({
+                    where: postWhere,
+                    orderBy: { createdAt: 'desc' },
+                    take,
+                    include: {
+                        store: { select: { slug: true } },
+                        author: { select: { displayName: true, username: true, avatarUrl: true } },
+                        images: { select: { url: true } },
                     },
                 }),
             ]);
@@ -104,10 +117,30 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                 images: d.images.map((img: { url: string }) => img.url),
             }));
 
-            // Merge both lists and sort chronologically (newest first), then page
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const posts = rawPosts.map((p: any) => ({
+                id: p.id,
+                createdAt: p.createdAt.toISOString(),
+                body: p.body,
+                type: p.type as 'POST' | 'ANNOUNCEMENT',
+                likeCount: p.likeCount,
+                commentCount: p.commentCount,
+                storeSlug: p.store.slug,
+                author: {
+                    displayName: p.author.displayName ?? null,
+                    username: p.author.username ?? null,
+                    avatarUrl: p.author.avatarUrl ?? null,
+                },
+                images: p.images.map((img: { url: string }) => ({ url: img.url })),
+                isLiked: false, // overwritten per-user below
+            }));
+
+            // Merge all three lists and sort chronologically (newest first), then page
             const productItems = products.map((p: typeof products[0]) => ({ type: 'product' as const, createdAt: p.createdAt, data: p }));
             const demandItems = demands.map((d: typeof demands[0]) => ({ type: 'demand' as const, createdAt: d.createdAt, data: d }));
-            const merged = [...productItems, ...demandItems]
+            const postItems = posts.map((p: typeof posts[0]) => ({ type: 'post' as const, createdAt: p.createdAt, data: p }));
+
+            const merged = [...productItems, ...demandItems, ...postItems]
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, take);
 
@@ -115,7 +148,7 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
 
             return { items: merged, nextCursor };
         },
-        [`feed-v2-${cursor}-${category ?? 'all'}-${take}`],
+        [`feed-v3-${cursor}-${category ?? 'all'}-${take}`],
         { revalidate: 60 }
     )();
 }
@@ -136,33 +169,41 @@ export async function GET(req: Request) {
     const savedProductIds = new Set<string>();
     const likedDemandIds = new Set<string>();
     const savedDemandIds = new Set<string>();
+    const likedPostIds = new Set<string>();
 
     if (userId && items.length > 0) {
         const productIds = items.filter(i => i.type === 'product').map(i => i.data.id);
         const demandIds = items.filter(i => i.type === 'demand').map(i => i.data.id);
+        const postIds = items.filter(i => i.type === 'post').map(i => i.data.id);
 
-        const [pLikes, pSaves, dLikes, dSaves] = await Promise.all([
+        const [pLikes, pSaves, dLikes, dSaves, postLikes] = await Promise.all([
             productIds.length ? prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
             productIds.length ? prisma.savedProduct.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             demandIds.length ? (prisma.demandLike as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             demandIds.length ? (prisma.savedDemand as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
+            postIds.length ? prisma.postLike.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }) : [],
         ]);
 
         pLikes.forEach((l: { productId: string }) => likedProductIds.add(l.productId));
         pSaves.forEach((s: { productId: string }) => savedProductIds.add(s.productId));
         dLikes.forEach((l: { demandId: string }) => likedDemandIds.add(l.demandId));
         dSaves.forEach((s: { demandId: string }) => savedDemandIds.add(s.demandId));
+        postLikes.forEach((l: { postId: string }) => likedPostIds.add(l.postId));
     }
 
     // Merge personalization
-    const personalizedItems = items.map(item => ({
-        ...item,
-        data: item.type === 'product'
-            ? { ...item.data, isLiked: likedProductIds.has(item.data.id), isSaved: savedProductIds.has(item.data.id) }
-            : { ...item.data, isLiked: likedDemandIds.has(item.data.id), isSaved: savedDemandIds.has(item.data.id) },
-    }));
+    const personalizedItems = items.map(item => {
+        if (item.type === 'product') {
+            return { ...item, data: { ...item.data, isLiked: likedProductIds.has(item.data.id), isSaved: savedProductIds.has(item.data.id) } };
+        }
+        if (item.type === 'demand') {
+            return { ...item, data: { ...item.data, isLiked: likedDemandIds.has(item.data.id), isSaved: savedDemandIds.has(item.data.id) } };
+        }
+        // post
+        return { ...item, data: { ...item.data, isLiked: likedPostIds.has(item.data.id) } };
+    });
 
     const cacheHeader = userId
         ? 'private, max-age=15'
