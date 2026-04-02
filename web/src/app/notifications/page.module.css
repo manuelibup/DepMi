@@ -22,7 +22,6 @@
         max-width: 900px;
         margin: 0 auto;
         padding: 0 16px;
-        align-items: flex-start;
     }
     .content {
         flex: 1;
