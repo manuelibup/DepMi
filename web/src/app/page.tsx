@@ -200,7 +200,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <div className={styles.guestBanner}>
           <span>You&apos;re browsing as a guest &mdash; sign up to buy, sell &amp; save</span>
           <div className={styles.guestActions}>
-            <Link href="/login" className={styles.guestSignup}>Join free</Link>
+            <Link href="/" className={styles.guestSignup}>Join free</Link>
             <Link href="/login" className={styles.guestLogin}>Log in</Link>
           </div>
         </div>

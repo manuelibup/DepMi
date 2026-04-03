@@ -46,7 +46,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const loginHref = `/login?callbackUrl=${encodeURIComponent(state.callbackUrl)}`;
-    const registerHref = `/login?callbackUrl=${encodeURIComponent(state.callbackUrl)}`;
+    const registerHref = `/`;
 
     return (
         <AuthGateContext.Provider value={{ openGate, closeGate }}>
