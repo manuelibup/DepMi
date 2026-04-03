@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import DesktopSidebar from './DesktopSidebar';
 
-const GUEST_PAGES = ['/login', '/register', '/signup', '/waitlist'];
+const GUEST_PAGES = ['/login', '/register', '/signup', '/waitlist', '/welcome'];
 
 export default function NavigationWrapper({ children }: { children: React.ReactNode }) {
     const { status } = useSession();
