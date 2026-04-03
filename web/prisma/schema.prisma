@@ -209,6 +209,7 @@ model Store {
   tin                 String?
   verificationStatus    StoreVerificationStatus @default(UNVERIFIED)
   feeWaiverUntil        DateTime?
+  phoneNumber           String?
   storeState            String?
   localDeliveryFee      Decimal?                @db.Decimal(10, 2)
   nationwideDeliveryFee Decimal?                @db.Decimal(10, 2)

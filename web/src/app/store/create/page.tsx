@@ -15,7 +15,8 @@ export default function StoreCreatePage() {
         slug: '',
         description: '',
         location: '',
-        logoUrl: ''
+        logoUrl: '',
+        phoneNumber: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -206,6 +207,27 @@ export default function StoreCreatePage() {
                             value={form.location}
                             onChange={(e) => setForm({ ...form, location: e.target.value })}
                             placeholder="e.g. Lagos, Nigeria"
+                            style={{
+                                width: '100%',
+                                padding: '0.875rem 1rem',
+                                borderRadius: 'var(--radius-md)',
+                                border: '1px solid var(--border)',
+                                background: 'var(--input-bg)',
+                                color: 'var(--text-primary)',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                        <label htmlFor="phoneNumber" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Contact Phone Number (Optional)</label>
+                        <input
+                            id="phoneNumber"
+                            type="tel"
+                            value={form.phoneNumber}
+                            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                            placeholder="e.g. 08012345678"
                             style={{
                                 width: '100%',
                                 padding: '0.875rem 1rem',

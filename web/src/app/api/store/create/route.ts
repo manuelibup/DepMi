@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         // }
 
         const body = await req.json();
-        const { name, slug, description, location, logoUrl } = body;
+        const { name, slug, description, location, logoUrl, phoneNumber } = body;
 
         if (!name || !slug) {
             return NextResponse.json({ message: "Store name and handle (@slug) are required." }, { status: 400 });
@@ -83,6 +83,7 @@ export async function POST(req: Request) {
                 description,
                 location,
                 logoUrl,
+                phoneNumber: phoneNumber || null,
                 isActive: true,
                 feeWaiverUntil,
             }
