@@ -65,7 +65,7 @@ If fewer than 3 match well, return fewer. If nothing matches, return [].`;
         const content: string = data.choices?.[0]?.message?.content ?? '';
 
         // Extract JSON array from response (model sometimes adds extra text)
-        const match = content.match(/\[.*?\]/s);
+        const match = content.match(/\[[\s\S]*?\]/);
         if (!match) return;
 
         const ids: unknown[] = JSON.parse(match[0]);
