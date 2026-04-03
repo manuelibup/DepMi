@@ -7,6 +7,7 @@ import Link from 'next/link';
 import styles from './page.module.css';
 
 import WaitlistHome from '@/components/WaitlistHome';
+import LandingPage from '@/components/LandingPage';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import StoriesBar from '@/components/StoriesBar';
@@ -25,6 +26,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   }
 
   const session = await getServerSession(authOptions);
+
+  // Guests see the landing page
+  if (!session) {
+    const [users, stores, listings] = await Promise.all([
+      prisma.user.count(),
+      prisma.store.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { inStock: true } }),
+    ]);
+    return <LandingPage stats={{ users, stores, listings }} />;
+  }
 
   // Onboarding redirects — only for logged-in users
   if (session?.user && !session.user.username) {
