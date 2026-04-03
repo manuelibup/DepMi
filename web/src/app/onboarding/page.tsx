@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import CloudinaryUploader from '@/components/CloudinaryUploader';
 import styles from './page.module.css';
 
 type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -51,7 +50,6 @@ export default function OnboardingPage() {
     // ── Step 1 state ──
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
-    const [avatarUrl, setAvatarUrl] = useState('');
     const [step1Loading, setStep1Loading] = useState(false);
     const [step1Error, setStep1Error] = useState('');
     const [checkState, setCheckState] = useState<CheckState>('idle');
@@ -60,14 +58,23 @@ export default function OnboardingPage() {
 
     // ── Step 2 state ──
     const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
+    const [locationUsers, setLocationUsers] = useState<SuggestedUser[]>([]);
+    const [uniUsers, setUniUsers] = useState<SuggestedUser[]>([]);
+    const [contactUsers, setContactUsers] = useState<SuggestedUser[]>([]);
+    const [contactsGranted, setContactsGranted] = useState(false);
+    const [contactsLoading, setContactsLoading] = useState(false);
     const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
     const [followLoading, setFollowLoading] = useState<Set<string>>(new Set());
     const [step2Fetched, setStep2Fetched] = useState(false);
 
-    // ── Step 3 (location) state ──
+    // ── Step 3 (location + uni) state ──
     const [city, setCity] = useState('');
     const [locationState, setLocationState] = useState('');
     const [country, setCountry] = useState('');
+    const [isInUni, setIsInUni] = useState(false);
+    const [university, setUniversity] = useState('');
+    const [faculty, setFaculty] = useState('');
+    const [department, setDepartment] = useState('');
     const [step3Loading, setStep3Loading] = useState(false);
 
     // ── Step 4 (interests) state ──
@@ -104,12 +111,55 @@ export default function OnboardingPage() {
     useEffect(() => {
         if (step === 2 && !step2Fetched) {
             setStep2Fetched(true);
-            fetch('/api/user/suggested')
+            fetch('/api/user/suggested?context=all')
                 .then(r => r.json())
-                .then(d => setSuggestedUsers(d.users ?? []))
+                .then(d => {
+                    setSuggestedUsers(d.users ?? []);
+                    setLocationUsers(d.sections?.location ?? []);
+                    setUniUsers(d.sections?.uni ?? []);
+                })
                 .catch(() => {});
         }
     }, [step, step2Fetched]);
+
+    // ── Contact Picker (Android Chrome only) ──
+    const handleContactPicker = async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contacts = (navigator as any).contacts;
+        if (!contacts) return;
+        setContactsLoading(true);
+        try {
+            const selected: { tel?: string[] }[] = await contacts.select(['tel'], { multiple: true });
+            const hashes: string[] = [];
+            for (const contact of selected) {
+                for (const tel of contact.tel ?? []) {
+                    const normalised = tel.replace(/\D/g, '');
+                    if (!normalised) continue;
+                    // SHA-256 via SubtleCrypto (browser native, no library needed)
+                    const encoded = new TextEncoder().encode(normalised);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+                    const hashHex = Array.from(new Uint8Array(hashBuffer))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+                    hashes.push(hashHex);
+                }
+            }
+            if (hashes.length > 0) {
+                const res = await fetch('/api/user/match-contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hashes }),
+                });
+                const data = await res.json();
+                setContactUsers(data.users ?? []);
+            }
+            setContactsGranted(true);
+        } catch {
+            // user cancelled or API unsupported
+        } finally {
+            setContactsLoading(false);
+        }
+    };
 
     // ── Username availability check ──
     const handleUsernameChange = useCallback((raw: string) => {
@@ -152,7 +202,6 @@ export default function OnboardingPage() {
 
         try {
             const body: Record<string, string> = { username, displayName };
-            if (avatarUrl) body.avatarUrl = avatarUrl;
 
             const res = await fetch('/api/user/onboarding', {
                 method: 'POST',
@@ -223,7 +272,7 @@ export default function OnboardingPage() {
         }
     };
 
-    // ── Step 3 (location) submit ──
+    // ── Step 3 (location + uni) submit ──
     const handleStep3Submit = async () => {
         setStep3Loading(true);
         try {
@@ -234,6 +283,9 @@ export default function OnboardingPage() {
                     ...(city.trim() && { city: city.trim() }),
                     ...(locationState.trim() && { state: locationState.trim() }),
                     ...(country.trim() && { country: country.trim() }),
+                    ...(isInUni && university.trim() && { university: university.trim() }),
+                    ...(isInUni && faculty.trim() && { faculty: faculty.trim() }),
+                    ...(isInUni && department.trim() && { department: department.trim() }),
                 }),
             });
         } catch {
@@ -472,7 +524,7 @@ export default function OnboardingPage() {
                             <p className={styles.subtitle}>
                                 {isRepair
                                     ? 'Your current username contains spaces, which is no longer supported. Please choose a new handle.'
-                                    : 'Add your photo, name, and a unique username.'}
+                                    : 'Pick a name and a unique username to get started.'}
                             </p>
                         </div>
 
@@ -504,32 +556,6 @@ export default function OnboardingPage() {
                             </div>
                         )}
 
-                        {/* Avatar upload */}
-                        {!isRepair && (
-                            <div className={styles.avatarUploadRow}>
-                                <div className={styles.avatarPreview}>
-                                    {avatarUrl ? (
-                                        <Image src={avatarUrl} alt="Your avatar" fill style={{ objectFit: 'cover' }} sizes="72px" />
-                                    ) : (
-                                        <span style={{ fontSize: '1.75rem' }}>
-                                            {displayName ? displayName.charAt(0).toUpperCase() : '?'}
-                                        </span>
-                                    )}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Profile photo</p>
-                                    <CloudinaryUploader
-                                        accept="image/*"
-                                        maxSizeMB={5}
-                                        buttonText={avatarUrl ? 'Change photo' : 'Upload photo'}
-                                        cropAspectRatio={1}
-                                        cropTitle="Crop your profile photo"
-                                        onUploadSuccess={(result) => setAvatarUrl(result.secure_url)}
-                                    />
-                                    <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Optional · JPG or PNG</p>
-                                </div>
-                            </div>
-                        )}
 
                         <form className={styles.form} onSubmit={handleStep1Submit}>
                             <div className={styles.fieldGroup}>
@@ -601,83 +627,173 @@ export default function OnboardingPage() {
                 )}
 
                 {/* ── STEP 2: Follow accounts ── */}
-                {step === 2 && (
-                    <>
-                        <div className={styles.header}>
-                            <h1 className={styles.title}>Follow people you like</h1>
-                            <p className={styles.subtitle}>
-                                {suggestedUsers.length === 0
-                                    ? 'Loading suggestions...'
-                                    : `Follow at least ${minFollows} account${minFollows !== 1 ? 's' : ''} to grow the community and curate your feed.`}
-                            </p>
-                        </div>
-
-                        <p style={{ textAlign: 'center', fontSize: '0.85rem', color: followedIds.size >= minFollows ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600 }}>
-                            {followedIds.size} following
-                            {followedIds.size < minFollows
-                                ? ` · ${minFollows - followedIds.size} more to go`
-                                : ' · Ready to continue!'}
-                        </p>
-
-                        <div className={styles.userGrid}>
-                            {suggestedUsers.map(user => {
+                {step === 2 && (() => {
+                    // Helper: render a horizontal scroll row of user cards
+                    const UserRow = ({ users, emptyMsg }: { users: SuggestedUser[]; emptyMsg: string }) => (
+                        <div style={{ overflowX: 'auto', display: 'flex', gap: '10px', paddingBottom: '4px', scrollSnapType: 'x mandatory' }}>
+                            {users.length === 0 ? (
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '16px 0', whiteSpace: 'nowrap' }}>{emptyMsg}</p>
+                            ) : users.map(user => {
                                 const isFollowing = followedIds.has(user.id);
-                                const isLoading = followLoading.has(user.id);
+                                const isLoad = followLoading.has(user.id);
                                 return (
-                                    <div key={user.id} className={styles.userCard}>
-                                        <div className={styles.userCardAvatar}>
+                                    <div key={user.id} style={{
+                                        scrollSnapAlign: 'start',
+                                        flexShrink: 0,
+                                        width: '130px',
+                                        background: 'var(--bg-elevated)',
+                                        border: `1.5px solid ${isFollowing ? 'var(--primary)' : 'var(--card-border)'}`,
+                                        borderRadius: '14px',
+                                        padding: '14px 10px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        transition: 'border-color 0.15s',
+                                    }}>
+                                        <div style={{ position: 'relative', width: '52px', height: '52px', borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                             {user.avatarUrl ? (
-                                                <Image src={user.avatarUrl} alt={user.displayName} fill style={{ objectFit: 'cover' }} />
+                                                <Image src={user.avatarUrl} alt={user.displayName} fill style={{ objectFit: 'cover' }} sizes="52px" />
                                             ) : (
                                                 <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>
                                                     {user.displayName.charAt(0).toUpperCase()}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className={styles.userCardInfo}>
-                                            <p className={styles.userCardName}>{user.displayName}</p>
-                                            <p className={styles.userCardHandle}>@{user.username}</p>
-                                        </div>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', textAlign: 'center', lineHeight: 1.2, maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.displayName}</p>
+                                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{user.username}</p>
                                         <button
                                             type="button"
                                             onClick={() => toggleFollow(user.id)}
-                                            disabled={isLoading}
-                                            className={`${styles.followBtn} ${isFollowing ? styles.followBtnActive : ''}`}
+                                            disabled={isLoad}
+                                            style={{
+                                                marginTop: '4px',
+                                                width: '100%',
+                                                padding: '6px 0',
+                                                borderRadius: '20px',
+                                                border: `1.5px solid ${isFollowing ? 'var(--primary)' : 'var(--card-border)'}`,
+                                                background: isFollowing ? 'var(--primary)' : 'transparent',
+                                                color: isFollowing ? '#fff' : 'var(--text-main)',
+                                                fontSize: '0.78rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                            }}
                                         >
-                                            {isLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                                            {isLoad ? '...' : isFollowing ? 'Following' : 'Follow'}
                                         </button>
                                     </div>
                                 );
                             })}
-
-                            {suggestedUsers.length === 0 && (
-                                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '24px 0' }}>
-                                    No suggestions available yet.
-                                </p>
-                            )}
                         </div>
+                    );
 
-                        <button
-                            type="button"
-                            className={styles.submitBtn}
-                            onClick={() => setStep(3)}
-                            disabled={!canProceedStep2}
-                        >
-                            Continue
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14m-7-7 7 7-7 7" />
-                            </svg>
-                        </button>
-                    </>
-                )}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const hasContactPicker = typeof navigator !== 'undefined' && !!(navigator as any).contacts;
 
-                {/* ── STEP 3: Location ── */}
+                    return (
+                        <>
+                            <div className={styles.header}>
+                                <h1 className={styles.title}>Find people you know</h1>
+                                <p className={styles.subtitle}>
+                                    Follow at least {minFollows} account{minFollows !== 1 ? 's' : ''} to curate your feed.
+                                </p>
+                            </div>
+
+                            <p style={{ textAlign: 'center', fontSize: '0.85rem', color: followedIds.size >= minFollows ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, marginBottom: '16px' }}>
+                                {followedIds.size} following
+                                {followedIds.size < minFollows
+                                    ? ` · ${minFollows - followedIds.size} more to go`
+                                    : ' · Ready to continue!'}
+                            </p>
+
+                            {/* Contacts section */}
+                            {hasContactPicker && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>From your contacts</p>
+                                        {!contactsGranted && (
+                                            <button
+                                                type="button"
+                                                onClick={handleContactPicker}
+                                                disabled={contactsLoading}
+                                                style={{
+                                                    padding: '5px 14px',
+                                                    borderRadius: '20px',
+                                                    border: '1.5px solid var(--primary)',
+                                                    background: 'transparent',
+                                                    color: 'var(--primary)',
+                                                    fontSize: '0.78rem',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                {contactsLoading ? 'Searching...' : 'Allow access'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {contactsGranted ? (
+                                        <UserRow
+                                            users={contactUsers}
+                                            emptyMsg="None of your contacts are on DepMi yet."
+                                        />
+                                    ) : (
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.83rem', margin: 0 }}>
+                                            Tap &ldquo;Allow access&rdquo; to find friends from your phonebook. Phone numbers are hashed on your device — we never see them.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* From your location */}
+                            {locationUsers.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <p style={{ margin: '0 0 10px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>From your area</p>
+                                    <UserRow users={locationUsers} emptyMsg="" />
+                                </div>
+                            )}
+
+                            {/* From your university */}
+                            {uniUsers.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <p style={{ margin: '0 0 10px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>From your university</p>
+                                    <UserRow users={uniUsers} emptyMsg="" />
+                                </div>
+                            )}
+
+                            {/* General suggestions */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <p style={{ margin: '0 0 10px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                                    {locationUsers.length === 0 && uniUsers.length === 0 && !hasContactPicker ? 'Suggested for you' : 'Popular on DepMi'}
+                                </p>
+                                <UserRow
+                                    users={suggestedUsers}
+                                    emptyMsg="Loading suggestions..."
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                className={styles.submitBtn}
+                                onClick={() => setStep(3)}
+                                disabled={!canProceedStep2}
+                            >
+                                Continue
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 12h14m-7-7 7 7-7 7" />
+                                </svg>
+                            </button>
+                        </>
+                    );
+                })()}
+
+                {/* ── STEP 3: Location + University ── */}
                 {step === 3 && (
                     <>
                         <div className={styles.header}>
                             <h1 className={styles.title}>Where are you based?</h1>
                             <p className={styles.subtitle}>
-                                Help us show you relevant products and sellers near you.
+                                Help us show you relevant products and connect you with people nearby.
                             </p>
                         </div>
 
@@ -727,6 +843,95 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                             </div>
+
+                            {/* Uni toggle */}
+                            <button
+                                type="button"
+                                onClick={() => setIsInUni(v => !v)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    width: '100%',
+                                    background: isInUni ? 'rgba(255,92,56,0.08)' : 'var(--bg-elevated)',
+                                    border: `1.5px solid ${isInUni ? 'var(--primary)' : 'var(--card-border)'}`,
+                                    borderRadius: '12px',
+                                    padding: '14px 16px',
+                                    cursor: 'pointer',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.95rem',
+                                    fontWeight: 500,
+                                    textAlign: 'left',
+                                    transition: 'all 0.15s',
+                                }}
+                            >
+                                <span style={{ fontSize: '1.3rem' }}>🎓</span>
+                                <span style={{ flex: 1 }}>I&apos;m currently in university</span>
+                                <span style={{
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '50%',
+                                    border: `2px solid ${isInUni ? 'var(--primary)' : 'var(--card-border)'}`,
+                                    background: isInUni ? 'var(--primary)' : 'transparent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                }}>
+                                    {isInUni && (
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="m20 6-11 11-5-5" />
+                                        </svg>
+                                    )}
+                                </span>
+                            </button>
+
+                            {isInUni && (
+                                <>
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>University / School</label>
+                                        <div className={styles.inputWrapper}>
+                                            <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" />
+                                            </svg>
+                                            <input
+                                                type="text"
+                                                className={styles.input}
+                                                placeholder="e.g. University of Lagos"
+                                                value={university}
+                                                onChange={(e) => setUniversity(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>Faculty <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                                        <div className={styles.inputWrapper}>
+                                            <input
+                                                type="text"
+                                                className={styles.input}
+                                                style={{ paddingLeft: '16px' }}
+                                                placeholder="e.g. Engineering"
+                                                value={faculty}
+                                                onChange={(e) => setFaculty(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className={styles.fieldGroup}>
+                                        <label className={styles.label}>Department <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                                        <div className={styles.inputWrapper}>
+                                            <input
+                                                type="text"
+                                                className={styles.input}
+                                                style={{ paddingLeft: '16px' }}
+                                                placeholder="e.g. Computer Science"
+                                                value={department}
+                                                onChange={(e) => setDepartment(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
                             <button
                                 type="button"
