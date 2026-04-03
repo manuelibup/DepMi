@@ -48,7 +48,10 @@ interface ProductCardProps {
 function NotifyMeButton({ productId }: { productId?: string }) {
     const { openGate } = useAuthGate();
     const { status } = useSession();
-    const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
+    const [state, setState] = useState<'idle' | 'loading' | 'done'>(() => {
+        if (typeof window === 'undefined' || !productId) return 'idle';
+        return localStorage.getItem(`notify_${productId}`) === '1' ? 'done' : 'idle';
+    });
 
     const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -63,6 +66,7 @@ function NotifyMeButton({ productId }: { productId?: string }) {
                 body: JSON.stringify({ productId }),
             });
             setState('done');
+            if (productId) localStorage.setItem(`notify_${productId}`, '1');
         } catch { setState('idle'); }
     };
 

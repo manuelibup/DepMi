@@ -8,8 +8,15 @@ import BackButton from '@/components/BackButton';
 import ClientCheckoutForm from './ClientCheckoutForm';
 import styles from './page.module.css';
 
-export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CheckoutPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ variantId?: string }>;
+}) {
     const { id } = await params;
+    const { variantId } = await searchParams;
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         redirect('/login?callbackUrl=/checkout/' + id);
@@ -19,6 +26,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         where: { id },
         include: {
             images: true,
+            variants: true,
             store: {
                 select: {
                     id: true,
@@ -32,18 +40,31 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
         }
     });
 
-    if (!product || (!product.isDigital && !product.inStock) || product.isPortfolioItem) {
-        notFound();
+    if (!product || product.isPortfolioItem) notFound();
+
+    // Determine effective price and stock based on whether product uses variants
+    let effectivePrice = Number(product.price);
+    let effectiveStock = product.stock;
+    let variantLabel: string | null = null;
+
+    if (product.variants.length > 0) {
+        // Variant product — must have a valid in-stock variantId
+        const variant = product.variants.find(v => v.id === variantId);
+        if (!variant || variant.stock === 0) notFound();
+        effectivePrice = Number(variant.price);
+        effectiveStock = variant.stock;
+        variantLabel = variant.name;
+    } else {
+        // No variants — check product-level inStock
+        if (!product.isDigital && !product.inStock) notFound();
     }
 
-    // Product-level fee: null = use store default, number (including 0) = explicit override
     const productDeliveryFee = product.deliveryFee != null ? Number(product.deliveryFee) : null;
     const localDeliveryFee = Number(product.store.localDeliveryFee ?? 0);
     const nationwideDeliveryFee = Number(product.store.nationwideDeliveryFee ?? 0);
     const storeState = product.store.storeState ?? '';
     const dispatchEnabled = product.store.dispatchEnabled;
 
-    // Try to get user data to pre-fill phone and address
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { phoneNumber: true, address: true, city: true, state: true }
@@ -71,8 +92,8 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                         </div>
                         <div className={styles.productInfo}>
                             <p className={styles.storeName}>{product.store.name}</p>
-                            <h2 className={styles.productTitle}>{product.title}</h2>
-                            <p className={styles.productPrice}>₦{Number(product.price).toLocaleString()}</p>
+                            <h2 className={styles.productTitle}>{product.title}{variantLabel ? ` — ${variantLabel}` : ''}</h2>
+                            <p className={styles.productPrice}>₦{effectivePrice.toLocaleString()}</p>
                         </div>
                     </div>
                 </section>
@@ -81,9 +102,9 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
                     productId={product.id}
                     storeId={product.store.id}
                     productTitle={product.title}
-                    productPrice={Number(product.price)}
-                    subtotal={Number(product.price)}
-                    stock={product.stock}
+                    productPrice={effectivePrice}
+                    subtotal={effectivePrice}
+                    stock={effectiveStock}
                     productDeliveryFee={productDeliveryFee}
                     localDeliveryFee={localDeliveryFee}
                     nationwideDeliveryFee={nationwideDeliveryFee}
