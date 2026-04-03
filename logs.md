@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 97 — Apr 3, 2026 — Store Posts in Main Feed & Campus Retention Strategy](#session-97--apr-3-2026--store-posts-in-main-feed--campus-retention-strategy)
 - [Session 96 — Apr 2, 2026 — Right Sidebar on Profile, Notifications & Bookmarks](#session-96--apr-2-2026--right-sidebar-on-profile-notifications--bookmarks)
 - [Session 95 — Apr 1, 2026 — Multi-Image Upload, Crop Removal & Variant Seller Notification](#session-95--apr-1-2026--multi-image-upload-crop-removal--variant-seller-notification)
 - [Session 94 — Apr 1, 2026 — Store Profile: Horizontal Feed, Interactive Actions & Sold Out](#session-94--apr-1-2026--store-profile-horizontal-feed-interactive-actions--sold-out)
@@ -77,6 +78,30 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 97 — Apr 3, 2026 — Store Posts in Main Feed & Campus Retention Strategy
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Store posts wired into main feed (commit `88032f2`):**
+- `/api/feed/route.ts` — added `prisma.post.findMany` to the cached feed query alongside products and demands. Posts merge chronologically. `PostLike` personalization added. Cache key bumped to `feed-v3`.
+- `FeedInfiniteScroll/index.tsx` — added `post` to the `FeedItem` union type. `PostCard` renders full-width in both list and grid modes. New `sessionUserId` prop passed through for interactive likes/comments.
+- `page.tsx` — added `rawPosts` to the initial server-side fetch, serialized to `FeedItem[]`, merged into `initialItems`. `sessionUserId` now passed to `FeedInfiniteScroll`.
+- Store owners can post a Store Update → it immediately appears in the main feed for all users.
+- ANNOUNCEMENT type posts get the coral badge in the feed.
+
+**Campus retention strategy discussion:**
+Four features planned for upcoming school marketing push (in recommended build order):
+1. **Profile picture upload** — custom Cloudinary upload, not just Google OAuth avatar
+2. **University data at onboarding** — `university`, `faculty`, `department` fields on User; collected at onboarding step 1
+3. **People you may know** — discovery powered by shared university/department data
+4. **Communities** — campus/hostel/department-based communities (longest build; needs #2 first)
+
+Registration number as KYC noted but deferred — validate format only, no university DB integration needed yet.
+
+**Commit:** `88032f2`
 
 ---
 
