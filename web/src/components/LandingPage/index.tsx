@@ -45,8 +45,7 @@ export default function LandingPage({ stats }: Props) {
             <header className={`${styles.header} ${!isVisible ? styles.headerHidden : ''}`}>
                 <div className={styles.nav}>
                     <div className={styles.logo}>
-                        <Image src="/depmi-logo.svg" alt="DepMi Logo" width={32} height={32} />
-                        <span>DepMi</span>
+                        <Image src="/depmi-wordmark.png" alt="DepMi" width={100} height={40} style={{ objectFit: 'contain' }} />
                     </div>
                     <button onClick={() => signIn('google')} className={styles.navSignIn}>
                         Sign in
