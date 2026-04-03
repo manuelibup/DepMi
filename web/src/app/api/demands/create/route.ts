@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { Category } from '@prisma/client';
 import { notifyStoreOwnersOfDemand } from '@/lib/notifyWatchers';
+import { matchDemandToProducts } from '@/lib/matchDemand';
 
 function generateDemandSlug(text: string, id: string): string {
     const base = text
@@ -91,6 +92,10 @@ export async function POST(req: Request) {
             category: category as string,
             budget: Number(budget),
         }).catch((err) => console.error('Demand notification error:', err));
+
+        // Fire-and-forget: AI product matching (Groq/Llama, no PII sent)
+        matchDemandToProducts(demand.id, text, category as string)
+            .catch((err) => console.error('AI match error:', err));
 
         return NextResponse.json({ message: 'Demand successfully posted', demand }, { status: 201 });
 

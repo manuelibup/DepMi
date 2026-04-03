@@ -260,6 +260,7 @@ model Demand {
   currency   String        @default("₦")
   videoUrl   String?
   viewCount  Int           @default(0)
+  aiMatchedProductIds String[] @default([])
   images     DemandMedia[]
   bids       Bid[]
   comments   Comment[]     @relation("DemandComments")

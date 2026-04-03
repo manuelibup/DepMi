@@ -169,6 +169,21 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         createdAt: c.createdAt.toISOString(),
     }));
 
+    // Fetch AI-matched products (if any)
+    const matchedProducts = demand.aiMatchedProductIds?.length
+        ? await prisma.product.findMany({
+              where: { id: { in: demand.aiMatchedProductIds } },
+              select: {
+                  id: true,
+                  title: true,
+                  price: true,
+                  slug: true,
+                  images: { take: 1, select: { url: true } },
+                  store: { select: { name: true, slug: true } },
+              },
+          })
+        : [];
+
     const timeAgo = new Date(demand.createdAt).toLocaleDateString();
 
     const demandJsonLd = {
@@ -277,6 +292,31 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                     viewCount={demand.viewCount ?? 0}
                     isLoggedIn={!!userId}
                 />
+
+                {matchedProducts.length > 0 && (
+                    <div className={styles.suggestedSection}>
+                        <p className={styles.suggestedLabel}>Suggested Products</p>
+                        <div className={styles.suggestedScroll}>
+                            {matchedProducts.map((p) => (
+                                <Link
+                                    key={p.id}
+                                    href={p.slug ? `/p/${p.slug}` : `/p/${p.id}`}
+                                    className={styles.suggestedCard}
+                                >
+                                    <div className={styles.suggestedImgWrap}>
+                                        {p.images[0]?.url ? (
+                                            <img src={p.images[0].url} alt={p.title} className={styles.suggestedImg} />
+                                        ) : (
+                                            <div className={styles.suggestedImgPlaceholder} />
+                                        )}
+                                    </div>
+                                    <p className={styles.suggestedTitle}>{p.title}</p>
+                                    <p className={styles.suggestedPrice}>₦{Number(p.price).toLocaleString()}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className={styles.divider} />
 
