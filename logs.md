@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 99 — Apr 3, 2026 — Build Fix, /welcome Page, Onboarding Cleanup & Store Phone](#session-99--apr-3-2026--build-fix-welcome-page-onboarding-cleanup--store-phone)
 - [Session 98 — Apr 3, 2026 — Onboarding: Contacts, University & New Follower Notifications](#session-98--apr-3-2026--onboarding-contacts-university--new-follower-notifications)
 - [Session 97 — Apr 3, 2026 — Store Posts in Main Feed & Campus Retention Strategy](#session-97--apr-3-2026--store-posts-in-main-feed--campus-retention-strategy)
 - [Session 96 — Apr 2, 2026 — Right Sidebar on Profile, Notifications & Bookmarks](#session-96--apr-2-2026--right-sidebar-on-profile-notifications--bookmarks)
@@ -79,6 +80,40 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 99 — Apr 3, 2026 — Build Fix, /welcome Page, Onboarding Cleanup & Store Phone
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Vercel build fix — `/s` regex flag:**
+- `web/src/lib/matchDemand.ts` line 68: `/\[.*?\]/s` → `/\[[\s\S]*?\]/`
+- The dotall `/s` flag is ES2018+; TypeScript target was ES2015 — caused hard build failure on Vercel
+
+**`/welcome` landing page route:**
+- `web/src/app/welcome/page.tsx` existed locally but had never been committed to git — Vercel never saw it, causing 404 in production
+- Committed the file; route now renders `LandingPage` with live DB stats; redirects logged-in users to `/`
+- Added `/welcome` to `GUEST_PAGES` in `NavigationWrapper.tsx` so the sidebar is hidden on the landing page
+- Updated `AuthGate.tsx` + `page.tsx` guest CTAs to link to `/welcome` instead of `/`
+
+**Landing page polish:**
+- Replaced phone mockup image: `app-screenshot-v3.png` → `app-screenshot-v4.jpg` (coral-themed Requests feed)
+- Replaced "DepMi" text + SVG icon in landing nav with wordmark PNG (`/depmi-wordmark.png`, copied from `brand-assets/`)
+
+**Onboarding — removed avatar upload (step 1):**
+- Mobile browsers (iOS/Android) can background the page when the file picker opens, causing React state to reset to step 0 or redirect to the feed
+- All DepMi users sign up via Google OAuth and already have a profile photo — upload was redundant
+- Removed `CloudinaryUploader` import, `avatarUrl` state, avatar upload UI block, and `avatarUrl` body field from `handleStep1Submit`
+- Users can change their photo in profile settings; subtitle updated accordingly
+
+**Store phone number (full stack):**
+- Schema: added `phoneNumber String?` to `Store` model
+- `npm run db:push` run — 249 users backed up successfully
+- `web/src/app/api/store/create/route.ts` — added `phoneNumber` to destructured body + `prisma.store.create` data
+- `web/src/app/store/create/page.tsx` — added `phoneNumber: ''` state + "Contact Phone Number (Optional)" `<input type="tel">` field
+
+**Commits:** multiple (build fix → welcome → sidebar → screenshot → wordmark → schema + form)
 
 ---
 

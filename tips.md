@@ -663,3 +663,25 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
   }
   ```
 - **The Rule**: Wildcard vanity URLs (like `/:handle`) should ALWAYS be excluded from reserved paths via strict programmatic JavaScript logic in middleware, not via static configuration files.
+
+---
+
+## 📱 51. Mobile File Picker Causes React State Reset on Onboarding
+
+*Added after diagnosing a critical onboarding bug where image upload reset users to step 0 or redirected them to the feed.*
+
+- **The Issue**: On iOS and Android Chrome, opening a native `<input type="file">` can put the app in the background. When the user returns after picking a file, React may re-mount the component tree — resetting multi-step form state (e.g. `currentStep` back to `0`) and triggering auth-redirect logic in `useEffect`.
+- **The Impact**: Users attempting to upload a profile photo at onboarding step 1 were sent back to the beginning or kicked to the home feed.
+- **The Fix**: Move any file uploads to a step where a reset is harmless (last step), or remove them entirely if the data is already available (Google OAuth users already have a profile photo). For DepMi, avatar upload was removed from onboarding — users set/change photos via profile settings instead.
+- **General Rule**: Never put a file `<input>` in an early step of a multi-step flow on mobile. Either put it last (so a reset doesn't lose meaningful prior input) or use a separate screen/modal that can fully recover its own state independently.
+
+---
+
+## 🔗 52. Vercel Only Builds Committed Files — Don't Rely on Local-Only State
+
+*Added after diagnosing a persistent 404 on the `/welcome` landing page.*
+
+- **The Issue**: A page file (`web/src/app/welcome/page.tsx`) existed locally and worked perfectly in dev, but returned 404 in production for weeks. The root cause: the file was never added to git — it existed only on the local machine.
+- **How to Catch It**: Run `git status` before pushing. Any files listed under "Untracked files" will NOT be deployed. Vercel clones from the git repo — it only sees committed history.
+- **The Fix**: `git add <file> && git commit && git push`. Then re-trigger a Vercel deployment.
+- **Rule**: After creating a new page or route, always verify `git status` shows it as staged before pushing. A local dev server passing is not sufficient proof that a route will work in production.
