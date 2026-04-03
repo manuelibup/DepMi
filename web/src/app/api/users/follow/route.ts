@@ -16,11 +16,35 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid target' }, { status: 400 });
     }
 
+    const existing = await prisma.userFollow.findUnique({
+        where: { followerId_followingId: { followerId: session.user.id, followingId: targetUserId } },
+    });
+
     await prisma.userFollow.upsert({
         where: { followerId_followingId: { followerId: session.user.id, followingId: targetUserId } },
         create: { followerId: session.user.id, followingId: targetUserId },
         update: {},
     });
+
+    // Notify the followed user (only on new follows, not re-follows)
+    if (!existing) {
+        const follower = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { displayName: true, username: true },
+        });
+        const name = follower?.displayName ?? follower?.username ?? 'Someone';
+        const link = follower?.username ? `/${follower.username}` : null;
+
+        await prisma.notification.create({
+            data: {
+                userId: targetUserId,
+                type: 'NEW_FOLLOWER',
+                title: 'New follower',
+                body: `${name} started following you`,
+                ...(link && { link }),
+            },
+        });
+    }
 
     return NextResponse.json({ following: true });
 }

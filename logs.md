@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 98 — Apr 3, 2026 — Onboarding: Contacts, University & New Follower Notifications](#session-98--apr-3-2026--onboarding-contacts-university--new-follower-notifications)
 - [Session 97 — Apr 3, 2026 — Store Posts in Main Feed & Campus Retention Strategy](#session-97--apr-3-2026--store-posts-in-main-feed--campus-retention-strategy)
 - [Session 96 — Apr 2, 2026 — Right Sidebar on Profile, Notifications & Bookmarks](#session-96--apr-2-2026--right-sidebar-on-profile-notifications--bookmarks)
 - [Session 95 — Apr 1, 2026 — Multi-Image Upload, Crop Removal & Variant Seller Notification](#session-95--apr-1-2026--multi-image-upload-crop-removal--variant-seller-notification)
@@ -78,6 +79,56 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 98 — Apr 3, 2026 — Onboarding: Contacts, University & New Follower Notifications
+
+**Agent:** Claude (Sonnet 4.6)
+
+**Schema changes (db:push + prisma generate run, 249 users backed up):**
+- Added `university String?`, `faculty String?`, `department String?` to `User` model
+- Added `NEW_FOLLOWER` to `NotificationType` enum
+
+**New API: `/api/user/match-contacts` (POST)**
+- Accepts array of SHA-256 hashed phone numbers (hashed client-side via SubtleCrypto)
+- Matches against DepMi users' stored phone numbers (hashed server-side)
+- Returns only public profile fields — raw numbers never stored or seen by DepMi
+- Validates hex SHA-256 format, caps at 500 hashes per request
+- Compatible with Meta/Google Ads custom audience upload (both accept pre-hashed numbers)
+
+**Updated `/api/user/suggested?context=all`:**
+- Now returns `sections.location` (users from same state), `sections.uni` (users from same university), `sections.general` (popular, SUPER_ADMIN pinned) alongside legacy flat `users` array
+- Requires authenticated session for segmented results
+
+**Updated `/api/users/follow` (POST):**
+- Now fires `NEW_FOLLOWER` notification to the followed user on new follows only (not re-follows)
+- Notification links to the follower's profile
+
+**Updated `/api/user/update` (PATCH):**
+- Schema now accepts `university`, `faculty`, `department` fields
+
+**Updated `/api/user/complete-onboarding` (POST):**
+- Saves `university`, `faculty`, `department` to User on completion
+
+**Onboarding step 2 redesign:**
+- Replaced flat user grid with 3 labelled horizontal-scroll sections: "From your contacts", "From your area", "From your university"
+- Contact section only renders on Android Chrome (Contact Picker API detection)
+- "Allow access" button triggers Contact Picker → hashes phone numbers in browser via SubtleCrypto → sends hashes to `/api/user/match-contacts` → shows matched DepMi users
+- Privacy note shown inline: "Phone numbers are hashed on your device — we never see them"
+- Location + uni sections auto-populate from API, collapse if empty
+- Scroll-snap cards (130px wide) with coral Follow button
+
+**Onboarding step 3 redesign:**
+- Added "I'm currently in university" toggle (coral checkmark when active)
+- Reveals `University / School`, `Faculty (optional)`, `Department (optional)` fields when toggled on
+- All saved to DB via `/api/user/update` on Continue
+- Subtitle updated to mention connecting with nearby people
+
+**Decisions discussed:**
+- Contacts hashing is privacy-preserving AND ad-compatible (Meta/Google accept SHA-256 hashed numbers)
+- Sticking with asymmetric **followers** model (not friends) — correct for commerce; "follows you back" label is the social layer on top
+- New follower notifications implemented to drive reciprocal follows
 
 ---
 

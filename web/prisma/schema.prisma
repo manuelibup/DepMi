@@ -40,6 +40,9 @@ model User {
   onboardingComplete        Boolean          @default(false)
   referralSource            String?
   interests                 String[]
+  university                String?
+  faculty                   String?
+  department                String?
   notifDemandCategories     String[]
   accounts           Account[]
   comments        Comment[]        @relation("UserComments")
@@ -797,6 +800,7 @@ enum NotificationType {
   ANNOUNCEMENT
   SOCIAL_ACTIVITY  // "Your friend X just bought Y from Z" — social proof feed
   STORE_FOLLOW_SALE // "A store you follow just completed a sale" — seller social proof
+  NEW_FOLLOWER
 }
 
 enum MessageType {

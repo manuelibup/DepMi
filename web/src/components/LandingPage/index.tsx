@@ -89,7 +89,7 @@ export default function LandingPage({ stats }: Props) {
                                     <div className={styles.mockSearch}>Search DepMi...</div>
                                 </div>
                                 <Image
-                                    src="/app-screenshot-v3.png"
+                                    src="/app-screenshot-v4.jpg"
                                     alt="DepMi App Feed"
                                     width={375}
                                     height={812}

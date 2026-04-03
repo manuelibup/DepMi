@@ -15,6 +15,15 @@ export async function POST(req: Request) {
         const referralSource: string | undefined = typeof body.referralSource === 'string' && body.referralSource.trim()
             ? body.referralSource.trim()
             : undefined;
+        const university: string | undefined = typeof body.university === 'string' && body.university.trim()
+            ? body.university.trim()
+            : undefined;
+        const faculty: string | undefined = typeof body.faculty === 'string' && body.faculty.trim()
+            ? body.faculty.trim()
+            : undefined;
+        const department: string | undefined = typeof body.department === 'string' && body.department.trim()
+            ? body.department.trim()
+            : undefined;
 
         await prisma.user.update({
             where: { id: session.user.id },
@@ -22,6 +31,9 @@ export async function POST(req: Request) {
                 interests,
                 onboardingComplete: true,
                 ...(referralSource && { referralSource }),
+                ...(university && { university }),
+                ...(faculty && { faculty }),
+                ...(department && { department }),
             },
         });
 

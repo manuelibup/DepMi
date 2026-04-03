@@ -227,7 +227,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 *   **DAU Tracking**: `ActivityPing` client component fires on mount → `POST /api/activity/ping` → updates `User.lastActiveAt` (rate-limited to once/hour).
 
 ### **Session 63 Extensions (Mar 17, 2026)** ✅ *Complete.*
-*   **Onboarding Flow** (5 steps + welcome/done screens): Step 0 = branded Welcome (value props, skipped on repair); Step 1 = Profile (username + display name + **avatar upload via Cloudinary**); Step 2 = Follow (min 7, no skip); Step 3 = **Location** (city/state/country, skippable); Step 4 = Interests. Ends on "You're in!" done screen with two CTAs.
+*   **Onboarding Flow** (5 steps + welcome/done screens): Step 0 = branded Welcome (value props, skipped on repair); Step 1 = Profile (username + display name + **avatar upload via Cloudinary**); Step 2 = Follow (min 7, no skip) — 3 horizontal-scroll sections: "From your contacts" (Contact Picker API + SHA-256 hash matching), "From your area", "From your university"; Step 3 = **Location + University** (city/state/country + "I'm in university" toggle revealing university/faculty/department, skippable); Step 4 = Interests; Step 5 = Referral source. Ends on "You're in!" done screen.
 *   **Suggested Users**: SUPER_ADMIN always pinned first; remaining users Fisher-Yates shuffled before returning top 30.
 *   **Product Recommendations**: "You might also like" section on product detail pages — same category, different store, in-stock, limit 6, ordered by `viewCount` desc.
 *   **SEO — Structured Data**: JSON-LD `Product` schema on `/p/[id]` pages (price, availability, seller, aggregateRating). JSON-LD `Article` schema on all blog posts.
@@ -256,7 +256,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`, `onboardingComplete Boolean @default(false)`, `referralSource String?` (captured at onboarding step 5 — "where did you hear about us").
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`, `onboardingComplete Boolean @default(false)`, `referralSource String?` (captured at onboarding step 5), `university String?`, `faculty String?`, `department String?` (collected at onboarding step 3 — power "people from your uni" recommendations).
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 30-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum), `dispatchEnabled Boolean @default(true)`, `pickupAddress String?`, `shipbubbleAddrCode Int?`, `storeState String?` (used for Shipbubble delivery zone; auto-backfilled from `location` via `scripts/backfill-store-state.js`).
@@ -495,7 +495,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 ---
 
 ## 6. Data Architecture (Current Schema)
-- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`, `onboardingComplete Boolean @default(false)`, `referralSource String?` (captured at onboarding step 5 — "where did you hear about us").
+- **User** — Personal identity, auth, buying, trust (buyer Deps). Includes `kycTier` enum, `cumulativeSpend` (Int, tracks rolling 30-day spend for TIER_0 limit enforcement), shipping fields (`address`, `city`, `state`, `country`) to reduce checkout friction, `adminRole AdminRole?`, `lastActiveAt DateTime?`, `isBanned Boolean @default(false)`, `onboardingComplete Boolean @default(false)`, `referralSource String?` (captured at onboarding step 5), `university String?`, `faculty String?`, `department String?` (collected at onboarding step 3 — power "people from your uni" recommendations).
 - **Account** — Multi-provider auth records (Email/Google/WhatsApp).
 - **KycStatus** — Tiered verification (stores Smile ID/Dojah reference tokens only).
 - **Store** — Business identity (like Facebook Pages). Owned by User. Has its own Dep score. Includes `rating` (Float), `reviewCount` (Int), `feeWaiverUntil` (DateTime? — new stores get 30-day 0% platform fee), `verificationStatus` (StoreVerificationStatus enum).
