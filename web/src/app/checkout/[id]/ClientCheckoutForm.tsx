@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import styles from './page.module.css';
 import { useTrackEvent } from '@/hooks/useTrackEvent';
 
@@ -44,6 +45,7 @@ interface Props {
     defaultAddress: string;
     defaultCity: string;
     defaultState: string;
+    isGuest: boolean;
 }
 
 type Stage = 'form' | 'submitting' | 'redirecting';
@@ -70,8 +72,10 @@ export default function ClientCheckoutForm({
     dispatchEnabled,
     isDigital = false,
     defaultPhone, defaultAddress, defaultCity, defaultState,
+    isGuest
 }: Props) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const resumeOrderId = searchParams.get('resume');
     const variantId = searchParams.get('variantId');
     const track = useTrackEvent();
@@ -87,6 +91,13 @@ export default function ClientCheckoutForm({
     const [quantity, setQuantity] = useState(1);
     const [deliveryMethod, setDeliveryMethod] = useState<'DELIVERY' | 'PICKUP' | 'DISPATCH'>('DELIVERY');
     const [error, setError] = useState('');
+
+    // Guest Auth
+    const [authStage, setAuthStage] = useState<'idle' | 'otp' | 'done'>(isGuest ? 'idle' : 'done');
+    const [guestEmail, setGuestEmail] = useState('');
+    const [guestOtp, setGuestOtp] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
+    const [authError, setAuthError] = useState('');
 
     // State searchable dropdown
     const [showStateList, setShowStateList] = useState(false);
@@ -365,6 +376,105 @@ export default function ClientCheckoutForm({
                 </div>
                 <h2>Redirecting to secure payment…</h2>
                 <p>You&apos;ll be taken to Flutterwave to complete your payment safely.</p>
+            </div>
+        );
+    }
+
+    if (authStage !== 'done') {
+        const handleSendOtp = async (e: React.FormEvent) => {
+            e.preventDefault();
+            setAuthLoading(true);
+            setAuthError('');
+            try {
+                const res = await fetch('/api/checkout/guest-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: guestEmail }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+                setAuthStage('otp');
+            } catch (err: any) {
+                setAuthError(err.message);
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        const handleVerifyOtp = async (e: React.FormEvent) => {
+            e.preventDefault();
+            setAuthLoading(true);
+            setAuthError('');
+            try {
+                const res = await signIn('credentials', {
+                    email: guestEmail,
+                    otp: guestOtp,
+                    redirect: false,
+                });
+                if (res?.error) throw new Error(res.error);
+                setAuthStage('done');
+                router.refresh(); // Fetch new session so `page.tsx` resolves the user details!
+            } catch (err: any) {
+                setAuthError(err.message);
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        return (
+            <div className={styles.formGroup} style={{ gap: '24px' }}>
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Checkout as Guest</h2>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                        Enter your email to securely track your order and release funds from Escrow upon delivery.
+                    </p>
+                    
+                    {authStage === 'idle' ? (
+                        <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <input 
+                                className={styles.inputField} 
+                                type="email" 
+                                placeholder="Email Address" 
+                                value={guestEmail} 
+                                onChange={(e) => setGuestEmail(e.target.value)} 
+                                required 
+                            />
+                            {authError && <p className={styles.errorMessage}>{authError}</p>}
+                            <button type="submit" className={styles.payBtn} disabled={authLoading}>
+                                {authLoading ? 'Sending...' : 'Continue to Checkout'}
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                We sent a secure code to <strong>{guestEmail}</strong>.
+                            </p>
+                            <input 
+                                className={styles.inputField} 
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                placeholder="6-digit code" 
+                                value={guestOtp} 
+                                onChange={(e) => setGuestOtp(e.target.value)} 
+                                required 
+                                style={{ letterSpacing: '4px', fontSize: '1.2rem', textAlign: 'center' }}
+                            />
+                            {authError && <p className={styles.errorMessage}>{authError}</p>}
+                            <button type="submit" className={styles.payBtn} disabled={authLoading}>
+                                {authLoading ? 'Verifying...' : 'Verify & Continue'}
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => setAuthStage('idle')}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.85rem', marginTop: '8px' }}
+                            >
+                                Change Email
+                            </button>
+                        </form>
+                    )}
+                </section>
             </div>
         );
     }

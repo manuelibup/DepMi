@@ -18,9 +18,6 @@ export default async function CheckoutPage({
     const { id } = await params;
     const { variantId } = await searchParams;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-        redirect('/login?callbackUrl=/checkout/' + id);
-    }
 
     const product = await prisma.product.findUnique({
         where: { id },
@@ -68,10 +65,10 @@ export default async function CheckoutPage({
     const storeState = product.store.storeState ?? '';
     const dispatchEnabled = product.store.dispatchEnabled;
 
-    const user = await prisma.user.findUnique({
+    const user = session?.user?.id ? await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { phoneNumber: true, address: true, city: true, state: true }
-    });
+    }) : null;
 
     return (
         <main className={styles.main}>
@@ -118,6 +115,7 @@ export default async function CheckoutPage({
                     defaultAddress={user?.address || ''}
                     defaultCity={user?.city || ''}
                     defaultState={user?.state || ''}
+                    isGuest={!session?.user?.id}
                 />
             </div>
         </main>

@@ -47,9 +47,10 @@ export const authOptions: NextAuthOptions = {
             credentials: {
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" },
+                otp: { label: "OTP", type: "text" },
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials.password) {
+                if (!credentials?.email) {
                     throw new Error("Invalid credentials");
                 }
 
@@ -60,6 +61,36 @@ export const authOptions: NextAuthOptions = {
 
                 if (!user) {
                     throw new Error("Invalid credentials");
+                }
+
+                // If OTP is provided, verify via OTP flow
+                if (credentials.otp) {
+                    const { verifyOtp } = await import("@/lib/otp");
+                    const isOtpValid = await verifyOtp(user.id, "EMAIL_VERIFICATION", credentials.otp);
+                    
+                    if (!isOtpValid) {
+                        throw new Error("Invalid or expired code");
+                    }
+                    
+                    // Mark email as verified if it wasn't
+                    if (!user.emailVerified) {
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { emailVerified: true }
+                        });
+                    }
+
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.displayName,
+                        image: user.avatarUrl,
+                    };
+                }
+
+                // Otherwise, proceed with Standard Password flow
+                if (!credentials.password) {
+                    throw new Error("Password is required");
                 }
 
                 const emailAccount = user.accounts.find(
