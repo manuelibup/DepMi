@@ -6,6 +6,8 @@ import NavigationWrapper from "@/components/NavigationWrapper";
 import ActivityPing from "@/components/ActivityPing";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import PushPrompt from "@/components/PushPrompt";
+import UTMCapture from "@/components/UTMCapture";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -159,6 +161,8 @@ export default function RootLayout({
       <body>
         <Providers>
           <Toaster theme="dark" position="bottom-center" richColors />
+          <UTMCapture />
+          <Analytics />
           <ServiceWorkerRegistrar />
           <ActivityPing />
           <PushPrompt />

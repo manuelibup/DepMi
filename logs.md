@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 101 — Apr 4, 2026 — Vercel Analytics](#session-101--apr-4-2026--vercel-analytics)
+- [Session 100 — Apr 4, 2026 — Git Connection Migration](#session-100--apr-4-2026--git-connection-migration)
 - [Session 99 — Apr 3, 2026 — Build Fix, /welcome Page, Onboarding Cleanup & Store Phone](#session-99--apr-3-2026--build-fix-welcome-page-onboarding-cleanup--store-phone)
 - [Session 98 — Apr 3, 2026 — Onboarding: Contacts, University & New Follower Notifications](#session-98--apr-3-2026--onboarding-contacts-university--new-follower-notifications)
 - [Session 97 — Apr 3, 2026 — Store Posts in Main Feed & Campus Retention Strategy](#session-97--apr-3-2026--store-posts-in-main-feed--campus-retention-strategy)
@@ -80,6 +82,16 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 101 — Apr 4, 2026 — Vercel Analytics
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+- **Vercel Analytics:** Installed `@vercel/analytics` and added the `<Analytics />` tracking component to the root Next.js layout (`web/src/app/layout.tsx`) to enable automated page view and visitor tracking.
 
 ---
 
