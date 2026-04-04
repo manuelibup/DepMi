@@ -22,6 +22,7 @@ const USERNAME_EXEMPT = [
     '/login',
     '/register',
     '/api/',
+    '/checkout',
 ];
 
 export async function middleware(req: NextRequest) {
