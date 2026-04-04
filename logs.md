@@ -83,6 +83,17 @@
 
 ---
 
+## Session 100 — Apr 4, 2026 — Git Connection Migration
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+- **Git User Config:** Updated local git `user.name` to `manuelibup` and `user.email` to `manuelibup22@gmail.com`.
+- **Git Remote Update:** Updated the GitHub remote origin URL to point to the new account (`https://github.com/manuelibup/DepMi.git`).
+
+---
+
 ## Session 99 — Apr 3, 2026 — Build Fix, /welcome Page, Onboarding Cleanup & Store Phone
 
 **Agent:** Claude (Sonnet 4.6)
