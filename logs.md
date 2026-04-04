@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 103 — Apr 4, 2026 — Checkout Variant Fix](#session-103--apr-4-2026--checkout-variant-fix)
 - [Session 102 — Apr 4, 2026 — Monthly Active Users (MAU) Metric](#session-102--apr-4-2026--monthly-active-users-mau-metric)
 - [Session 101 — Apr 4, 2026 — Vercel Analytics](#session-101--apr-4-2026--vercel-analytics)
 - [Session 100 — Apr 4, 2026 — Git Connection Migration](#session-100--apr-4-2026--git-connection-migration)
@@ -83,6 +84,16 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 103 — Apr 4, 2026 — Checkout Variant Fix
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+- **Homepage "Buy via Escrow" Fix:** Identified and fixed a bug where clicking "Buy via Escrow" from the homepage feed on a product that has *variants* resulted in a 404 error. The checkout page was previously throwing a `notFound()` if a `variantId` wasn't provided. Now, if a user clicks checkout from the feed for a variant product, they are intelligently redirected to the specific product page (`/p/[id]`) so they can select their desired variant before checking out.
 
 ---
 

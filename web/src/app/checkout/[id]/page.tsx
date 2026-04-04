@@ -48,6 +48,9 @@ export default async function CheckoutPage({
     let variantLabel: string | null = null;
 
     if (product.variants.length > 0) {
+        if (!variantId) {
+            redirect(`/p/${product.slug || product.id}`);
+        }
         // Variant product — must have a valid in-stock variantId
         const variant = product.variants.find(v => v.id === variantId);
         if (!variant || variant.stock === 0) notFound();
