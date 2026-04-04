@@ -675,7 +675,7 @@ export default function ClientCheckoutForm({
                             : `₦${currentDeliveryFee.toLocaleString()}`}
                     </span>
                 </div>
-                <div className={styles.summaryRow}><span>Service &amp; escrow fee (5%)</span><span>₦{gatewayFee.toLocaleString()}</span></div>
+                <div className={styles.summaryRow}><span>Service &amp; escrow fee</span><span>₦{gatewayFee.toLocaleString()}</span></div>
 
                 <div className={styles.trustBanner} style={{ marginTop: '16px' }}>
                     <div className={styles.trustIcon}>
