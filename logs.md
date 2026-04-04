@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 102 — Apr 4, 2026 — Monthly Active Users (MAU) Metric](#session-102--apr-4-2026--monthly-active-users-mau-metric)
 - [Session 101 — Apr 4, 2026 — Vercel Analytics](#session-101--apr-4-2026--vercel-analytics)
 - [Session 100 — Apr 4, 2026 — Git Connection Migration](#session-100--apr-4-2026--git-connection-migration)
 - [Session 99 — Apr 3, 2026 — Build Fix, /welcome Page, Onboarding Cleanup & Store Phone](#session-99--apr-3-2026--build-fix-welcome-page-onboarding-cleanup--store-phone)
@@ -85,6 +86,17 @@
 
 ---
 
+## Session 102 — Apr 4, 2026 — Monthly Active Users (MAU) Metric
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+- **MAU Scan:** Ran a direct database scan to evaluate Monthly Active Users since the platform launched on March 10th. The result observed was **213 MAU**.
+- **Welcome Page Stats:** Updated the Server Component `WelcomePage` to query MAU natively and passed it downward into the `LandingPage`. 
+- **Landing Page Stats Bar:** Modified the `LandingPage` stats bar UI to inject the `MAU` ("Active Users") widget natively alongside "Members", "Active Stores", and "Live Listings", giving prospects accurate traction data right off the bat.
+
+---
 ## Session 101 — Apr 4, 2026 — Vercel Analytics
 
 **Agent:** Antigravity

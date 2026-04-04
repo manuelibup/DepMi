@@ -11,6 +11,7 @@ interface Stats {
     users: number;
     stores: number;
     listings: number;
+    mau: number;
 }
 
 interface Props {
@@ -106,6 +107,11 @@ export default function LandingPage({ stats }: Props) {
                     <div className={styles.statItem}>
                         <span className={styles.statNumber}>{fmt(stats.users)}+</span>
                         <span className={styles.statLabel}>Members</span>
+                    </div>
+                    <div className={styles.statDivider} />
+                    <div className={styles.statItem}>
+                        <span className={styles.statNumber}>{fmt(stats.mau)}+</span>
+                        <span className={styles.statLabel}>Active Users</span>
                     </div>
                     <div className={styles.statDivider} />
                     <div className={styles.statItem}>
