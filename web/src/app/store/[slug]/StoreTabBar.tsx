@@ -34,6 +34,13 @@ interface StoreTabBarProps {
 }
 
 type TabKey = 'products' | 'updates';
+type StoreSortKey = 'default' | 'price_asc' | 'price_desc';
+
+const STORE_SORT_OPTIONS: { label: string; value: StoreSortKey; icon: string }[] = [
+    { label: 'Featured', value: 'default', icon: '★' },
+    { label: 'Price ↑', value: 'price_asc', icon: '↑' },
+    { label: 'Price ↓', value: 'price_desc', icon: '↓' },
+];
 
 // ── Individual card ──────────────────────────────────────────────────────────
 
@@ -251,6 +258,14 @@ export default function StoreTabBar({
     isOwner,
 }: StoreTabBarProps) {
     const [activeTab, setActiveTab] = useState<TabKey>('products');
+    const [sortKey, setSortKey] = useState<StoreSortKey>('default');
+
+    const sortedProducts = [...products].sort((a, b) => {
+        if (sortKey === 'price_asc') return a.price - b.price;
+        if (sortKey === 'price_desc') return b.price - a.price;
+        // default: featured first, then original order
+        return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+    });
 
     return (
         <div>
@@ -274,6 +289,34 @@ export default function StoreTabBar({
                 >
                     Updates
                 </button>
+
+                {/* Price sort pills — visible on products tab */}
+                {activeTab === 'products' && products.length > 0 && (
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, paddingRight: 8 }}>
+                        {STORE_SORT_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setSortKey(opt.value)}
+                                title={opt.label}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: 20,
+                                    border: `1.5px solid ${sortKey === opt.value ? 'var(--primary)' : 'var(--card-border)'}`,
+                                    background: sortKey === opt.value ? 'rgba(var(--primary-rgb),0.1)' : 'transparent',
+                                    color: sortKey === opt.value ? 'var(--primary)' : 'var(--text-muted)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s',
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {opt.icon}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Products Tab */}
@@ -290,7 +333,7 @@ export default function StoreTabBar({
                         )
                     ) : (
                         <div className={styles.feedScroll}>
-                            {products.map(product => (
+                            {sortedProducts.map(product => (
                                 <StoreProductCard
                                     key={product.id}
                                     product={product}

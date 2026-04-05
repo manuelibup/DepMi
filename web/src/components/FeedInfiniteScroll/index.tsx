@@ -32,6 +32,7 @@ interface Props {
     initialItems: FeedItem[];
     initialCursor: string | null;
     category?: string;
+    sort?: string;
     topStores: TopStore[];
     sessionUserId?: string;
 }
@@ -42,6 +43,7 @@ export default function FeedInfiniteScroll({
     initialItems,
     initialCursor,
     category,
+    sort,
     topStores,
     sessionUserId,
 }: Props) {
@@ -75,6 +77,7 @@ export default function FeedInfiniteScroll({
             const params = new URLSearchParams({ take: '20' });
             if (cursor) params.set('cursor', cursor);
             if (category) params.set('category', category);
+            if (sort) params.set('sort', sort);
 
             const res = await fetch(`/api/feed?${params}`);
             if (!res.ok) throw new Error('Feed fetch failed');
@@ -91,7 +94,7 @@ export default function FeedInfiniteScroll({
         } finally {
             setLoading(false);
         }
-    }, [loading, hasMore, cursor, category]);
+    }, [loading, hasMore, cursor, category, sort]);
 
     useEffect(() => {
         if (observerRef.current) observerRef.current.disconnect();

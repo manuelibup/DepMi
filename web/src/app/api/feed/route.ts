@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 
 // Cache base feed pages (no user personalization) for 60 seconds
-function getCachedFeedPage(cursor: string | null, category: string | undefined, take: number) {
+function getCachedFeedPage(cursor: string | null, category: string | undefined, take: number, sort: string | undefined) {
     return unstable_cache(
         async () => {
             const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
@@ -25,12 +25,17 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                 postWhere.createdAt = { lt: new Date(cursor) };
             }
 
+            const productOrderBy: Record<string, string>[] =
+                sort === 'price_asc' ? [{ price: 'asc' }] :
+                sort === 'price_desc' ? [{ price: 'desc' }] :
+                [{ createdAt: 'desc' }];
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const [rawProducts, rawDemands, rawPosts] = await Promise.all([
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (prisma.product as any).findMany({
                     where: productWhere,
-                    orderBy: { createdAt: 'desc' },
+                    orderBy: productOrderBy,
                     take,
                     include: {
                         store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
@@ -62,6 +67,7 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
                     },
                 }),
             ]);
+
 
             // Serialize to plain JSON
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,15 +146,18 @@ function getCachedFeedPage(cursor: string | null, category: string | undefined, 
             const demandItems = demands.map((d: typeof demands[0]) => ({ type: 'demand' as const, createdAt: d.createdAt, data: d }));
             const postItems = posts.map((p: typeof posts[0]) => ({ type: 'post' as const, createdAt: p.createdAt, data: p }));
 
-            const merged = [...productItems, ...demandItems, ...postItems]
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .slice(0, take);
+            // When price-sorting, put products first then demands/posts
+            const merged = sort === 'price_asc' || sort === 'price_desc'
+                ? [...productItems, ...demandItems, ...postItems].slice(0, take)
+                : [...productItems, ...demandItems, ...postItems]
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .slice(0, take);
 
             const nextCursor = merged.length === take ? merged[merged.length - 1].createdAt : null;
 
             return { items: merged, nextCursor };
         },
-        [`feed-v3-${cursor}-${category ?? 'all'}-${take}`],
+        [`feed-v3-${cursor}-${category ?? 'all'}-${sort ?? 'newest'}-${take}`],
         { revalidate: 60 }
     )();
 }
@@ -157,12 +166,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const cursor = searchParams.get('cursor');
     const category = searchParams.get('category') || undefined;
+    const sort = searchParams.get('sort') || undefined;
     const take = Math.min(Number(searchParams.get('take') || '10'), 20);
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id ?? null;
 
-    const { items, nextCursor } = await getCachedFeedPage(cursor, category, take);
+    const { items, nextCursor } = await getCachedFeedPage(cursor, category, take, sort);
 
     // Fetch user personalization — lightweight ID lookups only
     const likedProductIds = new Set<string>();

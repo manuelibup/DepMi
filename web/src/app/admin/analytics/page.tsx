@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 type EventRow = { type: string; _count: { id: number } };
 type TopRow = { targetId: string | null; _count: { id: number } };
+type UtmRow = { value: string; count: bigint };
 
 function fmt(n: number) {
     return n >= 1_000_000
@@ -45,6 +46,9 @@ export default async function AnalyticsPage() {
         uniqueSessions7d,
         optOutCount,
         totalUsers,
+        utmSources30d,
+        utmMediums30d,
+        utmCampaigns30d,
     ] = await Promise.all([
         ev.count(),
         ev.count({ where: { createdAt: { gte: ago24h } } }),
@@ -88,6 +92,28 @@ export default async function AnalyticsPage() {
         }).then((r: { sessionId: string }[]) => r.length),
         prisma.user.count({ where: { analyticsOptOut: true } }),
         prisma.user.count(),
+        // UTM attribution — last 30 days
+        prisma.$queryRaw<UtmRow[]>`
+            SELECT (metadata->>'utm_source') as value, COUNT(*)::bigint as count
+            FROM "Event"
+            WHERE "createdAt" >= ${ago30d}
+              AND metadata->>'utm_source' IS NOT NULL
+            GROUP BY value ORDER BY count DESC LIMIT 10
+        `,
+        prisma.$queryRaw<UtmRow[]>`
+            SELECT (metadata->>'utm_medium') as value, COUNT(*)::bigint as count
+            FROM "Event"
+            WHERE "createdAt" >= ${ago30d}
+              AND metadata->>'utm_medium' IS NOT NULL
+            GROUP BY value ORDER BY count DESC LIMIT 10
+        `,
+        prisma.$queryRaw<UtmRow[]>`
+            SELECT (metadata->>'utm_campaign') as value, COUNT(*)::bigint as count
+            FROM "Event"
+            WHERE "createdAt" >= ${ago30d}
+              AND metadata->>'utm_campaign' IS NOT NULL
+            GROUP BY value ORDER BY count DESC LIMIT 10
+        `,
     ]);
 
     // Resolve product IDs to titles
@@ -258,6 +284,66 @@ export default async function AnalyticsPage() {
                     </div>
                 )}
             </div>
+
+            {/* UTM Attribution — last 30 days */}
+            {(utmSources30d.length > 0 || utmMediums30d.length > 0 || utmCampaigns30d.length > 0) && (
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>UTM Attribution — Last 30 Days</h2>
+                    <div className={styles.tablesGrid}>
+                        {utmSources30d.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-muted)', marginBottom: 10 }}>By Source</p>
+                                <table className={styles.table}>
+                                    <thead><tr><th>#</th><th>Source</th><th>Events</th></tr></thead>
+                                    <tbody>
+                                        {utmSources30d.map((r, i) => (
+                                            <tr key={r.value}>
+                                                <td style={{ color: 'var(--text-muted)', width: 28 }}>{i + 1}</td>
+                                                <td className={styles.truncate}>{r.value}</td>
+                                                <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{fmt(Number(r.count))}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        {utmMediums30d.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-muted)', marginBottom: 10 }}>By Medium</p>
+                                <table className={styles.table}>
+                                    <thead><tr><th>#</th><th>Medium</th><th>Events</th></tr></thead>
+                                    <tbody>
+                                        {utmMediums30d.map((r, i) => (
+                                            <tr key={r.value}>
+                                                <td style={{ color: 'var(--text-muted)', width: 28 }}>{i + 1}</td>
+                                                <td className={styles.truncate}>{r.value}</td>
+                                                <td style={{ color: '#06b6d4', fontWeight: 700 }}>{fmt(Number(r.count))}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        {utmCampaigns30d.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--text-muted)', marginBottom: 10 }}>By Campaign</p>
+                                <table className={styles.table}>
+                                    <thead><tr><th>#</th><th>Campaign</th><th>Events</th></tr></thead>
+                                    <tbody>
+                                        {utmCampaigns30d.map((r, i) => (
+                                            <tr key={r.value}>
+                                                <td style={{ color: 'var(--text-muted)', width: 28 }}>{i + 1}</td>
+                                                <td className={styles.truncate}>{r.value}</td>
+                                                <td style={{ color: '#22c55e', fontWeight: 700 }}>{fmt(Number(r.count))}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {totalEvents === 0 && (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>

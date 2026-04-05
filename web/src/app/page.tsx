@@ -19,7 +19,7 @@ import RightSidebar from '@/components/RightSidebar';
 const STORE_COLORS = ['#1A1D1F', '#0984E3', 'var(--primary)', '#D63031', '#6C5CE7', '#E17055'];
 const INITIAL_TAKE = 10;
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string; sort?: string }> }) {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {
     return <WaitlistHome />;
   }
@@ -36,6 +36,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
   const sp = await searchParams;
   const category = sp.category;
+  const sort = sp.sort;
   const userId = session?.user?.id ?? null;
 
   const productWhere: Record<string, unknown> = { stock: { gt: 0 } };
@@ -45,6 +46,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     demandWhere.category = category as string;
   }
 
+  const productOrderBy: Record<string, string>[] =
+    sort === 'price_asc' ? [{ price: 'asc' }] :
+    sort === 'price_desc' ? [{ price: 'desc' }] :
+    [{ createdAt: 'desc' }];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawProducts: any[] = [], rawDemands: any[] = [], rawPosts: any[] = [], topStores: any[] = [];
   try {
@@ -52,7 +58,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma.product as any).findMany({
       where: productWhere,
-      orderBy: { createdAt: 'desc' },
+      orderBy: productOrderBy,
       take: INITIAL_TAKE,
       include: {
         store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
@@ -222,6 +228,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                 initialItems={initialItems}
                 initialCursor={initialCursor}
                 category={category}
+                sort={sort}
                 topStores={topStores}
                 sessionUserId={userId ?? undefined}
               />

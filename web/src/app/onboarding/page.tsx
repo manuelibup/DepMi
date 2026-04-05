@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
+import NigeriaLocationPicker, { LocationValue } from '@/components/NigeriaLocationPicker';
 
 type CheckState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -70,12 +71,18 @@ export default function OnboardingPage() {
     // ── Step 3 (location + uni) state ──
     const [city, setCity] = useState('');
     const [locationState, setLocationState] = useState('');
-    const [country, setCountry] = useState('');
+    const [country, setCountry] = useState('Nigeria');
     const [isInUni, setIsInUni] = useState(false);
     const [university, setUniversity] = useState('');
     const [faculty, setFaculty] = useState('');
     const [department, setDepartment] = useState('');
     const [step3Loading, setStep3Loading] = useState(false);
+
+    const handleLocationChange = (val: LocationValue) => {
+        setCity(val.city);
+        setLocationState(val.state);
+        setCountry(val.country);
+    };
 
     // ── Step 4 (interests) state ──
     const [interests, setInterests] = useState<Set<string>>(new Set());
@@ -798,51 +805,16 @@ export default function OnboardingPage() {
                         </div>
 
                         <div className={styles.form}>
-                            <div className={styles.fieldGroup}>
-                                <label className={styles.label}>City</label>
-                                <div className={styles.inputWrapper}>
-                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
-                                    </svg>
-                                    <input
-                                        type="text"
-                                        className={styles.input}
-                                        placeholder="e.g. Lagos"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className={styles.fieldGroup}>
-                                <label className={styles.label}>State / Region</label>
-                                <div className={styles.inputWrapper}>
-                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
-                                    </svg>
-                                    <input
-                                        type="text"
-                                        className={styles.input}
-                                        placeholder="e.g. Lagos State"
-                                        value={locationState}
-                                        onChange={(e) => setLocationState(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className={styles.fieldGroup}>
-                                <label className={styles.label}>Country</label>
-                                <div className={styles.inputWrapper}>
-                                    <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                                    </svg>
-                                    <input
-                                        type="text"
-                                        className={styles.input}
-                                        placeholder="e.g. Nigeria"
-                                        value={country}
-                                        onChange={(e) => setCountry(e.target.value)}
-                                    />
-                                </div>
-                            </div>
+                            <NigeriaLocationPicker
+                                label="Where are you based?"
+                                allowOtherCountries
+                                onChange={handleLocationChange}
+                            />
+                            {(city || locationState) && (
+                                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                    📍 {[city, locationState, country].filter(Boolean).join(', ')}
+                                </p>
+                            )}
 
                             {/* Uni toggle */}
                             <button

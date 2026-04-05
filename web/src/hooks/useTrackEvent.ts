@@ -14,6 +14,9 @@ type EventType =
     | 'ORDER'
     | 'SHARE';
 
+const UTM_KEY = '_dm_utm';
+const UTM_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 function getSessionId(): string {
     if (typeof window === 'undefined') return 'ssr';
     let id = localStorage.getItem('_dm_sid');
@@ -22,6 +25,24 @@ function getSessionId(): string {
         localStorage.setItem('_dm_sid', id);
     }
     return id;
+}
+
+function getUtm(): Record<string, string> | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const raw = localStorage.getItem(UTM_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw) as Record<string, string | number>;
+        if (Date.now() - (data._ts as number) > UTM_TTL) {
+            localStorage.removeItem(UTM_KEY);
+            return null;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { _ts, ...utm } = data;
+        return utm as Record<string, string>;
+    } catch {
+        return null;
+    }
 }
 
 export function useTrackEvent() {
@@ -35,11 +56,16 @@ export function useTrackEvent() {
             },
         ) => {
             const sessionId = getSessionId();
+            const utm = getUtm();
+            // Merge UTM into metadata — event-level metadata takes precedence over UTM
+            const metadata = utm
+                ? { ...utm, ...(opts?.metadata ?? {}) }
+                : opts?.metadata;
             // Fire-and-forget — never await, never block UI
             fetch('/api/track', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, sessionId, ...opts }),
+                body: JSON.stringify({ type, sessionId, ...opts, metadata }),
             }).catch(() => {});
         },
         [],

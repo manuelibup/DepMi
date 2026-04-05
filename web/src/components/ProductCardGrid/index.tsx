@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './ProductCardGrid.module.css';
 import type { ProductData } from '@/components/ProductCard';
+import { useTrackImpression } from '@/hooks/useTrackImpression';
 
 interface Props {
     data: ProductData;
@@ -13,9 +14,11 @@ interface Props {
 
 export default function ProductCardGrid({ data, index = 0 }: Props) {
     const router = useRouter();
+    const impressionRef = useTrackImpression(data.id ?? '', 'product', { index, view: 'grid' });
 
     return (
         <article
+            ref={impressionRef as React.RefObject<HTMLElement>}
             className={styles.card}
             style={{ animationDelay: `${index * 40}ms` }}
             onClick={() => data.id && router.push(`/p/${data.slug ?? data.id}`)}

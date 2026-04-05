@@ -21,10 +21,16 @@
     }
 }
 
+.filterRow {
+    display: flex;
+    align-items: center;
+}
+
 .scroll {
     display: flex;
     overflow-x: auto;
     scrollbar-width: none;
+    flex: 1;
 }
 
 .scroll::-webkit-scrollbar {
@@ -73,4 +79,39 @@
     height: 4px;
     background-color: var(--primary);
     border-radius: 9999px;
+}
+
+/* ── Sort pills ──────────────────────────────────────── */
+.sortWrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 10px;
+    border-left: 1px solid var(--card-border);
+    flex-shrink: 0;
+    height: 53px;
+}
+
+.sortPill {
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--card-border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.sortPill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.sortPillActive {
+    background: rgba(var(--primary-rgb), 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
 }

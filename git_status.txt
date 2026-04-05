@@ -1,0 +1,44 @@
+On branch main
+Your branch is ahead of 'origin/main' by 2 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .claude/settings.json
+	modified:   web/src/app/admin/analytics/page.tsx
+	modified:   web/src/app/layout.tsx
+	modified:   web/src/components/PostCard/index.tsx
+	modified:   web/src/components/ProductCardGrid/index.tsx
+	modified:   web/src/hooks/useTrackEvent.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	analyze_png.py
+	contracts/.gitignore
+	contracts/contracts/
+	contracts/hardhat.config.js
+	contracts/package-lock.json
+	contracts/package.json
+	contracts/scripts/
+	contracts/test/
+	git_status.txt
+	web/analyze_png.js
+	web/extract_d.js
+	web/extract_e.js
+	web/fix-gap.js
+	web/output_traced.svg
+	web/src/app/api/checkout/crypto-confirm/
+	web/src/app/api/checkout/initialize-crypto/
+	web/src/app/api/cron/auto-release-digital/
+	web/src/app/api/rates/
+	web/src/app/checkout/crypto/
+	web/src/app/help/
+	web/src/app/store/[slug]/settings/CryptoSettingsForm.tsx
+	web/src/app/store/[slug]/wallet/
+	web/src/components/UTMCapture.tsx
+	web/src/lib/currency.ts
+	web/src/lib/thirdweb.ts
+	web/vectorize_png.js
+
+no changes added to commit (use "git add" and/or "git commit -a")

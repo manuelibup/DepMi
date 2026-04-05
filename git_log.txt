@@ -1,0 +1,20 @@
+a44992b docs: update session logs and project docs
+8e06db7 docs: update session 99 log
+bc05da8 feat: replace text logo with depmi wordmark PNG on landing page
+91fd20a feat: update landing page screenshot to coral-themed v4
+72ed8ef fix: remove avatar upload from onboarding to prevent mobile state reset bug
+46cb4a9 feat: add phoneNumber field to Store model and store creation form
+aef10ff fix: hide sidebar on /welcome page
+201fe2a feat: add /welcome landing page route for unauthenticated users
+cbb7261 fix: replace /s regex flag with [\s\S] for ES2015 compat + route signup to /welcome
+79a2bd0 feat: show LandingPage to guests at /
+82911ef fix: Join free and Create Account route to landing page (/)
+d8952b3 fix: signup buttons now go to /login (Google OAuth flow)
+5896570 fix: checkout 404 for variant products + notify me persistence
+bffa601 docs: add Session 97 log — store posts in feed, campus strategy
+490a9eb fix: correct register links + add AI demand-product matching
+88032f2 feat: store posts/updates appear in the main feed
+5d725dc fix: all signup CTAs now route to landing page (/)
+7ebc238 feat: redirect signup flows to landing page
+3b95ea5 fix: make right sidebar sticky on notifications, bookmarks and profile pages
+d15132e fix: change store profile products tab from horizontal scroll to vertical feed

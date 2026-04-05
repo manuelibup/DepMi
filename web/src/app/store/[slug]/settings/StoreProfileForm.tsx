@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import NigeriaLocationPicker, { LocationValue } from '@/components/NigeriaLocationPicker';
 
 interface Props {
     slug: string;
@@ -45,6 +46,10 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
     const [description, setDescription] = useState(initial.description);
     const [location, setLocation] = useState(initial.location);
     const [saving, setSaving] = useState(false);
+
+    const handleLocationChange = (val: LocationValue) => {
+        setLocation(`${val.city ? val.city + ', ' : ''}${val.state}, ${val.country}`);
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -164,15 +169,16 @@ export default function StoreProfileForm({ slug, storeName, initial }: Props) {
 
             {/* Location */}
             <div>
-                <label style={labelStyle}>Business Location</label>
-                <input
-                    type="text"
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    maxLength={200}
-                    placeholder="e.g. Ikeja, Lagos"
-                    style={inputStyle}
+                <NigeriaLocationPicker
+                    label="Business Location"
+                    allowOtherCountries
+                    onChange={handleLocationChange}
                 />
+                {location && (
+                    <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Will save as: <strong style={{ color: 'var(--text-main)' }}>{location}</strong>
+                    </p>
+                )}
             </div>
 
             <button

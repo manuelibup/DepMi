@@ -4,6 +4,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './PostCard.module.css';
+import { useTrackImpression } from '@/hooks/useTrackImpression';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
 
 export interface PostAuthor {
     displayName: string | null;
@@ -130,6 +132,8 @@ function MediaCarousel({ images }: { images: { url: string }[] }) {
 // ── PostCard ──────────────────────────────────────────────────────────────────
 
 export default function PostCard({ data, sessionUserId }: { data: PostData; sessionUserId?: string }) {
+    const impressionRef = useTrackImpression(data.id, 'store', { postType: data.type });
+    const track = useTrackEvent();
     const [liked, setLiked] = useState(data.isLiked ?? false);
     const [likeCount, setLikeCount] = useState(data.likeCount);
     const [commentCount, setCommentCount] = useState(data.commentCount);
@@ -149,6 +153,7 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
         const wasLiked = liked;
         setLiked(!wasLiked);
         setLikeCount(c => wasLiked ? c - 1 : c + 1);
+        if (!wasLiked) track('LIKE', { targetId: data.id, targetType: 'post' });
         try {
             await fetch(`/api/posts/${data.id}/like`, { method: 'POST' });
         } catch {
@@ -200,10 +205,11 @@ export default function PostCard({ data, sessionUserId }: { data: PostData; sess
             setShareCopied(true);
             setTimeout(() => setShareCopied(false), 2000);
         });
+        track('SHARE', { targetId: data.id, targetType: 'post' });
     }
 
     return (
-        <div className={`${styles.card} ${data.type === 'ANNOUNCEMENT' ? styles.announcement : ''}`}>
+        <div ref={impressionRef as React.RefObject<HTMLDivElement>} className={`${styles.card} ${data.type === 'ANNOUNCEMENT' ? styles.announcement : ''}`}>
             {data.type === 'ANNOUNCEMENT' && (
                 <div className={styles.announcementBadge}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z" /></svg>
