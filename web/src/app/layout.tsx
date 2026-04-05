@@ -8,6 +8,7 @@ import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import PushPrompt from "@/components/PushPrompt";
 import UTMCapture from "@/components/UTMCapture";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -163,6 +164,7 @@ export default function RootLayout({
           <Toaster theme="dark" position="bottom-center" richColors />
           <UTMCapture />
           <Analytics />
+          <SpeedInsights />
           <ServiceWorkerRegistrar />
           <ActivityPing />
           <PushPrompt />
