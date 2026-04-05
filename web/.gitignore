@@ -53,3 +53,4 @@ test-*.js
 test-*.ts
 /tmp/
 lint*.txt
+src/_crypto-dev/
