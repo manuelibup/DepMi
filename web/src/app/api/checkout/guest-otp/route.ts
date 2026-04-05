@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 
         if (emailResult.error) {
             console.error('[guest-otp/send] Resend error:', emailResult.error);
-            return NextResponse.json({ error: `Email delivery failed: ${emailResult.error.message}` }, { status: 502 });
+            return NextResponse.json({ error: 'Email delivery failed due to a server configuration issue. Please contact support or try again later.' }, { status: 502 });
         }
 
         return NextResponse.json({ success: true, message: 'OTP sent to email.' });
