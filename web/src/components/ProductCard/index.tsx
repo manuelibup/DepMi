@@ -308,10 +308,11 @@ export default function ProductCard({ data, index = 0 }: ProductCardProps) {
 
     const handleAction = async (e: React.MouseEvent, action: string) => {
         e.preventDefault(); e.stopPropagation();
-        if (status === 'unauthenticated') { openGate(); return; }
+        
         if (action === 'buy' && data.id) {
             router.push(`/checkout/${data.id}`);
         } else if (action === 'chat' && data.ownerId) {
+            if (status === 'unauthenticated') { openGate(); return; }
             try {
                 const res = await fetch('/api/messages/new', {
                     method: 'POST',

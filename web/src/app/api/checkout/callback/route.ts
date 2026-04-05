@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.redirect(`${baseUrl}/orders?success=true&orderId=${orderId}`)
         }
 
-        const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.05 * 100) / 100
+        const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
 
         await prisma.$transaction(async (tx) => {
             await tx.order.update({

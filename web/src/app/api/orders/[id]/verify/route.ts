@@ -65,7 +65,7 @@ export async function POST(
         const flwStatus = await verifyByTxRef(txRef);
 
         if (flwStatus && flwStatus.paid) {
-            const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.05 * 100) / 100;
+            const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.03 * 100) / 100;
 
             await prisma.order.update({
                 where: { id: orderId },

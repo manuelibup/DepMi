@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         const pendingEscrow = pendingOrders.reduce((sum, order) => {
             // Processing fee is already paid by buyer, platform fee (5%) will be deducted on release
             const amount = Number(order.totalAmount);
-            const estimatedFee = amount * 0.05; 
+            const estimatedFee = amount * 0.03; 
             return sum + (amount - estimatedFee);
         }, 0);
 
