@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     const [buyer, product] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { id: true, displayName: true, walletAddress: true },
+        select: { id: true, displayName: true },
       }),
       prisma.product.findUnique({
         where: { id: productId },
