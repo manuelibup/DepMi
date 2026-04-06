@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
@@ -30,10 +30,10 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
         if (!POSTHOG_KEY) return;
         posthog.init(POSTHOG_KEY, {
             api_host: POSTHOG_HOST,
-            capture_pageview: false, // we handle manually above
+            capture_pageview: false,
             capture_pageleave: true,
             session_recording: {
-                maskAllInputs: true,     // never capture passwords / card numbers
+                maskAllInputs: true,
                 maskInputOptions: { password: true },
             },
             persistence: 'localStorage+cookie',
@@ -44,7 +44,9 @@ export default function PostHogProvider({ children }: { children: React.ReactNod
 
     return (
         <PHProvider client={posthog}>
-            <PostHogPageView />
+            <Suspense fallback={null}>
+                <PostHogPageView />
+            </Suspense>
             {children}
         </PHProvider>
     );
