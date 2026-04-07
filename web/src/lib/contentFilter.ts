@@ -33,6 +33,8 @@ const PATTERNS: { regex: RegExp; reason: string }[] = [
     // Twitter/X
     { regex: /\b(dm|message|follow|find|contact|hmu)\s+(me\s+)?on\s+(twitter|x\.com)\b/i, reason: 'off-platform contact solicitation' },
     { regex: /\bmy\s+(twitter|x)\s+(handle|@|dm)\b/i, reason: 'off-platform contact solicitation' },
+    // Generic off-platform solicitation
+    { regex: /\bdm\b/i, reason: 'off-platform contact solicitation' },
 ];
 
 export function detectViolation(text: string): { blocked: true; reason: string; match: string } | { blocked: false } {

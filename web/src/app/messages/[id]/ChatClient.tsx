@@ -381,6 +381,10 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             </header>
 
             <div className={styles.chatArea}>
+                <div className={styles.safetyBanner}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px', color: 'var(--primary)' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                    Messaging and transactions outside the app are prohibited and are at your own risk. DepMi is not responsible for issues outside the platform.
+                </div>
                 {messages.map((msg, idx) => {
                     const isMe = msg.senderId === currentUser.id;
                     const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -464,7 +468,16 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                                         <img src={msg.mediaUrl} alt="sticker" className={styles.stickerImage} />
                                     </div>
                                 )}
-                                {msg.text && <div className={styles.msgText}>{renderMessageText(msg.text)}</div>}
+                                {msg.text && (
+                                    <div className={styles.msgText}>
+                                        {!isMe && (
+                                            <div className={styles.safetyNotice}>
+                                                Safety Tip: Transactions outside DepMi are at your own risk.
+                                            </div>
+                                        )}
+                                        {renderMessageText(msg.text)}
+                                    </div>
+                                )}
                                 <div className={styles.time}>{timeStr}</div>
                             </div>
                         </div>
