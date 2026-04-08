@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 105 — Apr 8, 2026 — Neon Database Compute Optimization & Aggressive Caching](#session-105--apr-8-2026--neon-database-compute-optimization--aggressive-caching)
+- [Session 104 — Apr 6, 2026 — PostHog, Location Standardization & Crypto Removal](#session-104--apr-6-2026--posthog-location-standardization--crypto-removal)
 - [Session 103 — Apr 4, 2026 — Checkout Variant Fix](#session-103--apr-4-2026--checkout-variant-fix)
 - [Session 102 — Apr 4, 2026 — Monthly Active Users (MAU) Metric](#session-102--apr-4-2026--monthly-active-users-mau-metric)
 - [Session 101 — Apr 4, 2026 — Vercel Analytics](#session-101--apr-4-2026--vercel-analytics)
@@ -84,6 +86,54 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 105 — Apr 8, 2026 — Neon Database Compute Optimization & Aggressive Caching
+
+**Agent:** Antigravity / Gemini 3 Flash
+**Human:** Manuel
+
+### What Was Done
+- **Neon Compute Optimization:** Addressed excessive database compute consumption by implementing a comprehensive caching strategy and activity-aware background processes.
+- **Shared Feed Caching:** 
+    - Created `web/src/lib/feed.ts` to centralize feed fetching with `unstable_cache`.
+    - Refactored the main feed API and Landing Page to serve cached data for guests and bots.
+    - Offloaded user-specific state (personalization) to the client-side/lightweight lookups, allowing shared caching of the base feed.
+- **Universal Handle Resolution Caching:**
+    - Created `web/src/lib/resolveHandle.ts` to cache handle resolution (lookup store vs user).
+    - Implemented a 1-hour cache for handle lookups, significantly reducing DB hits on direct profile/store visits.
+- **Product & Demand Page Caching:**
+    - Created `web/src/lib/product.ts` and `web/src/lib/demand.ts` for cached item detail fetching.
+    - Refactored `/p/[id]` and `/requests/[id]` routes to use `unstable_cache` for base data and recommendations.
+    - Isolated personalization (likes/saves) into separate queries to maintain cache efficiency.
+- **Activity-Aware Chat SSE:**
+    - Modified `web/src/app/messages/[id]/ChatClient.tsx` to monitor user activity (mouse, scroll, typing) and tab visibility.
+    - Implemented an auto-disconnect feature that pauses SSE polling after 5 minutes of inactivity, allowing the database to suspend during idle periods.
+- **Code Refactoring:**
+    - Consolidated duplicated `notFound()` and logic redundancies in the demand page.
+    - Cleaned up TypeScript `any` casts in cached libraries where Prisma types were overly complex.
+
+---
+
+## Session 104 — Apr 6, 2026 — PostHog, Location Standardization & Crypto Removal
+
+**Agent:** Antigravity / Gemini 3 Flash
+**Human:** Manuel
+
+### What Was Done
+- **PostHog Integration:** Integrated `posthog-js` with a global `PostHogProvider`. Resolved a critical Vercel build error (`useSearchParams()` bailout) by wrapping the tracking component in a `<Suspense>` boundary.
+- **Vercel Speed Insights:** Installed `@vercel/speed-insights` for Core Web Vitals monitoring in production.
+- **NigeriaLocationPicker:** Introduced a standardized location selector using `country-state-city` data. Replaced free-text inputs in Onboarding (Step 3) and Store Settings with searchable dropdowns for States and Cities in Nigeria.
+- **Price-Based Sorting:** 
+    - **Main Feed:** Added "Newest", "Price ↑", and "Price ↓" sort pills to the `FilterBar`, wired to server-side Prisma sorting in the feed API.
+    - **Store Profile:** Implemented client-side price sorting for the store's product catalogue.
+- **Crypto Maintenance (Production Stability):**
+    - Removed `thirdweb` and `ethers` dependencies to resolve peer-dependency conflicts and reduce build bloat.
+    - Stubbed out all crypto routes (`initialize-crypto`, `crypto-confirm`) and UI components (`CryptoCheckoutClient`, `WalletClient`, `CryptoSettingsForm`) with "Coming Soon" placeholders.
+    - **Local Backup:** Extracted and preserved the full original crypto integration in `web/src/_crypto-dev/` (added to `.gitignore`) for future development.
+- **UI/UX Fixes:**
+    - Fixed "Electric Coral" brand color (`#FF5C38`) in OTP and Guest Checkout email templates to ensure consistent rendering across email clients.
 
 ---
 

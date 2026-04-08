@@ -166,7 +166,33 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // SSE with visibility detection
+    // Inactivity detection
+    const lastActivityRef = useRef(Date.now());
+    const [isIdle, setIsIdle] = useState(false);
+
+    useEffect(() => {
+        const handleActivity = () => {
+            lastActivityRef.current = Date.now();
+            if (isIdle) setIsIdle(false);
+        };
+
+        const events = ['mousemove', 'keypress', 'touchstart', 'scroll'];
+        events.forEach(e => window.addEventListener(e, handleActivity));
+
+        const checkInactivity = setInterval(() => {
+            const idleTime = Date.now() - lastActivityRef.current;
+            if (idleTime > 5 * 60 * 1000) { // 5 minutes
+                setIsIdle(true);
+            }
+        }, 20000); // Check every 20s
+
+        return () => {
+            events.forEach(e => window.removeEventListener(e, handleActivity));
+            clearInterval(checkInactivity);
+        };
+    }, [isIdle]);
+
+    // SSE with visibility and activity detection
     useEffect(() => {
         let eventSource: EventSource | null = null;
 
@@ -181,7 +207,9 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
                             const existingIds = new Set(prev.map((m) => m.id));
                             const uniqueNew = newMsgs.filter((m) => m.id && !existingIds.has(m.id));
                             if (uniqueNew.length === 0) return prev;
-                            return [...prev, ...uniqueNew];
+                            const combined = [...prev, ...uniqueNew];
+                            // Sort to ensure chronological order even if stream delivers late
+                            return combined.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
                         });
                     }
                 } catch (err) { }
@@ -195,26 +223,24 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             }
         };
 
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+        const checkState = () => {
+            const isVisible = document.visibilityState === 'visible';
+            if (isVisible && !isIdle) {
                 connect();
             } else {
                 disconnect();
             }
         };
 
-        // Connect initially if visible
-        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-            connect();
-        }
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+        // Initial check and listeners
+        checkState();
+        document.addEventListener('visibilitychange', checkState);
 
         return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('visibilitychange', checkState);
             disconnect();
         };
-    }, [conversationId]);
+    }, [conversationId, isIdle]);
 
     const handleSend = async (payload: { text?: string, type?: string, mediaUrl?: string }) => {
         if (sending) return;

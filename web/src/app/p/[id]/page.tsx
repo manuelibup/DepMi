@@ -5,21 +5,11 @@ import { withWatermark } from '@/lib/cloudinaryWatermark';
 import { notFound, redirect } from 'next/navigation';
 import VariantPicker from './VariantPicker';
 
+import { getCachedProduct, getCachedRecommendations } from '@/lib/product';
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
-    const product = await prisma.product.findFirst({
-        where: { OR: [{ slug: id }, { id }] },
-        select: {
-            id: true,
-            slug: true,
-            title: true,
-            description: true,
-            price: true,
-            currency: true,
-            images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
-            store: { select: { name: true } },
-        },
-    });
+    const product = await getCachedProduct(id);
     if (!product) return {};
     const price = `${product.currency || '₦'}${Number(product.price).toLocaleString()}`;
     const rawImage = product.images[0]?.url;
@@ -65,24 +55,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     let userKycTier: string = 'UNVERIFIED';
     if (userId) {
+        // This is a per-user query, unavoidable unless we add kycTier to JWT
         const u = await prisma.user.findUnique({ where: { id: userId }, select: { kycTier: true } });
         userKycTier = u?.kycTier ?? 'UNVERIFIED';
     }
 
-    const product = await prisma.product.findFirst({
-        where: { OR: [{ slug: id }, { id }] },
-        include: {
-            images: { orderBy: { order: 'asc' } },
-            store: {
-                select: { id: true, name: true, slug: true, logoUrl: true, depCount: true, depTier: true, ownerId: true, rating: true, reviewCount: true, dispatchEnabled: true, pickupAddress: true }
-            },
-            comments: {
-                include: { author: { select: { displayName: true, username: true, avatarUrl: true } } },
-                orderBy: { createdAt: 'asc' }
-            },
-            variants: { orderBy: { price: 'asc' } },
-        }
-    });
+    const product = await getCachedProduct(id);
 
     if (!product) notFound();
 
@@ -90,8 +68,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     if (product.slug && id !== product.slug) {
         redirect(`/p/${product.slug}`);
     }
-
-    // prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => { });
 
     const serializedComments = product.comments.map(c => ({
         id: c.id,
@@ -130,26 +106,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         }),
     };
 
-    // Organic recommendations: same category, different store, in stock, top by views
-    const recommendations = await prisma.product.findMany({
-        where: {
-            category: product.category,
-            storeId: { not: product.storeId },
-            inStock: true,
-            isPortfolioItem: false,
-        },
-        select: {
-            id: true,
-            slug: true,
-            title: true,
-            price: true,
-            currency: true,
-            images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
-            store: { select: { name: true } },
-        },
-        orderBy: { viewCount: 'desc' },
-        take: 6,
-    });
+    // Organic recommendations: same category, different store, in stock, top by views (Cached)
+    const recommendations = await getCachedRecommendations(product.category || 'Other', product.storeId);
 
     return (
         <main className={styles.page}>

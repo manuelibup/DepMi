@@ -4,21 +4,11 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 
+import { getCachedDemand, getDemandPersonalization } from '@/lib/demand';
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const demand = await (prisma.demand as any).findFirst({
-        where: { OR: [{ slug: id }, { id }] },
-        select: {
-            slug: true,
-            text: true,
-            budget: true,
-            budgetMin: true,
-            location: true,
-            images: { take: 1, orderBy: { order: 'asc' }, select: { url: true } },
-            user: { select: { displayName: true } },
-        },
-    });
+    const demand = await getCachedDemand(id);
     if (!demand) return {};
     const image = demand.images?.[0]?.url;
     const title = demand.text.length > 60 ? demand.text.slice(0, 57) + '…' : demand.text;
@@ -76,37 +66,15 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         userKycTier = u?.kycTier ?? 'UNVERIFIED';
     }
 
-    const demand = (await (prisma.demand as any).findFirst({
-        where: { OR: [{ slug: id }, { id }] },
-        include: {
-            user: { select: { displayName: true, username: true, avatarUrl: true } },
-            images: { orderBy: { order: 'asc' }, select: { url: true } },
-            _count: { select: { likes: true, comments: true } },
-            ...(userId ? {
-                likes: { where: { userId }, select: { id: true } },
-                saves: { where: { userId }, select: { id: true } },
-            } : {}),
-            bids: {
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    store: { select: { name: true, slug: true, depCount: true, depTier: true, owner: { select: { id: true, username: true } } } },
-                    product: { select: { title: true, slug: true, images: { take: 1, select: { url: true } } } },
-                    replies: {
-                        orderBy: { createdAt: 'asc' },
-                        include: { author: { select: { displayName: true, username: true, avatarUrl: true } } }
-                    }
-                }
-            },
-            comments: {
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    author: { select: { displayName: true, username: true, avatarUrl: true } }
-                }
-            }
-        }
-    }) as any);
+    const demand = await getCachedDemand(id) as any;
 
     if (!demand) notFound();
+
+    // Fetch personalization separately
+    let personalization = { isLiked: false, isSaved: false };
+    if (userId) {
+        personalization = await getDemandPersonalization(demand.id, userId);
+    }
 
     // If accessed by UUID and a slug exists, 301 redirect to the clean slug URL
     if (demand.slug && id !== demand.slug) {
@@ -285,8 +253,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                 {/* Social action bar */}
                 <DemandDetailActions
                     demandId={demand.id}
-                    initialLiked={userId ? (demand.likes?.length ?? 0) > 0 : false}
-                    initialSaved={userId ? (demand.saves?.length ?? 0) > 0 : false}
+                    initialLiked={personalization.isLiked}
+                    initialSaved={personalization.isSaved}
                     initialLikeCount={demand._count?.likes ?? 0}
                     commentCount={demand._count?.comments ?? 0}
                     viewCount={demand.viewCount ?? 0}

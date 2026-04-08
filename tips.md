@@ -585,6 +585,23 @@ Don't forget to set these in **Project Settings > Environment Variables** for an
 
 ---
 
+## 🛑 55. SSE Resource Leaks & Activity-Based Pausing
+
+- **The Problem**: A background tab running an SSE stream (`EventSource`) with a database polling loop keeps the database awake 24/7.
+- **The Fix**: Use a `useEffect` hook to track user activity (mouse, scroll, keypress). If the user is idle for >5 minutes or the tab is hidden (`document.visibilityState === 'hidden'`), call `eventSource.close()`. Re-establish the connection only when activity resumes.
+- **Benefit**: This allows Neon databases to auto-suspend properly, saving significant compute costs for idle users.
+
+## 📦 56. Shared Feed Cache Pattern (`unstable_cache`)
+
+- **The Problem**: Personalized feeds (where "Likes" are embedded in the server-side payload) cannot be cached globally using Next.js `unstable_cache`.
+- **The Fix**: Separate the **Base Item Data** (Product/Demand details) from the **Personalization State** (isLiked, isSaved).
+  1. Wrap the base data fetch in `unstable_cache` with a 60s revalidation.
+  2. Perform a separate, lightweight query for personalization ONLY if the `userId` is present.
+  3. Combine them in the page component or inject personalization via a client-side hook/prop.
+- **Benefit**: Guests and crawlers hit the global cache while logged-in users get a customized experience without re-fetching core data.
+
+---
+
 ## 🖤 46. Flex Overflow "Black Screen" — Mobile Overlay Collapsing Sibling to 0 Width
 
 *This tip was added after diagnosing a black-screen bug on the Orders page desktop layout (Session 71).*
@@ -685,3 +702,46 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 - **How to Catch It**: Run `git status` before pushing. Any files listed under "Untracked files" will NOT be deployed. Vercel clones from the git repo — it only sees committed history.
 - **The Fix**: `git add <file> && git commit && git push`. Then re-trigger a Vercel deployment.
 - **Rule**: After creating a new page or route, always verify `git status` shows it as staged before pushing. A local dev server passing is not sufficient proof that a route will work in production.
+
+---
+
+## 📈 53. PostHog & `useSearchParams()` (Vercel Build Error)
+
+*Added after a critical Next.js build failure during PostHog integration.*
+
+- **The Issue**: Using `useSearchParams()` in a global layout component (like an analytics provider) causes the entire site to bail out of static rendering and transition to client-side rendering for every page. On Vercel, this can lead to build errors if not handled correctly.
+- **The Fix**: Always wrap any component that uses `useSearchParams()` in a **`<Suspense>` boundary**.
+  ```tsx
+  // Inside PostHogProvider.tsx
+  function PostHogPageView() {
+    const searchParams = useSearchParams(); // This hook triggers the bailout
+    // ... tracking logic
+  }
+
+  export function PostHogProvider({ children }) {
+    return (
+      <PHProvider client={posthog}>
+        <Suspense fallback={null}>
+          <PostHogPageView />
+        </Suspense>
+        {children}
+      </PHProvider>
+    );
+  }
+  ```
+- **Why?**: Suspense boundaries delineate the part of the tree that is dynamic, allowing the rest of the layout to be pre-rendered statically.
+
+---
+
+## 🛡️ 54. Staged Feature Removal (The `_crypto-dev` Pattern)
+
+*Added after "taking down" the incomplete crypto integration for production stability.*
+
+- **The Problem**: You have an unfinished, mission-critical feature (like Crypto payments) that is causing build errors or dependency bloat, but you don't want to delete the hard-earned code.
+- **The Solution**: 
+  1. **Stub the routes**: Update the public pages/APIs to return a hardcoded "Coming Soon" or `503 Service Unavailable`.
+  2. **Move the source**: Move the full, complex logic into a local, gitignored directory (e.g., `web/src/_crypto-dev/`).
+  3. **Uninstall dependencies**: Remove the heavy library (`thirdweb`, `ethers`) from `package.json` to fix builds and reduce production bundle size.
+  4. **Document**: Add the local path to `.gitignore` so the "dev" code never leaks to production, but stays safe on the developer's machine for future resumption.
+- **Benefit**: Restores production stability immediately without losing progress or littering the main `src` tree with broken imports.
+

@@ -1,18 +1,15 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import StorefrontPage from '@/app/store/[slug]/page';
 import UserProfilePage from '@/app/u/[username]/page';
+import { getCachedHandle } from '@/lib/resolveHandle';
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
     const { handle } = await params;
+    const resolved = await getCachedHandle(handle);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = await (prisma.user as any).findFirst({
-        where: { username: { equals: handle, mode: 'insensitive' } },
-        select: { displayName: true, username: true, bio: true, avatarUrl: true },
-    });
-    if (user) {
+    if (resolved?.type === 'user') {
+        const user = resolved.data;
         const desc = user.bio || `Follow ${user.displayName} on DepMi`;
         return {
             title: `${user.displayName} (@${user.username}) · DepMi`,
@@ -32,11 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
         };
     }
 
-    const store = await prisma.store.findFirst({
-        where: { slug: { equals: handle, mode: 'insensitive' } },
-        select: { name: true, description: true, logoUrl: true, location: true, depCount: true, slug: true },
-    });
-    if (store) {
+    if (resolved?.type === 'store') {
+        const store = resolved.data;
         const locationSuffix = store.location ? ` — ${store.location}` : '';
         const title = `${store.name}${locationSuffix} · DepMi`;
         const descParts: string[] = [store.description || `Shop ${store.name} on DepMi`];
@@ -66,29 +60,17 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
 
 /**
  * Universal handle resolver — depmi.com/[handle]
- * Renders user profile or store content directly at the clean URL.
- * /store/[slug] and /u/[username] 301-redirect here via next.config.ts.
  */
 export default async function HandlePage({ params }: { params: Promise<{ handle: string }> }) {
     const { handle } = await params;
+    const resolved = await getCachedHandle(handle);
 
-    // Check user first
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = await (prisma.user as any).findFirst({
-        where: { username: { equals: handle, mode: 'insensitive' } },
-        select: { username: true },
-    });
-    if (user) {
-        return UserProfilePage({ params: Promise.resolve({ username: user.username }) });
+    if (resolved?.type === 'user') {
+        return UserProfilePage({ params: Promise.resolve({ username: resolved.data.username }) });
     }
 
-    // Check store
-    const store = await prisma.store.findFirst({
-        where: { slug: { equals: handle, mode: 'insensitive' } },
-        select: { slug: true },
-    });
-    if (store) {
-        return StorefrontPage({ params: Promise.resolve({ slug: store.slug }) });
+    if (resolved?.type === 'store') {
+        return StorefrontPage({ params: Promise.resolve({ slug: resolved.data.slug }) });
     }
 
     notFound();
