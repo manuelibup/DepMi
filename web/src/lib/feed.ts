@@ -170,31 +170,50 @@ export async function getCachedTopStores() {
 export async function personalizeItems(items: FeedItem[], userId: string | null) {
     if (!userId || items.length === 0) return items;
 
-    const productIds = items.filter(i => i.type === 'product').map(i => i.data.id);
-    const demandIds = items.filter(i => i.type === 'demand').map(i => i.data.id);
-    const postIds = items.filter(i => i.type === 'post').map(i => i.data.id);
+    // Cache the user's liked/saved IDs for 30s — prevents 5 DB queries on every infinite scroll page
+    const getUserInteractions = unstable_cache(
+        async () => {
+            const productIds = items.filter(i => i.type === 'product').map(i => i.data.id);
+            const demandIds = items.filter(i => i.type === 'demand').map(i => i.data.id);
+            const postIds = items.filter(i => i.type === 'post').map(i => i.data.id);
 
-    const [pLikes, pSaves, dLikes, dSaves, postLikes] = await Promise.all([
-        productIds.length ? prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
-        productIds.length ? prisma.savedProduct.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
-        demandIds.length ? (prisma.demandLike as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
-        demandIds.length ? (prisma.savedDemand as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
-        postIds.length ? prisma.postLike.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }) : [],
-    ]);
+            const [pLikes, pSaves, dLikes, dSaves, postLikes] = await Promise.all([
+                productIds.length ? prisma.productLike.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
+                productIds.length ? prisma.savedProduct.findMany({ where: { userId, productId: { in: productIds } }, select: { productId: true } }) : [],
+                demandIds.length ? (prisma.demandLike as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
+                demandIds.length ? (prisma.savedDemand as any).findMany({ where: { userId, demandId: { in: demandIds } }, select: { demandId: true } }) : [],
+                postIds.length ? prisma.postLike.findMany({ where: { userId, postId: { in: postIds } }, select: { postId: true } }) : [],
+            ]);
 
-    const likedProductIds = new Set(pLikes.map((l: any) => l.productId));
-    const savedProductIds = new Set(pSaves.map((s: any) => s.productId));
-    const likedDemandIds = new Set(dLikes.map((l: any) => l.demandId));
-    const savedDemandIds = new Set(dSaves.map((s: any) => s.demandId));
-    const likedPostIds = new Set(postLikes.map((l: any) => l.postId));
+            return {
+                likedProductIds: pLikes.map((l: any) => l.productId),
+                savedProductIds: pSaves.map((s: any) => s.productId),
+                likedDemandIds: dLikes.map((l: any) => l.demandId),
+                savedDemandIds: dSaves.map((s: any) => s.demandId),
+                likedPostIds: postLikes.map((l: any) => l.postId),
+            };
+        },
+        // Cache key: user + item IDs (so different page cursors still work correctly)
+        [`personalize-${userId}-${items.map(i => i.data.id).join(',')}`],
+        { revalidate: 30 } // 30 seconds — balances freshness with DB savings
+    );
+
+    const { likedProductIds, savedProductIds, likedDemandIds, savedDemandIds, likedPostIds } = await getUserInteractions();
+
+    const likedProductSet = new Set(likedProductIds);
+    const savedProductSet = new Set(savedProductIds);
+    const likedDemandSet = new Set(likedDemandIds);
+    const savedDemandSet = new Set(savedDemandIds);
+    const likedPostSet = new Set(likedPostIds);
 
     return items.map(item => {
         if (item.type === 'product') {
-            return { ...item, data: { ...item.data, isLiked: likedProductIds.has(item.data.id), isSaved: savedProductIds.has(item.data.id) } };
+            return { ...item, data: { ...item.data, isLiked: likedProductSet.has(item.data.id), isSaved: savedProductSet.has(item.data.id) } };
         }
         if (item.type === 'demand') {
-            return { ...item, data: { ...item.data, isLiked: likedDemandIds.has(item.data.id), isSaved: savedDemandIds.has(item.data.id) } };
+            return { ...item, data: { ...item.data, isLiked: likedDemandSet.has(item.data.id), isSaved: savedDemandSet.has(item.data.id) } };
         }
-        return { ...item, data: { ...item.data, isLiked: likedPostIds.has(item.data.id) } };
+        return { ...item, data: { ...item.data, isLiked: likedPostSet.has(item.data.id) } };
     });
 }
+
