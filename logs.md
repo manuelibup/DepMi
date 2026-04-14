@@ -3883,3 +3883,25 @@ Continuation of Session 66. Tackled growth/retention backlog: dispatch badge, an
   - Executed a major overhaul of the DepMi SVGs. Discarded the optically-distorted typography approach and implemented the "o-on-a-stick" perfectly round geometric method for the typography (`depmi-wordmark.svg`).
   - Added structural boolean `<mask`> systems and `fill-rule="evenodd"` on a massive 2200x1000 canvas to ensure vector fidelity across all browsers.
   - Documented the SVG boolean methodology extensively in `tips.md` and `MEMORY.md` so future agent instances can emulate strict mathematical typography creation natively.
+
+---
+
+## Session 107 — Apr 14, 2026 — Neon Compute Phase 3: DB Write Optimization & Analytics Caching
+
+**Agent:** Antigravity
+**Human:** Manuel
+
+### What Was Done
+
+**Context:** Following Phase 2 caching, database compute on Neon still had remaining hotspots. A deep dive into the Neon SQL metrics revealed the main culprit: the `Event` table had nearly 15,000 inserts, primarily driven by `FEED_IMPRESSION` events from infinite scrolling on the home feed.
+
+- **Optimized Event Tracking:** Stopped writing `FEED_IMPRESSION`, `STORE_VIEW`, and `DEMAND_VIEW` to the Postgres DB. These high-volume, low-value events are already captured by PostHog. This reduces the `Event` table insert rate by ~85%.
+- **Kept High-Value Tracking:** Retained DB tracking for commerce-critical events (`PRODUCT_VIEW`, `LIKE`, `SAVE`, `BID`, `ORDER`, `SEARCH`, `SHARE`).
+- **Cached Personalization:** Wrapped the `personalizeItems` function in `lib/feed.ts` with a 30-second per-user `unstable_cache`. This eliminates 5 DB queries per feed scroll, significantly reducing load for the most visited page (Home Feed).
+- **Admin Analytics Optimization:** Added a 5-minute `unstable_cache` to the admin analytics page (`app/admin/analytics/page.tsx`) to prevent 13 concurrent heavy aggregator queries on every visit.
+- **Removed Dead Code:** Cleaned up stale JSX sections in the admin analytics page that referenced the now-dropped event types.
+
+### Validations
+- Verified the build locally.
+- Pushed changes to GitHub for deployment on Vercel.
+- Confirmed the UI changes are accurate to user behavior.

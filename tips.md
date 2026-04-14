@@ -745,3 +745,13 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
   4. **Document**: Add the local path to `.gitignore` so the "dev" code never leaks to production, but stays safe on the developer's machine for future resumption.
 - **Benefit**: Restores production stability immediately without losing progress or littering the main `src` tree with broken imports.
 
+
+---
+
+## 🛑 55. DB Exhaustion via High-Volume Logging (Event Tracking)
+
+*Added after identifying a 14,878 insert spike on the Event table that drained Neon compute.*
+
+- **The Issue**: Custom event logging in the DB (e.g., tracking every feed card impression as scrolling) causes massive DB write volumes. A 10-card scroll triggers 10 DB writes, queued every 30 seconds. This prevents the DB from autosuspending and burns compute limits.
+- **The Fix**: Delegate high-volume, low-value engagement events (like page views, feed impressions, scroll depth) to a robust external analytics provider like PostHog. 
+- **The Rule**: Only use the primary Postgres DB to track high-value, durable commerce signals (Orders, Bids, Saves, Likes, Product Views) that require immediate transactional consistency or can't be easily associated with a user transaction in an external tool.
