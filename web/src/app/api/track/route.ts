@@ -79,8 +79,10 @@ async function isOptedOut(userId: string): Promise<boolean> {
     return opted;
 }
 
+// High-value commerce events only — FEED_IMPRESSION / STORE_VIEW / DEMAND_VIEW
+// are dropped here and tracked by PostHog instead, saving ~85% of Event inserts.
 const validTypes = [
-    'FEED_IMPRESSION', 'PRODUCT_VIEW', 'DEMAND_VIEW', 'STORE_VIEW',
+    'PRODUCT_VIEW',
     'SEARCH', 'LIKE', 'SAVE', 'BID', 'ORDER', 'SHARE',
 ];
 

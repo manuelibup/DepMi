@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/admin';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
 import KpiCard from '../dashboard/KpiCard';
 import styles from '../engagement/page.module.css';
 
@@ -21,129 +22,114 @@ function fmt(n: number) {
             : String(n);
 }
 
+const getAnalyticsData = unstable_cache(
+    async () => {
+        const now = new Date();
+        const ago24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const ago7d  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000);
+        const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ev = prisma.event as any;
+
+        const [
+            totalEvents,
+            events24h,
+            events7d,
+            byType7d,
+            topProductViews7d,
+            uniqueSessions24h,
+            uniqueSessions7d,
+            optOutCount,
+            totalUsers,
+            utmSources30d,
+            utmMediums30d,
+            utmCampaigns30d,
+        ] = await Promise.all([
+            ev.count(),
+            ev.count({ where: { createdAt: { gte: ago24h } } }),
+            ev.count({ where: { createdAt: { gte: ago7d } } }),
+            ev.groupBy({
+                by: ['type'],
+                where: { createdAt: { gte: ago7d } },
+                _count: { id: true },
+                orderBy: { _count: { id: 'desc' } },
+            }),
+            ev.groupBy({
+                by: ['targetId'],
+                where: { type: 'PRODUCT_VIEW', createdAt: { gte: ago7d }, targetId: { not: null } },
+                _count: { id: true },
+                orderBy: { _count: { id: 'desc' } },
+                take: 10,
+            }),
+            ev.findMany({
+                where: { createdAt: { gte: ago24h } },
+                distinct: ['sessionId'],
+                select: { sessionId: true },
+            }).then((r: { sessionId: string }[]) => r.length),
+            ev.findMany({
+                where: { createdAt: { gte: ago7d } },
+                distinct: ['sessionId'],
+                select: { sessionId: true },
+            }).then((r: { sessionId: string }[]) => r.length),
+            prisma.user.count({ where: { analyticsOptOut: true } }),
+            prisma.user.count(),
+            prisma.$queryRaw<UtmRow[]>`
+                SELECT (metadata->>'utm_source') as value, COUNT(*)::bigint as count
+                FROM "Event"
+                WHERE "createdAt" >= ${ago30d}
+                  AND metadata->>'utm_source' IS NOT NULL
+                GROUP BY value ORDER BY count DESC LIMIT 10
+            `,
+            prisma.$queryRaw<UtmRow[]>`
+                SELECT (metadata->>'utm_medium') as value, COUNT(*)::bigint as count
+                FROM "Event"
+                WHERE "createdAt" >= ${ago30d}
+                  AND metadata->>'utm_medium' IS NOT NULL
+                GROUP BY value ORDER BY count DESC LIMIT 10
+            `,
+            prisma.$queryRaw<UtmRow[]>`
+                SELECT (metadata->>'utm_campaign') as value, COUNT(*)::bigint as count
+                FROM "Event"
+                WHERE "createdAt" >= ${ago30d}
+                  AND metadata->>'utm_campaign' IS NOT NULL
+                GROUP BY value ORDER BY count DESC LIMIT 10
+            `,
+        ]);
+
+        // Resolve product IDs to titles
+        const productViewIds = (topProductViews7d as TopRow[]).map((r: TopRow) => r.targetId).filter(Boolean) as string[];
+        const viewProducts = await prisma.product.findMany({
+            where: { id: { in: productViewIds } },
+            select: { id: true, title: true },
+        });
+        const productMap = Object.fromEntries(viewProducts.map((p: { id: string; title: string }) => [p.id, p.title]));
+
+        return {
+            totalEvents, events24h, events7d, byType7d,
+            topProductViews7d, uniqueSessions24h, uniqueSessions7d,
+            optOutCount, totalUsers, utmSources30d, utmMediums30d, utmCampaigns30d,
+            productMap,
+        };
+    },
+    ['admin-analytics-v1'],
+    { revalidate: 300 } // 5-minute cache
+);
+
 export default async function AnalyticsPage() {
     const session = await getServerSession(authOptions);
     const check = requireAdmin(session, 'ADMIN');
     if (!check.ok) redirect('/');
 
-    const now = new Date();
-    const ago24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const ago7d  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000);
-    const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ev = prisma.event as any;
-
-    const [
-        totalEvents,
-        events24h,
-        events7d,
-        byType7d,
-        topImpressions7d,
-        topProductViews7d,
-        topDemandViews7d,
-        uniqueSessions24h,
-        uniqueSessions7d,
-        optOutCount,
-        totalUsers,
-        utmSources30d,
-        utmMediums30d,
-        utmCampaigns30d,
-    ] = await Promise.all([
-        ev.count(),
-        ev.count({ where: { createdAt: { gte: ago24h } } }),
-        ev.count({ where: { createdAt: { gte: ago7d } } }),
-        ev.groupBy({
-            by: ['type'],
-            where: { createdAt: { gte: ago7d } },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-        }),
-        ev.groupBy({
-            by: ['targetId'],
-            where: { type: 'FEED_IMPRESSION', targetType: 'product', createdAt: { gte: ago7d }, targetId: { not: null } },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-            take: 10,
-        }),
-        ev.groupBy({
-            by: ['targetId'],
-            where: { type: 'PRODUCT_VIEW', createdAt: { gte: ago7d }, targetId: { not: null } },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-            take: 10,
-        }),
-        ev.groupBy({
-            by: ['targetId'],
-            where: { type: 'DEMAND_VIEW', createdAt: { gte: ago7d }, targetId: { not: null } },
-            _count: { id: true },
-            orderBy: { _count: { id: 'desc' } },
-            take: 10,
-        }),
-        ev.findMany({
-            where: { createdAt: { gte: ago24h } },
-            distinct: ['sessionId'],
-            select: { sessionId: true },
-        }).then((r: { sessionId: string }[]) => r.length),
-        ev.findMany({
-            where: { createdAt: { gte: ago7d } },
-            distinct: ['sessionId'],
-            select: { sessionId: true },
-        }).then((r: { sessionId: string }[]) => r.length),
-        prisma.user.count({ where: { analyticsOptOut: true } }),
-        prisma.user.count(),
-        // UTM attribution — last 30 days
-        prisma.$queryRaw<UtmRow[]>`
-            SELECT (metadata->>'utm_source') as value, COUNT(*)::bigint as count
-            FROM "Event"
-            WHERE "createdAt" >= ${ago30d}
-              AND metadata->>'utm_source' IS NOT NULL
-            GROUP BY value ORDER BY count DESC LIMIT 10
-        `,
-        prisma.$queryRaw<UtmRow[]>`
-            SELECT (metadata->>'utm_medium') as value, COUNT(*)::bigint as count
-            FROM "Event"
-            WHERE "createdAt" >= ${ago30d}
-              AND metadata->>'utm_medium' IS NOT NULL
-            GROUP BY value ORDER BY count DESC LIMIT 10
-        `,
-        prisma.$queryRaw<UtmRow[]>`
-            SELECT (metadata->>'utm_campaign') as value, COUNT(*)::bigint as count
-            FROM "Event"
-            WHERE "createdAt" >= ${ago30d}
-              AND metadata->>'utm_campaign' IS NOT NULL
-            GROUP BY value ORDER BY count DESC LIMIT 10
-        `,
-    ]);
-
-    // Resolve product IDs to titles
-    const productImpressionIds = (topImpressions7d as TopRow[]).map(r => r.targetId).filter(Boolean) as string[];
-    const productViewIds = (topProductViews7d as TopRow[]).map(r => r.targetId).filter(Boolean) as string[];
-    const demandViewIds = (topDemandViews7d as TopRow[]).map(r => r.targetId).filter(Boolean) as string[];
-
-    const [impProducts, viewProducts, viewDemands] = await Promise.all([
-        prisma.product.findMany({
-            where: { id: { in: productImpressionIds } },
-            select: { id: true, title: true },
-        }),
-        prisma.product.findMany({
-            where: { id: { in: productViewIds } },
-            select: { id: true, title: true },
-        }),
-        prisma.demand.findMany({
-            where: { id: { in: demandViewIds } },
-            select: { id: true, text: true },
-        }),
-    ]);
-
-    const productMap = Object.fromEntries([...impProducts, ...viewProducts].map(p => [p.id, p.title]));
-    const demandMap = Object.fromEntries(viewDemands.map(d => [d.id, d.text]));
+    const {
+        totalEvents, events24h, events7d, byType7d,
+        topProductViews7d, uniqueSessions24h, uniqueSessions7d,
+        optOutCount, totalUsers, utmSources30d, utmMediums30d, utmCampaigns30d,
+        productMap,
+    } = await getAnalyticsData();
 
     const TYPE_LABEL: Record<string, string> = {
-        FEED_IMPRESSION: 'Feed Impressions',
         PRODUCT_VIEW: 'Product Views',
-        DEMAND_VIEW: 'Demand Views',
-        STORE_VIEW: 'Store Views',
         SEARCH: 'Searches',
         LIKE: 'Likes',
         SAVE: 'Saves',
@@ -152,10 +138,7 @@ export default async function AnalyticsPage() {
         SHARE: 'Shares',
     };
     const TYPE_COLOR: Record<string, string> = {
-        FEED_IMPRESSION: '#a855f7',
         PRODUCT_VIEW: '#0066FF',
-        DEMAND_VIEW: '#06b6d4',
-        STORE_VIEW: '#22c55e',
         SEARCH: '#f59e0b',
         LIKE: '#ef4444',
         SAVE: 'var(--primary)',
@@ -221,27 +204,6 @@ export default async function AnalyticsPage() {
             )}
 
             <div className={styles.tablesGrid}>
-                {/* Top products by impressions */}
-                {(topImpressions7d as TopRow[]).length > 0 && (
-                    <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Top Products by Feed Impressions (7d)</h2>
-                        <table className={styles.table}>
-                            <thead><tr><th>#</th><th>Product</th><th>Impressions</th></tr></thead>
-                            <tbody>
-                                {(topImpressions7d as TopRow[]).map((r, i) => (
-                                    <tr key={r.targetId}>
-                                        <td style={{ color: 'var(--text-muted)', width: 28 }}>{i + 1}</td>
-                                        <td className={styles.truncate}>
-                                            {r.targetId ? (productMap[r.targetId] ?? r.targetId.slice(0, 8) + '…') : '—'}
-                                        </td>
-                                        <td style={{ color: '#a855f7', fontWeight: 700 }}>{fmt(r._count.id)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
                 {/* Top products by views */}
                 {(topProductViews7d as TopRow[]).length > 0 && (
                     <div className={styles.section}>
@@ -256,27 +218,6 @@ export default async function AnalyticsPage() {
                                             {r.targetId ? (productMap[r.targetId] ?? r.targetId.slice(0, 8) + '…') : '—'}
                                         </td>
                                         <td style={{ color: '#0066FF', fontWeight: 700 }}>{fmt(r._count.id)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Top demands by views */}
-                {(topDemandViews7d as TopRow[]).length > 0 && (
-                    <div className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Top Requests by Views (7d)</h2>
-                        <table className={styles.table}>
-                            <thead><tr><th>#</th><th>Request</th><th>Views</th></tr></thead>
-                            <tbody>
-                                {(topDemandViews7d as TopRow[]).map((r, i) => (
-                                    <tr key={r.targetId}>
-                                        <td style={{ color: 'var(--text-muted)', width: 28 }}>{i + 1}</td>
-                                        <td className={styles.truncate}>
-                                            {r.targetId ? ((demandMap[r.targetId] ?? '').slice(0, 60) || r.targetId.slice(0, 8) + '…') : '—'}
-                                        </td>
-                                        <td style={{ color: '#06b6d4', fontWeight: 700 }}>{fmt(r._count.id)}</td>
                                     </tr>
                                 ))}
                             </tbody>
