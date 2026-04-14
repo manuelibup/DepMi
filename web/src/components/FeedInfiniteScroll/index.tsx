@@ -252,20 +252,24 @@ export default function FeedInfiniteScroll({
                         );
                     }
 
-                    // Inject SuggestedProfiles after the 3rd item
-                    if (index === 2 && topStores.length > 0) {
+                    const isSuggestedSlot = index === 2 || (index > 10 && index % 24 === 0);
+                    const isTrendingSlot = index === 7 || (index > 15 && index % 32 === 0);
+
+                    // Inject SuggestedProfiles
+                    if (isSuggestedSlot && topStores.length > 0) {
+                        const storesToShow = index === 2 ? topStores : [...topStores].sort(() => 0.5 - Math.random());
                         return (
                             <React.Fragment key={`feed-frag-sg-${index}`}>
                                 {card}
                                 <div style={fullWidth}>
-                                    <SuggestedProfiles stores={topStores} />
+                                    <SuggestedProfiles stores={storesToShow} />
                                 </div>
                             </React.Fragment>
                         );
                     }
 
-                    // Inject Trending carousel after the 8th item
-                    if (index === 7) {
+                    // Inject Trending carousel
+                    if (isTrendingSlot) {
                         return (
                             <React.Fragment key={`feed-frag-car-${index}`}>
                                 {card}
