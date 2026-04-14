@@ -74,7 +74,7 @@ export default function FeedInfiniteScroll({
         setLoading(true);
 
         try {
-            const params = new URLSearchParams({ take: '20' });
+            const params = new URLSearchParams({ take: '32' });
             if (cursor) params.set('cursor', cursor);
             if (category) params.set('category', category);
             if (sort) params.set('sort', sort);
@@ -103,7 +103,7 @@ export default function FeedInfiniteScroll({
             (entries) => {
                 if (entries[0].isIntersecting) fetchMore();
             },
-            { rootMargin: '300px' },
+            { rootMargin: '800px' },
         );
 
         if (sentinelRef.current) observerRef.current.observe(sentinelRef.current);

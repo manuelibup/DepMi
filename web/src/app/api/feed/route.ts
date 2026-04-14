@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     const cursor = searchParams.get('cursor');
     const category = searchParams.get('category') || undefined;
     const sort = searchParams.get('sort') || undefined;
-    const take = Math.min(Number(searchParams.get('take') || '24'), 24);
+    const take = Math.min(Number(searchParams.get('take') || '32'), 32);
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id ?? null;
