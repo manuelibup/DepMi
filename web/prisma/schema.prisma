@@ -325,6 +325,8 @@ model Bid {
   isAccepted Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  images     String[] @default([])
+  videoUrl   String?
   productId  String?
   storeId    String
   demand     Demand   @relation(fields: [demandId], references: [id])
@@ -625,6 +627,8 @@ model Comment {
   bidId     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  images    String[] @default([])
+  videoUrl  String?
   author    User     @relation("UserComments", fields: [authorId], references: [id])
   demand    Demand?  @relation("DemandComments", fields: [demandId], references: [id], onDelete: Cascade)
   product   Product? @relation("ProductComments", fields: [productId], references: [id], onDelete: Cascade)

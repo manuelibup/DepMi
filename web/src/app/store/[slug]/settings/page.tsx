@@ -51,17 +51,15 @@ export default async function StoreSettingsPage({ params }: { params: Promise<{ 
             </header>
 
             <div className={styles.content}>
-                {feeWaiverDaysLeft > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', marginBottom: '20px' }}>
-                        <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>🎁</span>
-                        <div>
-                            <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: 'var(--primary)' }}>Free selling active</p>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                0% platform fee · {feeWaiverDaysLeft} day{feeWaiverDaysLeft !== 1 ? 's' : ''} remaining
-                            </p>
-                        </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(var(--primary-rgb),0.08)', border: '1px solid rgba(var(--primary-rgb),0.2)', marginBottom: '20px' }}>
+                    <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>🎁</span>
+                    <div>
+                        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: 'var(--primary)' }}>Selling is currently Free!</p>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            Enjoy 0% platform fees on all your sales.
+                        </p>
                     </div>
-                )}
+                </div>
                 <StoreSettingsForm store={{
                     ...store,
                     localDeliveryFee: store.localDeliveryFee != null ? Number(store.localDeliveryFee) : null,

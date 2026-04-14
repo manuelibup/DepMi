@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 108 — Apr 14, 2026 — 0% Platform Fee Implementation & AI Automation Roadmap](#session-108--apr-14-2026--0-platform-fee-implementation--ai-automation-roadmap)
 - [Session 107 — Apr 14, 2026 — Mandatory Phone Number on Store Creation](#session-107--apr-14-2026--mandatory-phone-number-on-store-creation)
 - [Session 106 — Apr 14, 2026 — Neon Compute Phase 2: Sidebar Caching, Admin Dashboard & Sitemap](#session-106--apr-14-2026--neon-compute-phase-2-sidebar-caching-admin-dashboard--sitemap)
 - [Session 105 — Apr 8, 2026 — Neon Database Compute Optimization & Aggressive Caching](#session-105--apr-8-2026--neon-database-compute-optimization--aggressive-caching)
@@ -3925,3 +3926,30 @@ Continuation of Session 66. Tackled growth/retention backlog: dispatch badge, an
 ### Future Roadmap: TikTok-Style Algorithmic Feed
 - **Deferred Feature:** Implementing a 'For You' algorithm prioritizing local/followed content instead of global chronological.
 - **Reason:** Database compute scaling. Custom algorithmic queries prevent global caching and exponentially multiply DB reads on Neon. Deferred until revenue or traffic threshold justifies compute expenditure.
+
+---
+
+## Session 108 — Apr 14, 2026 — 0% Platform Fee Implementation & AI Automation Roadmap
+
+**Agent:** Antigravity (Google Deepmind)
+**Human:** Manuel
+
+### What Was Done
+- **Platform Fees Abolished:** Successfully stripped all 3% platform fees across the checkout flow.
+  - Rewrote calculation layers inside `CheckoutClientForm`, Monnify Webhooks, and Flutterwave Webhooks.
+  - Hardcoded `platformFee` to `0` inside the escrow `verify`, `confirm`, and cron release routes.
+  - Earnings displays now correctly reflect `0` processing deductions for the seller.
+- **Frontend Adjustments:**
+  - `StoreSettingsPage` & `StoreAnalyticsPage`: Removed the expiration countdown script for "fee waivers." Replaced it with a permanent `0% platform fee` structural banner.
+- **Strategic Discussion (DepMi Pro vs. Freemium):**
+  - Discussed the implementation of an AI Seller Agent for automated DMs (RAG architecture with native Neon pgvector matching contextually to the seller's inventory).
+  - Drafted concepts for locking features behind a DepMi Pro subscription (e.g. ₦5000/mo) in the future:
+    - AI DM Auto-Replies (Agentic bots to handle DMs)
+    - Advanced Custom Domains (`store.vickyshoes.com` instead of `depmi.com/store/vickyshoes`)
+    - Advanced Analytics (visitor demographics, top viewing locations)
+    - Bulk CSV product upload / sync with other tools like Shopify
+    - Priority placement in the DepMi feed
+    - Advanced discount engine (BOGO, timed flash sales)
+
+### Validations
+- Verified that calculations effectively charge the seller 0 on payout logic and webhooks.

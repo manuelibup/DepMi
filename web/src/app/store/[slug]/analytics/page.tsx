@@ -181,15 +181,13 @@ export default async function StoreAnalyticsPage({
             </div>
 
             {/* Fee waiver banner */}
-            {feeWaiverDaysLeft > 0 && (
-                <div className={styles.feeWaiver}>
-                    <span className={styles.feeWaiverIcon}>🎁</span>
-                    <div>
-                        <span className={styles.feeWaiverTitle}>Free selling active</span>
-                        <span className={styles.feeWaiverSub}>0% platform fee · {feeWaiverDaysLeft} day{feeWaiverDaysLeft !== 1 ? 's' : ''} remaining</span>
-                    </div>
+            <div className={styles.feeWaiver}>
+                <span className={styles.feeWaiverIcon}>🎁</span>
+                <div>
+                    <span className={styles.feeWaiverTitle}>Selling is currently Free!</span>
+                    <span className={styles.feeWaiverSub}>Enjoy 0% platform fees on all your sales.</span>
                 </div>
-            )}
+            </div>
 
             {/* Period filter */}
             <div className={styles.periodRow}>
