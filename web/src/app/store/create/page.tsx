@@ -17,6 +17,8 @@ export default function StoreCreatePage() {
         location: '',
         logoUrl: '',
         phoneNumber: '',
+        isStudentVendor: false,
+        university: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -145,7 +147,7 @@ export default function StoreCreatePage() {
                             />
                         </div>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            depmi.com/store/{form.slug || 'handle'}
+                            depmi.com/{form.slug || 'handle'}
                         </p>
                     </div>
 
@@ -200,13 +202,15 @@ export default function StoreCreatePage() {
 
                     {/* Location */}
                     <div>
-                        <label htmlFor="location" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Primary Location (Optional)</label>
+                        <label htmlFor="location" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Primary Location</label>
                         <input
                             id="location"
+                            list="nigeria-cities"
                             type="text"
                             value={form.location}
                             onChange={(e) => setForm({ ...form, location: e.target.value })}
                             placeholder="e.g. Lagos, Nigeria"
+                            required
                             style={{
                                 width: '100%',
                                 padding: '0.875rem 1rem',
@@ -217,6 +221,71 @@ export default function StoreCreatePage() {
                                 outline: 'none'
                             }}
                         />
+                        <datalist id="nigeria-cities">
+                            <option value="Lagos, Nigeria" />
+                            <option value="Abuja, Nigeria" />
+                            <option value="Port Harcourt, Nigeria" />
+                            <option value="Ibadan, Nigeria" />
+                            <option value="Kano, Nigeria" />
+                            <option value="Uyo, Nigeria" />
+                            <option value="Enugu, Nigeria" />
+                            <option value="Benin City, Nigeria" />
+                            <option value="Kaduna, Nigeria" />
+                            <option value="Jos, Nigeria" />
+                        </datalist>
+                    </div>
+
+                    {/* Student Vendor Toggle */}
+                    <div style={{ padding: '1rem', background: 'rgba(var(--primary-rgb), 0.05)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--primary)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '0.75rem' }}>
+                            <input 
+                                type="checkbox" 
+                                checked={form.isStudentVendor}
+                                onChange={(e) => setForm({ ...form, isStudentVendor: e.target.checked })}
+                                style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>I am a Student Vendor</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Show buyers my university to build local trust.</span>
+                            </div>
+                        </label>
+
+                        {form.isStudentVendor && (
+                            <div style={{ marginTop: '1rem' }}>
+                                <label htmlFor="university" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Campus/University</label>
+                                <input
+                                    id="university"
+                                    type="text"
+                                    list="nigeria-universities"
+                                    value={form.university}
+                                    onChange={(e) => setForm({ ...form, university: e.target.value })}
+                                    placeholder="e.g. University of Lagos (UNILAG)"
+                                    required={form.isStudentVendor}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.875rem 1rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--input-bg)',
+                                        color: 'var(--text-primary)',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <datalist id="nigeria-universities">
+                                    <option value="University of Lagos (UNILAG)" />
+                                    <option value="University of Ibadan (UI)" />
+                                    <option value="Obafemi Awolowo University (OAU)" />
+                                    <option value="University of Nigeria, Nsukka (UNN)" />
+                                    <option value="Ahmadu Bello University (ABU)" />
+                                    <option value="University of Uyo (UNIUYO)" />
+                                    <option value="University of Port Harcourt (UNIPORT)" />
+                                    <option value="Covenant University (CU)" />
+                                    <option value="Babcock University" />
+                                    <option value="Federal University of Technology, Owerri (FUTO)" />
+                                    <option value="Federal University of Technology, Akure (FUTA)" />
+                                </datalist>
+                            </div>
+                        )}
                     </div>
 
                     {/* Phone Number */}

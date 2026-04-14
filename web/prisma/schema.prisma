@@ -214,6 +214,8 @@ model Store {
   feeWaiverUntil        DateTime?
   phoneNumber           String?
   storeState            String?
+  isStudentVendor       Boolean                 @default(false)
+  university            String?
   localDeliveryFee      Decimal?                @db.Decimal(10, 2)
   nationwideDeliveryFee Decimal?                @db.Decimal(10, 2)
   dispatchEnabled       Boolean                 @default(true)

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         // }
 
         const body = await req.json();
-        const { name, slug, description, location, logoUrl, phoneNumber } = body;
+        const { name, slug, description, location, logoUrl, phoneNumber, isStudentVendor, university } = body;
 
         if (!name || !slug) {
             return NextResponse.json({ message: "Store name and handle (@slug) are required." }, { status: 400 });
@@ -84,6 +84,8 @@ export async function POST(req: Request) {
                 location,
                 logoUrl,
                 phoneNumber: phoneNumber || null,
+                isStudentVendor: isStudentVendor || false,
+                university: university || null,
                 isActive: true,
                 feeWaiverUntil,
             }
