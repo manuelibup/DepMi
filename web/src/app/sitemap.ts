@@ -1,7 +1,22 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
 
 const BASE_URL = 'https://depmi.com';
+
+// Cache sitemap dynamic routes for 24 hours — Google re-crawls every few days
+const getCachedSitemapRoutes = unstable_cache(
+    async () => {
+        const [stores, products, demands] = await Promise.all([
+            prisma.store.findMany({ select: { slug: true, updatedAt: true }, take: 500 }),
+            prisma.product.findMany({ select: { id: true, slug: true, updatedAt: true }, take: 500 }),
+            prisma.demand.findMany({ select: { id: true, slug: true, updatedAt: true }, take: 500 }),
+        ]);
+        return { stores, products, demands };
+    },
+    ['sitemap-routes-v1'],
+    { revalidate: 86400 } // 24 hours
+);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Static pages
@@ -23,11 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     let demandRoutes: MetadataRoute.Sitemap = [];
 
     try {
-        const [stores, products, demands] = await Promise.all([
-            prisma.store.findMany({ select: { slug: true, updatedAt: true } }),
-            prisma.product.findMany({ select: { id: true, slug: true, updatedAt: true } }),
-            prisma.demand.findMany({ select: { id: true, slug: true, updatedAt: true } }),
-        ]);
+        const { stores, products, demands } = await getCachedSitemapRoutes();
         storeRoutes = stores.map((store) => ({
             url: `${BASE_URL}/${store.slug}`,
             lastModified: store.updatedAt,
@@ -52,3 +63,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...storeRoutes, ...productRoutes, ...demandRoutes];
 }
+

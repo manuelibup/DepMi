@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
                     // Ignore transient fetch errors during polling
                     console.error('[SSE] Polling error:', e);
                 }
-            }, 15000);
+            }, 30000); // Poll every 30s (was 15s) — halves Neon queries from active chat users
 
             // Clean up intervals when the client disconnects
             req.signal.addEventListener('abort', () => {

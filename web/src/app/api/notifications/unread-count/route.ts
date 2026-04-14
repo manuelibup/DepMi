@@ -13,5 +13,10 @@ export async function GET() {
         where: { userId: session.user.id, isRead: false }
     });
 
-    return NextResponse.json({ count });
+    return NextResponse.json({ count }, {
+        headers: {
+            // Cache per-user for 30s, allow stale for 60s — prevents a DB hit on every page nav
+            'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+        },
+    });
 }

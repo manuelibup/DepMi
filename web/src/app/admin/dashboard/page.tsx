@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/admin';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
 import KpiCard from './KpiCard';
 import SignupsChart from './SignupsChart';
 import DauChart from './DauChart';
@@ -19,16 +20,13 @@ function fmt(n: number) {
             : String(n);
 }
 
-export default async function AdminDashboard() {
-    const session = await getServerSession(authOptions);
-    const check = requireAdmin(session, 'MODERATOR');
-    if (!check.ok) redirect('/');
-
-    const [
-        users, stores, products, posts, demands, activeOrders, disputedOrders, signupRows, dauRows,
-        totalSpentRaw, productWorthRaw, ordersCreated, ordersCompleted, ordersCancelled
-    ] =
-        await Promise.all([
+// Cache all dashboard metrics for 5 minutes — counts change slowly and don't need real-time accuracy
+const getAdminDashboardData = unstable_cache(
+    async () => {
+        const [
+            users, stores, products, posts, demands, activeOrders, disputedOrders, signupRows, dauRows,
+            totalSpentRaw, productWorthRaw, ordersCreated, ordersCompleted, ordersCancelled
+        ] = await Promise.all([
             prisma.user.count(),
             prisma.store.count(),
             prisma.product.count(),
@@ -56,25 +54,43 @@ export default async function AdminDashboard() {
             prisma.order.count({ where: { status: { in: ['DELIVERED', 'COMPLETED'] } } }),
             prisma.order.count({ where: { status: 'CANCELLED' } })
         ]);
+        return {
+            users, stores, products, posts, demands, activeOrders, disputedOrders,
+            // Serialize dates so they survive JSON serialization in the cache
+            signupRows: signupRows.map((r: any) => ({ date: r.date.toISOString(), count: Number(r.count) })),
+            dauRows: dauRows.map((r: any) => ({ date: r.date.toISOString(), dau: Number(r.dau) })),
+            totalSpent: Number(totalSpentRaw._sum.totalAmount || 0),
+            productWorth: Number(productWorthRaw[0]?.total || 0),
+            ordersCreated, ordersCompleted, ordersCancelled
+        };
+    },
+    ['admin-dashboard-v1'],
+    { revalidate: 300 } // Cache for 5 minutes
+);
 
-    const totalSpent = Number(totalSpentRaw._sum.totalAmount || 0);
-    const productWorth = Number(productWorthRaw[0]?.total || 0);
+export default async function AdminDashboard() {
+    const session = await getServerSession(authOptions);
+    const check = requireAdmin(session, 'MODERATOR');
+    if (!check.ok) redirect('/');
 
-    const totalSignups30d = signupRows.reduce((acc: number, r: any) => acc + Number(r.count), 0);
-    const avgDailySignups = signupRows.length > 0 ? (totalSignups30d / signupRows.length).toFixed(1) : '0';
+    const data = await getAdminDashboardData();
+    const { users, stores, products, posts, demands, activeOrders, disputedOrders, totalSpent, productWorth, ordersCreated, ordersCompleted, ordersCancelled } = data;
 
-    const signups = signupRows
-        .map((r: any) => ({ date: r.date.toISOString().split('T')[0], count: Number(r.count) }))
+    const totalSignups30d = data.signupRows.reduce((acc: number, r: any) => acc + r.count, 0);
+    const avgDailySignups = data.signupRows.length > 0 ? (totalSignups30d / data.signupRows.length).toFixed(1) : '0';
+
+    const signups = data.signupRows
+        .map((r: any) => ({ date: r.date.split('T')[0], count: r.count }))
         .reverse();
 
-    const dau = dauRows.map((r: any) => ({
-        date: r.date.toISOString().split('T')[0],
-        dau: Number(r.dau),
+    const dau = data.dauRows.map((r: any) => ({
+        date: r.date.split('T')[0],
+        dau: r.dau,
     }));
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayDau = dau.find(d => d.date === todayStr)?.dau ?? 0;
-    const peakDau = dau.length > 0 ? Math.max(...dau.map(d => d.dau)) : 0;
+    const todayDau = dau.find((d: any) => d.date === todayStr)?.dau ?? 0;
+    const peakDau = dau.length > 0 ? Math.max(...dau.map((d: any) => d.dau)) : 0;
 
     return (
         <div className={styles.page}>

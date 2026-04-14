@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 106 — Apr 14, 2026 — Neon Compute Phase 2: Sidebar Caching, Admin Dashboard & Sitemap](#session-106--apr-14-2026--neon-compute-phase-2-sidebar-caching-admin-dashboard--sitemap)
 - [Session 105 — Apr 8, 2026 — Neon Database Compute Optimization & Aggressive Caching](#session-105--apr-8-2026--neon-database-compute-optimization--aggressive-caching)
 - [Session 104 — Apr 6, 2026 — PostHog, Location Standardization & Crypto Removal](#session-104--apr-6-2026--posthog-location-standardization--crypto-removal)
 - [Session 103 — Apr 4, 2026 — Checkout Variant Fix](#session-103--apr-4-2026--checkout-variant-fix)
@@ -86,6 +87,44 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 106 — Apr 14, 2026 — Neon Compute Phase 2: Sidebar Caching, Admin Dashboard & Sitemap
+
+**Agent:** Antigravity (Claude Sonnet 4.6 Thinking)
+**Human:** Manuel
+
+### What Was Done
+
+**Context:** Despite Phase 1 caching (feed, handles, product/demand pages, chat idle detection), compute had climbed to 78.37 CU-hrs in the first 2 weeks of the billing period. This session identified and fixed the 5 remaining hot spots.
+
+- **Sidebar Badge Polling — 4 Routes Cached (30s per-user):**
+  - Added `Cache-Control: private, max-age=30, stale-while-revalidate=60` to:
+    - `api/messages/unread-count/route.ts`
+    - `api/notifications/unread-count/route.ts`
+    - `api/orders/unread-count/route.ts`
+  - These 4 routes fire on every page navigation for logged-in users from `DesktopSidebar`. The private cache prevents redundant DB hits within the 30-second window.
+
+- **Admin Dashboard — 14 Queries Cached (5 min):**
+  - Created `getAdminDashboardData` with `unstable_cache` in `admin/dashboard/page.tsx`.
+  - Wrapped all 14 concurrent Prisma queries in a single cached function with a 5-minute TTL (`admin-dashboard-v1`).
+  - Serialized `Date` objects to ISO strings before caching (required for `unstable_cache` JSON serialization).
+
+- **Admin Signups Chart API — Cached (5 min):**
+  - Wrapped `$queryRawUnsafe` in `api/admin/stats/signups/route.ts` with `unstable_cache` keyed by `trunc` + `limit` with 5-minute TTL.
+
+- **SSE Stream Poll Interval Doubled (15s → 30s):**
+  - Increased chat message stream poll interval in `api/messages/stream/route.ts` from 15000ms to 30000ms.
+  - Halves DB queries per active chat with no noticeable UX degradation at this scale.
+
+- **Sitemap — Cached (24h) + Row-Limited:**
+  - Refactored `app/sitemap.ts` to use `unstable_cache` with `revalidate: 86400` (24 hours).
+  - Added `take: 500` limit to all three `findMany` queries to prevent full table scans on Googlebot crawl.
+
+### Validations
+- TypeScript compiled successfully (Turbopack, 15.8s).
+- Pre-existing `_crypto-dev` error confirmed unrelated to these changes (documented in Session 104).
 
 ---
 
