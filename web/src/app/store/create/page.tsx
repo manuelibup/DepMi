@@ -290,13 +290,14 @@ export default function StoreCreatePage() {
 
                     {/* Phone Number */}
                     <div>
-                        <label htmlFor="phoneNumber" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Contact Phone Number (Optional)</label>
+                        <label htmlFor="phoneNumber" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Contact Phone Number</label>
                         <input
                             id="phoneNumber"
                             type="tel"
                             value={form.phoneNumber}
                             onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
                             placeholder="e.g. 08012345678"
+                            required
                             style={{
                                 width: '100%',
                                 padding: '0.875rem 1rem',

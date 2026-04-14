@@ -294,7 +294,7 @@ export default function ClientCheckoutForm({
     const { fee: currentDeliveryFee, label: deliveryLabel, isLive } = getDeliveryFee();
     const currentSubtotal = itemPrice * quantity;
     const baseTotal = currentSubtotal + currentDeliveryFee;
-    const gatewayFee = Math.round(baseTotal * 0.03 * 100) / 100;
+    const gatewayFee = 0; // Math.round(baseTotal * 0.03 * 100) / 100;
     const finalTotal = baseTotal + gatewayFee;
 
     const filteredStates = NIGERIAN_STATES.filter(s =>

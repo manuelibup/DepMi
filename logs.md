@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 107 — Apr 14, 2026 — Mandatory Phone Number on Store Creation](#session-107--apr-14-2026--mandatory-phone-number-on-store-creation)
 - [Session 106 — Apr 14, 2026 — Neon Compute Phase 2: Sidebar Caching, Admin Dashboard & Sitemap](#session-106--apr-14-2026--neon-compute-phase-2-sidebar-caching-admin-dashboard--sitemap)
 - [Session 105 — Apr 8, 2026 — Neon Database Compute Optimization & Aggressive Caching](#session-105--apr-8-2026--neon-database-compute-optimization--aggressive-caching)
 - [Session 104 — Apr 6, 2026 — PostHog, Location Standardization & Crypto Removal](#session-104--apr-6-2026--posthog-location-standardization--crypto-removal)
@@ -87,6 +88,21 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+---
+
+## Session 107 — Apr 14, 2026 — Mandatory Phone Number on Store Creation
+
+**Agent:** Antigravity (Gemini 3.1 Pro (Low))
+**Human:** Manuel
+
+### What Was Done
+- **Store Creation Form:** Updated `web/src/app/store/create/page.tsx` to make the "Contact Phone Number" field compulsory.
+- **Store Creation API:** Modified `web/src/app/api/store/create/route.ts` to require `phoneNumber` and added a check to verify it isn't already used by another account.
+- **User Profile Sync:** Added a `prisma.$transaction` in the store creation route to simultaneously create the store and update the user's base profile with their provided phone number.
+
+### Validations
+- Confirmed there are no TypeScript issues and verified the schema already supports `phoneNumber` uniqueness constraint.
 
 ---
 
@@ -3905,3 +3921,7 @@ Continuation of Session 66. Tackled growth/retention backlog: dispatch badge, an
 - Verified the build locally.
 - Pushed changes to GitHub for deployment on Vercel.
 - Confirmed the UI changes are accurate to user behavior.
+
+### Future Roadmap: TikTok-Style Algorithmic Feed
+- **Deferred Feature:** Implementing a 'For You' algorithm prioritizing local/followed content instead of global chronological.
+- **Reason:** Database compute scaling. Custom algorithmic queries prevent global caching and exponentially multiply DB reads on Neon. Deferred until revenue or traffic threshold justifies compute expenditure.

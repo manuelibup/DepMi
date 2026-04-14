@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         try {
             const totalAmount = Number(order.totalAmount);
             const feeWaived = order.seller.feeWaiverUntil && order.seller.feeWaiverUntil > new Date();
-            const platformFee = feeWaived ? 0 : Math.round(totalAmount * 0.03 * 100) / 100;
+            const platformFee = 0; // feeWaived ? 0 : Math.round(totalAmount * 0.03 * 100) / 100;
             const sellerAmount = Math.round((totalAmount - platformFee) * 100) / 100;
 
             // If seller has no bank details, mark completed but flag for manual payout

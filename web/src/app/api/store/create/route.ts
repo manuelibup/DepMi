@@ -23,8 +23,8 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { name, slug, description, location, logoUrl, phoneNumber, isStudentVendor, university } = body;
 
-        if (!name || !slug) {
-            return NextResponse.json({ message: "Store name and handle (@slug) are required." }, { status: 400 });
+        if (!name || !slug || !phoneNumber) {
+            return NextResponse.json({ message: "Store name, handle (@slug), and phone number are required." }, { status: 400 });
         }
 
         const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -73,23 +73,39 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Store handle is already taken." }, { status: 409 });
         }
 
+        // Check if phone number is already used by another user
+        const existingUserWithPhone = await prisma.user.findUnique({
+            where: { phoneNumber }
+        });
+
+        if (existingUserWithPhone && existingUserWithPhone.id !== session.user.id) {
+            return NextResponse.json({ message: "Phone number is already associated with another account." }, { status: 409 });
+        }
+
         // Create the Store — grant 30-day fee waiver for all new sellers
         const feeWaiverUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        const store = await prisma.store.create({
-            data: {
-                ownerId: session.user.id,
-                name,
-                slug: normalizedSlug,
-                description,
-                location,
-                logoUrl,
-                phoneNumber: phoneNumber || null,
-                isStudentVendor: isStudentVendor || false,
-                university: university || null,
-                isActive: true,
-                feeWaiverUntil,
-            }
-        });
+        
+        const [store, updatedUser] = await prisma.$transaction([
+            prisma.store.create({
+                data: {
+                    ownerId: session.user.id,
+                    name,
+                    slug: normalizedSlug,
+                    description,
+                    location,
+                    logoUrl,
+                    phoneNumber,
+                    isStudentVendor: isStudentVendor || false,
+                    university: university || null,
+                    isActive: true,
+                    feeWaiverUntil,
+                }
+            }),
+            prisma.user.update({
+                where: { id: session.user.id },
+                data: { phoneNumber }
+            })
+        ]);
 
         return NextResponse.json({
             message: "Store created successfully!",

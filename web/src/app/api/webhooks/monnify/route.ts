@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       if (order.escrowStatus !== 'HELD' || order.status !== 'PENDING') return
 
       // Calculate platform fee (5% of order total, max precision)
-      const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
+      const platformFeeNgn = 0; // Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
 
       // Mark order as paid — escrow is now HELD (funds in Monnify, not yet paid to seller)
       await tx.order.update({

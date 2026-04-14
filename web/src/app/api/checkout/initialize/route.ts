@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       : (shipbubbleDeliveryFee ? Number(shipbubbleDeliveryFee) : Number(product.deliveryFee || 2500))
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
     // Service & escrow fee (5%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
-    const gatewayFee = Math.round(subtotalAndDelivery * 0.03 * 100) / 100
+    const gatewayFee = 0; // Math.round(subtotalAndDelivery * 0.03 * 100) / 100
     const finalAmountToPay = subtotalAndDelivery + gatewayFee
 
     // Create or find existing Order

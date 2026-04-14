@@ -75,7 +75,7 @@ export async function POST(
   const totalAmount = Number(order.totalAmount)
   // Waive platform fee if the store's fee waiver period is still active
   const feeWaived = order.seller.feeWaiverUntil && order.seller.feeWaiverUntil > new Date()
-  const platformFee = feeWaived ? 0 : Math.round(totalAmount * 0.03 * 100) / 100
+  const platformFee = 0; // feeWaived ? 0 : Math.round(totalAmount * 0.03 * 100) / 100
   const sellerAmount = Math.round((totalAmount - platformFee) * 100) / 100
 
   // Check seller has bank details

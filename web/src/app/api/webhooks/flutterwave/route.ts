@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
             if (order.status === 'CONFIRMED' || order.paystackRef === tx_ref) return
             if (order.escrowStatus !== 'HELD' || order.status !== 'PENDING') return
 
-            const platformFeeNgn = Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
+            const platformFeeNgn = 0; // Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
 
             await tx.order.update({
                 where: { id: orderId },
