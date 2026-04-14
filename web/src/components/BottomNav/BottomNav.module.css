@@ -53,6 +53,25 @@
     align-items: center;
     justify-content: center;
     height: 24px;
+    position: relative;
+}
+
+.badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #FF3B30;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--bg-elevated);
 }
 
 .navLabel {

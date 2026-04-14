@@ -21,21 +21,23 @@ const NAV_TABS = [
         ),
     },
     {
-        label: 'Requests',
-        href: '/requests',
+        label: 'Search',
+        href: '/search',
         icon: (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
         ),
     },
     null, // Centre ➕ button placeholder
     {
-        label: 'Bookmarks',
-        href: '/bookmarks',
+        label: 'Messages',
+        href: '/messages',
+        badge: true,
         icon: (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
             </svg>
         ),
     },
@@ -57,6 +59,7 @@ export default function BottomNav() {
     const { openGate } = useAuthGate();
     const [stores, setStores] = useState<StoreInfo[]>([]);
     const [sheetOpen, setSheetOpen] = useState(false);
+    const [unreadMessages, setUnreadMessages] = useState(0);
     const isVisible = useScrollDirection();
 
     useEffect(() => {
@@ -65,6 +68,10 @@ export default function BottomNav() {
             .then((r) => r.json())
             .then((data) => setStores(data.stores ?? []))
             .catch(() => {});
+        fetch('/api/messages/unread-count')
+            .then((r) => r.json())
+            .then((data) => setUnreadMessages(data.count ?? 0))
+            .catch(() => {});
     }, [status]);
 
     const handleAddPress = useCallback(() => {
@@ -72,7 +79,6 @@ export default function BottomNav() {
             openGate('post a request or list a product', pathname ?? '/');
             return;
         }
-        // Always show the sheet — sellers see "Add a Product", buyers see "Create a Store"
         setSheetOpen(true);
     }, [status, openGate, pathname]);
 
@@ -157,13 +163,20 @@ export default function BottomNav() {
                         );
                     }
 
+                    const badgeCount = item.badge ? unreadMessages : 0;
+
                     return (
                         <Link
                             key={item.label}
                             href={item.href}
                             className={`${styles.navItem} ${isActive ? styles.active : ''}`}
                         >
-                            <span className={styles.navIcon}>{item.icon}</span>
+                            <span className={styles.navIcon}>
+                                {item.icon}
+                                {badgeCount > 0 && (
+                                    <span className={styles.badge}>{badgeCount > 9 ? '9+' : badgeCount}</span>
+                                )}
+                            </span>
                             <span className={styles.navLabel}>{item.label}</span>
                         </Link>
                     );

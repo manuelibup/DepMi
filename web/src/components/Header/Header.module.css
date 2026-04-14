@@ -175,13 +175,54 @@
     transform: scale(0.92);
 }
 
-.hamburgerDot {
+/* Right side: notif bell + hamburger */
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Notifications bell button */
+.notifBtn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--text-main);
+    position: relative;
+    transition: background 0.15s;
+}
+
+.notifBtn:hover {
+    background: var(--bg-elevated);
+}
+
+.notifBtn:active {
+    transform: scale(0.92);
+}
+
+.notifBadge {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
+    top: 6px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
     background: #FF3B30;
-    border-radius: 50%;
-    border: 2px solid var(--bg-main);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--bg-main);
+}
+
+@media (min-width: 640px) {
+    .notifBtn {
+        display: none;
+    }
 }
