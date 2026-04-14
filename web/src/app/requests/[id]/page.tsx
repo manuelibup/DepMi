@@ -126,7 +126,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             id: r.id,
             text: r.text,
             author: r.author,
-            createdAt: r.createdAt.toISOString(),
+            createdAt: new Date(r.createdAt).toISOString(),
         })),
     }));
 
@@ -134,7 +134,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         id: c.id,
         text: c.text,
         author: c.author,
-        createdAt: c.createdAt.toISOString(),
+        createdAt: new Date(c.createdAt).toISOString(),
     }));
 
     // Fetch AI-matched products (if any)
@@ -160,7 +160,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         name: demand.text.length > 80 ? demand.text.slice(0, 77) + '…' : demand.text,
         description: demand.text,
         url: `https://depmi.com/requests/${demand.id}`,
-        datePosted: demand.createdAt.toISOString(),
+        datePosted: new Date(demand.createdAt).toISOString(),
         ...(demand.location && { areaServed: demand.location }),
         offers: {
             '@type': 'Offer',

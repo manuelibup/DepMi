@@ -15,7 +15,7 @@ import EmptyState from '@/components/EmptyState';
 import FeedInfiniteScroll from '@/components/FeedInfiniteScroll';
 import RightSidebar from '@/components/RightSidebar';
 
-const INITIAL_TAKE = 10;
+const INITIAL_TAKE = 24;
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string; sort?: string }> }) {
   if (process.env.NEXT_PUBLIC_SHOW_WAITLIST === 'true') {

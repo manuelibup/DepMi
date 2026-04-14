@@ -69,11 +69,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         redirect(`/p/${product.slug}`);
     }
 
-    const serializedComments = product.comments.map(c => ({
+    const serializedComments = product.comments.map((c: any) => ({
         id: c.id,
         text: c.text,
         author: c.author,
-        createdAt: c.createdAt.toISOString(),
+        createdAt: new Date(c.createdAt).toISOString(),
     }));
 
     // JSON-LD: Product schema for Google rich results
