@@ -128,6 +128,19 @@ export async function POST(req: NextRequest) {
           link: '/orders'
         })
       }
+
+      // Automatically make buyer follow the store and the store owner
+      await tx.storeFollow.upsert({
+        where: { userId_storeId: { userId: order.buyer.id, storeId: order.seller.id } },
+        create: { userId: order.buyer.id, storeId: order.seller.id },
+        update: {}
+      })
+
+      await tx.userFollow.upsert({
+        where: { followerId_followingId: { followerId: order.buyer.id, followingId: order.seller.ownerId } },
+        create: { followerId: order.buyer.id, followingId: order.seller.ownerId },
+        update: {}
+      })
     })
   } catch (err) {
     // Log internally but return 200 so Monnify doesn't keep retrying

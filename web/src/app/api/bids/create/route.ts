@@ -12,6 +12,8 @@ const bidSchema = z.object({
     amount: z.number().min(100),
     proposal: z.string().optional(),
     productId: z.string().uuid().optional(),
+    images: z.array(z.string().url()).max(4).optional(),
+    videoUrl: z.string().url().optional(),
 });
 
 export async function POST(req: Request) {
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Invalid format', errors: parsed.error.format() }, { status: 400 });
         }
 
-        const { demandId, storeId, amount, proposal, productId } = parsed.data;
+        const { demandId, storeId, amount, proposal, productId, images, videoUrl } = parsed.data;
 
         // Verify the store belongs to the user
         const store = await prisma.store.findUnique({
@@ -64,6 +66,8 @@ export async function POST(req: Request) {
                     amount,
                     proposal,
                     productId,
+                    images: images || [],
+                    videoUrl,
                 }
             }),
             prisma.notification.create({
