@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 import styles from './RequestDetail.module.css';
 
 interface ProductMin {
@@ -28,6 +29,8 @@ export default function BidForm({
         amount: '',
         proposal: '',
         productId: '',
+        images: [] as string[],
+        videoUrl: '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -61,6 +64,8 @@ export default function BidForm({
                     amount: parseFloat(formData.amount),
                     proposal: formData.proposal || undefined,
                     productId: formData.productId || undefined,
+                    images: formData.images.length > 0 ? formData.images : undefined,
+                    videoUrl: formData.videoUrl || undefined,
                 })
             });
 
@@ -71,7 +76,7 @@ export default function BidForm({
             }
 
             setStatus('success');
-            setFormData({ amount: '', proposal: '', productId: '' });
+            setFormData({ amount: '', proposal: '', productId: '', images: [], videoUrl: '' });
             router.refresh();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
@@ -136,6 +141,43 @@ export default function BidForm({
                     placeholder="I have exactly what you need in pristine condition... (Ctrl+Enter to submit)"
                     rows={2}
                 />
+            </div>
+
+            <div className={styles.inputGroup}>
+                <label>Media Upload (Max 4 photos, 1 video)</label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                    {formData.images.map((url, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: 60, height: 60 }}>
+                            <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                            <button type="button" onClick={() => setFormData(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: 20, height: 20, border: 'none', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                        </div>
+                    ))}
+                    {formData.videoUrl && (
+                        <div style={{ position: 'relative', width: 60, height: 60 }}>
+                            <video src={formData.videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} muted />
+                            <button type="button" onClick={() => setFormData(p => ({ ...p, videoUrl: '' }))} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: 20, height: 20, border: 'none', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                        </div>
+                    )}
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    {(formData.images.length + (formData.videoUrl ? 1 : 0)) < 4 && (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setFormData(p => ({ ...p, images: [...p.images, res.secure_url] }))}
+                            accept="image/*"
+                            maxSizeMB={10}
+                            buttonText="Add Photo"
+                        />
+                    )}
+                    {(formData.images.length + (formData.videoUrl ? 1 : 0)) < 4 && !formData.videoUrl && (
+                        <CloudinaryUploader
+                            onUploadSuccess={(res: CloudinaryUploadResult) => setFormData(p => ({ ...p, videoUrl: res.secure_url }))}
+                            accept="video/*"
+                            maxSizeMB={100}
+                            maxDurationSeconds={60}
+                            buttonText="Add Video"
+                        />
+                    )}
+                </div>
             </div>
 
             {status === 'error' && <p className={styles.errorText}>{errorMsg}</p>}

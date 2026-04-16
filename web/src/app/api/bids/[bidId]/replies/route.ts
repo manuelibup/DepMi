@@ -16,6 +16,8 @@ export async function POST(
     const { bidId } = await params;
     const body = await req.json();
     const text = (body.text ?? '').trim();
+    const images = (body.images && Array.isArray(body.images) ? body.images : []).slice(0, 4);
+    const videoUrl = body.videoUrl ?? null;
 
     if (!text || text.length < 1) {
         return NextResponse.json({ message: 'Reply cannot be empty' }, { status: 400 });
@@ -45,6 +47,8 @@ export async function POST(
             authorId: session.user.id,
             bidId,
             demandId: bid.demand.id,
+            images,
+            videoUrl,
         },
         include: {
             author: { select: { displayName: true, username: true, avatarUrl: true } },
@@ -82,6 +86,8 @@ export async function POST(
     return NextResponse.json({
         id: comment.id,
         text: comment.text,
+        images: comment.images,
+        videoUrl: comment.videoUrl,
         author: comment.author,
         createdAt: comment.createdAt.toISOString(),
     }, { status: 201 });

@@ -19,12 +19,8 @@ export async function getCachedFeedPage(cursor: string | null, category: string 
                 productWhere.category = category;
                 demandWhere.category = category;
             }
-            if (cursor) {
-                const cursorDate = new Date(cursor);
-                productWhere.createdAt = { lt: cursorDate };
-                demandWhere.createdAt = { lt: cursorDate };
-                postWhere.createdAt = { lt: cursorDate };
-            }
+            const page = parseInt(cursor || '1', 10);
+            const offset = (page - 1) * take;
 
             const productOrderBy: Record<string, string>[] =
                 sort === 'price_asc' ? [{ price: 'asc' }] :
@@ -35,6 +31,7 @@ export async function getCachedFeedPage(cursor: string | null, category: string 
                 (prisma.product as any).findMany({
                     where: productWhere,
                     orderBy: productOrderBy,
+                    skip: offset,
                     take,
                     include: {
                         store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, id: true, ownerId: true, owner: { select: { username: true } } } },
@@ -46,6 +43,7 @@ export async function getCachedFeedPage(cursor: string | null, category: string 
                 (prisma.demand as any).findMany({
                     where: demandWhere,
                     orderBy: { createdAt: 'desc' },
+                    skip: offset,
                     take,
                     include: {
                         user: { select: { displayName: true, username: true, avatarUrl: true } },
@@ -56,6 +54,7 @@ export async function getCachedFeedPage(cursor: string | null, category: string 
                 prisma.post.findMany({
                     where: postWhere,
                     orderBy: { createdAt: 'desc' },
+                    skip: offset,
                     take,
                     include: {
                         store: { select: { slug: true } },
@@ -143,11 +142,11 @@ export async function getCachedFeedPage(cursor: string | null, category: string 
                     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                     .slice(0, take);
 
-            const nextCursor = merged.length === take ? merged[merged.length - 1].createdAt : null;
+            const nextCursor = merged.length === take ? String(page + 1) : null;
 
             return { items: merged, nextCursor };
         },
-        [`feed-v3-${cursor}-${category ?? 'all'}-${sort ?? 'newest'}-${take}`],
+        [`feed-v4-page-${cursor || '1'}-${category ?? 'all'}-${sort ?? 'newest'}-${take}`],
         { revalidate: 60 }
     )();
 }

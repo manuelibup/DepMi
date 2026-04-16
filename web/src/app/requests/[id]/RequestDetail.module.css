@@ -459,21 +459,49 @@
 }
 
 .bidCard {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.05));
-    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.bidCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary);
 }
 
 .bidHeader {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+}
+
+.bidHeaderLeft {
+    display: flex;
     align-items: center;
-    font-size: 1rem;
+    gap: 10px;
+}
+
+.bidAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
     color: var(--text-main);
+    border: 1px solid var(--card-border);
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
 .bidPrice {

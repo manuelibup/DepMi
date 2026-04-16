@@ -13,7 +13,7 @@ export async function getCachedDemand(idOrSlug: string) {
                     bids: {
                         orderBy: { createdAt: 'desc' },
                         include: {
-                            store: { select: { name: true, slug: true, depCount: true, depTier: true, owner: { select: { id: true, username: true } } } },
+                            store: { select: { name: true, slug: true, logoUrl: true, depCount: true, depTier: true, owner: { select: { id: true, username: true } } } },
                             product: { select: { title: true, slug: true, images: { take: 1, select: { url: true } } } },
                             replies: {
                                 orderBy: { createdAt: 'asc' },

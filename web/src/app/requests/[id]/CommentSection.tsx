@@ -4,11 +4,15 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useAuthGate } from '@/context/AuthGate';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
+import DemandMediaCarousel from './DemandMediaCarousel';
 import styles from './RequestDetail.module.css';
 
 interface CommentItem {
     id: string;
     text: string;
+    images?: string[];
+    videoUrl?: string | null;
     author: { displayName: string; username?: string | null; avatarUrl?: string | null };
     createdAt: string;
 }
@@ -103,6 +107,8 @@ export default function CommentSection({
     const { openGate } = useAuthGate();
     const [comments, setComments] = useState<CommentItem[]>(initialComments);
     const [text, setText] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+    const [videoUrl, setVideoUrl] = useState<string>('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -235,13 +241,19 @@ export default function CommentSection({
         const res = await fetch(apiPath, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text.trim() }),
+            body: JSON.stringify({ 
+                text: text.trim(),
+                images: images.length > 0 ? images : undefined,
+                videoUrl: videoUrl || undefined 
+            }),
         });
 
         if (res.ok) {
             const newComment = await res.json();
             setComments(prev => [...prev, newComment]);
             setText('');
+            setImages([]);
+            setVideoUrl('');
         } else {
             const data = await res.json().catch(() => ({}));
             setError(data.message || 'Failed to post comment');
@@ -295,6 +307,14 @@ export default function CommentSection({
                             <p className={styles.commentText}>
                                 <CommentText text={c.text} />
                             </p>
+                            {(c.images && c.images.length > 0 || c.videoUrl) && (
+                                <div style={{ marginTop: '8px', borderRadius: '12px', overflow: 'hidden', background: '#000', maxHeight: '300px' }}>
+                                    <DemandMediaCarousel 
+                                        images={c.images?.map(url => ({ url })) ?? []} 
+                                        videoUrl={c.videoUrl} 
+                                    />
+                                </div>
+                            )}
                         </div>
                     ))
                 )}
@@ -361,12 +381,50 @@ export default function CommentSection({
                             <span className={styles.charCount}>{text.length}/500</span>
                             <button
                                 type="submit"
-                                disabled={submitting || !text.trim()}
+                                disabled={submitting || (!text.trim() && images.length === 0 && !videoUrl)}
                                 className={styles.commentSubmitBtn}
                             >
                                 {submitting ? '…' : 'Post'}
                             </button>
                         </div>
+
+                        {/* Media Upload Area inside form */}
+                        <div style={{ marginTop: '12px' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                {images.map((url, idx) => (
+                                    <div key={idx} style={{ position: 'relative', width: 48, height: 48 }}>
+                                        <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
+                                        <button type="button" onClick={() => setImages(p => p.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, border: 'none', cursor: 'pointer', fontSize: 10 }}>✕</button>
+                                    </div>
+                                ))}
+                                {videoUrl && (
+                                    <div style={{ position: 'relative', width: 48, height: 48 }}>
+                                        <video src={videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} muted />
+                                        <button type="button" onClick={() => setVideoUrl('')} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, border: 'none', cursor: 'pointer', fontSize: 10 }}>✕</button>
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                {(images.length + (videoUrl ? 1 : 0)) < 4 && (
+                                    <CloudinaryUploader
+                                        onUploadSuccess={(res: CloudinaryUploadResult) => setImages(p => [...p, res.secure_url])}
+                                        accept="image/*"
+                                        maxSizeMB={10}
+                                        buttonText="Photo"
+                                    />
+                                )}
+                                {(images.length + (videoUrl ? 1 : 0)) < 4 && !videoUrl && (
+                                    <CloudinaryUploader
+                                        onUploadSuccess={(res: CloudinaryUploadResult) => setVideoUrl(res.secure_url)}
+                                        accept="video/*"
+                                        maxSizeMB={100}
+                                        maxDurationSeconds={60}
+                                        buttonText="Video"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 

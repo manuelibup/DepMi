@@ -4,15 +4,19 @@ import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import CloudinaryUploader, { CloudinaryUploadResult } from '@/components/CloudinaryUploader';
 import BidActionGate from './BidActionGate';
 import BidForm from './BidForm';
 import AcceptBidButton from './AcceptBidButton';
 import CommentSection, { CommentText } from './CommentSection';
+import DemandMediaCarousel from './DemandMediaCarousel';
 import styles from './RequestDetail.module.css';
 
 type SerializedComment = {
     id: string;
     text: string;
+    images?: string[];
+    videoUrl?: string | null;
     author: { displayName: string; username?: string | null; avatarUrl?: string | null };
     createdAt: string;
 };
@@ -21,8 +25,10 @@ type SerializedBid = {
     id: string;
     amount: number;
     proposal: string | null;
+    images?: string[];
+    videoUrl?: string | null;
     isAccepted: boolean;
-    store: { name: string; slug: string | null };
+    store: { name: string; slug: string | null; logoUrl?: string | null };
     ownerUserId: string | null;
     ownerUsername: string | null;
     product: { title: string; slug: string } | null;
@@ -70,6 +76,8 @@ function BidReplyThread({
     const { data: session } = useSession();
     const [replies, setReplies] = useState<SerializedComment[]>(bid.replies);
     const [replyText, setReplyText] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+    const [videoUrl, setVideoUrl] = useState<string>('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -80,12 +88,18 @@ function BidReplyThread({
         const res = await fetch(`/api/bids/${bid.id}/replies`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: replyText.trim() }),
+            body: JSON.stringify({ 
+                text: replyText.trim(),
+                images: images.length > 0 ? images : undefined,
+                videoUrl: videoUrl || undefined
+            }),
         });
         if (res.ok) {
             const newReply = await res.json();
             setReplies(prev => [...prev, newReply]);
             setReplyText('');
+            setImages([]);
+            setVideoUrl('');
         } else {
             const data = await res.json().catch(() => ({}));
             setError(data.message || 'Failed to post reply');
@@ -140,6 +154,14 @@ function BidReplyThread({
                                     <span className={styles.bidReplyTime}>· {timeAgo(r.createdAt)}</span>
                                 </div>
                                 <p className={styles.bidReplyText}><CommentText text={r.text} /></p>
+                                {(r.images && r.images.length > 0 || r.videoUrl) && (
+                                    <div style={{ marginTop: '6px', borderRadius: '8px', overflow: 'hidden', background: '#000', maxHeight: '200px' }}>
+                                        <DemandMediaCarousel 
+                                            images={r.images?.map(url => ({ url })) ?? []} 
+                                            videoUrl={r.videoUrl} 
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -165,11 +187,46 @@ function BidReplyThread({
                                     className={styles.bidReplyTextarea}
                                 />
                             </div>
+                            {/* Media Preview */}
+                            <div style={{ display: 'flex', gap: '6px', marginLeft: '38px', marginTop: '6px', flexWrap: 'wrap' }}>
+                                {images.map((url, idx) => (
+                                    <div key={idx} style={{ position: 'relative', width: 40, height: 40 }}>
+                                        <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} />
+                                        <button type="button" onClick={() => setImages(p => p.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: -4, right: -4, background: 'red', color: 'white', borderRadius: '50%', width: 14, height: 14, border: 'none', cursor: 'pointer', fontSize: 9 }}>✕</button>
+                                    </div>
+                                ))}
+                                {videoUrl && (
+                                    <div style={{ position: 'relative', width: 40, height: 40 }}>
+                                        <video src={videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} muted />
+                                        <button type="button" onClick={() => setVideoUrl('')} style={{ position: 'absolute', top: -4, right: -4, background: 'red', color: 'white', borderRadius: '50%', width: 14, height: 14, border: 'none', cursor: 'pointer', fontSize: 9 }}>✕</button>
+                                    </div>
+                                )}
+                            </div>
+
                             {error && <p style={{ color: 'var(--error)', fontSize: '0.8rem', margin: '4px 0 0' }}>{error}</p>}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {(images.length + (videoUrl ? 1 : 0)) < 4 && (
+                                        <CloudinaryUploader
+                                            onUploadSuccess={(res: CloudinaryUploadResult) => setImages(p => [...p, res.secure_url])}
+                                            accept="image/*"
+                                            maxSizeMB={5}
+                                            buttonText="Photo"
+                                        />
+                                    )}
+                                    {(images.length + (videoUrl ? 1 : 0)) < 4 && !videoUrl && (
+                                        <CloudinaryUploader
+                                            onUploadSuccess={(res: CloudinaryUploadResult) => setVideoUrl(res.secure_url)}
+                                            accept="video/*"
+                                            maxSizeMB={50}
+                                            maxDurationSeconds={30}
+                                            buttonText="Video"
+                                        />
+                                    )}
+                                </div>
                                 <button
                                     type="submit"
-                                    disabled={submitting || !replyText.trim()}
+                                    disabled={submitting || (!replyText.trim() && images.length === 0 && !videoUrl)}
                                     className={styles.commentSubmitBtn}
                                     style={{ fontSize: '0.8rem', padding: '6px 14px' }}
                                 >
@@ -272,19 +329,28 @@ export default function BidsCommentsTab({
                             bids.map(bid => (
                                 <div key={bid.id} className={styles.bidCard}>
                                     <div className={styles.bidHeader}>
-                                        <div className={styles.bidStoreInfo}>
-                                            {bid.store.slug ? (
-                                                <Link href={`/store/${bid.store.slug}`} className={styles.bidStoreName}>
-                                                    {bid.store.name}
-                                                </Link>
-                                            ) : (
-                                                <strong>{bid.store.name}</strong>
-                                            )}
-                                            {bid.ownerUsername && (
-                                                <Link href={`/${bid.ownerUsername}`} className={styles.bidOwnerHandle}>
-                                                    @{bid.ownerUsername}
-                                                </Link>
-                                            )}
+                                        <div className={styles.bidHeaderLeft}>
+                                            <div className={styles.bidAvatar}>
+                                                {bid.store.logoUrl ? (
+                                                    <img src={bid.store.logoUrl} alt={bid.store.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                ) : (
+                                                    bid.store.name.substring(0, 2).toUpperCase()
+                                                )}
+                                            </div>
+                                            <div className={styles.bidStoreInfo}>
+                                                {bid.store.slug ? (
+                                                    <Link href={`/store/${bid.store.slug}`} className={styles.bidStoreName}>
+                                                        {bid.store.name}
+                                                    </Link>
+                                                ) : (
+                                                    <strong>{bid.store.name}</strong>
+                                                )}
+                                                {bid.ownerUsername && (
+                                                    <Link href={`/${bid.ownerUsername}`} className={styles.bidOwnerHandle}>
+                                                        @{bid.ownerUsername}
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </div>
                                         <span className={styles.bidPrice}>₦{bid.amount.toLocaleString()}</span>
                                     </div>
@@ -301,6 +367,16 @@ export default function BidsCommentsTab({
                                             <Link href={`/p/${bid.product.slug}`} className={styles.attachedProductLink}>
                                                 Attached: {bid.product.title}
                                             </Link>
+                                        </div>
+                                    )}
+
+                                    {/* Uploaded Media */}
+                                    {(bid.images && bid.images.length > 0 || bid.videoUrl) && (
+                                        <div style={{ marginTop: '12px', marginBottom: '12px', borderRadius: '12px', overflow: 'hidden', background: '#000', maxHeight: '400px' }}>
+                                            <DemandMediaCarousel 
+                                                images={bid.images?.map(url => ({ url })) ?? []} 
+                                                videoUrl={bid.videoUrl} 
+                                            />
                                         </div>
                                     )}
 

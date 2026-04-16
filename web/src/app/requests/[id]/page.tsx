@@ -117,14 +117,18 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         id: bid.id,
         amount: Number(bid.amount),
         proposal: bid.proposal,
+        images: bid.images ?? [],
+        videoUrl: bid.videoUrl ?? null,
         isAccepted: bid.isAccepted,
-        store: { name: bid.store.name, slug: bid.store.slug },
+        store: { name: bid.store.name, slug: bid.store.slug, logoUrl: bid.store.logoUrl },
         ownerUserId: bid.store.owner?.id ?? null,
         ownerUsername: bid.store.owner?.username ?? null,
         product: bid.product ? { title: bid.product.title, slug: bid.product.slug } : null,
         replies: (bid.replies ?? []).map((r: any) => ({
             id: r.id,
             text: r.text,
+            images: r.images ?? [],
+            videoUrl: r.videoUrl ?? null,
             author: r.author,
             createdAt: new Date(r.createdAt).toISOString(),
         })),
@@ -133,6 +137,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
     const serializedComments = demand.comments.map((c: any) => ({
         id: c.id,
         text: c.text,
+        images: c.images ?? [],
+        videoUrl: c.videoUrl ?? null,
         author: c.author,
         createdAt: new Date(c.createdAt).toISOString(),
     }));
