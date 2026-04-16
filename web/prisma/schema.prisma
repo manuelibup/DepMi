@@ -130,6 +130,7 @@ model Post {
   type         PostType      @default(POST)
   likeCount    Int           @default(0)
   commentCount Int           @default(0)
+  saveCount    Int           @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   store        Store         @relation("StorePosts", fields: [storeId], references: [id], onDelete: Cascade)
@@ -217,6 +218,9 @@ model Store {
   isStudentVendor       Boolean                 @default(false)
   university            String?
   localDeliveryFee      Decimal?                @db.Decimal(10, 2)
+  likeCount             Int                     @default(0)
+  commentCount          Int                     @default(0)
+  saveCount             Int                     @default(0)
   nationwideDeliveryFee Decimal?                @db.Decimal(10, 2)
   dispatchEnabled       Boolean                 @default(true)
   pickupAddress         String?
@@ -266,6 +270,10 @@ model Demand {
   currency   String        @default("₦")
   videoUrl   String?
   viewCount  Int           @default(0)
+  likeCount  Int           @default(0)
+  commentCount Int         @default(0)
+  saveCount  Int           @default(0)
+  bidCount   Int           @default(0)
   aiMatchedProductIds String[] @default([])
   images     DemandMedia[]
   bids       Bid[]
@@ -349,6 +357,9 @@ model Product {
   categoryOther   String?
   viewCount       Int            @default(0)
   inStock         Boolean        @default(true)
+  likeCount       Int            @default(0)
+  commentCount    Int            @default(0)
+  saveCount       Int            @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   videoUrl        String?

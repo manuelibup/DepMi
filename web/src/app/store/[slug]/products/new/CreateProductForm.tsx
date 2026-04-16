@@ -123,8 +123,8 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             setActiveInput('variants');
             return;
         }
-        if (form.imageUrls.length < 3) {
-            toast.error('Please add at least 3 images to showcase your product.');
+        if (form.imageUrls.length < 1) {
+            toast.error('Please add at least 1 image to showcase your product.');
             return;
         }
 
@@ -179,7 +179,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
     };
 
     const hasVariants = variants.length > 0;
-    const canPost = form.title.trim().length > 0 && (hasVariants || form.price !== '') && form.imageUrls.length >= 3 && status !== 'loading';
+    const canPost = form.title.trim().length > 0 && (hasVariants || form.price !== '') && form.imageUrls.length >= 1 && status !== 'loading';
 
     return (
         <div className={styles.container}>
@@ -287,7 +287,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                             accept="image/*"
                             maxSizeMB={10}
                             multiple
-                            buttonText={form.imageUrls.length === 0 ? 'Add Photos (Min 3)' : form.imageUrls.length < 3 ? `Add More Photos (${3 - form.imageUrls.length} more needed)` : 'Add More Photos'}
+                            buttonText={form.imageUrls.length === 0 ? 'Add Photos' : 'Add More Photos'}
                         />
                     )}
 
@@ -316,7 +316,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             </div>
 
             <div className={styles.hintContainer}>
-                <p><strong>Required to list:</strong> Title, Price, Category, Amount Available, and at least 3 photos.</p>
+                <p><strong>Required to list:</strong> Title, Price, Category, Amount Available, and at least 1 photo.</p>
             </div>
 
             {/* Inline expandable inputs based on active pill */}
