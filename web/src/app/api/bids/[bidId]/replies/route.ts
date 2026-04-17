@@ -41,19 +41,25 @@ export async function POST(
         return NextResponse.json({ message: 'Bid not found' }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-        data: {
-            text,
-            authorId: session.user.id,
-            bidId,
-            demandId: bid.demand.id,
-            images,
-            videoUrl,
-        },
-        include: {
-            author: { select: { displayName: true, username: true, avatarUrl: true } },
-        },
-    });
+    const [comment] = await prisma.$transaction([
+        prisma.comment.create({
+            data: {
+                text,
+                authorId: session.user.id,
+                bidId,
+                demandId: bid.demand.id,
+                images,
+                videoUrl,
+            },
+            include: {
+                author: { select: { displayName: true, username: true, avatarUrl: true } },
+            },
+        }),
+        prisma.demand.update({
+            where: { id: bid.demand.id },
+            data: { commentCount: { increment: 1 } }
+        })
+    ]);
 
     // Notify the bid owner if they're not the one replying
     const bidOwnerId = bid.store.owner?.id;

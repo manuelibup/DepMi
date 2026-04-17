@@ -52,18 +52,24 @@ export async function POST(
         return NextResponse.json({ message: 'Demand not found' }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-        data: {
-            text,
-            authorId: session.user.id,
-            demandId,
-            images,
-            videoUrl,
-        },
-        include: {
-            author: { select: { displayName: true, username: true, avatarUrl: true } }
-        }
-    });
+    const [comment] = await prisma.$transaction([
+        prisma.comment.create({
+            data: {
+                text,
+                authorId: session.user.id,
+                demandId,
+                images,
+                videoUrl,
+            },
+            include: {
+                author: { select: { displayName: true, username: true, avatarUrl: true } }
+            }
+        }),
+        prisma.demand.update({
+            where: { id: demandId },
+            data: { commentCount: { increment: 1 } }
+        })
+    ]);
 
     // Notify demand poster if they're not the commenter
     if (demand.userId !== session.user.id) {

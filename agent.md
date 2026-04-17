@@ -92,6 +92,8 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 - **Order Tracing:** Orders track their origin (Demand + Bid), so the demand→bid→order flow is auditable.
 - **"Request This Product" button:** Surfaces on `/search` when a query returns 0 DepMi results. One tap → pre-fills a Demand post with the search query. This is the primary UI entry point into the Demand Engine for buyers.
 - **"Notify Me When Available":** Shown on (a) empty search results and (b) out-of-stock product cards. Creates a `ProductWatch` record. When a matching product is listed or restocked, DepMi notifies the user via SMS (Termii) or email (Resend). Phase 2: UI + DB record. Phase 3: notification delivery.
+- **Rich Media Bids & Comments:** (Session 110) Buyers and sellers can attach up to **4 media items** (combined images/videos) to bids, comments, and replies. Bid cards are redesigned as elevated "Mini Product Cards" with auto-loading carousels and store branding.
+- **Dynamic Bidding Context:** Bids can be linked to existing store products, allowing buyers to see the full product context (price, images, reviews) directly from the bidding interface. (Updated Session 110).
 
 ### G. Affiliate & Reshare System
 - **Reshare to Earn:** Every user gets a custom affiliate link for any product. If a sale happens through their link, they earn a commission set by the vendor (5–20%, deducted from vendor's profit). Resharing is a paid feature activation for stores — only stores that have enabled it generate commissionable links.
@@ -266,8 +268,8 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **ProductLike** — `{ id, userId, productId, createdAt }`. Database-persisted likes for algorithmic feed tuning and social proof.
 - **SavedProduct** — `{ id, userId, productId, createdAt }`. The "Wish List" feature for buyers.
 - **ProductWatch** — `{ id, userId, searchQuery?, productId?, createdAt, notified }`. Created when buyer taps "Notify Me When Available".
-- **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field.
-- **Comment** — `{ id, text, authorId, productId?, demandId?, createdAt, updatedAt }`. Belongs to either a Product OR a Demand (nullable FK). KYC-gated (UNVERIFIED users cannot comment). Text limit 500 chars. Supports inline product mentions via `[Title](/p/id)` syntax rendered as green chip links.
+- **Demand + Bid** — Demand Engine: buyer requests, vendor bids (can attach Product). Demand includes `category` field. **Bids support rich media** (images array & videoUrl, up to 4 total).
+- **Comment** — `{ id, text, authorId, productId?, demandId?, createdAt, updatedAt, images (String[]), videoUrl }`. Belongs to either a Product OR a Demand (nullable FK). Support for **rich media** (up to 4 total items) and inline product mentions. KYC-gated (UNVERIFIED users cannot comment). Text limit 500 chars. 
 - **Order + OrderItem** — Escrow orders with origin tracing (Demand → Bid → Order). Order has `status` enum: `PENDING | CONFIRMED | SHIPPED | DELIVERED | COMPLETED | CANCELLED | DISPUTED | RESOLVED_BUYER | RESOLVED_VENDOR | REFUNDED`. Includes `escrowStatus` enum: `HELD | RELEASING | RELEASED`. Dispatch fields: `dispatchOrderId String?`, `dispatchProvider String?`, `shipbubbleReqToken String?`.
 - **Review** — `{ id, orderId, buyerId, storeId, rating (1–5), text?, createdAt }`. One per completed order.
 - **StoreFollow** — `{ id, userId, storeId, notify (bool), createdAt, updatedAt }`. Tracks store follows + per-follow notification toggle ("Bell" icon). `@@unique([userId, storeId])`.

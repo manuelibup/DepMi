@@ -78,6 +78,10 @@ export async function POST(req: Request) {
                     body: `${store.name} has offered to fulfill your request for ₦${amount.toLocaleString()}`,
                     link: `/requests/${demandId}`
                 }
+            }),
+            prisma.demand.update({
+                where: { id: demandId },
+                data: { bidCount: { increment: 1 } }
             })
         ]);
 

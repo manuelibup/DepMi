@@ -21,10 +21,16 @@ export async function POST(
         });
 
         if (existing) {
-            await prisma.savedDemand.delete({ where: { id: existing.id } });
+            await prisma.$transaction([
+                prisma.savedDemand.delete({ where: { id: existing.id } }),
+                prisma.demand.update({ where: { id: demandId }, data: { saveCount: { decrement: 1 } } }),
+            ]);
             return NextResponse.json({ saved: false });
         } else {
-            await prisma.savedDemand.create({ data: { userId, demandId } });
+            await prisma.$transaction([
+                prisma.savedDemand.create({ data: { userId, demandId } }),
+                prisma.demand.update({ where: { id: demandId }, data: { saveCount: { increment: 1 } } }),
+            ]);
             return NextResponse.json({ saved: true });
         }
     } catch (err) {

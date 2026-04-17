@@ -755,3 +755,18 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 - **The Issue**: Custom event logging in the DB (e.g., tracking every feed card impression as scrolling) causes massive DB write volumes. A 10-card scroll triggers 10 DB writes, queued every 30 seconds. This prevents the DB from autosuspending and burns compute limits.
 - **The Fix**: Delegate high-volume, low-value engagement events (like page views, feed impressions, scroll depth) to a robust external analytics provider like PostHog. 
 - **The Rule**: Only use the primary Postgres DB to track high-value, durable commerce signals (Orders, Bids, Saves, Likes, Product Views) that require immediate transactional consistency or can't be easily associated with a user transaction in an external tool.
+
+---
+
+## 🖼️ 56. Rich Media Social Features (Bids & Comments)
+
+*Added after implementing multi-media support for bids and comments in Session 110.*
+
+- **The Limit**: Enforce a strict **4-item total limit** (combined images + video) for interactive social posts (bids, comments, replies). This prevents UI overcrowding and keeps database/CDN costs manageable while offering rich context.
+- **The Redesign (Mini Product Cards)**: Bids in the demand engine perform best when they look like **mini product cards** rather than plain text comments. 
+    - Include the store's avatar/logo for brand recognition.
+    - Integrate `DemandMediaCarousel` to auto-preview attached media.
+    - Elevate the card with modern shadows and typography to distinguish "Bids" from "Comments."
+- **Data Fetching**: Use `unstable_cache` tags carefully. When media for a bid is updated, you must revalidate the specific demand or product tag to ensure the new media carousels refresh immediately.
+- **Serialization**: Always serialize the new `images` array and `videoUrl` fields in your server components before passing them to client forms or displays.
+

@@ -18,11 +18,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (existing) {
-      await prisma.savedProduct.delete({ where: { id: existing.id } });
+      await prisma.$transaction([
+        prisma.savedProduct.delete({ where: { id: existing.id } }),
+        prisma.product.update({ where: { id }, data: { saveCount: { decrement: 1 } } }),
+      ]);
       return NextResponse.json({ saved: false });
     } else {
-      await prisma.savedProduct.create({ data: { userId, productId: id } });
-      
+      await prisma.$transaction([
+        prisma.savedProduct.create({ data: { userId, productId: id } }),
+        prisma.product.update({ where: { id }, data: { saveCount: { increment: 1 } } }),
+      ]);
+
       const product = await prisma.product.findUnique({
           where: { id },
           select: { title: true, store: { select: { ownerId: true } } }

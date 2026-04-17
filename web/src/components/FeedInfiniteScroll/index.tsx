@@ -55,6 +55,7 @@ export default function FeedInfiniteScroll({
     const [sortMode, setSortMode] = useState<SortMode>('new');
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const fetchingRef = useRef(false);
 
     // Restore persisted view mode
     useEffect(() => {
@@ -70,7 +71,8 @@ export default function FeedInfiniteScroll({
     };
 
     const fetchMore = useCallback(async () => {
-        if (loading || !hasMore) return;
+        if (loading || !hasMore || fetchingRef.current) return;
+        fetchingRef.current = true;
         setLoading(true);
 
         try {
@@ -93,6 +95,7 @@ export default function FeedInfiniteScroll({
             // silent — don't break the feed on network errors
         } finally {
             setLoading(false);
+            fetchingRef.current = false;
         }
     }, [loading, hasMore, cursor, category, sort]);
 

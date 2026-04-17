@@ -18,11 +18,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (existing) {
-      await prisma.productLike.delete({ where: { id: existing.id } });
+      await prisma.$transaction([
+        prisma.productLike.delete({ where: { id: existing.id } }),
+        prisma.product.update({ where: { id }, data: { likeCount: { decrement: 1 } } }),
+      ]);
       return NextResponse.json({ liked: false });
     } else {
-      await prisma.productLike.create({ data: { userId, productId: id } });
-      
+      await prisma.$transaction([
+        prisma.productLike.create({ data: { userId, productId: id } }),
+        prisma.product.update({ where: { id }, data: { likeCount: { increment: 1 } } }),
+      ]);
+
       const product = await prisma.product.findUnique({
           where: { id },
           select: { title: true, store: { select: { ownerId: true } } }

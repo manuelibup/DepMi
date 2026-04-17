@@ -52,18 +52,24 @@ export async function POST(
         return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-        data: {
-            text,
-            authorId: session.user.id,
-            productId,
-            images,
-            videoUrl,
-        },
-        include: {
-            author: { select: { displayName: true, username: true, avatarUrl: true } }
-        }
-    });
+    const [comment] = await prisma.$transaction([
+        prisma.comment.create({
+            data: {
+                text,
+                authorId: session.user.id,
+                productId,
+                images,
+                videoUrl,
+            },
+            include: {
+                author: { select: { displayName: true, username: true, avatarUrl: true } }
+            }
+        }),
+        prisma.product.update({
+            where: { id: productId },
+            data: { commentCount: { increment: 1 } }
+        })
+    ]);
 
     // Notify store owner if they're not the commenter
     const storeOwnerId = product.store.ownerId;

@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 110 — Apr 16, 2026 — Rich Media Bids & Comments + UI Redesign](#session-110--apr-16-2026--rich-media-bids--comments--ui-redesign)
+- [Session 109 — Apr 16, 2026 — Database Backup](#session-109--apr-16-2026--database-backup)
 - [Session 108 — Apr 14, 2026 — 0% Platform Fee Implementation & AI Automation Roadmap](#session-108--apr-14-2026--0-platform-fee-implementation--ai-automation-roadmap)
 - [Session 107 — Apr 14, 2026 — Mandatory Phone Number on Store Creation](#session-107--apr-14-2026--mandatory-phone-number-on-store-creation)
 - [Session 106 — Apr 14, 2026 — Neon Compute Phase 2: Sidebar Caching, Admin Dashboard & Sitemap](#session-106--apr-14-2026--neon-compute-phase-2-sidebar-caching-admin-dashboard--sitemap)
@@ -89,6 +91,51 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 110 — Apr 16, 2026 — Rich Media Bids & Comments + UI Redesign
+
+**Agent:** Antigravity (Gemini 3.5 Pro)
+**Human:** Manuel
+
+### What Was Done
+- **Rich Media Support:** Enhanced `Bid` and `Comment` models to support images and videos. Updated API routes to persist these fields.
+- **Media Upload Integration:** Integrated `CloudinaryUploader` into `BidForm`, `CommentSection`, and `BidReplyThread` with a strict **4-item total limit** per submission.
+- **Bid UI Redesign:** Refactored bid cards into elevated "mini product cards" with store logos, improved typography, and integrated `DemandMediaCarousel` for attached media.
+- **Product Constraint Update:** Removed the hardcoded minimum of 3 images for new product listings in `CreateProductForm.tsx`, lowering the requirement to at least 1 image.
+- **Data Layer:** Updated `getCachedDemand` in `src/lib/demand.ts` to include store logos and media fields in the database queries.
+
+### Validations
+- Verified Prisma schema synchronization and API payload handling.
+- Confirmed total media limits are enforced on the frontend.
+- Successfully pushed all changes to `origin/main`.
+
+---
+
+## Session 109 — Apr 16, 2026 — Database Backup
+
+**Agent:** Antigravity (Gemini 3 Flash)
+**Human:** Manuel
+
+### What Was Done
+- **Database Backup:** Performed a full table-by-table backup of the production database using the internal `web/scripts/backup-db.js` script.
+- **Connectivity Fix:** Encountered a DNS resolution error (`ENOTFOUND`) with the Neon pooler URL (`DATABASE_URL`). Resolved this by switching to the `DIRECT_URL` for the duration of the script execution.
+- **Storage:** The backup was successfully saved as timestamped JSON files in `web/backups/2026-04-16T19-41-16/`, with a `_manifest.json` file summarizing row counts.
+
+### Validations
+- Verified that all 32 tables were backed up successfully.
+- Confirmed the existence and file sizes of the generated JSON files in the backup directory.
+
+---
+
+## Session 108 — Apr 14, 2026 — 0% Platform Fee Implementation & AI Automation Roadmap
+
+**Agent:** Antigravity (Gemini 3.1 Pro (Low))
+**Human:** Manuel
+
+### What Was Done
+- **0% Platform Fee:** Confirmed the removal of the 5% platform fee across the codebase. Updated logic to only charge escrow fees where applicable.
+- **AI Automation Roadmap:** Outlined the roadmap for "Seller Agent" automation, focusing on training models on store-specific chat data to drive efficiency.
+- **Documentation:** Updated `growth.md` and `agent.md` with the new monetization strategy.
 
 ---
 

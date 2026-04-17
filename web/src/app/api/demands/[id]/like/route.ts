@@ -21,10 +21,16 @@ export async function POST(
         });
 
         if (existing) {
-            await prisma.demandLike.delete({ where: { id: existing.id } });
+            await prisma.$transaction([
+                prisma.demandLike.delete({ where: { id: existing.id } }),
+                prisma.demand.update({ where: { id: demandId }, data: { likeCount: { decrement: 1 } } }),
+            ]);
             return NextResponse.json({ liked: false });
         } else {
-            await prisma.demandLike.create({ data: { userId, demandId } });
+            await prisma.$transaction([
+                prisma.demandLike.create({ data: { userId, demandId } }),
+                prisma.demand.update({ where: { id: demandId }, data: { likeCount: { increment: 1 } } }),
+            ]);
             return NextResponse.json({ liked: true });
         }
     } catch (err) {
