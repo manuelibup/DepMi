@@ -791,6 +791,34 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
     2. Convert page numbers to `skip = (page-1) * take` in your Prisma query.
 - **Benefit**: guest traffic hits the fast global cache 90% of the time, keeping the database asleep.
 
+---
+
+## ⚡ 57. Scaling Health Check: Denormalized Counters vs Counts
+
+*Added after a critical Neon compute exhaustion session caused by expensive `_count` joins.*
+
+- **The Problem**: Querying `_count: { select: { likes: true, followers: true } }` on a list of stores or users performs multiple `LEFT JOIN` aggregations. As the database grows to thousands of rows, these counts become compute-prohibitive.
+- **The Fix**: **Denormalization**.
+    1. Add static `Int` columns directly to the model (e.g., `followerCount`, `likeCount`).
+    2. Wrap every interaction (Follow/Like) in a `prisma.$transaction`.
+    3. Update the counter **atomically** using `{ increment: 1 }` or `{ decrement: 1 }` in the same transaction that creates the interaction row.
+- **Why?**: Reading a static column is an $O(1)$ operation, whereas counting rows is $O(N)$. This is the difference between a site that scales to 1M users and one that crashes at 1k.
+
+---
+
+## 🛡️ 58. SSE Orphaned Tab Prevention (The Visibility Guard)
+
+*Added after diagnosing background database calls draining compute credits.*
+
+- **The Issue**: Server-Sent Events (SSE) like the Chat stream (`/api/messages/stream`) keep a persistent HTTP connection open. If a user backgrounds the tab on mobile or leaves it open in an inactive desktop window, the server continues polling the DB indefinitely.
+- **The Fix**: Implement a **Client-Side Visibility Guard**.
+    1. Listen for `visibilitychange`, `focus`, and `blur` events in React.
+    2. Explicitly call `eventSource.close()` the moment the tab is hidden or focus is lost.
+    3. Re-initialize the connection only when the user returns.
+- **Rule**: Never leave a database-backed stream running in the background. If you can't see the chat, you shouldn't be paying for the connection!
+
+---
+
 ## 🛡️ 59. Infinite Scroll "Runaway" Guard
 
 - **The Problem**: High-speed scrolling or "bounce" scrolling (flicking the screen repeatedly) can trigger multiple overlapping `fetchMore` calls before the first one completes, flooding the API with redundant requests.

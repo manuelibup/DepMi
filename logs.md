@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 111 — Apr 17, 2026 — Platform Scaling & Compute Guardrails](#session-111--apr-17-2026--platform-scaling--compute-guardrails)
 - [Session 110 — Apr 16, 2026 — Rich Media Bids & Comments + UI Redesign](#session-110--apr-16-2026--rich-media-bids--comments--ui-redesign)
 - [Session 109 — Apr 16, 2026 — Database Backup](#session-109--apr-16-2026--database-backup)
 - [Session 108 — Apr 14, 2026 — 0% Platform Fee Implementation & AI Automation Roadmap](#session-108--apr-14-2026--0-platform-fee-implementation--ai-automation-roadmap)
@@ -91,6 +92,26 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 111 — Apr 17, 2026 — Platform Scaling & Compute Guardrails
+
+**Agent:** Antigravity 
+**Human:** Manuel
+
+### What Was Done
+- **Database Scaling:** Denormalized `followerCount` for `User` and `Store` models to eliminate expensive `_count` joins. Reading follower counts is now an O(1) operation.
+- **Query Optimization:** Added 4 missing indexes to `DepTransaction(orderId)`, `Order(demandId)`, `Bid(productId)`, and `Product(viewCount)`.
+- **Search Optimization:** Shifted product search from `contains` (full-table scan) to `startsWith` (indexable) to allow B-tree index usage as the catalog grows.
+- **Aggressive Caching:** Wrapped Admin Overview and Commerce analytics in `unstable_cache` with 15-30m revalidation periods to preserve compute.
+- **SSE Activity Guard:** Enhanced `ChatClient.tsx` with `visibilitychange`, `focus`, and `blur` listeners. Connections are killed the moment a tab is backgrounded or the window loses focus, preventing "Orphaned Tab" compute drain.
+- **Discovery Sort:** Refactored "Suggested Profiles" API to sort by the new static `followerCount` column instead of a dynamic relation count.
+
+### Validations
+- **Backfill:** Successfully synchronized counts for **279 users** and **74 stores**.
+- **SSE Management:** Verified client-side disconnects on app suspension/backgrounding.
+- **Git:** Successfully pushed to `origin/main` (commit `9b79098`).
+
+---
 
 ## Session 110 — Apr 16, 2026 — Rich Media Bids & Comments + UI Redesign
 
