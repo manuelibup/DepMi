@@ -237,7 +237,7 @@ Compound interest. 110 minutes/week = meaningfully better engineer in 6 months.
 ## Track 2: DepMi — Business Growth
 
 ### Current State (always update from https://depmi.com/api/stats)
-- Users: 222 | Stores: 62 | Listings: 126
+- Users: 279 | Stores: 74 | Listings: 171
 - Launch date: Mar 10, 2026
 - No completed orders yet (core escrow loop untested in production)
 - ~12 signups/day (spike week of Mar 17–23 — verify if sustained)

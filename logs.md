@@ -93,12 +93,13 @@
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
 
-## Session 111 — Apr 17, 2026 — Platform Scaling & Compute Guardrails
+## Session 111 — Apr 17, 2026 — 07:15 - 08:35 WAT
 
 **Agent:** Antigravity 
 **Human:** Manuel
 
-### What Was Done
+### Description
+Platform Scaling & Compute Guardrails overhaul to resolve Neon database compute bottlenecks.
 - **Database Scaling:** Denormalized `followerCount` for `User` and `Store` models to eliminate expensive `_count` joins. Reading follower counts is now an O(1) operation.
 - **Query Optimization:** Added 4 missing indexes to `DepTransaction(orderId)`, `Order(demandId)`, `Bid(productId)`, and `Product(viewCount)`.
 - **Search Optimization:** Shifted product search from `contains` (full-table scan) to `startsWith` (indexable) to allow B-tree index usage as the catalog grows.
