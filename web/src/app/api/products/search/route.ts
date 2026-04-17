@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
         where: {
             inStock: true,
             OR: terms.flatMap(t => [
-                { title: { contains: t, mode: 'insensitive' as const } },
-                { store: { name: { contains: t, mode: 'insensitive' as const } } },
+                { title: { startsWith: t, mode: 'insensitive' as const } },
+                { store: { name: { startsWith: t, mode: 'insensitive' as const } } },
             ]),
         },
         select: {

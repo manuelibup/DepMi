@@ -225,7 +225,9 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
 
         const checkState = () => {
             const isVisible = document.visibilityState === 'visible';
-            if (isVisible && !isIdle) {
+            const isFocused = document.hasFocus();
+            // Connect only if visible, focused, and not idle
+            if (isVisible && isFocused && !isIdle) {
                 connect();
             } else {
                 disconnect();
@@ -235,9 +237,13 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         // Initial check and listeners
         checkState();
         document.addEventListener('visibilitychange', checkState);
+        window.addEventListener('focus', checkState);
+        window.addEventListener('blur', checkState);
 
         return () => {
             document.removeEventListener('visibilitychange', checkState);
+            window.removeEventListener('focus', checkState);
+            window.removeEventListener('blur', checkState);
             disconnect();
         };
     }, [conversationId, isIdle]);

@@ -20,14 +20,18 @@ export async function POST(req: NextRequest) {
         where: { followerId_followingId: { followerId: session.user.id, followingId: targetUserId } },
     });
 
-    await prisma.userFollow.upsert({
-        where: { followerId_followingId: { followerId: session.user.id, followingId: targetUserId } },
-        create: { followerId: session.user.id, followingId: targetUserId },
-        update: {},
-    });
-
-    // Notify the followed user (only on new follows, not re-follows)
     if (!existing) {
+        await prisma.$transaction([
+            prisma.userFollow.create({
+                data: { followerId: session.user.id, followingId: targetUserId },
+            }),
+            prisma.user.update({
+                where: { id: targetUserId },
+                data: { followerCount: { increment: 1 } },
+            })
+        ]);
+
+        // Notify the followed user
         const follower = await prisma.user.findUnique({
             where: { id: session.user.id },
             select: { displayName: true, username: true },
@@ -56,9 +60,21 @@ export async function DELETE(req: NextRequest) {
     const { targetUserId } = await req.json();
     if (!targetUserId) return NextResponse.json({ error: 'Invalid target' }, { status: 400 });
 
-    await prisma.userFollow.deleteMany({
-        where: { followerId: session.user.id, followingId: targetUserId },
+    const existing = await prisma.userFollow.findUnique({
+        where: { followerId_followingId: { followerId: session.user.id, followingId: targetUserId } },
     });
+
+    if (existing) {
+        await prisma.$transaction([
+            prisma.userFollow.delete({
+                where: { id: existing.id },
+            }),
+            prisma.user.update({
+                where: { id: targetUserId },
+                data: { followerCount: { decrement: 1 } },
+            })
+        ]);
+    }
 
     return NextResponse.json({ following: false });
 }

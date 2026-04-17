@@ -114,7 +114,6 @@ export default async function StorefrontPage({ params }: StorePageProps) {
         where: { slug },
         include: {
             owner: { select: { kycTier: true, username: true, displayName: true, id: true } },
-            _count: { select: { followers: true } },
             products: {
                 orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
                 include: {
@@ -295,7 +294,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                         </span>
                     )}
                     <span className={styles.metaSep}>·</span>
-                    <span className={styles.metaText}>{store._count.followers} follower{store._count.followers !== 1 ? 's' : ''}</span>
+                    <span className={styles.metaText}>{store.followerCount} follower{store.followerCount !== 1 ? 's' : ''}</span>
                 </div>
 
                 {/* Star rating */}
@@ -310,7 +309,7 @@ export default async function StorefrontPage({ params }: StorePageProps) {
                 {/* Action buttons — Follow (non-owners) + Share (everyone) */}
                 <div className={styles.followWrap} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     {!isOwner && (
-                        <FollowButton storeSlug={store.slug} initialFollowersCount={store._count.followers} />
+                        <FollowButton storeSlug={store.slug} initialFollowersCount={store.followerCount} />
                     )}
                     <ShareButton
                         url={`https://depmi.com/${store.slug}`}

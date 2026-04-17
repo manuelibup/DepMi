@@ -13,7 +13,7 @@ const USER_SELECT = {
     city: true,
     state: true,
     university: true,
-    _count: { select: { followers: true } },
+    followerCount: true,
 } as const;
 
 function shuffle<T>(arr: T[]): T[] {
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
             prisma.user.findMany({
                 where: baseWhere,
                 select: USER_SELECT,
-                orderBy: { followers: { _count: 'desc' } },
+                orderBy: { followerCount: 'desc' },
                 take: 30,
             }),
         ]);

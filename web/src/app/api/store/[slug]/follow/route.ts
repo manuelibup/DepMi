@@ -57,9 +57,15 @@ export async function POST(
             }
 
             // Otherwise, a standard POST means they want to UNFOLLOW
-            await prisma.storeFollow.delete({
-                where: { id: existingFollow.id }
-            });
+            await prisma.$transaction([
+                prisma.storeFollow.delete({
+                    where: { id: existingFollow.id }
+                }),
+                prisma.store.update({
+                    where: { id: storeId },
+                    data: { followerCount: { decrement: 1 } }
+                })
+            ]);
 
             return NextResponse.json({ 
                 message: 'Unfollowed successfully', 
@@ -68,13 +74,19 @@ export async function POST(
             }, { status: 200 });
         } else {
             // They are not following, so FOLLOW
-            const newFollow = await prisma.storeFollow.create({
-                data: {
-                    userId,
-                    storeId,
-                    notify: typeof notify === 'boolean' ? notify : true
-                }
-            });
+            const [newFollow] = await prisma.$transaction([
+                prisma.storeFollow.create({
+                    data: {
+                        userId,
+                        storeId,
+                        notify: typeof notify === 'boolean' ? notify : true
+                    }
+                }),
+                prisma.store.update({
+                    where: { id: storeId },
+                    data: { followerCount: { increment: 1 } }
+                })
+            ]);
 
             return NextResponse.json({ 
                 message: 'Followed successfully', 

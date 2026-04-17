@@ -81,6 +81,7 @@ model User {
   strikes           Strike[]
 
   @@index([lastActiveAt])
+  followerCount             Int              @default(0)
 }
 
 model Strike {
@@ -236,6 +237,7 @@ model Store {
 
   @@index([ownerId])
   @@index([slug])
+  followerCount         Int                   @default(0)
 }
 
 model DepTransaction {
@@ -251,6 +253,7 @@ model DepTransaction {
 
   @@index([userId])
   @@index([storeId])
+  @@index([orderId])
 }
 
 model Demand {
@@ -345,6 +348,7 @@ model Bid {
 
   @@index([demandId])
   @@index([storeId])
+  @@index([productId])
 }
 
 model Product {
@@ -385,6 +389,7 @@ model Product {
 
   @@index([category, inStock])
   @@index([storeId])
+  @@index([viewCount])
 }
 
 model ProductImage {
@@ -435,6 +440,7 @@ model Order {
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
+  @@index([demandId])
 }
 
 model Payment {

@@ -770,3 +770,44 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 - **Data Fetching**: Use `unstable_cache` tags carefully. When media for a bid is updated, you must revalidate the specific demand or product tag to ensure the new media carousels refresh immediately.
 - **Serialization**: Always serialize the new `images` array and `videoUrl` fields in your server components before passing them to client forms or displays.
 
+---
+
+## ⚡ 57. Database Performance: Denormalized Counters
+
+*Added after a critical Neon compute exhaustion session caused by expensive `_count` joins.*
+
+- **The Problem**: Querying `_count: { select: { likes: true, comments: true } }` on a feed with 32 items performs multiple `LEFT JOIN` aggregations. As the database grows, this scales poorly and burns compute credits.
+- **The Fix**: **Denormalization**.
+    1. Add static `Int` columns Directly to the model (e.g., `likeCount`, `commentCount`).
+    2. Wrap every interaction (Like/Save/Comment) in a `prisma.$transaction`.
+    3. Increment/decrement the counter atomically in the same transaction that creates the interaction row.
+- **Backfill**: When adding these columns to an existing DB, use a one-time SQL script to synchronize existing counts.
+
+## 📡 58. Global Feed Caching & Offset Pagination
+
+- **The Problem**: Cursor-based pagination using unique IDs or timestamps (e.g. `cursor=2024-04-01T12:00:00Z`) creates unique cache keys for every single user interaction. This means `unstable_cache` almost never hits for different users scrolling the same feed.
+- **The Fix**: Use **Page Numbers** (`page=1`, `page=2`) as cursors.
+    1. Page 1, Page 2, etc., have uniform cache keys that can be shared across all guest users.
+    2. Convert page numbers to `skip = (page-1) * take` in your Prisma query.
+- **Benefit**: guest traffic hits the fast global cache 90% of the time, keeping the database asleep.
+
+## 🛡️ 59. Infinite Scroll "Runaway" Guard
+
+- **The Problem**: High-speed scrolling or "bounce" scrolling (flicking the screen repeatedly) can trigger multiple overlapping `fetchMore` calls before the first one completes, flooding the API with redundant requests.
+- **The Fix**: Use a `fetchingRef` (not just state) in your React component.
+    ```tsx
+    const fetchingRef = useRef(false);
+    const fetchMore = async () => {
+      if (loading || !hasMore || fetchingRef.current) return;
+      fetchingRef.current = true;
+      setLoading(true);
+      try { /* fetch data */ }
+      finally {
+        setLoading(false);
+        fetchingRef.current = false;
+      }
+    }
+    ```
+- **Why `useRef`?**: `useState` updates are asynchronous. `useRef` updates are immediate, stopping a second execution of the function in the exact same tick.
+
+
