@@ -1,6 +1,5 @@
-'use client';
-
 import { useCallback } from 'react';
+import { usePostHog } from 'posthog-js/react';
 
 type EventType =
     | 'FEED_IMPRESSION'
@@ -16,16 +15,6 @@ type EventType =
 
 const UTM_KEY = '_dm_utm';
 const UTM_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-function getSessionId(): string {
-    if (typeof window === 'undefined') return 'ssr';
-    let id = localStorage.getItem('_dm_sid');
-    if (!id) {
-        id = crypto.randomUUID();
-        localStorage.setItem('_dm_sid', id);
-    }
-    return id;
-}
 
 function getUtm(): Record<string, string> | null {
     if (typeof window === 'undefined') return null;
@@ -46,6 +35,8 @@ function getUtm(): Record<string, string> | null {
 }
 
 export function useTrackEvent() {
+    const posthog = usePostHog();
+
     const track = useCallback(
         (
             type: EventType,
@@ -55,20 +46,21 @@ export function useTrackEvent() {
                 metadata?: Record<string, unknown>;
             },
         ) => {
-            const sessionId = getSessionId();
             const utm = getUtm();
-            // Merge UTM into metadata — event-level metadata takes precedence over UTM
-            const metadata = utm
-                ? { ...utm, ...(opts?.metadata ?? {}) }
-                : opts?.metadata;
-            // Fire-and-forget — never await, never block UI
-            fetch('/api/track', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, sessionId, ...opts, metadata }),
-            }).catch(() => {});
+            // Merge UTM into metadata
+            const metadata = {
+                ...(utm || {}),
+                ...(opts?.metadata || {}),
+                targetId: opts?.targetId,
+                targetType: opts?.targetType,
+            };
+
+            // Captured directly in PostHog — zero load on Vercel
+            if (posthog) {
+                posthog.capture(type, metadata);
+            }
         },
-        [],
+        [posthog],
     );
 
     return track;

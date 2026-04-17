@@ -192,49 +192,67 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
         };
     }, [isIdle]);
 
-    // SSE with visibility and activity detection
-    useEffect(() => {
-        let eventSource: EventSource | null = null;
+    // Polling with visibility and activity detection (Replacing SSE to save Vercel CPU)
+    const lastCheckRef = useRef<string>(
+        initialMessages.length > 0 
+            ? new Date(Math.max(...initialMessages.map(m => new Date(m.createdAt).getTime()))).toISOString()
+            : new Date().toISOString()
+    );
 
-        const connect = () => {
-            if (eventSource) return;
-            eventSource = new EventSource(`/api/messages/stream?conversationId=${conversationId}`);
-            eventSource.onmessage = (event) => {
-                try {
-                    const newMsgs = JSON.parse(event.data);
+    useEffect(() => {
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+        const fetchNewMessages = async () => {
+            try {
+                const res = await fetch(`/api/messages/${conversationId}?since=${lastCheckRef.current}`);
+                if (res.ok) {
+                    const newMsgs = await res.json();
                     if (Array.isArray(newMsgs) && newMsgs.length > 0) {
                         setMessages((prev) => {
                             const existingIds = new Set(prev.map((m) => m.id));
                             const uniqueNew = newMsgs.filter((m) => m.id && !existingIds.has(m.id));
                             if (uniqueNew.length === 0) return prev;
+                            
                             const combined = [...prev, ...uniqueNew];
-                            // Sort to ensure chronological order even if stream delivers late
-                            return combined.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                            const sorted = combined.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                            
+                            // Update last check to the latest message received
+                            const latestDate = new Date(Math.max(...sorted.map((m) => new Date(m.createdAt).getTime())));
+                            lastCheckRef.current = latestDate.toISOString();
+                            
+                            return sorted;
                         });
                     }
-                } catch (err) { }
-            };
+                }
+            } catch (err) {
+                console.error('[Polling] Error:', err);
+            }
         };
 
-        const disconnect = () => {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
+        const startPolling = () => {
+            if (pollTimer) return;
+            // Poll immediately on focus/return
+            fetchNewMessages();
+            pollTimer = setInterval(fetchNewMessages, 15000); // 15s interval balance
+        };
+
+        const stopPolling = () => {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
             }
         };
 
         const checkState = () => {
             const isVisible = document.visibilityState === 'visible';
             const isFocused = document.hasFocus();
-            // Connect only if visible, focused, and not idle
             if (isVisible && isFocused && !isIdle) {
-                connect();
+                startPolling();
             } else {
-                disconnect();
+                stopPolling();
             }
         };
 
-        // Initial check and listeners
         checkState();
         document.addEventListener('visibilitychange', checkState);
         window.addEventListener('focus', checkState);
@@ -244,9 +262,9 @@ export default function ChatClient({ conversationId, initialMessages, otherUser,
             document.removeEventListener('visibilitychange', checkState);
             window.removeEventListener('focus', checkState);
             window.removeEventListener('blur', checkState);
-            disconnect();
+            stopPolling();
         };
-    }, [conversationId, isIdle]);
+    }, [conversationId, isIdle, initialMessages]);
 
     const handleSend = async (payload: { text?: string, type?: string, mediaUrl?: string }) => {
         if (sending) return;
