@@ -249,7 +249,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 
 ### **Phase 4: Social Connectivity (Week 7)** ✅ *Complete.*
 *   **W7: Interactions & Retention:** Establish the social feedback loops that drive daily active usage (DAU).
-    - **Direct Messaging (DMs):** Real-time buyer-to-vendor communication (`/messages`). Polling-based or WebSocket chat interface with optimistic UI updates.
+    - **Direct Messaging (DMs):** Optimized messaging system using **Stateless Polling** (15s interval) and visibility guards to minimize Vercel compute consumption.
     - **Comment Engine:** Contextual comments on Demand Requests and Products (`/api/products/[id]/comments`). Include `@mentions` parsing that translates to clickable profile links and triggers push notifications.
     - **Interactive Notifications Feed:** A dedicated `/notifications` tab that consolidates all `MENTION`, `ORDER_UPDATE`, and system alerts.
     - **Share Sheet UX:** A unified, cross-platform custom share menu replacing native browser capabilities to ensure a consistent referral experience across WhatsApp, X, and Facebook.
@@ -399,7 +399,7 @@ DepMi ("Buy Here" in Ibibio) is a social commerce operating system designed for 
 ## 4. Financial & Regulatory Model (Phase 1)
 - **Gateway:** Flutterwave (Primary - 1.4% fee) / Paystack (Secondary).
 - **Core Principle:** Free to list — vendors only pay when they sell. This maximises vendor acquisition and avoids subscription friction before users see value.
-- **Primary Revenue — Transaction Fee:** **5% per completed order** (deducted via payment splits at checkout). This is the only cost a new vendor ever sees.
+- **Primary Revenue — Transaction Fee:** **3% per completed order** (charged to the buyer at checkout). This is the only cost a new vendor ever sees.
 - **Secondary Revenue — Featured Listings (Discovery Page):** *(Locked until 10,000 MAU)*
   - ₦800/day · ₦4,000/week · ₦12,000/month (sponsored carousel on Discovery)
   - ₦2,500/week (Category top-spot placement)
@@ -518,7 +518,7 @@ This roadmap focuses on shipping the **Demand Engine** and the **Trust Loop** (D
 - **Notification** — 15 typed events: `BID_RECEIVED | BID_ACCEPTED | ORDER_PLACED | ORDER_CONFIRMED | ORDER_SHIPPED | ORDER_DELIVERED | PAYMENT_RELEASED | DISPUTE_OPENED | DISPUTE_RESOLVED | PRODUCT_AVAILABLE | COMMENT_RECEIVED | MENTION | NEW_PRODUCT_FROM_STORE | DEP_EARNED | SYSTEM`.
 - **New Enums (Phase 3+):** `EscrowStatus (HELD | RELEASING | RELEASED)`, `PaymentRail (NAIRA | CRYPTO)`, `StoreVerificationStatus (UNVERIFIED | PENDING | VERIFIED | REJECTED)`, `MessageType (TEXT | IMAGE | AUDIO | STICKER)`.
 - **Store — extended fields:** `rating` (Float), `reviewCount` (Int), `bankCode/bankAccountNo/bankAccountName` (Monnify NGN payout), `cryptoWalletAddr/preferredPayoutRail` (crypto payout), `verificationStatus` (StoreVerificationStatus), `cacDocUrl/rcNumber/tin` (business verification docs).
-- **Order — extended fields:** `paymentRail` (PaymentRail), `escrowStatus` (EscrowStatus), `virtualAcctNo/virtualAcctBank/virtualAcctExpiry` (Monnify virtual account per checkout), `platformFeeNgn` (5% fee tracking), `cryptoTxHash/cryptoAmountUsdc` (crypto rail).
+- **Order — extended fields:** `paymentRail` (PaymentRail), `escrowStatus` (EscrowStatus), `virtualAcctNo/virtualAcctBank/virtualAcctExpiry` (Monnify virtual account per checkout), `platformFeeNgn` (3% buyer fee tracking — used to calculate seller payouts: `Total - platformFeeNgn`), `cryptoTxHash/cryptoAmountUsdc` (crypto rail).
 
 ---
 

@@ -1,6 +1,9 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 114 — Apr 22–25, 2026 — DepMi Bot (Universal Web Redirect Architecture)](#session-114--apr-2225-2026--depmi-bot-universal-web-redirect-architecture)
+- [Session 113 — Apr 21, 2026 — 3% Buyer Fee & URL Resilience](#session-113--apr-21-2026--3-buyer-fee--url-resilience)
+- [Session 112 — Apr 17, 2026 — Vercel Resource Guardrails & SSE Migration](#session-112--apr-17-2026--vercel-resource-guardrails--sse-migration)
 - [Session 111 — Apr 17, 2026 — Platform Scaling & Compute Guardrails](#session-111--apr-17-2026--platform-scaling--compute-guardrails)
 - [Session 110 — Apr 16, 2026 — Rich Media Bids & Comments + UI Redesign](#session-110--apr-16-2026--rich-media-bids--comments--ui-redesign)
 - [Session 109 — Apr 16, 2026 — Database Backup](#session-109--apr-16-2026--database-backup)
@@ -92,6 +95,99 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 114 — Apr 22–25, 2026 — DepMi Bot (Universal Web Redirect Architecture)
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### Description
+Built the full DepMi Bot system across WhatsApp, Telegram, Instagram, and X (Twitter) using a unified web redirect architecture — every platform's bot job is only to receive an image → AI-parse it → send ONE magic link back. All confirmation and store selection happens on `depmi.com/bot/import`.
+
+### Architecture
+- **Universal handler** (`web/src/lib/bot/universal-handler.ts`): single flow for all platforms. Deduplicates by `postId`, uploads image to Cloudinary, AI-parses with Claude Haiku, creates a 30-min `BotImportToken` (storeId=null), sends magic link.
+- **Magic link page** (`web/src/app/bot/import/page.tsx`): vendor clicks link → logs into DepMi → picks their store → reviews AI-parsed form → confirms → product listed. Store picker shown when vendor has multiple stores; auto-selected when they have one.
+- **`BotImportToken.storeId` is nullable** — store is selected on the web form after login, not at bot-message time.
+
+### New Library Files
+- `web/src/lib/bot/universal-handler.ts` — core unified handler
+- `web/src/lib/bot/ai-parser.ts` — Claude Haiku vision parse (title, price, description, category, confidence)
+- `web/src/lib/bot/cloudinary.ts` — server-side Cloudinary upload from URL
+- `web/src/lib/bot/whatsapp-api.ts` — Meta Cloud API wrapper (sendText, sendButtons, getMediaUrl, downloadMedia)
+- `web/src/lib/bot/telegram.ts` — Telegram Bot API wrapper (sendMessage, getFile, setWebhook)
+- `web/src/lib/bot/twitter-api.ts` — Twitter v2 with custom OAuth 1.0a signing
+- `web/src/lib/bot/instagram-api.ts` — Instagram Graph API wrapper
+- `web/src/lib/bot/shared.ts` — `createProductFromBot()` internal helper
+- `web/src/lib/whatsapp.ts` — WhatsApp notification helper for seller order alerts
+
+### New API Routes
+- `web/src/app/api/webhooks/whatsapp/route.ts` — GET (verification) + POST (image → magic link)
+- `web/src/app/api/webhooks/telegram/route.ts` — POST (messages) + GET (one-time webhook registration)
+- `web/src/app/api/webhooks/instagram/route.ts` — Instagram mention webhook
+- `web/src/app/api/cron/twitter-poll/route.ts` — X mentions poller (every 10 min via cron-job.org)
+- `web/src/app/api/cron/expire-bot-sessions/route.ts` — DB cleanup (every 6h)
+- `web/src/app/api/bot/import/route.ts` — GET (validate token) + POST (accepts storeId from form, verifies ownership, creates product)
+
+### New Pages & Components
+- `web/src/app/bot/import/page.tsx` — magic link review form (AI pre-filled, store picker, confidence warning)
+- `web/src/app/store/[slug]/settings/BotSettingsForm.tsx` — bot config UI
+
+### Schema Changes (two migrations)
+- Added `BotSession`, `BotImportToken` models; `BotPlatform` enum (WHATSAPP, INSTAGRAM, TWITTER, TELEGRAM)
+- Store fields: `botEnabled`, `whatsappLinked`, `instagramHandle`, `twitterHandle`
+- `Product.deliveryFee` nullable; `BotImportToken.storeId` nullable; `BOT_WHATSAPP_LINK` OtpType
+
+### Delivery Fee UX
+- `CreateProductForm` now has 3-option radio: Use store settings (null) / Free (0) / Custom flat rate
+
+### Pending (operational only — all code complete)
+- Create @DepMiBot on Telegram via @BotFather → add `TELEGRAM_BOT_TOKEN` to Vercel
+- Register Telegram webhook: `GET https://depmi.com/api/webhooks/telegram` with `Authorization: Bearer <CRON_SECRET>`
+- Set up crons on cron-job.org: twitter-poll (10 min) + expire-bot-sessions (6h)
+- WhatsApp: Meta Business account setup (Nigerian OTP issues with Meta's SMS gateway — retry later)
+- Add Twitter, Instagram, WhatsApp env vars to Vercel when credentials are ready
+
+---
+
+## Session 113 — Apr 21, 2026 — 00:00 - 06:30 WAT
+
+**Agent:** Antigravity 
+**Human:** Manuel
+
+### Description
+Monetization Pivot, Payment Architecture Security & Environment Resilience.
+- **3% Buyer Escrow & Service Fee**: Shifted monetization from seller-side commission to a 3% buyer-side fee. 
+  - **Backend**: Updated `/api/checkout/initialize` to calculate 3% of subtotal, store it in the database, and adjust the total amount passed to Flutterwave.
+  - **Frontend**: Updated `ClientCheckoutForm.tsx` to display "Escrow & Service fee" clearly.
+- **Payment Integrity**: Updated all callback (`api/checkout/callback`), webhook (`api/webhooks/flutterwave`), and manual verification (`api/orders/[id]/verify`) routes to use the stored `platformFeeNgn`. This ensures sellers always receive their full price (0% commission) while legacy orders (fee = 0) are still handled correctly.
+- **URL Variable Resilience**: Updated core services (`lib/flutterwave.ts`, `lib/email.ts`, `lib/notifyWatchers.ts`, and internal API routes) to fallback to `NEXT_PUBLIC_APP_URL` if `NEXTAUTH_URL` is missing. This prevents redirect and email link breakages in Vercel environments where only the public variable is set.
+- **Context Preservation**: Created a high-fidelity Markdown transcript in `web/md_context/gemini_context.md` covering the entire strategic discussion and implementation details for cross-AI collaboration.
+
+### Validations
+- **Logic Verification**: Manual code review of fee math (`Subtotal * 0.03`).
+- **Resilience Test**: Verified that `baseUrl` logic in Flutterwave and Emails handles missing env vars gracefully.
+
+---
+
+## Session 112 — Apr 17, 2026 — 09:20 - 10:35 WAT
+
+**Agent:** Antigravity 
+**Human:** Manuel
+
+### Description
+Critical Vercel Resource Optimization (Guardrails) to stop compute exhaustion and reduce the cloud bill.
+- **SSE Migration:** Removed persistent Server-Sent Events (SSE) `/api/messages/stream` in favor of a **Stateless Polling** model. Clients now fetch new messages every 15s. This drastically reduces "Fluid Active CPU" time by allowing serverless functions to terminate immediately after responding.
+- **Analytics Transition:** Migrated high-volume analytical events (View, Like, Search) from a server-side route (`/api/track`) to a client-side PostHog implementation. Removed the defunct `/api/track` route.
+- **OG Rendering Optimization:** Optimized `/api/og` by inlining brand SVGs (avoiding origin self-fetches) and implementing strict `Cache-Control: public, s-maxage=31536000, immutable` headers. Resolved the 28s generation stall.
+- **Activity Heartbeat Throttle:** Added a `localStorage` throttle to the `ActivityPing` component. The app now only pings the database once every 30 minutes per device, even on frequent refreshes.
+- **Middleware Matcher:** Optimized the middleware config to explicitly exclude `/api/og` and `/api/activity/ping` from the auth/session parsing layer, saving CPU cycles on lightweight requests.
+
+### Validations
+- **Resources:** Verified a significant drop in function invocations per active user session.
+- **Chat:** Confirmed messages still update correctly via the new polling strategy with visibility guards.
+- **OG:** Verified headers in browser devtools.
+
+---
 
 ## Session 111 — Apr 17, 2026 — 07:15 - 08:35 WAT
 

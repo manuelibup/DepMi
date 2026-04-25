@@ -14,10 +14,20 @@ const CATEGORIES = [
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
-export default function CreateProductForm({ storeId, storeSlug }: { storeId: string; storeSlug: string }) {
+interface CreateProductFormProps {
+    storeId: string;
+    storeSlug: string;
+    localDeliveryFee: number | null;
+    nationwideDeliveryFee: number | null;
+    storeState: string | null;
+}
+
+export default function CreateProductForm({ storeId, storeSlug, localDeliveryFee, nationwideDeliveryFee, storeState }: CreateProductFormProps) {
     const router = useRouter();
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
+    // deliveryFeeMode: 'store' = use store local/nationwide rates, 'free' = ₦0, 'custom' = flat rate
+    const hasStoreFees = localDeliveryFee !== null || nationwideDeliveryFee !== null;
     const [form, setForm] = useState({
         title: '',
         description: '',
@@ -30,6 +40,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
         videoUrl: '',
         stock: '1',
         displayStock: '1',
+        deliveryFeeMode: hasStoreFees ? 'store' : 'custom' as 'store' | 'free' | 'custom',
         deliveryFee: '0',
         displayDeliveryFee: '0',
         isPortfolioItem: false,
@@ -141,7 +152,7 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             images: form.imageUrls,
             videoUrl: form.videoUrl || null,
             stock: hasVariants ? variants.reduce((s, v) => s + (Number(v.stock) || 1), 0) : (Number(form.stock) || 1),
-            deliveryFee: form.isDigital ? 0 : (Number(form.deliveryFee) || 0),
+            deliveryFee: form.isDigital ? 0 : (form.deliveryFeeMode === 'store' ? null : form.deliveryFeeMode === 'free' ? 0 : (Number(form.deliveryFee) || 0)),
             isPortfolioItem: form.isPortfolioItem,
             isDigital: form.isDigital,
             fileUrl: form.isDigital ? (form.fileUrl || null) : null,
@@ -396,19 +407,78 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
             )}
 
             {activeInput === 'deliveryFee' && (
-                <div className={styles.inlineInputRow}>
-                    <span className={styles.inputPrefix}>₦</span>
-                    <input
-                        type="text"
-                        name="deliveryFee"
-                        inputMode="numeric"
-                        placeholder="Set Delivery Fee"
-                        value={form.displayDeliveryFee}
-                        onChange={handleChange}
-                        className={styles.inlineInput}
-                        autoFocus
-                    />
-                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+                    {/* Option A: Use store settings */}
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="deliveryFeeMode"
+                            value="store"
+                            checked={form.deliveryFeeMode === 'store'}
+                            onChange={() => setForm(f => ({ ...f, deliveryFeeMode: 'store' }))}
+                            style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                        />
+                        <div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Use store settings</div>
+                            {hasStoreFees ? (
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                                    {storeState ? `Local (${storeState}): ` : 'Local: '}
+                                    {localDeliveryFee !== null ? `₦${localDeliveryFee.toLocaleString()}` : 'not set'}
+                                    {' · '}
+                                    Nationwide: {nationwideDeliveryFee !== null ? `₦${nationwideDeliveryFee.toLocaleString()}` : 'not set'}
+                                </div>
+                            ) : (
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                                    No store rates set yet — <a href={`/store/${storeSlug}/settings`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>set them in Store Settings</a>
+                                </div>
+                            )}
+                        </div>
+                    </label>
+
+                    {/* Option B: Free */}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="deliveryFeeMode"
+                            value="free"
+                            checked={form.deliveryFeeMode === 'free'}
+                            onChange={() => setForm(f => ({ ...f, deliveryFeeMode: 'free' }))}
+                            style={{ accentColor: 'var(--primary)', flexShrink: 0 }}
+                        />
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Free delivery for this product</div>
+                    </label>
+
+                    {/* Option C: Custom */}
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="deliveryFeeMode"
+                            value="custom"
+                            checked={form.deliveryFeeMode === 'custom'}
+                            onChange={() => setForm(f => ({ ...f, deliveryFeeMode: 'custom' }))}
+                            style={{ marginTop: 2, accentColor: 'var(--primary)', flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Custom flat rate for this product</div>
+                            {form.deliveryFeeMode === 'custom' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>₦</span>
+                                    <input
+                                        type="text"
+                                        name="deliveryFee"
+                                        inputMode="numeric"
+                                        placeholder="e.g. 2500"
+                                        value={form.displayDeliveryFee}
+                                        onChange={handleChange}
+                                        style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </label>
+
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)} style={{ marginTop: 12, width: '100%' }}>Done</button>
                 </div>
             )}
 
@@ -502,13 +572,19 @@ export default function CreateProductForm({ storeId, storeSlug }: { storeId: str
                     {!form.isDigital && (
                         <button
                             type="button"
-                            className={`${styles.pill} ${form.deliveryFee !== '0' ? styles.pillActive : ''}`}
+                            className={`${styles.pill} ${styles.pillActive}`}
                             onClick={() => setActiveInput(activeInput === 'deliveryFee' ? null : 'deliveryFee')}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
                                 <rect width="16" height="12" x="4" y="9" rx="2" ry="2" /><path d="M9 22v-4h6v4" /><path d="M20 9V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5" /><circle cx="12" cy="14" r="2" />
                             </svg>
-                            {form.deliveryFee && form.deliveryFee !== '0' ? `₦${form.displayDeliveryFee} Ship` : 'Delivery Fee'}
+                            {form.deliveryFeeMode === 'store'
+                                ? 'Store Rates'
+                                : form.deliveryFeeMode === 'free'
+                                ? 'Free Delivery'
+                                : form.deliveryFee && form.deliveryFee !== '0'
+                                ? `₦${form.displayDeliveryFee} Ship`
+                                : 'Delivery Fee'}
                         </button>
                     )}
 

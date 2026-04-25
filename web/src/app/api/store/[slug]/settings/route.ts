@@ -14,6 +14,10 @@ const settingsSchema = z.object({
     nationwideDeliveryFee: z.number().min(0).nullable().optional(),
     dispatchEnabled:       z.boolean().optional(),
     pickupAddress:         z.string().max(300).nullable().optional(),
+    // Bot settings
+    botEnabled:            z.boolean().optional(),
+    instagramHandle:       z.string().max(50).nullable().optional(),
+    twitterHandle:         z.string().max(50).nullable().optional(),
 });
 
 export async function GET(

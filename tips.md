@@ -793,6 +793,20 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 
 ---
 
+## 🌍 59. Environment Variable Resilience (URL Fallbacks)
+
+*Added after fixing payment redirect breakages in Vercel (Session 113).*
+
+- **The Issue**: Next.js apps often rely on `NEXTAUTH_URL` as the source of truth for the site's base URL (for emails, redirects, and Webhooks). In Vercel, if this variable is missing or set to `localhost` by mistake, your production app will try to redirect users to `localhost` after payment.
+- **The Fix**: Use a "Resilient Fallback" pattern in all core libraries (`lib/email.ts`, `lib/flutterwave.ts`, etc.):
+  ```typescript
+  const APP_URL = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://depmi.com';
+  ```
+- **Why?**: Vercel often provides `NEXT_PUBLIC_APP_URL` automatically or through your own custom setup. by checking both, you ensure that if one is missing, the app doesn't go "blind" to its own location. Always include a hardcoded fallback to your production domain as the final safety net.
+
+---
+
+
 ## ⚡ 57. Scaling Health Check: Denormalized Counters vs Counts
 
 *Added after a critical Neon compute exhaustion session caused by expensive `_count` joins.*
@@ -837,5 +851,26 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
     }
     ```
 - **Why `useRef`?**: `useState` updates are asynchronous. `useRef` updates are immediate, stopping a second execution of the function in the exact same tick.
+
+---
+
+## ⚡ 60. Serverless Economy: Polling vs. SSE/WebSockets
+
+*Added after resolving a Vercel compute limit crisis in Session 112.*
+
+- **The Problem**: Persistent listeners (SSE, WebSockets) on Vercel Edge/Serverless functions keep the CPU "active" indefinitely. Vercel's **Fluid Active CPU** billing counts every millisecond the function is alive.
+- **The Solution**: **Stateless Polling**.
+    - The client checks for updates every 15-30 seconds.
+    - Each check takes ~50ms of CPU time and then the function **terminates immediately**.
+    - Polling is **300x-1000x cheaper** in a serverless environment than holding a persistent stream open.
+- **Rule**: Never use persistent server connections on Vercel for "long-term idling" tasks. Switch to polling or use a 3rd-party real-time provider (Pusher, Ably).
+
+## 🖼️ 61. OG Image Caching & URL Versioning
+
+- **The Problem**: To avoid regenerating OG images on every request (which is slow and compute-heavy), we use `Cache-Control: public, s-maxage=31536000, immutable`.
+- **The Trade-off**: If the image content changes (e.g., a product price updates), social platforms will continue to show the old cached image.
+- **The Fix**: **URL Versioning**.
+    - Append a version or "last updated" timestamp to the OG URL: `/api/og/product/123?v=171334000`.
+    - When the content changes, the URL changes. The browser/platform sees it as a brand-new image and fetches the fresh data, while still allowing the old version to remain perfectly cached.
 
 

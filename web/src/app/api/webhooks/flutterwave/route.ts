@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
+// DEPRECATED — Flutterwave removed. Payment rail migrated to Paystack.
+// New webhook: https://depmi.com/api/webhooks/paystack
+// Disable this endpoint in the Flutterwave dashboard to stop receiving events here.
+
+import { NextResponse } from 'next/server'
+
+export async function POST() {
+    return NextResponse.json({ ok: false, message: 'Flutterwave integration removed' }, { status: 410 })
+}
+
+/*
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
 import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
+import { notifyWhatsAppNewOrder } from '@/lib/whatsapp'
 import { bookShipment } from '@/lib/shipbubble'
 
-/**
- * Flutterwave payment webhook.
- * Handles async payment confirmations as a fallback to the redirect callback.
- *
- * Security: validates verif-hash header before touching the DB.
- * Idempotent: re-delivery of same tx_ref is a no-op.
- */
 export async function POST(req: NextRequest) {
     const signature = req.headers.get('verif-hash') ?? ''
     if (!signature || !validateWebhookSignature(signature)) {
@@ -25,7 +30,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: false }, { status: 400 })
     }
 
-    // Only handle successful charges
     if (payload.event !== 'charge.completed' || payload.data?.status !== 'successful') {
         return NextResponse.json({ ok: true })
     }
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
     }
 
-    let confirmedOrder: { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string } | null = null
+    let confirmedOrder: { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string; sellerPhone: string | null; totalAmount: number } | null = null
 
     try {
         await prisma.$transaction(async (tx) => {
@@ -51,8 +55,6 @@ export async function POST(req: NextRequest) {
                 },
             })
 
-
-            // Fallback for different txRef formats or IDs
             if (!order) {
                 order = await tx.order.findFirst({
                     where: { OR: [{ id: tx_ref }, { paystackRef: tx_ref }] },
@@ -65,104 +67,35 @@ export async function POST(req: NextRequest) {
                 if (order) orderId = order.id
             }
 
-            if (!order) {
-                console.error('[flutterwave-webhook] Order not found:', orderId)
-                return
-            }
-
-            // Idempotency
+            if (!order) { console.error('[flutterwave-webhook] Order not found:', orderId); return }
             if (order.status === 'CONFIRMED' || order.paystackRef === tx_ref) return
             if (order.escrowStatus !== 'HELD' || order.status !== 'PENDING') return
 
-            const platformFeeNgn = 0; // Math.round(Number(order.totalAmount) * 0.03 * 100) / 100
+            const platformFeeNgn = order.platformFeeNgn || 0
+            await tx.order.update({ where: { id: orderId }, data: { status: 'CONFIRMED', escrowStatus: 'HELD', paystackRef: tx_ref, platformFeeNgn } })
 
-            await tx.order.update({
-                where: { id: orderId },
-                data: {
-                    status: 'CONFIRMED',
-                    escrowStatus: 'HELD',
-                    paystackRef: tx_ref,
-                    platformFeeNgn,
-                },
-            })
-
-            // Decrement product stock
             for (const item of order.items) {
-                if (!item.product) continue;
-
-                const currentStock = item.product.stock || 1;
-                const newStock = Math.max(0, currentStock - item.quantity);
-
-                await tx.product.update({
-                    where: { id: item.productId },
-                    data: {
-                        stock: newStock,
-                        inStock: newStock > 0
-                    }
-                });
+                if (!item.product) continue
+                const newStock = Math.max(0, (item.product.stock || 1) - item.quantity)
+                await tx.product.update({ where: { id: item.productId }, data: { stock: newStock, inStock: newStock > 0 } })
             }
 
             const isDigitalOrder = order.isDigital || (order.items[0]?.product?.isDigital ?? false)
-            const variantName = order.items[0]?.variantName
-            const variantSuffix = variantName ? ` — ${variantName}` : ''
-            await tx.notification.create({
-                data: {
-                    userId: order.seller.ownerId,
-                    type: 'ORDER_CONFIRMED',
-                    title: 'New order payment received',
-                    body: isDigitalOrder
-                        ? `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Digital product — escrow auto-releases in 48h.`
-                        : `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`,
-                    link: '/orders',
-                },
-            })
+            const variantSuffix = order.items[0]?.variantName ? ` — ${order.items[0].variantName}` : ''
+            await tx.notification.create({ data: { userId: order.seller.ownerId, type: 'ORDER_CONFIRMED', title: 'New order payment received', body: isDigitalOrder ? `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Digital product — escrow auto-releases in 48h.` : `Order #${orderId.slice(-6).toUpperCase()} paid${variantSuffix} (₦${Number(order.totalAmount).toLocaleString()}). Prepare to ship.`, link: '/orders' } })
 
             if (order.buyer.email) {
-                await notifyOrderUpdate({
-                    orderId,
-                    status: 'PAID',
-                    userId: order.buyer.id,
-                    userName: order.buyer.displayName,
-                    userEmail: order.buyer.email,
-                    productTitle: order.items[0]?.product.title || 'Product',
-                    link: '/orders'
-                })
+                await notifyOrderUpdate({ orderId, status: 'PAID', userId: order.buyer.id, userName: order.buyer.displayName, userEmail: order.buyer.email, productTitle: order.items[0]?.product.title || 'Product', link: '/orders' })
             }
 
-            // Capture for post-transaction notifications
-            confirmedOrder = {
-                storeId: order.seller.id,
-                storeName: order.seller.name,
-                productTitle: order.items[0]?.product?.title ?? 'a product',
-                storeSlug: order.seller.slug,
-                buyerId: order.buyer.id,
-                sellerOwnerId: order.seller.ownerId,
-            }
+            confirmedOrder = { storeId: order.seller.id, storeName: order.seller.name, productTitle: order.items[0]?.product?.title ?? 'a product', storeSlug: order.seller.slug, buyerId: order.buyer.id, sellerOwnerId: order.seller.ownerId, sellerPhone: (order.seller.owner as { phoneNumber?: string | null }).phoneNumber ?? null, totalAmount: Number(order.totalAmount) }
 
-            // Auto-book dispatch if store has DepMi Dispatch enabled and quote token saved (skip for digital)
             if (!isDigitalOrder && order.seller.dispatchEnabled && order.shipbubbleReqToken) {
                 try {
                     const booking = await bookShipment(order.shipbubbleReqToken)
-                    await tx.order.update({
-                        where: { id: orderId },
-                        data: {
-                            dispatchOrderId: booking.shipbubbleOrderId,
-                            dispatchProvider: 'shipbubble/gigl',
-                            trackingNo: booking.trackingUrl ?? booking.trackingCode ?? null,
-                            status: 'SHIPPED',
-                        },
-                    })
-                    await tx.notification.create({
-                        data: {
-                            userId: order.seller.ownerId,
-                            type: 'ORDER_CONFIRMED',
-                            title: 'Dispatch booked automatically',
-                            body: `A GIG Logistics rider has been booked for order #${orderId.slice(-6).toUpperCase()}. Prepare the package for pickup.`,
-                            link: '/orders',
-                        },
-                    })
+                    await tx.order.update({ where: { id: orderId }, data: { dispatchOrderId: booking.shipbubbleOrderId, dispatchProvider: 'shipbubble/gigl', trackingNo: booking.trackingUrl ?? booking.trackingCode ?? null, status: 'SHIPPED' } })
+                    await tx.notification.create({ data: { userId: order.seller.ownerId, type: 'ORDER_CONFIRMED', title: 'Dispatch booked automatically', body: `A GIG Logistics rider has been booked for order #${orderId.slice(-6).toUpperCase()}. Prepare the package for pickup.`, link: '/orders' } })
                 } catch (dispatchErr) {
-                    // Don't fail payment confirmation — seller can ship manually
                     console.error('[flutterwave-webhook] Dispatch booking failed:', dispatchErr)
                 }
             }
@@ -171,36 +104,16 @@ export async function POST(req: NextRequest) {
         console.error('[flutterwave-webhook] DB error:', err)
     }
 
-    // Fire social notifications + auto-DM after transaction — never block payment confirmation
-    // Cast to typed const: TS narrows `let` assigned in async callbacks to null; this preserves the full type
-    type ConfirmedOrderData = { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string };
-    const finalOrder = confirmedOrder as ConfirmedOrderData | null;
+    type ConfirmedOrderData = { storeId: string; storeName: string; productTitle: string; storeSlug: string; buyerId: string; sellerOwnerId: string; sellerPhone: string | null; totalAmount: number }
+    const finalOrder = confirmedOrder as ConfirmedOrderData | null
     if (finalOrder) {
-        // Auto-DM buyer with order card (fire-and-forget)
         void sendOrderAutoDM(finalOrder.buyerId, finalOrder.sellerOwnerId, orderId)
+        if (finalOrder.sellerPhone) { void notifyWhatsAppNewOrder(finalOrder.sellerPhone, orderId.slice(-6).toUpperCase(), finalOrder.productTitle, finalOrder.totalAmount) }
         const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
-            // Notify store followers: "Someone just bought X from [Store]"
-            const followers = await prisma.storeFollow.findMany({
-                where: { storeId },
-                select: { userId: true },
-                take: 100, // cap per-order fan-out
-            })
-            if (followers.length > 0) {
-                await prisma.notification.createMany({
-                    data: followers.map(f => ({
-                        userId: f.userId,
-                        type: 'STORE_FOLLOW_SALE' as const,
-                        title: `Someone just bought from ${storeName}`,
-                        body: `"${productTitle}" was just purchased — check out what else is available.`,
-                        link: `/store/${storeSlug}`,
-                    })),
-                    skipDuplicates: true,
-                })
-            }
-        } catch (err) {
-            console.error('[flutterwave-webhook] Social notification error:', err)
-        }
+            const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })
+            if (followers.length > 0) { await prisma.notification.createMany({ data: followers.map(f => ({ userId: f.userId, type: 'STORE_FOLLOW_SALE' as const, title: `Someone just bought from ${storeName}`, body: `"${productTitle}" was just purchased — check out what else is available.`, link: `/store/${storeSlug}` })), skipDuplicates: true }) }
+        } catch (err) { console.error('[flutterwave-webhook] Social notification error:', err) }
     }
 
     return NextResponse.json({ ok: true })
@@ -208,16 +121,6 @@ export async function POST(req: NextRequest) {
 
 interface FlutterwaveWebhookPayload {
     event: string
-    data?: {
-        id: number
-        tx_ref: string
-        flw_ref: string
-        amount: number
-        currency: string
-        status: string
-        customer: {
-            email: string
-            name: string
-        }
-    }
+    data?: { id: number; tx_ref: string; flw_ref: string; amount: number; currency: string; status: string; customer: { email: string; name: string } }
 }
+*/

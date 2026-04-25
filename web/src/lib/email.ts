@@ -5,7 +5,7 @@
 import { resend } from './resend';
 
 const FROM = process.env.RESEND_FROM_EMAIL || 'DepMi <security@depmi.com>';
-const APP_URL = process.env.NEXTAUTH_URL || 'https://depmi.com';
+const APP_URL = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://depmi.com';
 
 function escHtml(s: string): string {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

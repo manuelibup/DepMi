@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
         });
 
         // The join URL format
-        const inviteUrl = `${process.env.NEXTAUTH_URL}/register?type=vendor&invite=${invite.id}`;
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://depmi.com';
+        const inviteUrl = `${baseUrl}/register?type=vendor&invite=${invite.id}`;
 
         return NextResponse.json({ inviteUrl, inviteId: invite.id });
     } catch (error) {

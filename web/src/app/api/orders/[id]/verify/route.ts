@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { verifyByTxRef } from '@/lib/flutterwave';
+import { verifyByTxRef } from '@/lib/paystack';
 
 // Simple per-user rate limiting: max 5 verify attempts per 10 minutes
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -65,7 +65,7 @@ export async function POST(
         const flwStatus = await verifyByTxRef(txRef);
 
         if (flwStatus && flwStatus.paid) {
-            const platformFeeNgn = 0; // Math.round(Number(order.totalAmount) * 0.03 * 100) / 100;
+            const platformFeeNgn = order.platformFeeNgn || 0;
 
             await prisma.order.update({
                 where: { id: orderId },
@@ -90,7 +90,7 @@ export async function POST(
         } else {
             return NextResponse.json({
                 success: false,
-                message: 'No successful payment found on Flutterwave for this order. If you just paid, please wait a minute and try again.'
+                message: 'No successful payment found for this order. If you just paid, please wait a minute and try again.'
             });
         }
     } catch (error) {

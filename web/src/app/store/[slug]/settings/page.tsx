@@ -7,6 +7,7 @@ import Link from 'next/link';
 import BackButton from '@/components/BackButton';
 import StoreSettingsForm from './StoreSettingsForm';
 import PayoutSettingsForm from './PayoutSettingsForm';
+import BotSettingsForm from './BotSettingsForm';
 import styles from './page.module.css';
 
 export default async function StoreSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -24,8 +25,10 @@ export default async function StoreSettingsPage({ params }: { params: Promise<{ 
             location: true, logoUrl: true, bannerUrl: true, isActive: true,
             localDeliveryFee: true, nationwideDeliveryFee: true,
             dispatchEnabled: true, pickupAddress: true,
-            storeState: true,
+            storeState: true, phoneNumber: true,
             feeWaiverUntil: true,
+            botEnabled: true, whatsappLinked: true,
+            instagramHandle: true, twitterHandle: true,
         },
     });
 
@@ -66,6 +69,14 @@ export default async function StoreSettingsPage({ params }: { params: Promise<{ 
                     nationwideDeliveryFee: store.nationwideDeliveryFee != null ? Number(store.nationwideDeliveryFee) : null,
                 }} />
                 <PayoutSettingsForm slug={slug} />
+                <BotSettingsForm store={{
+                    slug: store.slug,
+                    phoneNumber: store.phoneNumber ?? null,
+                    botEnabled: store.botEnabled ?? false,
+                    whatsappLinked: store.whatsappLinked ?? false,
+                    instagramHandle: store.instagramHandle ?? null,
+                    twitterHandle: store.twitterHandle ?? null,
+                }} />
             </div>
         </main>
     );

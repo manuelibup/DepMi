@@ -22,7 +22,7 @@ const productSchema = z.object({
     category: z.nativeEnum(Category),
     videoUrl: z.string().url().nullable().optional(),
     stock: z.number().int().min(0).default(1),
-    deliveryFee: z.number().min(0, "Delivery fee cannot be negative").default(2500),
+    deliveryFee: z.number().min(0, "Delivery fee cannot be negative").nullable().optional(),
     images: z.array(z.string()).optional(),
     isDigital: z.boolean().default(false),
     fileUrl: z.string().nullable().optional(),
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee, isDigital, fileUrl, variants } = parsed.data;
+        const { storeId, title, description, price, currency, category, images, videoUrl, stock, deliveryFee = null, isDigital, fileUrl, variants } = parsed.data;
 
         // If variants provided, derive product-level price from cheapest variant
         const hasVariants = variants && variants.length >= 1;
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
                 currency,
                 category,
                 stock: effectiveStock,
-                deliveryFee: isDigital ? 0 : deliveryFee,
+                deliveryFee: isDigital ? 0 : (deliveryFee === null ? undefined : deliveryFee),
                 isDigital,
                 fileUrl: fileUrl || null,
                 videoUrl: videoUrl || null,

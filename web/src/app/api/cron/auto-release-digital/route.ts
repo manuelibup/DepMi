@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { initiatePayout } from '@/lib/flutterwave';
+import { initiatePayout } from '@/lib/paystack';
 import { sendPushToUser } from '@/lib/webpush';
 
 const DIGITAL_ESCROW_HOURS = 48;

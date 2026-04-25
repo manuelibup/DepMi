@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { initializePayment } from '@/lib/flutterwave'
+import { initializePayment } from '@/lib/paystack'
 
 /**
  * POST /api/checkout/initialize
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
       ? 0
       : (shipbubbleDeliveryFee ? Number(shipbubbleDeliveryFee) : Number(product.deliveryFee || 2500))
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    // Service & escrow fee (5%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
-    const gatewayFee = 0; // Math.round(subtotalAndDelivery * 0.03 * 100) / 100
+    // Service & escrow fee (3%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
+    const gatewayFee = Math.round(subtotalAndDelivery * 0.03 * 100) / 100
     const finalAmountToPay = subtotalAndDelivery + gatewayFee
 
     // Create or find existing Order
@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
           return tx.order.update({
             where: { id: body.resumeOrderId },
             data: {
-              totalAmount: subtotalAndDelivery,
+              totalAmount: finalAmountToPay,
+              platformFeeNgn: gatewayFee,
               deliveryAddress,
               deliveryMethod,
               deliveryNote: deliveryNote ?? null,
@@ -97,7 +98,8 @@ export async function POST(req: NextRequest) {
         data: {
           buyerId: session.user.id,
           sellerId: product.store.id,
-          totalAmount: subtotalAndDelivery,
+          totalAmount: finalAmountToPay,
+          platformFeeNgn: gatewayFee,
           status: 'PENDING',
           escrowStatus: 'HELD',
           paymentRail: 'NAIRA',
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
       })
     })
 
-    // Generate Flutterwave payment link
+    // Generate Paystack payment link
     let payment
     try {
       payment = await initializePayment({
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
       } catch (cleanupErr) {
         console.error('[checkout/initialize] Failed to cleanup order:', cleanupErr)
       }
-      console.error('[checkout/initialize] Flutterwave error:', err)
+      console.error('[checkout/initialize] Paystack error:', err)
       return NextResponse.json(
         { error: `Payment provider error: ${err.message || 'Unavailable'}. Please try again.` },
         { status: 502 },

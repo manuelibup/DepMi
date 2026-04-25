@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sendPushToUser } from '@/lib/webpush';
+import { notifyWhatsAppNewMessage } from '@/lib/whatsapp';
 import { applyContentFilter } from '@/lib/contentFilter';
 
 export async function GET(
@@ -121,6 +122,20 @@ export async function POST(
             tag: `msg-${id}`,
         }).catch(() => {});
     });
+
+    // WhatsApp: notify recipients who haven't opened the app (fire-and-forget)
+    if (recipientIds.length > 0) {
+        const recipients = await prisma.user.findMany({
+            where: { id: { in: recipientIds } },
+            select: { phoneNumber: true, phoneVerified: true },
+        });
+        const senderName = sender?.displayName || 'Someone';
+        recipients.forEach(r => {
+            if (r.phoneNumber && r.phoneVerified) {
+                notifyWhatsAppNewMessage(r.phoneNumber, senderName).catch(() => {});
+            }
+        });
+    }
 
     return NextResponse.json(message, { status: 201 });
 }

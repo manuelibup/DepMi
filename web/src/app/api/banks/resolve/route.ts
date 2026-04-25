@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { resolveAccountName } from '@/lib/flutterwave';
+import { resolveAccountName } from '@/lib/paystack';
 
 export async function GET(req: Request) {
     try {
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ accountName });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        console.error('[resolve-account] Flutterwave error:', error?.message, '| bankCode:', new URL(req.url).searchParams.get('bankCode'));
+        console.error('[resolve-account] Paystack error:', error?.message, '| bankCode:', new URL(req.url).searchParams.get('bankCode'));
 
         // Map common Flutterwave errors to user-friendly messages
         const flwMsg = (error?.message || '').toLowerCase();

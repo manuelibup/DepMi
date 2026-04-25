@@ -226,6 +226,10 @@ model Store {
   dispatchEnabled       Boolean                 @default(true)
   pickupAddress         String?
   shipbubbleAddrCode    Int?
+  botEnabled          Boolean                 @default(false)
+  whatsappLinked      Boolean                 @default(false)
+  instagramHandle     String?                 // e.g. "mybrand" (without @)
+  twitterHandle       String?                 // e.g. "mybrand" (without @)
   bids                Bid[]                   @relation("StoreBids")
   depTransactions     DepTransaction[]        @relation("StoreDepTransactions")
   ordersAsSeller      Order[]                 @relation("SellerOrders")
@@ -234,6 +238,8 @@ model Store {
   posts               Post[]                  @relation("StorePosts")
   owner               User                    @relation("UserStores", fields: [ownerId], references: [id])
   followers           StoreFollow[]           @relation("StoreFollowers")
+  botSessions         BotSession[]
+  botImportTokens     BotImportToken[]
 
   @@index([ownerId])
   @@index([slug])
@@ -373,7 +379,7 @@ model Product {
   slug            String?        @unique
   currency        String         @default("₦")
   isFeatured      Boolean        @default(false)
-  deliveryFee     Decimal        @default(2500) @db.Decimal(10, 2)
+  deliveryFee     Decimal?       @db.Decimal(10, 2)  // null = inherit from store localDeliveryFee/nationwideDeliveryFee
   stock           Int            @default(1)
   bids            Bid[]          @relation("BidProduct")
   comments        Comment[]      @relation("ProductComments")
@@ -723,6 +729,7 @@ enum OtpType {
   EMAIL_VERIFICATION
   TRANSACTIONAL
   ACCOUNT_UPDATE
+  BOT_WHATSAPP_LINK
 }
 
 enum InviteStatus {
@@ -930,4 +937,44 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── DepMi Bot ──────────────────────────────────────────────────────────────
+
+model BotSession {
+  id         String      @id @default(uuid())
+  platform   BotPlatform
+  externalId String      // WhatsApp E.164 phone, Instagram user ID, or Twitter user ID
+  storeId    String?
+  state      Json        // { step, imageUrl, parsedData, rawCaption, messageId }
+  expiresAt  DateTime
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  store      Store?      @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@unique([platform, externalId])
+  @@index([expiresAt])
+}
+
+model BotImportToken {
+  id         String      @id @default(uuid())
+  platform   BotPlatform
+  postId     String      // Instagram media ID, tweet ID, or Telegram message ID
+  storeId    String?     // null until vendor selects their store on the import page
+  parsedData Json        // AI-parsed product fields
+  imageUrls  String[]    // Cloudinary URLs already uploaded
+  expiresAt  DateTime    // 30 minutes TTL
+  used       Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  store      Store?      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([expiresAt])
+}
+
+enum BotPlatform {
+  WHATSAPP
+  INSTAGRAM
+  TWITTER
+  TELEGRAM
 }

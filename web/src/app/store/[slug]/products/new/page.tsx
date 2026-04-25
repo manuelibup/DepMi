@@ -21,7 +21,7 @@ export default async function NewProductPage({ params }: NewProductPageProps) {
     // Fetch the store and verify ownership
     const store = await prisma.store.findUnique({
         where: { slug },
-        select: { id: true, ownerId: true, slug: true }
+        select: { id: true, ownerId: true, slug: true, localDeliveryFee: true, nationwideDeliveryFee: true, storeState: true }
     });
 
     if (!store) {
@@ -34,7 +34,13 @@ export default async function NewProductPage({ params }: NewProductPageProps) {
 
     return (
         <main style={{ maxWidth: '480px', margin: '0 auto', minHeight: '100dvh', backgroundColor: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
-            <CreateProductForm storeId={store.id} storeSlug={store.slug} />
+            <CreateProductForm
+                storeId={store.id}
+                storeSlug={store.slug}
+                localDeliveryFee={store.localDeliveryFee !== null ? Number(store.localDeliveryFee) : null}
+                nationwideDeliveryFee={store.nationwideDeliveryFee !== null ? Number(store.nationwideDeliveryFee) : null}
+                storeState={store.storeState}
+            />
         </main>
     );
 }

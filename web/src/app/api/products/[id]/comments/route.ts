@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { NotificationType } from '@prisma/client';
+import { notifyWhatsAppNewComment } from '@/lib/whatsapp';
 
 export async function POST(
     req: NextRequest,
@@ -46,7 +47,16 @@ export async function POST(
 
     const product = await prisma.product.findUnique({
         where: { id: productId },
-        select: { id: true, title: true, store: { select: { ownerId: true } } }
+        select: {
+            id: true,
+            title: true,
+            store: {
+                select: {
+                    ownerId: true,
+                    owner: { select: { phoneNumber: true, phoneVerified: true } },
+                },
+            },
+        },
     });
     if (!product) {
         return NextResponse.json({ message: 'Product not found' }, { status: 404 });
@@ -83,6 +93,13 @@ export async function POST(
                 link: `/p/${productId}`,
             }
         }).catch(() => { }); // fire-and-forget
+
+        // WhatsApp: ping seller so they see the question even if not checking the app
+        const ownerPhone = product.store.owner?.phoneNumber;
+        const ownerPhoneVerified = product.store.owner?.phoneVerified;
+        if (ownerPhone && ownerPhoneVerified) {
+            notifyWhatsAppNewComment(ownerPhone, comment.author.displayName, product.title).catch(() => {});
+        }
     }
 
     // Extract @mentions and notify users

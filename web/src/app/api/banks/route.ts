@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBankList } from '@/lib/flutterwave';
+import { getBankList } from '@/lib/paystack';
 
 export async function GET() {
     try {
