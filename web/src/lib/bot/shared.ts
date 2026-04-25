@@ -13,6 +13,7 @@ export interface BotProductInput {
     stock: number;
     deliveryFee: number | null; // null = inherit from store
     isDigital?: boolean;
+    inStock?: boolean;
     videoUrl?: string | null;
 }
 
@@ -32,6 +33,7 @@ export async function createProductFromBot(input: BotProductInput) {
         stock,
         deliveryFee,
         isDigital = false,
+        inStock = true,
         videoUrl = null,
     } = input;
 
@@ -59,6 +61,7 @@ export async function createProductFromBot(input: BotProductInput) {
             currency: '₦',
             category,
             stock,
+            inStock,
             deliveryFee: effectiveDeliveryFee === null ? undefined : effectiveDeliveryFee,
             isDigital,
             videoUrl: videoUrl || null,

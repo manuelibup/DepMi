@@ -37,6 +37,8 @@ const confirmSchema = z.object({
     category: z.nativeEnum(Category),
     stock: z.number().int().min(0).default(1),
     deliveryFee: z.number().min(0).nullable().optional(),
+    isDigital: z.boolean().default(false),
+    inStock: z.boolean().default(true),
     imageUrls: z.array(z.string()).min(1),
 });
 
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'Invalid request', errors: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { tokenId, storeId, title, description, price, category, stock, deliveryFee, imageUrls } = parsed.data;
+    const { tokenId, storeId, title, description, price, category, stock, deliveryFee, isDigital, inStock, imageUrls } = parsed.data;
 
     // Re-validate the token
     const token = await prisma.botImportToken.findUnique({ where: { id: tokenId } });
@@ -93,6 +95,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             images: imageUrls,
             stock,
             deliveryFee: deliveryFee ?? null,
+            isDigital,
+            inStock,
         });
 
         return NextResponse.json({

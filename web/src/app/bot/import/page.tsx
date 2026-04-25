@@ -50,6 +50,10 @@ export default function BotImportPage() {
         description: '',
         category: 'OTHER',
         stock: '1',
+        deliveryFeeMode: 'store' as 'store' | 'free' | 'custom',
+        deliveryFeeCustom: '',
+        isDigital: false,
+        forSale: true,
     });
 
     useEffect(() => {
@@ -106,6 +110,11 @@ export default function BotImportPage() {
 
         setSubmitting(true);
         try {
+            const deliveryFee =
+                form.deliveryFeeMode === 'free' ? 0
+                : form.deliveryFeeMode === 'custom' ? (Number(form.deliveryFeeCustom) || 0)
+                : null; // 'store' → inherit
+
             const res = await fetch('/api/bot/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -117,7 +126,9 @@ export default function BotImportPage() {
                     price: Number(form.price),
                     category: form.category,
                     stock: Number(form.stock) || 1,
-                    deliveryFee: null, // inherit from store settings
+                    deliveryFee,
+                    isDigital: form.isDigital,
+                    inStock: form.forSale,
                     imageUrls: tokenData.imageUrls,
                 }),
             });
@@ -283,7 +294,7 @@ export default function BotImportPage() {
 
                     {/* Stock */}
                     <div style={fieldStyle}>
-                        <label style={labelStyle}>Quantity available</label>
+                        <label style={labelStyle}>Quantity in stock</label>
                         <input
                             type="text"
                             inputMode="numeric"
@@ -293,13 +304,85 @@ export default function BotImportPage() {
                         />
                     </div>
 
-                    {/* Delivery note */}
-                    <div style={{
-                        padding: '10px 12px', borderRadius: 10, marginBottom: 20,
-                        background: 'var(--bg-elevated)', border: '1px solid var(--card-border)',
-                        fontSize: '0.78rem', color: 'var(--text-muted)',
-                    }}>
-                        Delivery fee will use your store settings (local + nationwide rates). You can adjust it after listing.
+                    {/* Physical / Digital */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Product type</label>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            {(['Physical', 'Digital'] as const).map(type => {
+                                const digital = type === 'Digital';
+                                const active = form.isDigital === digital;
+                                return (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, isDigital: digital, deliveryFeeMode: digital ? 'free' : f.deliveryFeeMode }))}
+                                        style={{
+                                            flex: 1, padding: '10px', borderRadius: 10, fontWeight: 600,
+                                            fontSize: '0.88rem', cursor: 'pointer', border: '1.5px solid',
+                                            borderColor: active ? 'var(--primary)' : 'var(--border)',
+                                            background: active ? 'rgba(255,92,56,0.08)' : 'var(--bg-elevated)',
+                                            color: active ? 'var(--primary)' : 'var(--text-muted)',
+                                        }}
+                                    >{type}</button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Delivery Fee */}
+                    {!form.isDigital && (
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>Delivery fee</label>
+                            {(['store', 'free', 'custom'] as const).map(mode => (
+                                <label key={mode} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                                    <input
+                                        type="radio"
+                                        name="deliveryFeeMode"
+                                        checked={form.deliveryFeeMode === mode}
+                                        onChange={() => setForm(f => ({ ...f, deliveryFeeMode: mode }))}
+                                        style={{ accentColor: 'var(--primary)' }}
+                                    />
+                                    <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                        {mode === 'store' && 'Use store settings'}
+                                        {mode === 'free' && 'Free delivery'}
+                                        {mode === 'custom' && 'Custom flat rate'}
+                                    </span>
+                                </label>
+                            ))}
+                            {form.deliveryFeeMode === 'custom' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>₦</span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={form.deliveryFeeCustom}
+                                        onChange={(e) => setForm(f => ({ ...f, deliveryFeeCustom: e.target.value.replace(/\D/g, '') }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                        placeholder="e.g. 1500"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* For Sale toggle */}
+                    <div style={{ ...fieldStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <label style={{ ...labelStyle, marginBottom: 0 }}>List as available for sale</label>
+                        <button
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, forSale: !f.forSale }))}
+                            style={{
+                                width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                                background: form.forSale ? 'var(--primary)' : 'var(--border)',
+                                position: 'relative', transition: 'background 0.2s',
+                            }}
+                        >
+                            <span style={{
+                                position: 'absolute', top: 3, width: 18, height: 18, borderRadius: '50%',
+                                background: '#fff', transition: 'left 0.2s',
+                                left: form.forSale ? 23 : 3,
+                            }} />
+                        </button>
                     </div>
 
                     <button
