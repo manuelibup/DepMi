@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { checkReservedAccountPayment } from '@/lib/monnify'
 
 /**
  * GET /api/checkout/verify?orderId=xxx
  * Polled by the checkout UI every 5s to detect payment.
+ * Paystack uses redirect+webhook — payment status is always reflected in DB.
  * Returns { paid: boolean, status: string }
  */
 export async function GET(req: NextRequest) {
@@ -26,8 +26,6 @@ export async function GET(req: NextRequest) {
       id: true,
       buyerId: true,
       status: true,
-      escrowStatus: true,
-      virtualAcctExpiry: true,
     },
   })
 
@@ -35,25 +33,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  // Already confirmed — return immediately (webhook beat the poll)
-  if (order.status === 'CONFIRMED') {
-    return NextResponse.json({ paid: true, status: 'CONFIRMED' })
-  }
-
-  // Check expiry
-  if (order.virtualAcctExpiry && new Date() > order.virtualAcctExpiry) {
-    return NextResponse.json({ paid: false, status: 'EXPIRED' })
-  }
-
-  // Poll Monnify for this order's reserved account
-  const accountReference = `depmi-order-${orderId}`
-  const result = await checkReservedAccountPayment(accountReference)
-
-  if (result?.paid) {
-    // Payment detected via poll (webhook may have been delayed)
-    // The webhook handler is authoritative — this is just a fallback signal
-    return NextResponse.json({ paid: true, status: 'CONFIRMED' })
-  }
-
-  return NextResponse.json({ paid: false, status: order.status })
+  const paid = order.status === 'CONFIRMED'
+  return NextResponse.json({ paid, status: order.status })
 }
