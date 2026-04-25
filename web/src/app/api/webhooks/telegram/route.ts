@@ -149,5 +149,17 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
         await handleTextOnlyMessage('TELEGRAM', reply);
     } catch (err) {
         console.error('[telegram-webhook] Error:', err);
+        // Try to send an error message so the vendor knows something went wrong
+        try {
+            const message = update.message || update.channel_post;
+            if (message?.chat?.id) {
+                await sendTelegramMessage(
+                    message.chat.id,
+                    `⚠️ Something went wrong processing your message. Please try again in a moment.`
+                );
+            }
+        } catch {
+            // ignore secondary error
+        }
     }
 }
