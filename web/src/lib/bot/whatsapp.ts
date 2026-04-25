@@ -73,7 +73,7 @@ async function getOrCreateSession(phone: string): Promise<{ id: string; storeId:
     return {
         id: session.id,
         storeId: session.storeId,
-        state: session.state as SessionState,
+        state: session.state as unknown as SessionState,
     };
 }
 
