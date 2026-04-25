@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { initializePayment } from '@/lib/paystack'
+import { initializePayment } from '@/lib/flutterwave'
 
 /**
  * POST /api/checkout/initialize
@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
       ? 0
       : (shipbubbleDeliveryFee ? Number(shipbubbleDeliveryFee) : Number(product.deliveryFee || 2500))
     const subtotalAndDelivery = totalItemsAmount + deliveryFee
-    // Service fee — currently waived (set to 0 until reintroduced with explicit approval)
-    const gatewayFee = 0
+    // Service & escrow fee (5%) — charged to buyer; DepMi's revenue, separate from Flutterwave's cost
+    const gatewayFee = 0; // Math.round(subtotalAndDelivery * 0.03 * 100) / 100
     const finalAmountToPay = subtotalAndDelivery + gatewayFee
 
     // Create or find existing Order
@@ -84,8 +84,7 @@ export async function POST(req: NextRequest) {
           return tx.order.update({
             where: { id: body.resumeOrderId },
             data: {
-              totalAmount: finalAmountToPay,
-              platformFeeNgn: gatewayFee,
+              totalAmount: subtotalAndDelivery,
               deliveryAddress,
               deliveryMethod,
               deliveryNote: deliveryNote ?? null,
@@ -98,8 +97,7 @@ export async function POST(req: NextRequest) {
         data: {
           buyerId: session.user.id,
           sellerId: product.store.id,
-          totalAmount: finalAmountToPay,
-          platformFeeNgn: gatewayFee,
+          totalAmount: subtotalAndDelivery,
           status: 'PENDING',
           escrowStatus: 'HELD',
           paymentRail: 'NAIRA',
@@ -124,7 +122,7 @@ export async function POST(req: NextRequest) {
       })
     })
 
-    // Generate Paystack payment link
+    // Generate Flutterwave payment link
     let payment
     try {
       payment = await initializePayment({
@@ -135,11 +133,12 @@ export async function POST(req: NextRequest) {
       })
     } catch (err: any) {
       try {
+        await prisma.orderItem.deleteMany({ where: { orderId: order.id } })
         await prisma.order.delete({ where: { id: order.id } })
       } catch (cleanupErr) {
         console.error('[checkout/initialize] Failed to cleanup order:', cleanupErr)
       }
-      console.error('[checkout/initialize] Paystack error:', err)
+      console.error('[checkout/initialize] Flutterwave error:', err)
       return NextResponse.json(
         { error: `Payment provider error: ${err.message || 'Unavailable'}. Please try again.` },
         { status: 502 },
