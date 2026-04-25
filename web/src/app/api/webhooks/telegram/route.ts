@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
-import { sendTelegramMessage, getTelegramFileUrl, setTelegramWebhook, TelegramUpdate } from '@/lib/bot/telegram';
+import { sendTelegramMessage, sendTelegramMessageWithButtons, answerCallbackQuery, getTelegramFileUrl, setTelegramWebhook, TelegramUpdate } from '@/lib/bot/telegram';
 import { handleProductPost, handleTextOnlyMessage } from '@/lib/bot/universal-handler';
 
 export const maxDuration = 60;
@@ -54,6 +54,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 async function processAsync(update: TelegramUpdate): Promise<void> {
     try {
+        // Handle inline button taps
+        if (update.callback_query) {
+            const { id, from, data, message } = update.callback_query;
+            await answerCallbackQuery(id);
+            if (data === 'how_to_list') {
+                const chatId = message?.chat.id ?? from.id;
+                await sendTelegramMessage(chatId,
+                    `📸 *Send me a product photo!*\n\n` +
+                    `Include the price in the caption, e.g:\n` +
+                    `_"Red Ankara bag 5500"_\n` +
+                    `_"iPhone 13 Pro — ₦380k"_\n\n` +
+                    `I'll do the rest.`
+                );
+            }
+            return;
+        }
+
         const message = update.message || update.channel_post;
         if (!message) return;
 
@@ -103,6 +120,27 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
                     caption,
                 },
                 reply
+            );
+            return;
+        }
+
+        // Bot commands
+        const text = message.text?.trim() ?? '';
+        if (text.startsWith('/start') || text.startsWith('/help')) {
+            await sendTelegramMessageWithButtons(
+                chatId,
+                `👋 *Welcome to DepMi Bot!*\n\n` +
+                `I help you list products on DepMi in seconds — straight from Telegram.\n\n` +
+                `*How to list a product:*\n` +
+                `1. Send me a *photo* of your product\n` +
+                `2. Add the *price* in the caption (e.g. "Ankara bag 5500")\n` +
+                `3. I'll parse it with AI and send you a link\n` +
+                `4. Click the link → review → *listed!* ✅\n\n` +
+                `_That's it. No forms, no stress._`,
+                [
+                    [{ text: '🛍 Browse DepMi', url: 'https://www.depmi.com' }],
+                    [{ text: '📦 List a product — send a photo now', callback_data: 'how_to_list' }],
+                ],
             );
             return;
         }

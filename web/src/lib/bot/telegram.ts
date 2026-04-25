@@ -2,6 +2,8 @@ const TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const BASE = `https://api.telegram.org/bot${TOKEN}`;
 const FILE_BASE = `https://api.telegram.org/file/bot${TOKEN}`;
 
+type InlineButton = { text: string; url?: string; callback_data?: string };
+
 /** Send a text message to a Telegram chat */
 export async function sendTelegramMessage(chatId: number | string, text: string): Promise<void> {
     const res = await fetch(`${BASE}/sendMessage`, {
@@ -11,7 +13,6 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
             chat_id: chatId,
             text,
             parse_mode: 'Markdown',
-            // Disable link previews so the magic link doesn't expand into a big embed
             disable_web_page_preview: true,
         }),
     });
@@ -19,6 +20,30 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
     if (!res.ok) {
         const err = await res.text();
         console.error('[telegram] sendMessage failed:', res.status, err);
+    }
+}
+
+/** Send a message with inline keyboard buttons */
+export async function sendTelegramMessageWithButtons(
+    chatId: number | string,
+    text: string,
+    buttons: InlineButton[][],   // rows of buttons
+): Promise<void> {
+    const res = await fetch(`${BASE}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+            reply_markup: { inline_keyboard: buttons },
+        }),
+    });
+
+    if (!res.ok) {
+        const err = await res.text();
+        console.error('[telegram] sendMessageWithButtons failed:', res.status, err);
     }
 }
 
@@ -51,10 +76,25 @@ export async function setTelegramWebhook(webhookUrl: string): Promise<boolean> {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/** Answer a callback_query (button tap) so Telegram stops showing the loading spinner */
+export async function answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
+    await fetch(`${BASE}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
+    });
+}
+
 export interface TelegramUpdate {
     update_id: number;
     message?: TelegramMessage;
     channel_post?: TelegramMessage;
+    callback_query?: {
+        id: string;
+        from: { id: number };
+        message?: TelegramMessage;
+        data?: string;
+    };
 }
 
 export interface TelegramMessage {
