@@ -83,6 +83,10 @@ export default function BotImportPage() {
                     description: tokenJson.parsedData.description || '',
                     category: tokenJson.parsedData.category || 'OTHER',
                     stock: '1',
+                    deliveryFeeMode: 'store',
+                    deliveryFeeCustom: '',
+                    isDigital: false,
+                    forSale: true,
                 });
 
                 if (storesRes.ok) {
