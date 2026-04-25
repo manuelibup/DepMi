@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { sendTelegramMessage, getTelegramFileUrl, setTelegramWebhook, TelegramUpdate } from '@/lib/bot/telegram';
 import { handleProductPost, handleTextOnlyMessage } from '@/lib/bot/universal-handler';
 
@@ -24,8 +25,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ ok: true });
     }
 
-    // Respond 200 immediately — Telegram will retry if we take too long
-    void processAsync(update);
+    // Respond 200 immediately, but keep the function alive until processing completes
+    waitUntil(processAsync(update));
 
     return NextResponse.json({ ok: true });
 }
