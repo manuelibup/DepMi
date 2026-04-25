@@ -12,7 +12,7 @@ export async function GET() {
 
     const stores = await prisma.store.findMany({
         where: { ownerId: session.user.id },
-        select: { slug: true, name: true },
+        select: { id: true, slug: true, name: true },
         orderBy: { createdAt: 'desc' },
     });
 
