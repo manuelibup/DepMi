@@ -57,8 +57,15 @@ export async function handleProductPost(
         }
     }
 
-    // AI-parse the product
-    const parsed = await parseProductFromPost(cloudinaryUrl || null, caption);
+    // AI-parse the product (optional — skipped if ANTHROPIC_API_KEY is not set)
+    let parsed = null;
+    if (process.env.ANTHROPIC_API_KEY) {
+        try {
+            parsed = await parseProductFromPost(cloudinaryUrl || null, caption);
+        } catch (err) {
+            console.error(`[bot/${platform}] AI parse failed:`, err);
+        }
+    }
 
     // Create import token (30-min TTL, storeId null — vendor picks on web)
     const token = await prisma.botImportToken.create({
@@ -66,7 +73,7 @@ export async function handleProductPost(
             platform,
             postId,
             storeId: null,
-            parsedData: parsed as object,
+            parsedData: (parsed ?? { title: '', price: 0, description: caption.substring(0, 500), category: 'OTHER', confidence: 'low' }) as object,
             imageUrls: cloudinaryUrl ? [cloudinaryUrl] : [],
             expiresAt: new Date(Date.now() + 30 * 60 * 1000),
         },
@@ -74,14 +81,20 @@ export async function handleProductPost(
 
     const link = `${BASE_URL}/bot/import?token=${token.id}`;
 
-    const confidenceNote = parsed.confidence === 'low'
-        ? '\n\n⚠️ I wasn\'t sure about the price — you can fix it on the page.'
-        : '';
-
-    await sendReply(
-        `I found: *${parsed.title}* — ₦${parsed.price > 0 ? parsed.price.toLocaleString() : '?'}${confidenceNote}\n\n` +
-        `Click to review and list it on DepMi (link expires in 30 min):\n${link}`
-    );
+    if (parsed) {
+        const confidenceNote = parsed.confidence === 'low'
+            ? '\n\n⚠️ I wasn\'t sure about the price — double-check it on the page.'
+            : '';
+        await sendReply(
+            `I found: *${parsed.title}* — ₦${parsed.price > 0 ? parsed.price.toLocaleString() : '?'}${confidenceNote}\n\n` +
+            `Click to review and list it on DepMi (link expires in 30 min):\n${link}`
+        );
+    } else {
+        await sendReply(
+            `Got your photo! ✅\n\n` +
+            `Click the link below to fill in the details and list it on DepMi (expires in 30 min):\n${link}`
+        );
+    }
 }
 
 /**
