@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { verifyByTxRef } from '@/lib/paystack';
+import { verifyByTxRef } from '@/lib/flutterwave';
 
 // Simple per-user rate limiting: max 5 verify attempts per 10 minutes
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;

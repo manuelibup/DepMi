@@ -203,13 +203,10 @@ export default function StoreCreatePage() {
                     {/* Location */}
                     <div>
                         <label htmlFor="location" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>Primary Location</label>
-                        <input
+                        <select
                             id="location"
-                            list="nigeria-cities"
-                            type="text"
                             value={form.location}
                             onChange={(e) => setForm({ ...form, location: e.target.value })}
-                            placeholder="e.g. Lagos, Nigeria"
                             required
                             style={{
                                 width: '100%',
@@ -217,22 +214,52 @@ export default function StoreCreatePage() {
                                 borderRadius: 'var(--radius-md)',
                                 border: '1px solid var(--border)',
                                 background: 'var(--input-bg)',
-                                color: 'var(--text-primary)',
-                                outline: 'none'
+                                color: form.location ? 'var(--text-primary)' : 'var(--text-muted)',
+                                outline: 'none',
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                cursor: 'pointer',
                             }}
-                        />
-                        <datalist id="nigeria-cities">
-                            <option value="Lagos, Nigeria" />
-                            <option value="Abuja, Nigeria" />
-                            <option value="Port Harcourt, Nigeria" />
-                            <option value="Ibadan, Nigeria" />
-                            <option value="Kano, Nigeria" />
-                            <option value="Uyo, Nigeria" />
-                            <option value="Enugu, Nigeria" />
-                            <option value="Benin City, Nigeria" />
-                            <option value="Kaduna, Nigeria" />
-                            <option value="Jos, Nigeria" />
-                        </datalist>
+                        >
+                            <option value="" disabled>Select your state</option>
+                            <option value="Abia, Nigeria">Abia</option>
+                            <option value="Adamawa, Nigeria">Adamawa</option>
+                            <option value="Akwa Ibom, Nigeria">Akwa Ibom</option>
+                            <option value="Anambra, Nigeria">Anambra</option>
+                            <option value="Bauchi, Nigeria">Bauchi</option>
+                            <option value="Bayelsa, Nigeria">Bayelsa</option>
+                            <option value="Benue, Nigeria">Benue</option>
+                            <option value="Borno, Nigeria">Borno</option>
+                            <option value="Cross River, Nigeria">Cross River</option>
+                            <option value="Delta, Nigeria">Delta</option>
+                            <option value="Ebonyi, Nigeria">Ebonyi</option>
+                            <option value="Edo, Nigeria">Edo</option>
+                            <option value="Ekiti, Nigeria">Ekiti</option>
+                            <option value="Enugu, Nigeria">Enugu</option>
+                            <option value="FCT Abuja, Nigeria">FCT Abuja</option>
+                            <option value="Gombe, Nigeria">Gombe</option>
+                            <option value="Imo, Nigeria">Imo</option>
+                            <option value="Jigawa, Nigeria">Jigawa</option>
+                            <option value="Kaduna, Nigeria">Kaduna</option>
+                            <option value="Kano, Nigeria">Kano</option>
+                            <option value="Katsina, Nigeria">Katsina</option>
+                            <option value="Kebbi, Nigeria">Kebbi</option>
+                            <option value="Kogi, Nigeria">Kogi</option>
+                            <option value="Kwara, Nigeria">Kwara</option>
+                            <option value="Lagos, Nigeria">Lagos</option>
+                            <option value="Nasarawa, Nigeria">Nasarawa</option>
+                            <option value="Niger, Nigeria">Niger</option>
+                            <option value="Ogun, Nigeria">Ogun</option>
+                            <option value="Ondo, Nigeria">Ondo</option>
+                            <option value="Osun, Nigeria">Osun</option>
+                            <option value="Oyo, Nigeria">Oyo</option>
+                            <option value="Plateau, Nigeria">Plateau</option>
+                            <option value="Rivers, Nigeria">Rivers</option>
+                            <option value="Sokoto, Nigeria">Sokoto</option>
+                            <option value="Taraba, Nigeria">Taraba</option>
+                            <option value="Yobe, Nigeria">Yobe</option>
+                            <option value="Zamfara, Nigeria">Zamfara</option>
+                        </select>
                     </div>
 
                     {/* Student Vendor Toggle */}

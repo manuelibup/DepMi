@@ -24,7 +24,10 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
     const product = await prisma.product.findUnique({
         where: { id, storeId: store.id },
-        include: { images: { orderBy: { order: 'asc' } } },
+        include: {
+            images: { orderBy: { order: 'asc' } },
+            variants: { orderBy: { createdAt: 'asc' } },
+        },
     });
 
     if (!product) notFound();
@@ -36,6 +39,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         price: Number(product.price),
         currency: product.currency,
         category: product.category as string,
+        categoryOther: product.categoryOther ?? null,
         imageUrl: product.images[0]?.url ?? '',
         imageUrls: product.images.map(img => img.url),
         videoUrl: product.videoUrl ?? '',
@@ -44,6 +48,12 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         deliveryFee: Number(product.deliveryFee),
         isDigital: product.isDigital,
         fileUrl: product.fileUrl ?? null,
+        variants: product.variants.map(v => ({
+            id: v.id,
+            name: v.name,
+            price: String(Number(v.price)),
+            stock: String(v.stock),
+        })),
     };
 
     return (

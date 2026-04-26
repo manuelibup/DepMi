@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { resolveAccountName } from '@/lib/paystack';
+import { resolveAccountName } from '@/lib/flutterwave';
 
 export async function GET(req: Request) {
     try {

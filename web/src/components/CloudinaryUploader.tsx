@@ -135,7 +135,8 @@ export default function CloudinaryUploader({
 
       setProgress(30);
 
-      // Step B: Post directly to Cloudinary CDN via XHR for progression
+      // Step B: Post directly to Cloudinary CDN via XHR for progress tracking.
+      // Wrapped in a Promise so callers can properly await completion.
       const formData = new FormData();
       formData.append('file', file);
       formData.append('api_key', apiKey);
@@ -143,69 +144,51 @@ export default function CloudinaryUploader({
       formData.append('signature', signature);
       formData.append('folder', folder);
       formData.append('upload_preset', upload_preset);
+      if (resourceType !== 'image') formData.append('resource_type', resourceType);
 
-      const xhr = new XMLHttpRequest();
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const resourceTypeParam = resourceType === 'auto' ? 'auto' : resourceType;
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/${resourceTypeParam}/upload`, true);
 
-      const resourceTypeParam = resourceType === 'auto' ? 'auto' : resourceType; // 'image', 'raw', or 'auto'
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceTypeParam}/upload`;
-
-      xhr.open('POST', uploadUrl, true);
-
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          // Scale 30% to 100% since we already jumped to 30 from the sig fetch
-          setProgress(30 + Math.round(percentComplete * 0.7));
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          // Validate the URL is actually from our Cloudinary account before storing
-          const expectedPrefix = `https://res.cloudinary.com/${cloudName}/`;
-          if (!response.secure_url?.startsWith(expectedPrefix)) {
-            setError('Upload response is invalid. Please try again.');
-            setIsUploading(false);
-            setProgress(0);
-            return;
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(30 + Math.round((e.loaded / e.total) * 70));
           }
-          setProgress(100);
-          setIsUploading(false);
-          // Only pass back the necessary attributes mapped to our DB target strategy
-          onUploadSuccess({
-            public_id: response.public_id,
-            format: response.format,
-            secure_url: response.secure_url,
-            original_filename: response.original_filename
-          });
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        } else {
-          try {
-            const errorData = JSON.parse(xhr.responseText);
-            setError(errorData.error?.message || 'Upload failed at Cloudinary');
-          } catch {
-            setError('Upload failed at Cloudinary (Unknown error)');
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            const expectedPrefix = `https://res.cloudinary.com/${cloudName}/`;
+            if (!response.secure_url?.startsWith(expectedPrefix)) {
+              reject(new Error('Upload response is invalid. Please try again.'));
+              return;
+            }
+            setProgress(100);
+            onUploadSuccess({
+              public_id: response.public_id,
+              format: response.format,
+              secure_url: response.secure_url,
+              original_filename: response.original_filename,
+            });
+            resolve();
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              reject(new Error(errorData.error?.message || 'Upload failed at Cloudinary'));
+            } catch {
+              reject(new Error('Upload failed at Cloudinary'));
+            }
           }
-          setIsUploading(false);
-          setProgress(0);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-      };
+        };
 
-      xhr.onerror = () => {
-        setError('Upload failed due to network error.');
-        setIsUploading(false);
-        setProgress(0);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      };
+        xhr.onerror = () => reject(new Error('Upload failed due to network error.'));
+        xhr.send(formData);
+      });
 
-      // Ensure resource_type is in the body for non-image uploads
-      if (resourceType !== 'image') {
-        formData.append('resource_type', resourceType);
-      }
-
-      xhr.send(formData);
+      setIsUploading(false);
+      setProgress(0);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');

@@ -13,6 +13,13 @@ const CATEGORIES = [
 ];
 const CURRENCIES = ['₦', '$', '£', '€'];
 
+interface ProductVariant {
+    id?: string;
+    name: string;
+    price: string;
+    stock: string;
+}
+
 interface ProductData {
     id: string;
     title: string;
@@ -29,6 +36,7 @@ interface ProductData {
     deliveryFee: number;
     isDigital: boolean;
     fileUrl: string | null;
+    variants?: ProductVariant[];
 }
 
 export default function EditProductForm({ product, storeSlug }: { product: ProductData; storeSlug: string }) {
@@ -56,7 +64,10 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
         fileUrl: product.fileUrl ?? '',
     });
 
-    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | null>(null);
+    const [variants, setVariants] = useState<ProductVariant[]>(
+        (product.variants ?? []).map(v => ({ id: v.id, name: v.name, price: v.price, stock: v.stock }))
+    );
+    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | 'variants' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -83,13 +94,20 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        const hasVariants = variants.length > 0;
+
         if (!form.title.trim()) {
             setErrorMsg('Please provide a title.');
             return;
         }
-        if (!form.price || isNaN(parseFloat(form.price))) {
-            setErrorMsg('Please provide a valid price.');
+        if (!hasVariants && (!form.price || isNaN(parseFloat(form.price)))) {
+            setErrorMsg('Please provide a price or add variants with individual prices.');
             setActiveInput('price');
+            return;
+        }
+        if (hasVariants && variants.some(v => !v.name.trim() || !v.price || isNaN(Number(v.price)))) {
+            setErrorMsg('Each variant needs a name and price.');
+            setActiveInput('variants');
             return;
         }
 
@@ -103,7 +121,7 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                 body: JSON.stringify({
                     title: form.title,
                     description: form.description,
-                    price: Number(form.price),
+                    price: hasVariants ? 0 : Number(form.price),
                     currency: form.currency,
                     category: form.category,
                     categoryOther: form.category === 'OTHER' ? form.categoryOther || null : null,
@@ -114,6 +132,9 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     deliveryFee: form.isDigital ? 0 : (Number(form.deliveryFee) || 0),
                     isDigital: form.isDigital,
                     fileUrl: form.isDigital ? (form.fileUrl || null) : null,
+                    variants: hasVariants
+                        ? variants.map(v => ({ name: v.name.trim(), price: Number(v.price), stock: Number(v.stock) || 1 }))
+                        : [],
                 }),
             });
 
@@ -377,16 +398,74 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                 </div>
             )}
 
+            {activeInput === 'variants' && (
+                <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Each variant has its own name, price and stock. Removes the single price field.
+                    </p>
+                    {variants.map((v, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                            <input
+                                type="text"
+                                placeholder="Name (e.g. Size L)"
+                                value={v.name}
+                                onChange={e => setVariants(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                                style={{ flex: 2, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                            />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Price"
+                                value={v.price}
+                                onChange={e => setVariants(prev => prev.map((x, j) => j === i ? { ...x, price: e.target.value.replace(/\D/g, '') } : x))}
+                                style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                            />
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Qty"
+                                value={v.stock}
+                                onChange={e => setVariants(prev => prev.map((x, j) => j === i ? { ...x, stock: e.target.value.replace(/\D/g, '') } : x))}
+                                style={{ width: 52, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                            />
+                            <button type="button" onClick={() => setVariants(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, lineHeight: 1 }}>
+                                <X size={16} />
+                            </button>
+                        </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                        <button type="button" onClick={() => setVariants(prev => [...prev, { name: '', price: '', stock: '1' }])} style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px dashed var(--primary)', background: 'rgba(255,92,56,0.06)', color: 'var(--primary)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+                            + Add variant
+                        </button>
+                        <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                    </div>
+                </div>
+            )}
+
             {/* Bottom action bar */}
             <div className={styles.actionBar}>
                 <div className={styles.pillsScroll}>
+                    {variants.length === 0 && (
+                        <button
+                            type="button"
+                            className={`${styles.pill} ${form.price ? styles.pillActive : ''}`}
+                            onClick={() => setActiveInput(activeInput === 'price' ? null : 'price')}
+                        >
+                            <Tag size={16} className={styles.pillIcon} />
+                            {form.price ? `${form.currency}${form.displayPrice}` : 'Price'}
+                        </button>
+                    )}
+
                     <button
                         type="button"
-                        className={`${styles.pill} ${form.price ? styles.pillActive : ''}`}
-                        onClick={() => setActiveInput(activeInput === 'price' ? null : 'price')}
+                        className={`${styles.pill} ${variants.length > 0 ? styles.pillActive : ''}`}
+                        onClick={() => {
+                            setActiveInput(activeInput === 'variants' ? null : 'variants');
+                            if (!variants.length) setVariants([{ name: '', price: '', stock: '1' }]);
+                        }}
                     >
-                        <Tag size={16} className={styles.pillIcon} />
-                        {form.price ? `${form.currency}${form.displayPrice}` : 'Price'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        {variants.length > 0 ? `${variants.length} Variant${variants.length > 1 ? 's' : ''}` : 'Variants'}
                     </button>
 
                     <button

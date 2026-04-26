@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getBankList, resolveAccountName, initiatePayout } from '@/lib/paystack';
+import { getBankList, resolveAccountName, initiatePayout } from '@/lib/flutterwave';
 import { z } from 'zod';
 
 const payoutSchema = z.object({

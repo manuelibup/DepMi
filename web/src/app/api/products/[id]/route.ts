@@ -47,7 +47,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title, description, price, currency, category, images, imageUrl, videoUrl, inStock, isPortfolioItem, deliveryFee, isDigital, fileUrl } = body;
+    const { title, description, price, currency, category, categoryOther, images, imageUrl, videoUrl, inStock, isPortfolioItem, deliveryFee, isDigital, fileUrl, variants } = body;
 
     const wasOutOfStock = product.inStock === false;
 
@@ -59,6 +59,7 @@ export async function PATCH(
             ...(price !== undefined && { price: Number(price) }),
             ...(currency !== undefined && { currency }),
             ...(category !== undefined && { category }),
+            ...(categoryOther !== undefined && { categoryOther: category === 'OTHER' ? (categoryOther || null) : null }),
             ...(videoUrl !== undefined && { videoUrl: videoUrl || null }),
             ...(inStock !== undefined && { inStock }),
             ...(isPortfolioItem !== undefined && { isPortfolioItem }),
@@ -80,6 +81,21 @@ export async function PATCH(
         if (imageList.length > 0) {
             await prisma.productImage.createMany({
                 data: imageList.map((url: string, order: number) => ({ productId: id, url, order })),
+            });
+        }
+    }
+
+    // Handle variants: full replace strategy
+    if (Array.isArray(variants)) {
+        await prisma.productVariant.deleteMany({ where: { productId: id } });
+        if (variants.length > 0) {
+            await prisma.productVariant.createMany({
+                data: variants.map((v: { name: string; price: number; stock: number }) => ({
+                    productId: id,
+                    name: v.name,
+                    price: Number(v.price),
+                    stock: Number(v.stock) || 1,
+                })),
             });
         }
     }
