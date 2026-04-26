@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true })
     }
 
-    let confirmedOrder: {
+    type ConfirmedOrder = {
         storeId: string
         storeName: string
         productTitle: string
@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
         sellerOwnerId: string
         sellerPhone: string | null
         totalAmount: number
-    } | null = null
+    }
+    // eslint-disable-next-line prefer-const
+    let confirmedOrder: ConfirmedOrder | null = null
 
     try {
         await prisma.$transaction(async (tx) => {
@@ -144,12 +146,15 @@ export async function POST(req: NextRequest) {
         console.error('[flutterwave-webhook] DB error:', err)
     }
 
-    if (confirmedOrder) {
-        void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
-        if (confirmedOrder.sellerPhone) {
-            void notifyWhatsAppNewOrder(confirmedOrder.sellerPhone, orderId.slice(-6).toUpperCase(), confirmedOrder.productTitle, confirmedOrder.totalAmount)
+    // TypeScript narrows confirmedOrder to null after try/catch because the assignment
+    // happens inside an async callback (control flow doesn't track closures). Double-cast.
+    const finalOrder = confirmedOrder as unknown as ConfirmedOrder | null
+    if (finalOrder) {
+        void sendOrderAutoDM(finalOrder.buyerId, finalOrder.sellerOwnerId, orderId)
+        if (finalOrder.sellerPhone) {
+            void notifyWhatsAppNewOrder(finalOrder.sellerPhone, orderId.slice(-6).toUpperCase(), finalOrder.productTitle, finalOrder.totalAmount)
         }
-        const { storeId, storeName, productTitle, storeSlug } = confirmedOrder
+        const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
             const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })
             if (followers.length > 0) {
