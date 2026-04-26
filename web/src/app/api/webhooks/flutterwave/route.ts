@@ -144,14 +144,12 @@ export async function POST(req: NextRequest) {
         console.error('[flutterwave-webhook] DB error:', err)
     }
 
-    type ConfirmedOrderData = typeof confirmedOrder
-    const finalOrder = confirmedOrder as ConfirmedOrderData | null
-    if (finalOrder) {
-        void sendOrderAutoDM(finalOrder.buyerId, finalOrder.sellerOwnerId, orderId)
-        if (finalOrder.sellerPhone) {
-            void notifyWhatsAppNewOrder(finalOrder.sellerPhone, orderId.slice(-6).toUpperCase(), finalOrder.productTitle, finalOrder.totalAmount)
+    if (confirmedOrder) {
+        void sendOrderAutoDM(confirmedOrder.buyerId, confirmedOrder.sellerOwnerId, orderId)
+        if (confirmedOrder.sellerPhone) {
+            void notifyWhatsAppNewOrder(confirmedOrder.sellerPhone, orderId.slice(-6).toUpperCase(), confirmedOrder.productTitle, confirmedOrder.totalAmount)
         }
-        const { storeId, storeName, productTitle, storeSlug } = finalOrder
+        const { storeId, storeName, productTitle, storeSlug } = confirmedOrder
         try {
             const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })
             if (followers.length > 0) {
