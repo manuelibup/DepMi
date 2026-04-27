@@ -15,6 +15,7 @@ export interface BotProductInput {
     isDigital?: boolean;
     inStock?: boolean;
     videoUrl?: string | null;
+    variants?: string;        // comma-separated "Name/Size" list, e.g. "Red/S, Red/M"
 }
 
 /**
@@ -35,7 +36,17 @@ export async function createProductFromBot(input: BotProductInput) {
         isDigital = false,
         inStock = true,
         videoUrl = null,
+        variants = '',
     } = input;
+
+    // Parse "Red/S, Red/M, Blue/L" into variant records
+    const parsedVariants = variants
+        ? variants.split(',').map(v => v.trim()).filter(Boolean).map(name => ({
+            name: name.substring(0, 80),
+            price,
+            stock: 1,
+        }))
+        : [];
 
     const store = await prisma.store.findUnique({
         where: { id: storeId },
@@ -67,6 +78,9 @@ export async function createProductFromBot(input: BotProductInput) {
             videoUrl: videoUrl || null,
             images: images.length > 0
                 ? { create: images.map((url, i) => ({ url, order: i })) }
+                : undefined,
+            variants: parsedVariants.length > 0
+                ? { create: parsedVariants }
                 : undefined,
         },
         include: { images: true },

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
 import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
 import { notifyWhatsAppNewOrder } from '@/lib/whatsapp'
+import { notifySellerNewOrder } from '@/lib/bot/notify'
 import { bookShipment } from '@/lib/shipbubble'
 
 export async function POST(req: NextRequest) {
@@ -154,6 +155,12 @@ export async function POST(req: NextRequest) {
         if (finalOrder.sellerPhone) {
             void notifyWhatsAppNewOrder(finalOrder.sellerPhone, orderId.slice(-6).toUpperCase(), finalOrder.productTitle, finalOrder.totalAmount)
         }
+        void notifySellerNewOrder(finalOrder.storeId, {
+            shortId: orderId.slice(-6).toUpperCase(),
+            productTitle: finalOrder.productTitle,
+            amount: finalOrder.totalAmount,
+            buyerName: 'a buyer',
+        })
         const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
             const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })

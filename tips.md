@@ -873,4 +873,15 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
     - Append a version or "last updated" timestamp to the OG URL: `/api/og/product/123?v=171334000`.
     - When the content changes, the URL changes. The browser/platform sees it as a brand-new image and fetches the fresh data, while still allowing the old version to remain perfectly cached.
 
+---
+
+## 🤖 62. Telegram Bot State Machine Pattern
+
+- **The core rule**: Telegram bots can ONLY message users who have previously messaged the bot. Store `chatId` in `BotSession.externalId` at `/connect` time — never lose it.
+- **Permanent sessions**: Set `BotSession.expiresAt = null` for connected sellers so the cleanup cron never deletes them. Filter the cron with `AND: [{ expiresAt: { not: null } }, { expiresAt: { lt: now } }]`.
+- **Callback data limit**: Telegram inline button `callback_data` is capped at **64 bytes**. Use short colon-separated keys (`post:`, `cat:FASHION:`, `typ:D:`) rather than verbose strings.
+- **State machine in JSON**: Store `{ step: 'edit_price', tokenId: '...' }` in `BotSession.state`. On the next text reply, read the state, update the token, reset state to `confirm`, re-send the summary card. One DB write per edit round-trip.
+- **New photo = cancel active edit**: If a seller sends a new photo while mid-edit, treat it as a fresh listing. Creates a cleaner UX than blocking or erroring.
+- **Re-register webhook after deploy**: The Telegram webhook URL is registered once via `GET /api/webhooks/telegram` with `Authorization: Bearer <CRON_SECRET>`. Any URL change (e.g., domain change) requires re-registration.
+
 

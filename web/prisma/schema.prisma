@@ -79,6 +79,7 @@ model User {
   analyticsOptOut   Boolean          @default(false)
   strikeCount       Int              @default(0)
   strikes           Strike[]
+  botSessions       BotSession[]
 
   @@index([lastActiveAt])
   followerCount             Int              @default(0)
@@ -944,15 +945,27 @@ model PushSubscription {
 model BotSession {
   id         String      @id @default(uuid())
   platform   BotPlatform
-  externalId String      // WhatsApp E.164 phone, Instagram user ID, or Twitter user ID
+  externalId String      // WhatsApp E.164 phone, Instagram user ID, Telegram chat ID
+  userId     String?
   storeId    String?
-  state      Json        // { step, imageUrl, parsedData, rawCaption, messageId }
-  expiresAt  DateTime
+  state      Json        // { step, tokenId } — tracks multi-turn conversation
+  expiresAt  DateTime?   // null = permanent (connected seller)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   store      Store?      @relation(fields: [storeId], references: [id], onDelete: SetNull)
 
   @@unique([platform, externalId])
+  @@index([expiresAt])
+}
+
+model BotConnectToken {
+  id        String   @id @default(cuid())
+  chatId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
   @@index([expiresAt])
 }
 

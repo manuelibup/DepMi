@@ -530,6 +530,7 @@ These are evaluated ideas parked for after the first 20-vendor pilot:
 - **QR Weekly Auction:** Highest weekly bidder gets a featured store QR code. 7-day cycle (not 24h — too short for vendor ROI). Physical QR codes point to a redirect URL that updates each week. Revisit at 1,000 MAU.
 - **Affiliate Cross-App Links:** "Can't find it on DepMi?" referral links to Konga/Amazon — but only via affiliate programs (Amazon Associates, Konga Affiliate). Never plain links. Earns DepMi a commission on exits. Evaluate at 5,000 MAU when catalog gaps are measurable.
 - **@DepMiBot (Instagram/FB tag-to-list):** AI bot that parses vendor posts and auto-creates draft listings. Deferred — requires ML pipeline and Meta API approval.
+- **Telegram multi-image upload:** Bot currently processes single photos only. Multi-photo albums (media groups) require grouping by `media_group_id` — deferred.
 - **Resell / Internal Dropshipping:** Requires mature product catalog and split payment infrastructure (Phase 2.5 target — see Section H).
 - **Pro Subscription:** Only after vendors are organically profitable and requesting advanced tools.
 - **Meilisearch / Typesense:** Upgrade from Postgres full-text search if p99 search latency exceeds 300ms at scale.

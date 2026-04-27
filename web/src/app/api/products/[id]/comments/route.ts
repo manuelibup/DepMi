@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { NotificationType } from '@prisma/client';
 import { notifyWhatsAppNewComment } from '@/lib/whatsapp';
+import { notifySellerNewComment } from '@/lib/bot/notify';
 
 export async function POST(
     req: NextRequest,
@@ -50,8 +51,10 @@ export async function POST(
         select: {
             id: true,
             title: true,
+            slug: true,
             store: {
                 select: {
+                    id: true,
                     ownerId: true,
                     owner: { select: { phoneNumber: true, phoneVerified: true } },
                 },
@@ -100,6 +103,12 @@ export async function POST(
         if (ownerPhone && ownerPhoneVerified) {
             notifyWhatsAppNewComment(ownerPhone, comment.author.displayName, product.title).catch(() => {});
         }
+        notifySellerNewComment(product.store.id, {
+            productTitle: product.title,
+            commenterName: comment.author.displayName,
+            body: text,
+            productSlug: product.slug || productId,
+        }).catch(() => {});
     }
 
     // Extract @mentions and notify users

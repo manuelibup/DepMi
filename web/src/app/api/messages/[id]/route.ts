@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { sendPushToUser } from '@/lib/webpush';
 import { notifyWhatsAppNewMessage } from '@/lib/whatsapp';
+import { notifyUserTelegram } from '@/lib/bot/notify';
 import { applyContentFilter } from '@/lib/contentFilter';
 
 export async function GET(
@@ -134,6 +135,9 @@ export async function POST(
             if (r.phoneNumber && r.phoneVerified) {
                 notifyWhatsAppNewMessage(r.phoneNumber, senderName).catch(() => {});
             }
+        });
+        recipientIds.forEach(rid => {
+            notifyUserTelegram(rid, `✉️ *New message from ${senderName}*\n\n[Reply →](https://depmi.com/messages)`).catch(() => {});
         });
     }
 

@@ -16,8 +16,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const [deletedSessions, deletedTokens] = await Promise.all([
         prisma.botSession.deleteMany({
             where: {
-                expiresAt: { lt: now },
-                // Keep the Twitter watermark record
+                // expiresAt: null means permanent (connected seller) — never delete those
+                AND: [
+                    { expiresAt: { not: null } },
+                    { expiresAt: { lt: now } },
+                ],
                 NOT: { externalId: '__watermark__' },
             },
         }),

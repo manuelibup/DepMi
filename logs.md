@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 115 — Apr 27, 2026 — Telegram Bot: Native In-Bot Seller Experience](#session-115--apr-27-2026--telegram-bot-native-in-bot-seller-experience)
 - [Session 114 — Apr 22–25, 2026 — DepMi Bot (Universal Web Redirect Architecture)](#session-114--apr-2225-2026--depmi-bot-universal-web-redirect-architecture)
 - [Session 113 — Apr 21, 2026 — 3% Buyer Fee & URL Resilience](#session-113--apr-21-2026--3-buyer-fee--url-resilience)
 - [Session 112 — Apr 17, 2026 — Vercel Resource Guardrails & SSE Migration](#session-112--apr-17-2026--vercel-resource-guardrails--sse-migration)
@@ -95,6 +96,50 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 115 — Apr 27, 2026 — Telegram Bot: Native In-Bot Seller Experience
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### Description
+Upgraded the Telegram bot from a magic-link redirector into a fully native seller experience. Sellers connect once, then list products, manage inventory, and receive order/comment/DM notifications entirely within Telegram — no browser required.
+
+### Architecture
+- **One-time account linking** (`/connect` command): bot generates a 10-min `BotConnectToken`, sends URL, seller logs in on web, picks store, `BotSession` (permanent, `expiresAt: null`) is created. All subsequent interactions are bot-native.
+- **Hybrid listing UX**: photo → AI parse → summary card with [✅ Post it / ✏️ Edit / ❌ Cancel]. Confident parse = one-tap listing. Edit menu for any field that needs correction.
+- **State machine**: `BotSession.state` JSON tracks multi-turn edit flow (`confirm`, `edit_name`, `edit_price`, `edit_description`, `edit_delivery`, `edit_variants`). Text replies during edit states update the token and re-render the summary card.
+- **Callback data format**: short colon-separated keys (`post:`, `edit:`, `cancel:`, `ename:`, `eprice:`, `cat:FASHION:`, `typ:D:`, etc.) — all under Telegram's 64-byte limit.
+
+### New Files
+- `web/src/lib/bot/notify.ts` — `notifySellerNewOrder`, `notifySellerNewComment`, `notifySellerNewMessage`, `notifyUserTelegram` helpers
+- `web/src/app/api/bot/connect/route.ts` — GET (validate token) + POST (link account, upsert BotSession, fire confirmation message)
+- `web/src/app/bot/connect/page.tsx` — connect UI (store picker, success screen)
+
+### Modified Files
+- `web/src/app/api/webhooks/telegram/route.ts` — **full rewrite**: `/connect`, `/disconnect`, `/products`, `/orders`, `/help` commands; photo handler; state machine; callback dispatcher; category + type button menus
+- `web/src/lib/bot/shared.ts` — `createProductFromBot` now accepts `variants` string, parses into `ProductVariant` records
+- `web/src/app/api/webhooks/flutterwave/route.ts` — wired `notifySellerNewOrder` after payment confirmed
+- `web/src/app/api/products/[id]/comments/route.ts` — wired `notifySellerNewComment` (fire-and-forget)
+- `web/src/app/api/messages/[id]/route.ts` — wired `notifyUserTelegram` for DM recipients
+
+### Schema Changes
+- `BotSession`: added `userId String?` (relation to User), made `expiresAt DateTime?` (null = permanent)
+- New `BotConnectToken` model: `id`, `chatId`, `expiresAt`, `used`
+- `User`: added `botSessions BotSession[]` relation
+- `expire-bot-sessions` cron updated to skip sessions with `expiresAt: null`
+
+### How Notifications Work
+- **New order** → fires in Flutterwave webhook after `charge.completed`
+- **New comment on product** → fires in product comments POST route
+- **New DM** → fires in messages `[id]` POST route for all recipients
+- All three are fire-and-forget; if no connected bot session exists for that store/user, they silently no-op
+
+### Pending (operational)
+- Re-register Telegram webhook after deploy (GET `/api/webhooks/telegram` with `Authorization: Bearer <CRON_SECRET>`)
+- Test full flow: `/connect` → photo → edit → "Post it" → confirm product live
+
+---
 
 ## Session 114 — Apr 22–25, 2026 — DepMi Bot (Universal Web Redirect Architecture)
 
