@@ -4,15 +4,20 @@ const FILE_BASE = `https://api.telegram.org/file/bot${TOKEN}`;
 
 type InlineButton = { text: string; url?: string; callback_data?: string };
 
+/** Escape characters that have special meaning in Telegram HTML mode */
+export function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /** Send a text message to a Telegram chat */
-export async function sendTelegramMessage(chatId: number | string, text: string): Promise<void> {
+export async function sendTelegramMessage(chatId: number | string, text: string, parseMode: 'Markdown' | 'HTML' | 'none' = 'Markdown'): Promise<void> {
     const res = await fetch(`${BASE}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             chat_id: chatId,
             text,
-            parse_mode: 'Markdown',
+            ...(parseMode !== 'none' && { parse_mode: parseMode }),
             disable_web_page_preview: true,
         }),
     });
@@ -20,6 +25,7 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
     if (!res.ok) {
         const err = await res.text();
         console.error('[telegram] sendMessage failed:', res.status, err);
+        throw new Error(`Telegram sendMessage failed: ${res.status}`);
     }
 }
 
@@ -27,7 +33,8 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
 export async function sendTelegramMessageWithButtons(
     chatId: number | string,
     text: string,
-    buttons: InlineButton[][],   // rows of buttons
+    buttons: InlineButton[][],
+    parseMode: 'Markdown' | 'HTML' | 'none' = 'Markdown',
 ): Promise<void> {
     const res = await fetch(`${BASE}/sendMessage`, {
         method: 'POST',
@@ -35,7 +42,7 @@ export async function sendTelegramMessageWithButtons(
         body: JSON.stringify({
             chat_id: chatId,
             text,
-            parse_mode: 'Markdown',
+            ...(parseMode !== 'none' && { parse_mode: parseMode }),
             disable_web_page_preview: true,
             reply_markup: { inline_keyboard: buttons },
         }),
@@ -44,6 +51,7 @@ export async function sendTelegramMessageWithButtons(
     if (!res.ok) {
         const err = await res.text();
         console.error('[telegram] sendMessageWithButtons failed:', res.status, err);
+        throw new Error(`Telegram sendMessageWithButtons failed: ${res.status}`);
     }
 }
 

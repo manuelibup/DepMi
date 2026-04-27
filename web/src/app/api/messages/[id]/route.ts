@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { sendPushToUser } from '@/lib/webpush';
 import { notifyWhatsAppNewMessage } from '@/lib/whatsapp';
 import { notifyUserTelegram } from '@/lib/bot/notify';
+import { escapeHtml } from '@/lib/bot/telegram';
 import { applyContentFilter } from '@/lib/contentFilter';
 
 export async function GET(
@@ -137,7 +138,11 @@ export async function POST(
             }
         });
         recipientIds.forEach(rid => {
-            notifyUserTelegram(rid, `✉️ *New message from ${senderName}*\n\n[Reply →](https://depmi.com/messages)`).catch(() => {});
+            notifyUserTelegram(
+                rid,
+                `✉️ <b>New message from ${escapeHtml(senderName)}</b>`,
+                [{ text: '💬 Reply', url: 'https://depmi.com/messages' }]
+            ).catch(() => {});
         });
     }
 
