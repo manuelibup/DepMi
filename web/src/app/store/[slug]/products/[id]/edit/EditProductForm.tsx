@@ -36,6 +36,7 @@ interface ProductData {
     deliveryFee: number;
     isDigital: boolean;
     fileUrl: string | null;
+    stock: number;
     variants?: ProductVariant[];
 }
 
@@ -67,7 +68,8 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
     const [variants, setVariants] = useState<ProductVariant[]>(
         (product.variants ?? []).map(v => ({ id: v.id, name: v.name, price: v.price, stock: v.stock }))
     );
-    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | 'variants' | null>(null);
+    const [stock, setStock] = useState(String(product.stock ?? 1));
+    const [activeInput, setActiveInput] = useState<'price' | 'category' | 'deliveryFee' | 'variants' | 'stock' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -132,6 +134,9 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                     deliveryFee: form.isDigital ? 0 : (Number(form.deliveryFee) || 0),
                     isDigital: form.isDigital,
                     fileUrl: form.isDigital ? (form.fileUrl || null) : null,
+                    stock: hasVariants
+                        ? variants.reduce((s, v) => s + (Number(v.stock) || 1), 0)
+                        : (Number(stock) || 1),
                     variants: hasVariants
                         ? variants.map(v => ({ name: v.name.trim(), price: Number(v.price), stock: Number(v.stock) || 1 }))
                         : [],
@@ -398,6 +403,24 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                 </div>
             )}
 
+            {activeInput === 'stock' && (
+                <div className={styles.inlineInputRow}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+                        <rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 12h6" /><path d="M9 16h6" /><path d="M9 8h6" />
+                    </svg>
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="How many do you have to sell?"
+                        value={stock}
+                        onChange={e => setStock(e.target.value.replace(/\D/g, ''))}
+                        className={styles.inlineInput}
+                        autoFocus
+                    />
+                    <button type="button" className={styles.doneBtn} onClick={() => setActiveInput(null)}>Done</button>
+                </div>
+            )}
+
             {activeInput === 'variants' && (
                 <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
                     <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -476,6 +499,19 @@ export default function EditProductForm({ product, storeSlug }: { product: Produ
                         <FolderOpen size={16} className={styles.pillIcon} />
                         {form.category === 'OTHER' ? 'Category' : form.category}
                     </button>
+
+                    {variants.length === 0 && (
+                        <button
+                            type="button"
+                            className={`${styles.pill} ${Number(stock) > 0 ? styles.pillActive : ''}`}
+                            onClick={() => setActiveInput(activeInput === 'stock' ? null : 'stock')}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.pillIcon}>
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 12h6" /><path d="M9 16h6" /><path d="M9 8h6" />
+                            </svg>
+                            {stock ? `${stock} available` : 'Qty Available'}
+                        </button>
+                    )}
 
                     <button
                         type="button"

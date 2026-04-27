@@ -333,3 +333,207 @@
     border-color: rgba(var(--primary-rgb), 0.3);
     color: var(--primary);
 }
+
+/* ── Type Picker ─────────────────────────────────────────────────────────── */
+.typePicker {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px 24px;
+}
+
+.typePickerLabel {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px;
+    text-align: center;
+}
+
+.typePickerSub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+    text-align: center;
+}
+
+.typeCards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.typeCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 16px;
+    border: 1.5px solid var(--card-border);
+    border-radius: 16px;
+    background: var(--bg-elevated);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.typeCard:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.06);
+}
+
+.typeCardIcon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.typeCardTitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.typeCardDesc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* ── Horizontal Media Strip ──────────────────────────────────────────────── */
+.mediaStrip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    align-items: flex-start;
+    margin-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mediaStrip::-webkit-scrollbar {
+    display: none;
+}
+
+.mediaThumbnail {
+    position: relative;
+    width: 86px;
+    height: 86px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--card-border);
+}
+
+.mediaThumbnail img,
+.mediaThumbnail video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.removeThumb {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.addMediaBtn {
+    width: 86px;
+    height: 86px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--card-border);
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.addMediaBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.addMediaBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.uploadingThumb {
+    width: 86px;
+    height: 86px;
+    border-radius: 10px;
+    border: 1.5px solid var(--primary);
+    background: var(--bg-elevated);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ── Action Grid ─────────────────────────────────────────────────────────── */
+.actionGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 8px 12px 12px;
+}
+
+.actionCell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.actionCell:hover {
+    background: var(--bg-elevated);
+}
+
+.actionCellActive {
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.08);
+    border-color: rgba(var(--primary-rgb), 0.2);
+}

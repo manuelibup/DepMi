@@ -20,17 +20,20 @@ interface CloudinaryUploaderProps {
   /** When set, image files will be shown in a crop modal before upload */
   cropAspectRatio?: number;
   cropTitle?: string;
+  /** When provided, renders this instead of the default button */
+  renderTrigger?: (props: { onClick: () => void; isUploading: boolean; progress: number }) => React.ReactNode;
 }
 
 export default function CloudinaryUploader({
   onUploadSuccess,
   accept = 'image/*,video/*',
-  maxSizeMB = 100, // Default to 100MB
-  maxDurationSeconds = 60, // Default to 60s
+  maxSizeMB = 100,
+  maxDurationSeconds = 60,
   buttonText = 'Upload Media',
   multiple = false,
   cropAspectRatio,
   cropTitle,
+  renderTrigger,
 }: CloudinaryUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
@@ -219,43 +222,48 @@ export default function CloudinaryUploader({
         style={{ display: 'none' }}
       />
 
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-        style={{
-          padding: '12px 16px',
-          backgroundColor: isUploading ? 'var(--bg-elevated)' : 'var(--primary)',
-          color: isUploading ? 'var(--text-muted)' : '#000',
-          border: '1px solid var(--card-border)',
-          borderRadius: 'var(--radius-md)',
-          fontWeight: 600,
-          cursor: isUploading ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          width: '100%',
-        }}
-      >
-        {isUploading ? (
-          <>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
-              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-            </svg>
-            Uploading ({progress}%)
-          </>
-        ) : (
-          <>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" x2="12" y1="3" y2="15" />
-            </svg>
-            {buttonText}
-          </>
-        )}
-      </button>
+      {renderTrigger
+        ? renderTrigger({ onClick: () => fileInputRef.current?.click(), isUploading, progress })
+        : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            style={{
+              padding: '12px 16px',
+              backgroundColor: isUploading ? 'var(--bg-elevated)' : 'var(--primary)',
+              color: isUploading ? 'var(--text-muted)' : '#000',
+              border: '1px solid var(--card-border)',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 600,
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+            }}
+          >
+            {isUploading ? (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                Uploading ({progress}%)
+              </>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" x2="12" y1="3" y2="15" />
+                </svg>
+                {buttonText}
+              </>
+            )}
+          </button>
+        )
+      }
 
       {/* Progress Bar (Visible when uploading) */}
       {isUploading && (

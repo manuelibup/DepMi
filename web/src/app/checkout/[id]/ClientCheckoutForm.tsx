@@ -524,14 +524,16 @@ export default function ClientCheckoutForm({
                 )}
 
                 <div className={styles.formGroup}>
-                    <div className={styles.qtyContainer}>
-                        <span className={styles.qtyLabel}>Quantity</span>
-                        <div className={styles.qtySelector}>
-                            <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}>-</button>
-                            <span className={styles.qtyValue}>{quantity}</span>
-                            <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(Math.min(stock, quantity + 1))} disabled={quantity >= stock}>+</button>
+                    {stock > 1 && (
+                        <div className={styles.qtyContainer}>
+                            <span className={styles.qtyLabel}>Quantity <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>({stock} available)</span></span>
+                            <div className={styles.qtySelector}>
+                                <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}>-</button>
+                                <span className={styles.qtyValue}>{quantity}</span>
+                                <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(Math.min(stock, quantity + 1))} disabled={quantity >= stock}>+</button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {(deliveryMethod === 'DELIVERY' || deliveryMethod === 'DISPATCH') ? (
                         <>

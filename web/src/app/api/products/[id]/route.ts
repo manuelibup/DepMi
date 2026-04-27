@@ -47,7 +47,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title, description, price, currency, category, categoryOther, images, imageUrl, videoUrl, inStock, isPortfolioItem, deliveryFee, isDigital, fileUrl, variants } = body;
+    const { title, description, price, currency, category, categoryOther, images, imageUrl, videoUrl, inStock, isPortfolioItem, deliveryFee, isDigital, fileUrl, stock, variants } = body;
 
     const wasOutOfStock = product.inStock === false;
 
@@ -66,6 +66,7 @@ export async function PATCH(
             ...(deliveryFee !== undefined && { deliveryFee: Number(deliveryFee) }),
             ...(isDigital !== undefined && { isDigital }),
             ...(fileUrl !== undefined && { fileUrl: fileUrl || null }),
+            ...(stock !== undefined && { stock: Math.max(1, Number(stock) || 1) }),
         },
     });
 

@@ -48,6 +48,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         deliveryFee: Number(product.deliveryFee),
         isDigital: product.isDigital,
         fileUrl: product.fileUrl ?? null,
+        stock: product.stock,
         variants: product.variants.map(v => ({
             id: v.id,
             name: v.name,
