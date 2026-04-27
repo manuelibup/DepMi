@@ -1,6 +1,8 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 117 — Apr 27, 2026 — Bot Store Settings, Payout & Notification Fix](#session-117--apr-27-2026--bot-store-settings-payout--notification-fix)
+- [Session 116 — Apr 27, 2026 — Seller UX Overhaul & Feed Reaction Fix](#session-116--apr-27-2026--seller-ux-overhaul--feed-reaction-fix)
 - [Session 115 — Apr 27, 2026 — Telegram Bot: Native In-Bot Seller Experience](#session-115--apr-27-2026--telegram-bot-native-in-bot-seller-experience)
 - [Session 114 — Apr 22–25, 2026 — DepMi Bot (Universal Web Redirect Architecture)](#session-114--apr-2225-2026--depmi-bot-universal-web-redirect-architecture)
 - [Session 113 — Apr 21, 2026 — 3% Buyer Fee & URL Resilience](#session-113--apr-21-2026--3-buyer-fee--url-resilience)
@@ -96,6 +98,49 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 117 — Apr 27, 2026 — Bot Store Settings, Payout & Notification Fix
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What changed
+- **Telegram notification fix (root cause):** `parse_mode: 'Markdown'` silently rejected messages when dynamic values contained `_`, `*`, or `[` (e.g. product titles, sender names). All outbound bot notifications switched to `parse_mode: 'HTML'` with `escapeHtml()` on every dynamic value. `sendTelegramMessage` / `sendTelegramMessageWithButtons` now throw on failure (were silently swallowing errors).
+- **Inline action buttons on all notifications:**
+  - New order → `[📋 View orders → depmi.com/orders]`
+  - New comment → `[👀 View listing → depmi.com/p/${slug}]`
+  - New DM → `[💬 Reply → depmi.com/messages]`
+- **Variant format prompt fixed:** Old "e.g. Red/S, Red/M" was ambiguous. Replaced with clear two-line format: `Size S, Size M` (same price) / `Size S:5000, Size M:6000` (different prices). Applies to both pre-listing edit and live product edit.
+- **Live product editing via bot:** Sellers can edit name, price, description, stock, variants, and toggle in-stock/sold-out on any listed product directly in Telegram (`/products` → `✏️ #N`).
+- **Feedback button:** `/feedback` or `/complaint` commands + "📩 Send feedback" button routes seller messages to founder's Telegram (`ADMIN_TELEGRAM_CHAT_ID` env var).
+- **`/admin` command:** Owner-only stats — connected sellers count, products posted via bot, list of recent sellers.
+- **Bot store settings (new module `store-settings.ts`):** Sellers can manage all store settings in Telegram without opening the web app:
+  - `/settings` → settings menu with current values + buttons for each field
+  - Local delivery fee, nationwide fee, pickup address, state, location, description — all patchable via text reply
+  - Dispatch toggle (immediate, no text reply needed)
+  - `/payout` → full 3-step payout account flow: bank search (fuzzy, top 6 matches) → account number entry → `resolveAccountName` verification → OTP via Resend email → DB save
+- **Files changed:** `web/src/lib/bot/telegram.ts`, `web/src/lib/bot/notify.ts`, `web/src/app/api/messages/[id]/route.ts`, `web/src/app/api/webhooks/telegram/route.ts`, `web/src/lib/bot/shared.ts`, `web/src/lib/bot/store-settings.ts` (new)
+- **Pending:** Add `ADMIN_TELEGRAM_CHAT_ID` env var to Vercel (set to Manuel's personal Telegram user ID via `@userinfobot`).
+
+---
+
+## Session 116 — Apr 27, 2026 — Seller UX Overhaul & Feed Reaction Fix
+
+**Agent:** Claude (Sonnet 4.6)
+
+### What changed
+- **Feed reaction staleness fix:** Removed 30s `unstable_cache` from `personalizeItems()` in `feed.ts` — `isLiked`/`isSaved`/`isFollowing` now always reflect DB truth on page load.
+- **Quantity picker fix:** `ClientCheckoutForm` hides the +/- picker entirely when `stock <= 1` — previously buttons were disabled with no explanation.
+- **EditProductForm stock field:** Sellers can now view and update inventory count from the edit form. Stock sent to PATCH `/api/products/[id]` and persisted to DB.
+- **CreateProductForm full overhaul:**
+  - Physical / Digital pre-picker step before the form appears.
+  - Horizontal 86×86px media strip (photos + video) — no more vertical stacked previews.
+  - Bottom action bar replaced with a minimalistic 3×2 icon grid: Price, Category, Qty in stock, Variants, Delivery/File, For Sale/Portfolio.
+  - Delivery fee simplified to two options only: "Use store delivery rates" or "Free delivery" — custom flat-rate input removed.
+  - Inline expandable panels open below the grid on tap, collapse on Done.
+- **CloudinaryUploader:** Added `renderTrigger` prop so callers can render a custom trigger (used by the compact media strip thumbnails).
+- **DB hotfix (earthsweet):** Updated 3 variant stocks from 1→4 and product.stock from 4→12 directly via node script.
+- **Commit:** `e1e651e`
 
 ## Session 115 — Apr 27, 2026 — Telegram Bot: Native In-Bot Seller Experience
 

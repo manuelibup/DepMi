@@ -14,6 +14,14 @@ import { uploadFromUrl } from '@/lib/bot/cloudinary';
 import { parseProductFromPost } from '@/lib/bot/ai-parser';
 import { createProductFromBot } from '@/lib/bot/shared';
 import { Category } from '@prisma/client';
+import {
+    BotSettingsState,
+    sendSettingsMenu,
+    handleSettingsState,
+    handlePayoutState,
+    handlePayoutConfirmCallback,
+    handleDispatchToggle,
+} from '@/lib/bot/store-settings';
 
 export const maxDuration = 60;
 
@@ -45,7 +53,8 @@ type BotState =
     | { step: 'live_edit_description'; productId: string }
     | { step: 'live_edit_stock'; productId: string }
     | { step: 'live_edit_variants'; productId: string }
-    | { step: 'waiting_feedback' };
+    | { step: 'waiting_feedback' }
+    | BotSettingsState;
 
 const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID ?? '';
 
@@ -90,7 +99,7 @@ async function getSession(chatId: number) {
     });
 }
 
-async function setSessionState(chatId: number, state: BotState) {
+async function setSessionState(chatId: number, state: object) {
     await prisma.botSession.updateMany({
         where: { platform: 'TELEGRAM', externalId: String(chatId) },
         data: { state: state as object },
@@ -306,11 +315,16 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
             `📸 *Send a photo* → list a product\n` +
             `/products — view & edit your listings\n` +
             `/orders — view pending orders\n` +
+            `/settings — store settings & delivery fees\n` +
+            `/payout — manage payout account\n` +
             `/feedback — send a complaint or suggestion\n` +
             `/disconnect — unlink this account`,
             [
                 [{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }],
-                [{ text: '📩 Send feedback', callback_data: 'feedback' }],
+                [
+                    { text: '⚙️ Settings', callback_data: 'storet' },
+                    { text: '📩 Feedback', callback_data: 'feedback' },
+                ],
             ]
         );
     } else {
@@ -599,6 +613,18 @@ async function handleStateMessage(chatId: number, text: string, state: BotState,
     // Dispatch live product edit states
     if ('productId' in state) {
         return handleLiveStateMessage(chatId, text, state as Extract<BotState, { productId: string }>);
+    }
+
+    // Settings states
+    if (state.step.startsWith('settings_')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return handleSettingsState(chatId, text, state as any, setSessionState);
+    }
+
+    // Payout states
+    if (state.step.startsWith('payout_')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return handlePayoutState(chatId, text, state as any, setSessionState);
     }
 
     const { tokenId } = state as Extract<BotState, { tokenId: string }>;
@@ -901,6 +927,87 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
                 `📸 *Send me a product photo!*\n\nInclude the price in the caption, e.g:\n_"Red Ankara bag 5500"_\n_"iPhone 13 Pro — ₦380k"_\n\nI'll do the rest.`
             );
             break;
+
+        // ── Store settings ────────────────────────────────────────────────────
+
+        case 'storet':
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`, 'none'); return; }
+            await sendSettingsMenu(chatId, session.storeId);
+            break;
+
+        case 'sfee_local':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_local_fee', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `📦 Enter your *local delivery fee* in ₦ (or type "free"):`, 'none');
+            break;
+
+        case 'sfee_nation':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_nationwide_fee', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `🚚 Enter your *nationwide delivery fee* in ₦ (or type "free"):`, 'none');
+            break;
+
+        case 'spickup':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_pickup', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `📍 Enter your *pickup address*:`, 'none');
+            break;
+
+        case 'sstate':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_state', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `🗺 Enter your *state* (e.g. Lagos):`, 'none');
+            break;
+
+        case 'sdesc':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_description', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `📝 Enter your *store description* (max 500 chars):`, 'none');
+            break;
+
+        case 'sloc':
+            if (!session?.storeId) return;
+            await setSessionState(chatId, { step: 'settings_location', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `📌 Enter your *location* (e.g. Lagos, Nigeria):`, 'none');
+            break;
+
+        case 'sdispatch':
+            if (!session?.storeId) return;
+            await handleDispatchToggle(chatId, session.storeId);
+            break;
+
+        // ── Payout flow ───────────────────────────────────────────────────────
+
+        case 'payout':
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`, 'none'); return; }
+            await setSessionState(chatId, { step: 'payout_bank_search', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `🏦 Type the name of your bank (e.g. "access", "zenith", "gtb"):`, 'none');
+            break;
+
+        case 'bk': {
+            // tokenId here is the bank code
+            if (!session?.storeId) return;
+            const bankCode = tokenId;
+            const { getBankList } = await import('@/lib/flutterwave');
+            const banks = await getBankList().catch(() => []);
+            const bank = banks.find(b => b.code === bankCode);
+            if (!bank) { await sendTelegramMessage(chatId, `⚠️ Bank not found. Type /payout to try again.`, 'none'); return; }
+            await setSessionState(chatId, {
+                step: 'payout_account_no',
+                storeId: session.storeId,
+                bankCode: bank.code,
+                bankName: bank.name,
+            });
+            await sendTelegramMessage(chatId, `✅ Selected: <b>${bank.name}</b>\n\nEnter your 10-digit account number:`, 'HTML');
+            break;
+        }
+
+        case 'payout_confirm': {
+            // tokenId = bankCode:acctNo:encodedName:encodedBankName (rest of the split)
+            if (!session?.storeId || !session?.userId) return;
+            await handlePayoutConfirmCallback(chatId, tokenId, session.storeId, session.userId, setSessionState);
+            break;
+        }
     }
 }
 
@@ -942,6 +1049,15 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
         }
         if (text.startsWith('/orders') && connected && session?.storeId) {
             await handleOrdersCommand(chatId, session.storeId);
+            return;
+        }
+        if (text.startsWith('/settings') && connected && session?.storeId) {
+            await sendSettingsMenu(chatId, session.storeId);
+            return;
+        }
+        if (text.startsWith('/payout') && connected && session?.storeId) {
+            await setSessionState(chatId, { step: 'payout_bank_search', storeId: session.storeId });
+            await sendTelegramMessage(chatId, `🏦 Type the name of your bank (e.g. "access", "zenith", "gtb"):`, 'none');
             return;
         }
         if (text.startsWith('/feedback') || text.startsWith('/complaint')) {
