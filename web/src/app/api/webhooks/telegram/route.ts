@@ -44,7 +44,10 @@ type BotState =
     | { step: 'live_edit_price'; productId: string }
     | { step: 'live_edit_description'; productId: string }
     | { step: 'live_edit_stock'; productId: string }
-    | { step: 'live_edit_variants'; productId: string };
+    | { step: 'live_edit_variants'; productId: string }
+    | { step: 'waiting_feedback' };
+
+const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID ?? '';
 
 // ─── Webhook endpoints ───────────────────────────────────────────────────────
 
@@ -303,8 +306,12 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
             `📸 *Send a photo* → list a product\n` +
             `/products — view & edit your listings\n` +
             `/orders — view pending orders\n` +
+            `/feedback — send a complaint or suggestion\n` +
             `/disconnect — unlink this account`,
-            [[{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }]]
+            [
+                [{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }],
+                [{ text: '📩 Send feedback', callback_data: 'feedback' }],
+            ]
         );
     } else {
         await sendTelegramMessageWithButtons(
@@ -392,6 +399,52 @@ async function handleOrdersCommand(chatId: number, storeId: string) {
         `📋 *Pending orders:*\n\n${list}`,
         [[{ text: 'Manage orders', url: 'https://depmi.com/orders' }]]
     );
+}
+
+async function handleAdminCommand(chatId: number) {
+    const isOwner = ADMIN_CHAT_ID && String(chatId) === ADMIN_CHAT_ID;
+    if (!isOwner) {
+        await sendTelegramMessage(chatId, `🔒 Admin only.`, 'none');
+        return;
+    }
+
+    const [connectedSellers, productsViaBot, recentFeedback] = await Promise.all([
+        prisma.botSession.count({ where: { platform: 'TELEGRAM', storeId: { not: null } } }),
+        prisma.botImportToken.count({ where: { platform: 'TELEGRAM', used: true } }),
+        prisma.botSession.findMany({
+            where: { platform: 'TELEGRAM', storeId: { not: null } },
+            orderBy: { id: 'desc' },
+            take: 5,
+            include: { store: { select: { name: true, slug: true } } },
+        }),
+    ]);
+
+    const storeList = recentFeedback
+        .map(s => `• ${s.store?.name ?? 'Unknown'} (depmi.com/${s.store?.slug ?? ''})`)
+        .join('\n');
+
+    await sendTelegramMessage(
+        chatId,
+        `📊 <b>DepMi Bot Stats</b>\n\n` +
+        `👤 Connected sellers: <b>${connectedSellers}</b>\n` +
+        `📦 Products posted via bot: <b>${productsViaBot}</b>\n\n` +
+        `<b>Recent sellers:</b>\n${storeList || 'None yet'}`,
+        'HTML'
+    );
+}
+
+async function forwardFeedbackToAdmin(chatId: number, text: string, session: { store?: { name?: string | null } | null } | null) {
+    if (!ADMIN_CHAT_ID) return;
+    const storeName = (session as { store?: { name?: string } | null } | null)?.store?.name ?? 'Unknown store';
+    await sendTelegramMessage(
+        ADMIN_CHAT_ID,
+        `📩 <b>Feedback from ${escapeHtmlLocal(storeName)}</b> (chat ${chatId})\n\n${escapeHtmlLocal(text)}`,
+        'HTML'
+    ).catch(() => {});
+}
+
+function escapeHtmlLocal(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // ─── Photo handler ────────────────────────────────────────────────────────────
@@ -525,8 +578,23 @@ async function handleLiveStateMessage(
 
 // ─── State machine: text replies during pre-listing edit flow ─────────────────
 
-async function handleStateMessage(chatId: number, text: string, state: BotState) {
+async function handleStateMessage(chatId: number, text: string, state: BotState, session: Awaited<ReturnType<typeof getSession>>) {
     if (state.step === 'idle' || state.step === 'confirm') return false;
+
+    // Feedback flow
+    if (state.step === 'waiting_feedback') {
+        if (!text.trim()) {
+            await sendTelegramMessage(chatId, `Please type your message:`, 'none');
+            return true;
+        }
+        const storeSession = session?.storeId
+            ? await prisma.store.findUnique({ where: { id: session.storeId }, select: { name: true } })
+            : null;
+        await forwardFeedbackToAdmin(chatId, text, { store: storeSession });
+        await setSessionState(chatId, { step: 'idle' });
+        await sendTelegramMessage(chatId, `✅ Your message has been sent to the DepMi team. We'll follow up if needed.`, 'none');
+        return true;
+    }
 
     // Dispatch live product edit states
     if ('productId' in state) {
@@ -821,6 +889,12 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
             if (session?.storeId) await handleProductsCommand(chatId, session.storeId);
             break;
 
+        case 'feedback':
+            if (!session) { await sendTelegramMessage(chatId, `Please /connect first.`, 'none'); return; }
+            await setSessionState(chatId, { step: 'waiting_feedback' });
+            await sendTelegramMessage(chatId, `📩 Type your complaint or feedback and I'll forward it to the DepMi team:`, 'none');
+            break;
+
         case 'how_to_list':
             await sendTelegramMessage(
                 chatId,
@@ -870,6 +944,19 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             await handleOrdersCommand(chatId, session.storeId);
             return;
         }
+        if (text.startsWith('/feedback') || text.startsWith('/complaint')) {
+            if (!connected) {
+                await sendTelegramMessage(chatId, `Please /connect first to send feedback.`, 'none');
+                return;
+            }
+            if (session) await setSessionState(chatId, { step: 'waiting_feedback' });
+            await sendTelegramMessage(chatId, `📩 Type your message and I'll forward it to the DepMi team:`, 'none');
+            return;
+        }
+        if (text.startsWith('/admin')) {
+            await handleAdminCommand(chatId);
+            return;
+        }
 
         // Photo or image document
         const hasPhoto = message.photo && message.photo.length > 0;
@@ -887,10 +974,10 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             return;
         }
 
-        // Text message — check state machine (pre-listing edits + live product edits)
+        // Text message — check state machine (pre-listing edits + live product edits + feedback)
         if (session && text) {
             const state = (session.state as unknown as BotState) ?? { step: 'idle' };
-            const handled = await handleStateMessage(chatId, text, state);
+            const handled = await handleStateMessage(chatId, text, state, session);
             if (handled) return;
         }
 
