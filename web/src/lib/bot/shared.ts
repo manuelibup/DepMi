@@ -39,13 +39,19 @@ export async function createProductFromBot(input: BotProductInput) {
         variants = '',
     } = input;
 
-    // Parse "Red/S, Red/M, Blue/L" into variant records
+    // Parse "Name, Name" or "Name:Price, Name:Price" into variant records
     const parsedVariants = variants
-        ? variants.split(',').map(v => v.trim()).filter(Boolean).map(name => ({
-            name: name.substring(0, 80),
-            price,
-            stock: 1,
-        }))
+        ? variants.split(',').map(v => {
+            const colonIdx = v.lastIndexOf(':');
+            const hasPrice = colonIdx > 0 && /\d/.test(v.slice(colonIdx + 1));
+            const namePart = hasPrice ? v.slice(0, colonIdx).trim() : v.trim();
+            const pricePart = hasPrice ? parseInt(v.slice(colonIdx + 1).replace(/[^0-9]/g, ''), 10) : NaN;
+            return {
+                name: namePart.substring(0, 80),
+                price: !isNaN(pricePart) && pricePart > 0 ? pricePart : price,
+                stock: 1,
+            };
+        }).filter(v => v.name.length > 0)
         : [];
 
     const store = await prisma.store.findUnique({

@@ -39,7 +39,12 @@ type BotState =
     | { step: 'edit_price'; tokenId: string }
     | { step: 'edit_description'; tokenId: string }
     | { step: 'edit_delivery'; tokenId: string }
-    | { step: 'edit_variants'; tokenId: string };
+    | { step: 'edit_variants'; tokenId: string }
+    | { step: 'live_edit_name'; productId: string }
+    | { step: 'live_edit_price'; productId: string }
+    | { step: 'live_edit_description'; productId: string }
+    | { step: 'live_edit_stock'; productId: string }
+    | { step: 'live_edit_variants'; productId: string };
 
 // ─── Webhook endpoints ───────────────────────────────────────────────────────
 
@@ -148,8 +153,48 @@ async function sendEditMenu(chatId: number, tokenId: string) {
                 { text: '🚚 Delivery fee', callback_data: `edel:${tokenId}` },
                 { text: '📦 Type', callback_data: `etype:${tokenId}` },
             ],
-            [{ text: '✏️ Variants (sizes/colors)', callback_data: `evar:${tokenId}` }],
+            [{ text: '🔖 Variants (sizes/colors)', callback_data: `evar:${tokenId}` }],
             [{ text: '← Back to review', callback_data: `back:${tokenId}` }],
+        ]
+    );
+}
+
+async function sendLiveEditMenu(chatId: number, productId: string) {
+    const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: {
+            title: true,
+            price: true,
+            inStock: true,
+            stock: true,
+            _count: { select: { variants: true } },
+        },
+    });
+    if (!product) {
+        await sendTelegramMessage(chatId, `⚠️ Product not found.`);
+        return;
+    }
+
+    const status = product.inStock ? '✅ In stock' : '❌ Sold out';
+    const variantLabel = product._count.variants > 0
+        ? `🔖 Variants (${product._count.variants})`
+        : '🔖 Add variants';
+
+    await sendTelegramMessageWithButtons(
+        chatId,
+        `✏️ *Editing: ${product.title}*\n₦${Number(product.price).toLocaleString()} · ${status} · ${product.stock} qty`,
+        [
+            [
+                { text: '📝 Name', callback_data: `lpname:${productId}` },
+                { text: '💰 Price', callback_data: `lpprice:${productId}` },
+            ],
+            [
+                { text: '📄 Description', callback_data: `lpdesc:${productId}` },
+                { text: '📦 Qty in stock', callback_data: `lpstock:${productId}` },
+            ],
+            [{ text: variantLabel, callback_data: `lpvar:${productId}` }],
+            [{ text: product.inStock ? '❌ Mark as sold out' : '✅ Mark as in stock', callback_data: `lpstatus:${productId}` }],
+            [{ text: '← My listings', callback_data: 'products' }],
         ]
     );
 }
@@ -186,6 +231,26 @@ async function sendTypeButtons(chatId: number, tokenId: string) {
             [{ text: '← Back', callback_data: `edit:${tokenId}` }],
         ]
     );
+}
+
+// ─── Variant string parser (shared by pre-listing and live edits) ─────────────
+// Format: "Name, Name" (uses base price) or "Name:Price, Name:Price" (custom per-variant price)
+
+function parseVariantString(text: string, basePrice: number): { name: string; price: number; stock: number }[] {
+    return text
+        .split(',')
+        .map(v => {
+            const colonIdx = v.lastIndexOf(':');
+            const hasPrice = colonIdx > 0 && /\d/.test(v.slice(colonIdx + 1));
+            const namePart = hasPrice ? v.slice(0, colonIdx).trim() : v.trim();
+            const pricePart = hasPrice ? parseInt(v.slice(colonIdx + 1).replace(/[^0-9]/g, ''), 10) : NaN;
+            return {
+                name: namePart.substring(0, 80),
+                price: !isNaN(pricePart) && pricePart > 0 ? pricePart : basePrice,
+                stock: 1,
+            };
+        })
+        .filter(v => v.name.length > 0);
 }
 
 // ─── Command handlers ─────────────────────────────────────────────────────────
@@ -236,7 +301,7 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
             `👋 *DepMi Bot*\n\n` +
             `You're connected! Here's what you can do:\n\n` +
             `📸 *Send a photo* → list a product\n` +
-            `/products — view your recent listings\n` +
+            `/products — view & edit your listings\n` +
             `/orders — view pending orders\n` +
             `/disconnect — unlink this account`,
             [[{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }]]
@@ -265,7 +330,7 @@ async function handleProductsCommand(chatId: number, storeId: string) {
             where: { storeId },
             orderBy: { createdAt: 'desc' },
             take: 7,
-            select: { title: true, price: true, inStock: true, slug: true },
+            select: { id: true, title: true, price: true, inStock: true, slug: true },
         }),
         prisma.store.findUnique({ where: { id: storeId }, select: { slug: true } }),
     ]);
@@ -279,10 +344,24 @@ async function handleProductsCommand(chatId: number, storeId: string) {
         `${i + 1}. *${p.title}* — ₦${Number(p.price).toLocaleString()} ${p.inStock ? '✅' : '❌ sold out'}`
     ).join('\n');
 
+    // Edit buttons — 3 per row, maps number label to product ID
+    const editRows: { text: string; callback_data: string }[][] = [];
+    for (let i = 0; i < products.length; i += 3) {
+        editRows.push(
+            products.slice(i, i + 3).map((p, j) => ({
+                text: `✏️ #${i + j + 1}`,
+                callback_data: `lp:${p.id}`,
+            }))
+        );
+    }
+
     await sendTelegramMessageWithButtons(
         chatId,
-        `📦 *Your listings:*\n\n${list}`,
-        [[{ text: 'View all on DepMi', url: `https://depmi.com/${store?.slug || ''}` }]]
+        `📦 *Your listings:*\n\n${list}\n\nTap ✏️ to edit any listing:`,
+        [
+            ...editRows,
+            [{ text: 'View all on DepMi', url: `https://depmi.com/${store?.slug || ''}` }],
+        ]
     );
 }
 
@@ -362,12 +441,99 @@ async function handlePhotoMessage(chatId: number, message: TelegramMessage, capt
     await sendConfirmCard(chatId, token.id, data);
 }
 
-// ─── State machine: text replies during edit flow ─────────────────────────────
+// ─── State machine: live product edits ───────────────────────────────────────
+
+async function handleLiveStateMessage(
+    chatId: number,
+    text: string,
+    state: Extract<BotState, { productId: string }>
+): Promise<boolean> {
+    const { productId } = state;
+
+    const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { price: true },
+    });
+    if (!product) {
+        await setSessionState(chatId, { step: 'idle' });
+        await sendTelegramMessage(chatId, `⚠️ Product not found.`);
+        return true;
+    }
+
+    switch (state.step) {
+        case 'live_edit_name': {
+            if (!text.trim()) {
+                await sendTelegramMessage(chatId, `Please enter a product name:`);
+                return true;
+            }
+            await prisma.product.update({ where: { id: productId }, data: { title: text.trim().substring(0, 100) } });
+            break;
+        }
+        case 'live_edit_price': {
+            const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+            if (isNaN(num) || num < 0) {
+                await sendTelegramMessage(chatId, `❌ Enter a valid price in ₦ (e.g. 5000):`);
+                return true;
+            }
+            await prisma.product.update({ where: { id: productId }, data: { price: num } });
+            break;
+        }
+        case 'live_edit_description': {
+            await prisma.product.update({ where: { id: productId }, data: { description: text.trim().substring(0, 500) || null } });
+            break;
+        }
+        case 'live_edit_stock': {
+            const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+            if (isNaN(num) || num < 1) {
+                await sendTelegramMessage(chatId, `❌ Enter a valid quantity (minimum 1):`);
+                return true;
+            }
+            await prisma.product.update({ where: { id: productId }, data: { stock: num } });
+            break;
+        }
+        case 'live_edit_variants': {
+            if (text.toLowerCase().trim() === 'none') {
+                await prisma.productVariant.deleteMany({ where: { productId } });
+                await setSessionState(chatId, { step: 'idle' });
+                await sendTelegramMessage(chatId, `✅ All variants removed.`);
+                await sendLiveEditMenu(chatId, productId);
+                return true;
+            }
+            const parsed = parseVariantString(text, Number(product.price));
+            if (parsed.length === 0) {
+                await sendTelegramMessage(chatId,
+                    `❌ Couldn't parse variants. Try:\n• Same price: \`Size S, Size M\`\n• Different prices: \`Size S:5000, Size M:6000\``
+                );
+                return true;
+            }
+            await prisma.productVariant.deleteMany({ where: { productId } });
+            await prisma.productVariant.createMany({
+                data: parsed.map(v => ({ ...v, productId })),
+            });
+            await setSessionState(chatId, { step: 'idle' });
+            await sendTelegramMessage(chatId, `✅ ${parsed.length} variant${parsed.length > 1 ? 's' : ''} saved.`);
+            await sendLiveEditMenu(chatId, productId);
+            return true;
+        }
+    }
+
+    await setSessionState(chatId, { step: 'idle' });
+    await sendTelegramMessage(chatId, `✅ Updated!`);
+    await sendLiveEditMenu(chatId, productId);
+    return true;
+}
+
+// ─── State machine: text replies during pre-listing edit flow ─────────────────
 
 async function handleStateMessage(chatId: number, text: string, state: BotState) {
     if (state.step === 'idle' || state.step === 'confirm') return false;
 
-    const { tokenId } = state;
+    // Dispatch live product edit states
+    if ('productId' in state) {
+        return handleLiveStateMessage(chatId, text, state as Extract<BotState, { productId: string }>);
+    }
+
+    const { tokenId } = state as Extract<BotState, { tokenId: string }>;
     const token = await getToken(tokenId);
     if (!token) {
         await setSessionState(chatId, { step: 'idle' });
@@ -415,9 +581,14 @@ async function handleStateMessage(chatId: number, text: string, state: BotState)
             break;
         }
 
-        case 'edit_variants':
-            data.variants = text.trim().substring(0, 300);
+        case 'edit_variants': {
+            if (text.toLowerCase().trim() === 'none') {
+                data.variants = '';
+            } else {
+                data.variants = text.trim().substring(0, 300);
+            }
             break;
+        }
 
         default:
             return false;
@@ -536,7 +707,13 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
 
         case 'evar':
             if (session) await setSessionState(chatId, { step: 'edit_variants', tokenId });
-            await sendTelegramMessage(chatId, `✏️ Send the *variants* (e.g. "Red/S, Red/M, Blue/L"):`);
+            await sendTelegramMessage(
+                chatId,
+                `🔖 Send *variants* (comma-separated):\n\n` +
+                `• Same price for all: \`Size S, Size M, Size L\`\n` +
+                `• Different prices: \`Size S:5000, Size M:6000\`\n` +
+                `• Type \`none\` to remove all variants`
+            );
             break;
 
         case 'ecat':
@@ -569,6 +746,80 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
             await sendConfirmCard(chatId, tokenId, data);
             break;
         }
+
+        // ── Live product editing ──────────────────────────────────────────────
+
+        case 'lp': {
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`); return; }
+            const owned = await prisma.product.findFirst({
+                where: { id: tokenId, storeId: session.storeId },
+                select: { id: true },
+            });
+            if (!owned) { await sendTelegramMessage(chatId, `⚠️ Product not found or not yours.`); return; }
+            await sendLiveEditMenu(chatId, tokenId);
+            break;
+        }
+
+        case 'lpname':
+            if (session) await setSessionState(chatId, { step: 'live_edit_name', productId: tokenId });
+            await sendTelegramMessage(chatId, `📝 Send the new *product name*:`);
+            break;
+
+        case 'lpprice':
+            if (session) await setSessionState(chatId, { step: 'live_edit_price', productId: tokenId });
+            await sendTelegramMessage(chatId, `💰 Send the new *price* in ₦ (e.g. 5000):`);
+            break;
+
+        case 'lpdesc':
+            if (session) await setSessionState(chatId, { step: 'live_edit_description', productId: tokenId });
+            await sendTelegramMessage(chatId, `📄 Send the new *description* (max 500 chars):`);
+            break;
+
+        case 'lpstock':
+            if (session) await setSessionState(chatId, { step: 'live_edit_stock', productId: tokenId });
+            await sendTelegramMessage(chatId, `📦 How many do you have? Send a number (e.g. 5):`);
+            break;
+
+        case 'lpstatus': {
+            if (!session?.storeId) return;
+            const prod = await prisma.product.findFirst({
+                where: { id: tokenId, storeId: session.storeId },
+                select: { inStock: true },
+            });
+            if (!prod) return;
+            await prisma.product.update({ where: { id: tokenId }, data: { inStock: !prod.inStock } });
+            await sendTelegramMessage(chatId, prod.inStock ? `❌ Marked as sold out.` : `✅ Marked as in stock.`);
+            await sendLiveEditMenu(chatId, tokenId);
+            break;
+        }
+
+        case 'lpvar': {
+            if (!session?.storeId) return;
+            const prod = await prisma.product.findFirst({
+                where: { id: tokenId, storeId: session.storeId },
+                include: { variants: { select: { name: true, price: true }, orderBy: { id: 'asc' } } },
+            });
+            if (!prod) { await sendTelegramMessage(chatId, `⚠️ Product not found.`); return; }
+
+            const currentVariants = prod.variants.length > 0
+                ? prod.variants.map(v => `• ${v.name} — ₦${Number(v.price).toLocaleString()}`).join('\n')
+                : '_No variants set_';
+
+            if (session) await setSessionState(chatId, { step: 'live_edit_variants', productId: tokenId });
+            await sendTelegramMessage(
+                chatId,
+                `🔖 *Current variants:*\n${currentVariants}\n\n` +
+                `Send new variants to *replace all*:\n` +
+                `• Same price: \`Size S, Size M, Size L\`\n` +
+                `• Different prices: \`Size S:5000, Size M:6000\`\n` +
+                `• Type \`none\` to remove all variants`
+            );
+            break;
+        }
+
+        case 'products':
+            if (session?.storeId) await handleProductsCommand(chatId, session.storeId);
+            break;
 
         case 'how_to_list':
             await sendTelegramMessage(
@@ -632,12 +883,11 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
                 );
                 return;
             }
-            // New photo cancels any active edit state
             await handlePhotoMessage(chatId, message, caption, session.storeId);
             return;
         }
 
-        // Text message — check edit state machine
+        // Text message — check state machine (pre-listing edits + live product edits)
         if (session && text) {
             const state = (session.state as unknown as BotState) ?? { step: 'idle' };
             const handled = await handleStateMessage(chatId, text, state);
