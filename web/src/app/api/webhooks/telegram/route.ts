@@ -22,6 +22,13 @@ import {
     handlePayoutConfirmCallback,
     handleDispatchToggle,
 } from '@/lib/bot/store-settings';
+import {
+    BuyerState,
+    handleBuyerDeepLink,
+    handleBuyStart,
+    handleBuyerState,
+    handleBuyerConfirm,
+} from '@/lib/bot/buyer';
 
 export const maxDuration = 60;
 
@@ -54,7 +61,8 @@ type BotState =
     | { step: 'live_edit_stock'; productId: string }
     | { step: 'live_edit_variants'; productId: string }
     | { step: 'waiting_feedback' }
-    | BotSettingsState;
+    | BotSettingsState
+    | BuyerState;
 
 const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID ?? '';
 
@@ -415,14 +423,173 @@ async function handleOrdersCommand(chatId: number, storeId: string) {
     );
 }
 
-async function handleAdminCommand(chatId: number) {
+async function handleAdminCommand(chatId: number, fullText: string) {
     const isOwner = ADMIN_CHAT_ID && String(chatId) === ADMIN_CHAT_ID;
     if (!isOwner) {
         await sendTelegramMessage(chatId, `🔒 Admin only.`, 'none');
         return;
     }
 
-    const [connectedSellers, productsViaBot, recentFeedback] = await Promise.all([
+    // Parse subcommand: /admin <sub> <arg>
+    const parts = fullText.trim().split(/\s+/);
+    const sub = parts[1]?.toLowerCase();
+
+    // ── /admin ban <username> ──────────────────────────────────────────────
+    if (sub === 'ban') {
+        const username = parts[2]?.replace('@', '');
+        if (!username) { await sendTelegramMessage(chatId, `Usage: /admin ban @username`, 'none'); return; }
+        const user = await prisma.user.findUnique({ where: { username }, select: { id: true, displayName: true, isBanned: true } });
+        if (!user) { await sendTelegramMessage(chatId, `❌ User @${username} not found.`, 'none'); return; }
+        await prisma.user.update({ where: { id: user.id }, data: { isBanned: true } });
+        await prisma.notification.create({ data: { userId: user.id, type: 'SYSTEM', title: 'Account suspended', body: 'Your account has been suspended by DepMi admin. Contact support@depmi.com to appeal.', link: '/help' } });
+        await sendTelegramMessage(chatId, `✅ @${username} (${user.displayName}) has been <b>banned</b>.`, 'HTML');
+        return;
+    }
+
+    // ── /admin unban <username> ────────────────────────────────────────────
+    if (sub === 'unban') {
+        const username = parts[2]?.replace('@', '');
+        if (!username) { await sendTelegramMessage(chatId, `Usage: /admin unban @username`, 'none'); return; }
+        const user = await prisma.user.findUnique({ where: { username }, select: { id: true, displayName: true } });
+        if (!user) { await sendTelegramMessage(chatId, `❌ User @${username} not found.`, 'none'); return; }
+        await prisma.user.update({ where: { id: user.id }, data: { isBanned: false } });
+        await prisma.notification.create({ data: { userId: user.id, type: 'SYSTEM', title: 'Account reinstated', body: 'Your account has been reinstated. Welcome back to DepMi.', link: '/' } });
+        await sendTelegramMessage(chatId, `✅ @${username} (${user.displayName}) has been <b>unbanned</b>.`, 'HTML');
+        return;
+    }
+
+    // ── /admin clearstrikes <username> ────────────────────────────────────
+    if (sub === 'clearstrikes') {
+        const username = parts[2]?.replace('@', '');
+        if (!username) { await sendTelegramMessage(chatId, `Usage: /admin clearstrikes @username`, 'none'); return; }
+        const user = await prisma.user.findUnique({ where: { username }, select: { id: true, displayName: true, strikeCount: true } });
+        if (!user) { await sendTelegramMessage(chatId, `❌ User @${username} not found.`, 'none'); return; }
+        await prisma.$transaction([
+            prisma.strike.deleteMany({ where: { userId: user.id } }),
+            prisma.user.update({ where: { id: user.id }, data: { strikeCount: 0, isBanned: false } }),
+        ]);
+        await prisma.notification.create({ data: { userId: user.id, type: 'SYSTEM', title: 'Strikes cleared', body: 'Your account strikes have been cleared by DepMi admin.', link: '/' } });
+        await sendTelegramMessage(chatId, `✅ Cleared <b>${user.strikeCount}</b> strike(s) for @${username} (${user.displayName}).`, 'HTML');
+        return;
+    }
+
+    // ── /admin deletepost <postId> [strike] ───────────────────────────────
+    if (sub === 'deletepost') {
+        const postId = parts[2];
+        const withStrike = parts[3] === 'strike';
+        if (!postId) { await sendTelegramMessage(chatId, `Usage: /admin deletepost <postId> [strike]`, 'none'); return; }
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true, authorId: true, body: true } });
+        if (!post) { await sendTelegramMessage(chatId, `❌ Post not found.`, 'none'); return; }
+        await prisma.post.delete({ where: { id: postId } });
+        if (withStrike) {
+            const STRIKE_LIMIT = 5;
+            const [, updated] = await prisma.$transaction([
+                prisma.strike.create({ data: { userId: post.authorId, reason: 'external link', context: `Post deleted by admin` } }),
+                prisma.user.update({ where: { id: post.authorId }, data: { strikeCount: { increment: 1 } }, select: { strikeCount: true } }),
+            ]);
+            const newCount = updated.strikeCount;
+            if (newCount >= STRIKE_LIMIT) {
+                await prisma.user.update({ where: { id: post.authorId }, data: { isBanned: true } });
+                await prisma.notification.create({ data: { userId: post.authorId, type: 'SYSTEM', title: 'Account suspended', body: 'Suspended for repeated community guidelines violations.', link: '/help' } });
+            } else {
+                await prisma.notification.create({ data: { userId: post.authorId, type: 'SYSTEM', title: `Strike ${newCount} of ${STRIKE_LIMIT} — Post removed`, body: `Your post was removed for containing an external link. ${STRIKE_LIMIT - newCount} more violation(s) will result in suspension.`, link: '/help' } });
+            }
+        }
+        await sendTelegramMessage(chatId, `✅ Post deleted${withStrike ? ' + strike issued' : ''}.`, 'none');
+        return;
+    }
+
+    // ── /admin deletedemand <demandId> [strike] ───────────────────────────
+    if (sub === 'deletedemand') {
+        const demandId = parts[2];
+        const withStrike = parts[3] === 'strike';
+        if (!demandId) { await sendTelegramMessage(chatId, `Usage: /admin deletedemand <demandId> [strike]`, 'none'); return; }
+        const demand = await prisma.demand.findUnique({ where: { id: demandId }, select: { id: true, userId: true } });
+        if (!demand) { await sendTelegramMessage(chatId, `❌ Demand not found.`, 'none'); return; }
+        await prisma.demand.update({ where: { id: demandId }, data: { isActive: false } });
+        if (withStrike) {
+            const STRIKE_LIMIT = 5;
+            const [, updated] = await prisma.$transaction([
+                prisma.strike.create({ data: { userId: demand.userId, reason: 'external link', context: `Demand removed by admin` } }),
+                prisma.user.update({ where: { id: demand.userId }, data: { strikeCount: { increment: 1 } }, select: { strikeCount: true } }),
+            ]);
+            const newCount = updated.strikeCount;
+            if (newCount >= STRIKE_LIMIT) {
+                await prisma.user.update({ where: { id: demand.userId }, data: { isBanned: true } });
+                await prisma.notification.create({ data: { userId: demand.userId, type: 'SYSTEM', title: 'Account suspended', body: 'Suspended for repeated community guidelines violations.', link: '/help' } });
+            } else {
+                await prisma.notification.create({ data: { userId: demand.userId, type: 'SYSTEM', title: `Strike ${newCount} of ${STRIKE_LIMIT} — Request removed`, body: `Your request was removed for containing an external link. ${STRIKE_LIMIT - newCount} more violation(s) will result in suspension.`, link: '/help' } });
+            }
+        }
+        await sendTelegramMessage(chatId, `✅ Request removed${withStrike ? ' + strike issued' : ''}.`, 'none');
+        return;
+    }
+
+    // ── /admin approvelink <domain> ───────────────────────────────────────
+    if (sub === 'approvelink') {
+        const domain = parts[2];
+        if (!domain) { await sendTelegramMessage(chatId, `Usage: /admin approvelink <domain>`, 'none'); return; }
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result = await (prisma as any).approvedLink.updateMany({ where: { domain }, data: { status: 'APPROVED' } });
+            if (result.count === 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (prisma as any).approvedLink.create({ data: { url: `https://${domain}`, domain, submittedBy: null as unknown as string, status: 'APPROVED' } }).catch(() => {});
+            }
+            // Notify original submitter
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const link = await (prisma as any).approvedLink.findFirst({ where: { domain } });
+            if (link?.submittedBy) {
+                await prisma.notification.create({ data: { userId: link.submittedBy, type: 'SYSTEM', title: `Link approved: ${domain}`, body: `Your link submission for ${domain} has been approved. Anyone can now post links from this domain on DepMi.`, link: '/links' } });
+            }
+        } catch { /* table may not exist yet */ }
+        await sendTelegramMessage(chatId, `✅ <b>${domain}</b> is now <b>approved</b>. Anyone can post links from it.`, 'HTML');
+        return;
+    }
+
+    // ── /admin rejectlink <domain> ────────────────────────────────────────
+    if (sub === 'rejectlink') {
+        const domain = parts[2];
+        if (!domain) { await sendTelegramMessage(chatId, `Usage: /admin rejectlink <domain>`, 'none'); return; }
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result = await (prisma as any).approvedLink.updateMany({ where: { domain }, data: { status: 'REJECTED' } });
+            if (result.count === 0) { await sendTelegramMessage(chatId, `❌ Domain ${domain} not found in submissions.`, 'none'); return; }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const link = await (prisma as any).approvedLink.findFirst({ where: { domain } });
+            if (link?.submittedBy) {
+                await prisma.notification.create({ data: { userId: link.submittedBy, type: 'SYSTEM', title: `Link rejected: ${domain}`, body: `Your link submission for ${domain} was not approved. External links from this domain are not permitted on DepMi.`, link: '/links' } });
+            }
+        } catch { /* table may not exist yet */ }
+        await sendTelegramMessage(chatId, `❌ <b>${domain}</b> has been <b>rejected</b>.`, 'HTML');
+        return;
+    }
+
+    // ── /admin userstats <username> ───────────────────────────────────────
+    if (sub === 'userstats') {
+        const username = parts[2]?.replace('@', '');
+        if (!username) { await sendTelegramMessage(chatId, `Usage: /admin userstats @username`, 'none'); return; }
+        const user = await prisma.user.findUnique({
+            where: { username },
+            select: { id: true, displayName: true, isBanned: true, strikeCount: true, adminRole: true, createdAt: true, _count: { select: { ordersAsBuyer: true, stores: true } } },
+        });
+        if (!user) { await sendTelegramMessage(chatId, `❌ User @${username} not found.`, 'none'); return; }
+        await sendTelegramMessage(
+            chatId,
+            `👤 <b>${escapeHtmlLocal(user.displayName)}</b> (@${username})\n` +
+            `Banned: ${user.isBanned ? '🚫 Yes' : '✅ No'}\n` +
+            `Strikes: ${user.strikeCount}/5\n` +
+            `Role: ${user.adminRole ?? 'User'}\n` +
+            `Stores: ${user._count.stores}\n` +
+            `Orders placed: ${user._count.ordersAsBuyer}\n` +
+            `Joined: ${user.createdAt.toDateString()}`,
+            'HTML'
+        );
+        return;
+    }
+
+    // ── /admin (no subcommand) → stats ────────────────────────────────────
+    const [connectedSellers, productsViaBot, recentSellers, totalUsers, totalStores] = await Promise.all([
         prisma.botSession.count({ where: { platform: 'TELEGRAM', storeId: { not: null } } }),
         prisma.botImportToken.count({ where: { platform: 'TELEGRAM', used: true } }),
         prisma.botSession.findMany({
@@ -431,18 +598,31 @@ async function handleAdminCommand(chatId: number) {
             take: 5,
             include: { store: { select: { name: true, slug: true } } },
         }),
+        prisma.user.count(),
+        prisma.store.count(),
     ]);
 
-    const storeList = recentFeedback
+    const storeList = recentSellers
         .map(s => `• ${s.store?.name ?? 'Unknown'} (depmi.com/${s.store?.slug ?? ''})`)
         .join('\n');
 
     await sendTelegramMessage(
         chatId,
-        `📊 <b>DepMi Bot Stats</b>\n\n` +
-        `👤 Connected sellers: <b>${connectedSellers}</b>\n` +
-        `📦 Products posted via bot: <b>${productsViaBot}</b>\n\n` +
-        `<b>Recent sellers:</b>\n${storeList || 'None yet'}`,
+        `📊 <b>DepMi Admin Panel</b>\n\n` +
+        `👥 Total users: <b>${totalUsers}</b>\n` +
+        `🏪 Total stores: <b>${totalStores}</b>\n` +
+        `🤖 Bot-connected sellers: <b>${connectedSellers}</b>\n` +
+        `📦 Products via bot: <b>${productsViaBot}</b>\n\n` +
+        `<b>Recent bot sellers:</b>\n${storeList || 'None yet'}\n\n` +
+        `<b>Commands:</b>\n` +
+        `/admin ban @user\n` +
+        `/admin unban @user\n` +
+        `/admin clearstrikes @user\n` +
+        `/admin userstats @user\n` +
+        `/admin deletepost &lt;postId&gt; [strike]\n` +
+        `/admin deletedemand &lt;demandId&gt; [strike]\n` +
+        `/admin approvelink &lt;domain&gt;\n` +
+        `/admin rejectlink &lt;domain&gt;`,
         'HTML'
     );
 }
@@ -592,7 +772,7 @@ async function handleLiveStateMessage(
 
 // ─── State machine: text replies during pre-listing edit flow ─────────────────
 
-async function handleStateMessage(chatId: number, text: string, state: BotState, session: Awaited<ReturnType<typeof getSession>>) {
+async function handleStateMessage(chatId: number, text: string, state: BotState, session: Awaited<ReturnType<typeof getSession>>, firstName = '') {
     if (state.step === 'idle' || state.step === 'confirm') return false;
 
     // Feedback flow
@@ -625,6 +805,12 @@ async function handleStateMessage(chatId: number, text: string, state: BotState,
     if (state.step.startsWith('payout_')) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return handlePayoutState(chatId, text, state as any, setSessionState);
+    }
+
+    // Buyer states
+    if (state.step.startsWith('buyer_')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return handleBuyerState(chatId, text, state as any, setSessionState, firstName);
     }
 
     const { tokenId } = state as Extract<BotState, { tokenId: string }>;
@@ -928,6 +1114,45 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
             );
             break;
 
+        // ── Buyer flow ────────────────────────────────────────────────────────
+
+        case 'bstart': {
+            // callback_data: bstart:productId:storeId:price:isDigital
+            const [productId, storeId, priceStr, digitalStr] = tokenId.split(':');
+            const price = parseInt(priceStr ?? '0', 10);
+            const isDigital = digitalStr === '1';
+            await handleBuyStart(chatId, productId, storeId, price, isDigital, undefined, undefined, setSessionState, session);
+            break;
+        }
+
+        case 'bvariant': {
+            // callback_data: bvariant:productId:variantId:variantName:variantPrice:storeId:isDigital
+            const [productId, variantId, variantName, priceStr, storeId, digitalStr] = tokenId.split(':');
+            const price = parseInt(priceStr ?? '0', 10);
+            const isDigital = digitalStr === '1';
+            await handleBuyStart(chatId, productId, storeId, price, isDigital, variantId, decodeURIComponent(variantName ?? ''), setSessionState, session);
+            break;
+        }
+
+        case 'baddr_reset': {
+            // callback_data: baddr_reset:productId:storeId:price:isDigital
+            const [productId, storeId, priceStr, digitalStr] = tokenId.split(':');
+            const price = parseInt(priceStr ?? '0', 10);
+            const isDigital = digitalStr === '1';
+            if (session) await setSessionState(chatId, { step: 'buyer_address', productId, storeId, price, isDigital });
+            await sendTelegramMessage(chatId, `📍 Enter your delivery address:\n\n<i>Format: Street, City, State</i>`, 'HTML');
+            break;
+        }
+
+        case 'bconfirm': {
+            if (!session?.userId) { await sendTelegramMessage(chatId, `Please /connect or verify your email first.`, 'none'); return; }
+            const state = session.state as unknown as BotState;
+            if (state.step !== 'buyer_confirm') { await sendTelegramMessage(chatId, `⚠️ Session expired. Please start over.`, 'none'); return; }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await handleBuyerConfirm(chatId, state as any, session.userId, setSessionState);
+            break;
+        }
+
         // ── Store settings ────────────────────────────────────────────────────
 
         case 'storet':
@@ -1039,7 +1264,17 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             await handleDisconnectCommand(chatId);
             return;
         }
-        if (text.startsWith('/start') || text.startsWith('/help')) {
+        if (text.startsWith('/start')) {
+            const param = text.split(' ')[1] ?? '';
+            if (param.startsWith('p_')) {
+                // Deep link: t.me/depmibot?start=p_SLUG
+                await handleBuyerDeepLink(chatId, param.slice(2), setSessionState, session);
+                return;
+            }
+            await handleHelpCommand(chatId, connected);
+            return;
+        }
+        if (text.startsWith('/help')) {
             await handleHelpCommand(chatId, connected);
             return;
         }
@@ -1070,7 +1305,7 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             return;
         }
         if (text.startsWith('/admin')) {
-            await handleAdminCommand(chatId);
+            await handleAdminCommand(chatId, text);
             return;
         }
 
@@ -1093,7 +1328,8 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
         // Text message — check state machine (pre-listing edits + live product edits + feedback)
         if (session && text) {
             const state = (session.state as unknown as BotState) ?? { step: 'idle' };
-            const handled = await handleStateMessage(chatId, text, state, session);
+            const firstName = message.from?.first_name ?? '';
+            const handled = await handleStateMessage(chatId, text, state, session, firstName);
             if (handled) return;
         }
 

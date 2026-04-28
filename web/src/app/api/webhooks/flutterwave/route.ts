@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { validateWebhookSignature } from '@/lib/flutterwave'
 import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
 import { notifyWhatsAppNewOrder } from '@/lib/whatsapp'
-import { notifySellerNewOrder } from '@/lib/bot/notify'
+import { notifySellerNewOrder, notifyUserTelegram } from '@/lib/bot/notify'
 import { bookShipment } from '@/lib/shipbubble'
 
 export async function POST(req: NextRequest) {
@@ -161,6 +161,13 @@ export async function POST(req: NextRequest) {
             amount: finalOrder.totalAmount,
             buyerName: 'a buyer',
         })
+        void notifyUserTelegram(
+            finalOrder.buyerId,
+            `✅ <b>Payment confirmed!</b>\n\n` +
+            `Your order <code>#${orderId.slice(-6).toUpperCase()}</code> for <b>${finalOrder.productTitle}</b> has been received.\n\n` +
+            `The seller will prepare your item shortly. You're protected by DepMi escrow — funds are only released when you confirm delivery.`,
+            [{ text: '📋 Track order', url: 'https://depmi.com/orders' }],
+        )
         const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
             const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })

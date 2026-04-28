@@ -221,6 +221,65 @@ export async function getBankList(): Promise<BankInfo[]> {
     }
 }
 
+// ─── Bank Transfer (Virtual Account) ──────────────────────────────────────────
+
+export interface BankTransferCharge {
+    orderId: string
+    accountNumber: string
+    bankName: string
+    amount: number
+    expiresAt: string
+    txRef: string
+    flwRef: string
+}
+
+/**
+ * Initiates a bank transfer charge via Flutterwave.
+ * Returns a temporary virtual account number the buyer transfers to.
+ * No redirect needed — fully server-side.
+ */
+export async function initializeBankTransfer(params: {
+    orderId: string
+    amount: number
+    buyerName: string
+    buyerEmail: string
+}): Promise<BankTransferCharge> {
+    const { orderId, amount, buyerName, buyerEmail } = params
+    const txRef = `depmi-order-${orderId}`
+
+    const res = await fetch(`${BASE_URL}/charges?type=bank_transfer`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${SECRET_KEY}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tx_ref: txRef,
+            amount,
+            currency: 'NGN',
+            email: buyerEmail,
+            fullname: buyerName,
+            is_permanent: false,
+        }),
+    })
+
+    const body = await res.json()
+    if (body.status === 'error') throw new Error(body.message)
+
+    const auth = body.data?.meta?.authorization
+    if (!auth?.account_number) throw new Error('No virtual account returned from Flutterwave')
+
+    return {
+        orderId,
+        txRef,
+        flwRef: body.data.flw_ref ?? '',
+        accountNumber: auth.account_number,
+        bankName: auth.transfer_bank ?? 'Wema Bank',
+        amount,
+        expiresAt: auth.expiry_date ?? '',
+    }
+}
+
 // ─── Account Resolution ────────────────────────────────────────────────────────
 
 export async function resolveAccountName(
