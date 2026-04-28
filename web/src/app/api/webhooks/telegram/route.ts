@@ -6,6 +6,7 @@ import {
     answerCallbackQuery,
     getTelegramFileUrl,
     setTelegramWebhook,
+    setCommandsForChat,
     TelegramUpdate,
     TelegramMessage,
 } from '@/lib/bot/telegram';
@@ -308,6 +309,7 @@ async function handleDisconnectCommand(chatId: number) {
         where: { platform: 'TELEGRAM', externalId: String(chatId) },
     });
     if (deleted.count > 0) {
+        await setCommandsForChat(chatId, false).catch(() => {});
         await sendTelegramMessage(chatId, `🔌 Disconnected. Send /connect to link again.`);
     } else {
         await sendTelegramMessage(chatId, `You weren't connected. Send /connect to link your DepMi account.`);
@@ -1271,6 +1273,8 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
                 await handleBuyerDeepLink(chatId, param.slice(2), setSessionState, session);
                 return;
             }
+            // Sync command menu on first /start
+            setCommandsForChat(chatId, connected).catch(() => {});
             await handleHelpCommand(chatId, connected);
             return;
         }

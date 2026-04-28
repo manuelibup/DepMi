@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { sendTelegramMessage } from '@/lib/bot/telegram';
+import { sendTelegramMessage, setCommandsForChat } from '@/lib/bot/telegram';
 
 /** GET /api/bot/connect?token=xxx — validate token, return chatId */
 export async function GET(req: NextRequest) {
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     });
 
     try {
+        await setCommandsForChat(Number(token.chatId), true);
         await sendTelegramMessage(
             token.chatId,
             `✅ *Connected!*\n\n` +

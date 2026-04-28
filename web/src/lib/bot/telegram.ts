@@ -84,6 +84,33 @@ export async function setTelegramWebhook(webhookUrl: string): Promise<boolean> {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/** Set the command menu for a specific chat (scope: chat) */
+export async function setCommandsForChat(chatId: number, seller: boolean): Promise<void> {
+    const sellerCommands = [
+        { command: 'products', description: 'View and edit your recent listings' },
+        { command: 'orders', description: 'View pending orders' },
+        { command: 'settings', description: 'Manage store settings and delivery fees' },
+        { command: 'payout', description: 'Set up your payout bank account' },
+        { command: 'feedback', description: 'Send a complaint or suggestion to the DepMi team' },
+        { command: 'disconnect', description: 'Unlink this account' },
+        { command: 'help', description: 'See all commands and tips' },
+    ];
+
+    const defaultCommands = [
+        { command: 'connect', description: 'Link your DepMi seller account' },
+        { command: 'help', description: 'Get started with DepMi Bot' },
+    ];
+
+    await fetch(`${BASE}/setMyCommands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            commands: seller ? sellerCommands : defaultCommands,
+            scope: { type: 'chat', chat_id: chatId },
+        }),
+    });
+}
+
 /** Answer a callback_query (button tap) so Telegram stops showing the loading spinner */
 export async function answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
     await fetch(`${BASE}/answerCallbackQuery`, {
