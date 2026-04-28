@@ -30,6 +30,12 @@ import {
     handleBuyerState,
     handleBuyerConfirm,
 } from '@/lib/bot/buyer';
+import {
+    OnboardingState,
+    handleSignupCommand,
+    handleCreateStoreEntry,
+    handleOnboardingState,
+} from '@/lib/bot/onboarding';
 
 export const maxDuration = 60;
 
@@ -63,7 +69,8 @@ type BotState =
     | { step: 'live_edit_variants'; productId: string }
     | { step: 'waiting_feedback' }
     | BotSettingsState
-    | BuyerState;
+    | BuyerState
+    | OnboardingState;
 
 const ADMIN_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID ?? '';
 
@@ -109,9 +116,15 @@ async function getSession(chatId: number) {
 }
 
 async function setSessionState(chatId: number, state: object) {
-    await prisma.botSession.updateMany({
-        where: { platform: 'TELEGRAM', externalId: String(chatId) },
-        data: { state: state as object },
+    await prisma.botSession.upsert({
+        where: { platform_externalId: { platform: 'TELEGRAM', externalId: String(chatId) } },
+        update: { state: state as object },
+        create: {
+            platform: 'TELEGRAM',
+            externalId: String(chatId),
+            state: state as object,
+            expiresAt: null,
+        },
     });
 }
 
@@ -341,15 +354,18 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
         await sendTelegramMessageWithButtons(
             chatId,
             `👋 *Welcome to DepMi Bot!*\n\n` +
-            `List products on DepMi straight from Telegram — no browser needed.\n\n` +
+            `Buy and sell on DepMi straight from Telegram — no browser needed.\n\n` +
             `*Get started:*\n` +
-            `1. Send /connect to link your seller account\n` +
-            `2. Send a photo of your product\n` +
-            `3. Review the AI-parsed details\n` +
-            `4. Tap ✅ — it's live!`,
+            `/signup — create a free DepMi account\n` +
+            `/connect — link an existing seller account\n\n` +
+            `Once connected:\n` +
+            `📸 Send a product photo to list it instantly`,
             [
                 [{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }],
-                [{ text: '🔗 Connect my account', callback_data: 'do_connect' }],
+                [
+                    { text: '✏️ Sign up', callback_data: 'do_signup' },
+                    { text: '🔗 Connect account', callback_data: 'do_connect' },
+                ],
             ]
         );
     }
@@ -815,6 +831,12 @@ async function handleStateMessage(chatId: number, text: string, state: BotState,
         return handleBuyerState(chatId, text, state as any, setSessionState, firstName);
     }
 
+    // Onboarding states
+    if (state.step.startsWith('ob_')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return handleOnboardingState(chatId, text, state as any, setSessionState, firstName);
+    }
+
     const { tokenId } = state as Extract<BotState, { tokenId: string }>;
     const token = await getToken(tokenId);
     if (!token) {
@@ -899,6 +921,13 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
     const param = action === 'cat' || action === 'typ' ? parts[1] : undefined;
 
     switch (action) {
+        case 'do_signup': {
+            const firstName = message?.from?.first_name ?? '';
+            await handleSignupCommand(chatId, session, setSessionState);
+            void firstName; // firstName is used by the state machine later
+            break;
+        }
+
         case 'do_connect':
             await handleConnectCommand(chatId, !!session);
             break;
@@ -1235,6 +1264,40 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
             await handlePayoutConfirmCallback(chatId, tokenId, session.storeId, session.userId, setSessionState);
             break;
         }
+
+        // ── Onboarding flow ───────────────────────────────────────────────────
+
+        case 'ob_create_store': {
+            if (!session?.userId) {
+                await sendTelegramMessage(chatId, `Please sign up first — send /signup to get started.`, 'none');
+                return;
+            }
+            await handleCreateStoreEntry(chatId, session.userId, setSessionState);
+            break;
+        }
+
+        case 'ob_skip':
+            await setSessionState(chatId, { step: 'idle' });
+            await sendTelegramMessageWithButtons(
+                chatId,
+                `👍 No problem! You can browse products on DepMi or come back anytime to set up a store.`,
+                [[{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }]],
+                'none'
+            );
+            break;
+
+        case 'ob_slug': {
+            // callback_data: ob_slug:SLUG — user accepted suggested slug
+            const suggestedSlug = tokenId;
+            const obState = (session?.state as unknown as BotState | undefined);
+            if (!obState || obState.step !== 'ob_store_slug') {
+                await sendTelegramMessage(chatId, `⚠️ Session expired. Please type your handle instead.`, 'none');
+                return;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await handleOnboardingState(chatId, suggestedSlug, obState as any, setSessionState, '');
+            break;
+        }
     }
 }
 
@@ -1306,6 +1369,18 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             }
             if (session) await setSessionState(chatId, { step: 'waiting_feedback' });
             await sendTelegramMessage(chatId, `📩 Type your message and I'll forward it to the DepMi team:`, 'none');
+            return;
+        }
+        if (text.startsWith('/signup') || text.startsWith('/register')) {
+            await handleSignupCommand(chatId, session, setSessionState);
+            return;
+        }
+        if (text.startsWith('/createstore')) {
+            if (!session?.userId) {
+                await sendTelegramMessage(chatId, `You need an account first. Send /signup to get started.`, 'none');
+                return;
+            }
+            await handleCreateStoreEntry(chatId, session.userId, setSessionState);
             return;
         }
         if (text.startsWith('/admin')) {

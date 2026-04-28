@@ -97,7 +97,8 @@ export async function setCommandsForChat(chatId: number, seller: boolean): Promi
     ];
 
     const defaultCommands = [
-        { command: 'connect', description: 'Link your DepMi seller account' },
+        { command: 'signup', description: 'Create a DepMi account in Telegram' },
+        { command: 'connect', description: 'Link your existing DepMi seller account' },
         { command: 'help', description: 'Get started with DepMi Bot' },
     ];
 
