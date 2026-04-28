@@ -1333,6 +1333,15 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             if (handled) return;
         }
 
+        // Handle pasted depmi bot deep links (t.me/depmibot?start=p_SLUG or depmi.com/p/SLUG)
+        const botLinkMatch = text.match(/[?&]start=p_([A-Za-z0-9_-]+)/);
+        const depmiLinkMatch = text.match(/depmi\.com\/p\/([A-Za-z0-9_-]+)/);
+        const linkSlug = botLinkMatch?.[1] ?? depmiLinkMatch?.[1];
+        if (linkSlug) {
+            await handleBuyerDeepLink(chatId, linkSlug, setSessionState, session);
+            return;
+        }
+
         // Default responses
         if (!connected) {
             await sendTelegramMessageWithButtons(
