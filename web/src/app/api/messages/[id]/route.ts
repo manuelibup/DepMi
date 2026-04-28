@@ -6,7 +6,7 @@ import { sendPushToUser } from '@/lib/webpush';
 import { notifyWhatsAppNewMessage } from '@/lib/whatsapp';
 import { notifyUserTelegram } from '@/lib/bot/notify';
 import { escapeHtml } from '@/lib/bot/telegram';
-import { applyContentFilter } from '@/lib/contentFilter';
+import { applyContentFilter, isAdminUser } from '@/lib/contentFilter';
 
 export async function GET(
     req: NextRequest,
@@ -74,7 +74,8 @@ export async function POST(
     }
 
     if (text) {
-        const violation = await applyContentFilter(session.user.id, text);
+        const immune = await isAdminUser(session.user.id);
+        const violation = await applyContentFilter(session.user.id, text, immune);
         if (violation) return NextResponse.json({ message: violation }, { status: 403 });
     }
 
