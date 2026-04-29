@@ -78,39 +78,24 @@ export async function GET(
 
     let upstream: Response | null = null;
 
-    // Attempt 1: Cloudinary signed CDN URL (works for both upload + authenticated types)
+    // Files uploaded with access_mode:authenticated cannot be fetched via CDN URL.
+    // private_download_url hits the Cloudinary API endpoint and bypasses CDN auth.
+    // IMPORTANT: Cloudinary's download API expects the public_id WITHOUT the file
+    // extension — the extension must be passed as the format parameter separately.
     if (decodedId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            const signedUrl = cloudinary.url(decodedId, {
-                resource_type: 'raw',
-                type: 'upload',
-                sign_url: true,
-                secure: true,
-                expires_at: Math.floor(Date.now() / 1000) + 300,
-            });
-            upstream = await tryFetch(signedUrl, 'signed-cdn');
-        } catch (err) {
-            console.error('[read] cloudinary.url threw:', err);
-        }
-    }
-
-    // Attempt 2: private_download_url via Cloudinary API endpoint
-    if (!upstream && decodedId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
-        try {
-            const dlUrl = cloudinary.utils.private_download_url(decodedId, '', { resource_type: 'raw' });
+            const extMatch = decodedId.match(/\.([a-zA-Z0-9]+)$/);
+            const fileExt = extMatch ? extMatch[1] : '';
+            const idWithoutExt = fileExt ? decodedId.slice(0, -(fileExt.length + 1)) : decodedId;
+            console.log('[read] private_download_url idWithoutExt:', idWithoutExt, 'ext:', fileExt);
+            const dlUrl = cloudinary.utils.private_download_url(idWithoutExt, fileExt, { resource_type: 'raw' });
             upstream = await tryFetch(dlUrl, 'private-download');
         } catch (err) {
             console.error('[read] private_download_url threw:', err);
         }
     }
 
-    // Attempt 3: direct stored URL (decoded)
-    if (!upstream) {
-        const decoded = rawId ? product.fileUrl.replace(encodeURIComponent(rawId), decodedId!) : decodeURIComponent(product.fileUrl);
-        upstream = await tryFetch(decoded, 'direct-decoded');
-    }
-
-    // Attempt 4: raw stored URL as-is
+    // Fallback: try direct URL (works only if access_mode is public)
     if (!upstream) {
         upstream = await tryFetch(product.fileUrl, 'direct-raw');
     }
