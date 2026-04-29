@@ -130,7 +130,7 @@ function useFileBuffer(orderId: string, hintFormat: string) {
       setState('loading');
       setErrorMsg('');
       try {
-        const res = await fetch(`/api/read/${orderId}`, { credentials: 'include' });
+        const res = await fetch(`/api/read/${orderId}`, { credentials: 'same-origin' });
         if (!res.ok) {
           const msg = res.status === 401 ? 'Please log in to read this file.'
             : res.status === 403 ? "You don't have access to this file."
