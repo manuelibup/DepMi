@@ -335,7 +335,10 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
             chatId,
             `👋 *DepMi Bot*\n\n` +
             `You're connected! Here's what you can do:\n\n` +
-            `📸 *Send a photo* → list a product\n` +
+            `*🛒 Buying*\n` +
+            `/buy — buy a product (paste any DepMi link)\n\n` +
+            `*📦 Selling*\n` +
+            `📸 *Send a photo* → list a product instantly\n` +
             `/products — view & edit your listings\n` +
             `/orders — view pending orders\n` +
             `/settings — store settings & delivery fees\n` +
@@ -355,13 +358,17 @@ async function handleHelpCommand(chatId: number, connected: boolean) {
             chatId,
             `👋 *Welcome to DepMi Bot!*\n\n` +
             `Buy and sell on DepMi straight from Telegram — no browser needed.\n\n` +
-            `*Get started:*\n` +
+            `*🛒 Buying*\n` +
+            `/buy — buy any product by pasting its link\n\n` +
+            `*🏪 Selling*\n` +
             `/signup — create a free DepMi account\n` +
             `/connect — link an existing seller account\n\n` +
-            `Once connected:\n` +
-            `📸 Send a product photo to list it instantly`,
+            `Once connected, send a product photo to list it instantly.`,
             [
                 [{ text: '🛍 Browse DepMi', url: 'https://depmi.com' }],
+                [
+                    { text: '🛒 Buy a product', callback_data: 'do_buy' },
+                ],
                 [
                     { text: '✏️ Sign up', callback_data: 'do_signup' },
                     { text: '🔗 Connect account', callback_data: 'do_connect' },
@@ -827,6 +834,20 @@ async function handleStateMessage(chatId: number, text: string, state: BotState,
         return handlePayoutState(chatId, text, state as any, setSessionState);
     }
 
+    // Buyer link — resolve product from pasted URL or slug
+    if (state.step === 'buyer_link') {
+        const botLinkMatch = text.match(/[?&]start=p_([A-Za-z0-9_-]+)/);
+        const depmiLinkMatch = text.match(/depmi\.com\/p\/([A-Za-z0-9_-]+)/);
+        const slug = botLinkMatch?.[1] ?? depmiLinkMatch?.[1] ?? text.trim().replace(/\s+/g, '');
+        if (!slug || slug.length < 2) {
+            await sendTelegramMessage(chatId, `❌ Couldn't find a product. Paste the full DepMi link (e.g. depmi.com/p/product-name).`, 'none');
+            return true;
+        }
+        await setSessionState(chatId, { step: 'idle' });
+        await handleBuyerDeepLink(chatId, slug, setSessionState, session);
+        return true;
+    }
+
     // Buyer states
     if (state.step.startsWith('buyer_')) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -932,6 +953,15 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
 
         case 'do_connect':
             await handleConnectCommand(chatId, !!session);
+            break;
+
+        case 'do_buy':
+            await setSessionState(chatId, { step: 'buyer_link' });
+            await sendTelegramMessage(
+                chatId,
+                `🛍 Paste the product link or URL:\n\n<i>e.g. depmi.com/p/product-name</i>`,
+                'HTML',
+            );
             break;
 
         case 'disconnect':
@@ -1073,25 +1103,41 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
             break;
         }
 
-        case 'lpname':
-            if (session) await setSessionState(chatId, { step: 'live_edit_name', productId: tokenId });
+        case 'lpname': {
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`); return; }
+            const ownedLpn = await prisma.product.findFirst({ where: { id: tokenId, storeId: session.storeId }, select: { id: true } });
+            if (!ownedLpn) { await sendTelegramMessage(chatId, `⚠️ Product not found or not yours.`); return; }
+            await setSessionState(chatId, { step: 'live_edit_name', productId: tokenId });
             await sendTelegramMessage(chatId, `📝 Send the new *product name*:`);
             break;
+        }
 
-        case 'lpprice':
-            if (session) await setSessionState(chatId, { step: 'live_edit_price', productId: tokenId });
+        case 'lpprice': {
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`); return; }
+            const ownedLpp = await prisma.product.findFirst({ where: { id: tokenId, storeId: session.storeId }, select: { id: true } });
+            if (!ownedLpp) { await sendTelegramMessage(chatId, `⚠️ Product not found or not yours.`); return; }
+            await setSessionState(chatId, { step: 'live_edit_price', productId: tokenId });
             await sendTelegramMessage(chatId, `💰 Send the new *price* in ₦ (e.g. 5000):`);
             break;
+        }
 
-        case 'lpdesc':
-            if (session) await setSessionState(chatId, { step: 'live_edit_description', productId: tokenId });
+        case 'lpdesc': {
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`); return; }
+            const ownedLpd = await prisma.product.findFirst({ where: { id: tokenId, storeId: session.storeId }, select: { id: true } });
+            if (!ownedLpd) { await sendTelegramMessage(chatId, `⚠️ Product not found or not yours.`); return; }
+            await setSessionState(chatId, { step: 'live_edit_description', productId: tokenId });
             await sendTelegramMessage(chatId, `📄 Send the new *description* (max 500 chars):`);
             break;
+        }
 
-        case 'lpstock':
-            if (session) await setSessionState(chatId, { step: 'live_edit_stock', productId: tokenId });
+        case 'lpstock': {
+            if (!session?.storeId) { await sendTelegramMessage(chatId, `Please /connect first.`); return; }
+            const ownedLps = await prisma.product.findFirst({ where: { id: tokenId, storeId: session.storeId }, select: { id: true } });
+            if (!ownedLps) { await sendTelegramMessage(chatId, `⚠️ Product not found or not yours.`); return; }
+            await setSessionState(chatId, { step: 'live_edit_stock', productId: tokenId });
             await sendTelegramMessage(chatId, `📦 How many do you have? Send a number (e.g. 5):`);
             break;
+        }
 
         case 'lpstatus': {
             if (!session?.storeId) return;
@@ -1371,6 +1417,15 @@ async function processAsync(update: TelegramUpdate): Promise<void> {
             }
             if (session) await setSessionState(chatId, { step: 'waiting_feedback' });
             await sendTelegramMessage(chatId, `📩 Type your message and I'll forward it to the DepMi team:`, 'none');
+            return;
+        }
+        if (text.startsWith('/buy')) {
+            await setSessionState(chatId, { step: 'buyer_link' });
+            await sendTelegramMessage(
+                chatId,
+                `🛍 Paste the product link or URL:\n\n<i>e.g. depmi.com/p/product-name\nor the bot deep link: t.me/depmibot?start=p_product-name</i>`,
+                'HTML',
+            );
             return;
         }
         if (text.startsWith('/signup') || text.startsWith('/register')) {

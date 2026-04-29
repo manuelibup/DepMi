@@ -87,6 +87,7 @@ export async function setTelegramWebhook(webhookUrl: string): Promise<boolean> {
 /** Set the command menu for a specific chat (scope: chat) */
 export async function setCommandsForChat(chatId: number, seller: boolean): Promise<void> {
     const sellerCommands = [
+        { command: 'buy', description: 'Buy a product — paste any DepMi link' },
         { command: 'products', description: 'View and edit your recent listings' },
         { command: 'orders', description: 'View pending orders' },
         { command: 'settings', description: 'Manage store settings and delivery fees' },
@@ -97,6 +98,7 @@ export async function setCommandsForChat(chatId: number, seller: boolean): Promi
     ];
 
     const defaultCommands = [
+        { command: 'buy', description: 'Buy a product — paste any DepMi link' },
         { command: 'signup', description: 'Create a DepMi account in Telegram' },
         { command: 'connect', description: 'Link your existing DepMi seller account' },
         { command: 'help', description: 'Get started with DepMi Bot' },

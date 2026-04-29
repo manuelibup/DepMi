@@ -7,6 +7,7 @@ import { sendTelegramMessage, sendTelegramMessageWithButtons, escapeHtml } from 
 // ─── State types ───────────────────────────────────────────────────────────────
 
 export type BuyerState =
+    | { step: 'buyer_link' }
     | { step: 'buyer_email'; productSlug: string }
     | { step: 'buyer_otp'; userId: string; email: string; productSlug: string }
     | { step: 'buyer_address'; productId: string; storeId: string; price: number; variantId?: string; variantName?: string; isDigital: boolean }
