@@ -1,6 +1,7 @@
 # DepMi — Development Log
 
 ## Table of Contents
+- [Session 118 — Apr 29, 2026 — Ebook Reader, Telegram Bot Security Audit & /buy Command](#session-118--apr-29-2026--ebook-reader-telegram-bot-security-audit--buy-command)
 - [Session 117 — Apr 27, 2026 — Bot Store Settings, Payout & Notification Fix](#session-117--apr-27-2026--bot-store-settings-payout--notification-fix)
 - [Session 116 — Apr 27, 2026 — Seller UX Overhaul & Feed Reaction Fix](#session-116--apr-27-2026--seller-ux-overhaul--feed-reaction-fix)
 - [Session 115 — Apr 27, 2026 — Telegram Bot: Native In-Bot Seller Experience](#session-115--apr-27-2026--telegram-bot-native-in-bot-seller-experience)
@@ -98,6 +99,56 @@
 - [Session 39 — Mar 4, 2026 — Full Frontend Audit (Post-Gemini)](#session-39--mar-4-2026--full-frontend-audit-post-gemini)
 - [Session 40 — Mar 4, 2026 — UI Polish Sprint (Bug Fixes + Settings Rebuild)](#session-40--mar-4-2026--ui-polish-sprint-bug-fixes--settings-rebuild)
 - [Session 41 — Mar 4, 2026 — Full Bug Fix Sprint (Post-Audit)](#session-41--mar-4-2026--full-bug-fix-sprint-post-audit)
+
+## Session 118 — Apr 29, 2026 — Ebook Reader, Telegram Bot Security Audit & /buy Command
+
+**Agent:** Claude (Sonnet 4.6)
+**Human:** Manuel
+
+### What changed
+
+#### Secure Ebook Reader
+- **Root cause of 401:** Cloudinary raw resource URLs blocked in-browser (referrer/CORS policy). Fixed by building a server-side proxy that never exposes the raw URL to the client.
+- **`/api/read/[orderId]`** (new): Auth-gated PDF proxy. Verifies session, buyer ownership, order status (CONFIRMED+). Fetches `product.fileUrl` server-side (S2S has no CORS/referrer restrictions — no signing needed). Returns PDF bytes with `Content-Disposition: inline`, `no-store`, `X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'`.
+- **`/api/download/[orderId]`** (new): Same auth pattern, returns `Content-Disposition: attachment` for non-PDF digital files.
+- **`/read/[orderId]/page.tsx`** (new): Server component. Auth redirect → `/login?callbackUrl=…`. Prisma query verifies buyer + status + `isDigital && fileUrl`. Passes `productTitle` + `buyerUsername` to client.
+- **`/read/[orderId]/EbookReader.tsx`** (new): Loads PDF.js 3.11.174 UMD via `next/script` CDN (avoids CSP module-script block). Sets worker `onLoad`. Fetches `/api/read/${orderId}` with `credentials: 'include'`, passes `ArrayBuffer` to `getDocument`. Canvas rendering with diagonal watermark grid (coral `@buyerUsername`, 8% opacity). `user-select: none`, right-click blocked, Ctrl+S/P blocked. Zoom + pagination controls.
+- **`/read/[orderId]/page.module.css`** (new): Full dark reader shell — top bar, scrollable canvas area, pagination bar.
+- **502 fix:** Removed Cloudinary SDK signed-URL generation (signing with expiry only works for `authenticated` type resources, not `upload` type). Now fetches `fileUrl` directly server-side.
+- **`/read` added to `AUTH_REQUIRED`** in middleware.
+
+#### Digital Order UI
+- **Order stepper:** `DIGITAL_BUYER_STEPS = [Placed, Paid, Available]` — ebook orders no longer show "Shipped". `getStepState` maps `Available` label → `CONFIRMED` status.
+- **Orders dashboard:** "Download" button replaced with `<a href="/read/${order.id}">📖 Read Now</a>` for digital orders.
+
+#### Telegram Bot — Payment Notifications for Digital Orders
+- **`notifyOrderUpdate`** gains `isDigital?: boolean`. PAID case sends "Your ebook is ready — Read Now" with link to `/read/${orderId}`.
+- **`/api/webhooks/paystack`** + **`/api/webhooks/flutterwave`:** Both fire `notifyUserTelegram` after confirming a digital order, sending a "Read Now" inline button to the buyer.
+
+#### Telegram Bot — Critical Security Fixes (3 vulnerabilities)
+1. **Buyer state → seller edit leak (CRITICAL):** `handleStateMessage` dispatch used `'productId' in state` to route to `handleLiveStateMessage`. Both `buyer_address` and `buyer_confirm` carry a `productId` field. `handleLiveStateMessage` had no `default` case in its switch, so it fell through to `sendLiveEditMenu` — giving any buyer the seller product edit UI for the product they were buying. **Fix:** Dispatch now requires `state.step.startsWith('live_edit_')`. Added `default: return false` as defence-in-depth.
+2. **`lpname`/`lpprice`/`lpdesc`/`lpstock` callbacks — no ownership check:** Any connected user could craft a callback with a foreign product UUID (e.g. `lpname:FOREIGN_UUID`), set their session to `live_edit_name`, then type the new value to overwrite a product they don't own. **Fix:** All four callbacks now verify `prisma.product.findFirst({ where: { id, storeId: session.storeId } })` before setting state.
+3. **Digital buy flow — missing confirm button:** `handleBuyStart` set state to `buyer_address` for digital orders and sent a plain text message. `handleBuyerState` immediately returned `false` for `isDigital`, leaving users stuck. **Fix:** Digital orders now skip `buyer_address` entirely — `handleBuyStart` goes straight to `buyer_confirm` state and sends the "Confirm & get payment details" inline button.
+
+#### Telegram Bot — Buyer UX (/buy command)
+- **`/buy` command:** Sets `buyer_link` state. Bot prompts for a product URL.
+- **`buyer_link` state:** Extracts slug from `depmi.com/p/…`, `t.me?start=p_…`, or bare slug. Calls `handleBuyerDeepLink` and shows the product card to start checkout.
+- **`do_buy` callback:** Added to the unconnected help screen for users who don't know `/buy`.
+- **Updated `/help` and `/start`:** Both show a clear Buying / Selling section split. `/buy` appears at the top of seller command list too.
+- **Command menus:** `/buy` added as first item in both seller and default command menus (`setCommandsForChat`).
+
+#### Telegram Bot — Short UUID Prefix System (callback_data 64-byte fix)
+- `sendProductCard` uses 8-char prefix of UUID for `pid`, `sid`, `vid` in `callback_data` (e.g. `bstart:pid8:sid8:price:digital` ≤40 bytes).
+- `handleBuyStart` resolves full IDs via `prisma.product.findFirst({ where: { id: { startsWith: prefix } } })`. Store ID extracted from the resolved product row, not from callback_data (prevents spoofing).
+
+### Validations
+- Committed and pushed all changes to `main`. Vercel deployed.
+- Re-registered Telegram webhook still required after deploy (`GET /api/webhooks/telegram` with CRON_SECRET).
+
+### Files changed
+`web/src/app/api/read/[orderId]/route.ts` (new), `web/src/app/api/download/[orderId]/route.ts` (new), `web/src/app/read/[orderId]/page.tsx` (new), `web/src/app/read/[orderId]/EbookReader.tsx` (new), `web/src/app/read/[orderId]/page.module.css` (new), `web/src/app/orders/OrdersDashboard.tsx`, `web/src/lib/notifyWatchers.ts`, `web/src/app/api/webhooks/paystack/route.ts`, `web/src/app/api/webhooks/flutterwave/route.ts`, `web/src/middleware.ts`, `web/src/lib/bot/buyer.ts`, `web/src/app/api/webhooks/telegram/route.ts`, `web/src/lib/bot/telegram.ts`
+
+---
 
 ## Session 117 — Apr 27, 2026 — Bot Store Settings, Payout & Notification Fix
 

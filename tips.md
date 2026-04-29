@@ -875,6 +875,19 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 
 ---
 
+## 🔒 63. Server-Side File Proxying for Private Media
+
+*Added after fixing the ebook 401 error and building the secure PDF reader.*
+
+- **Never expose raw Cloudinary (or any CDN) URLs to the browser** for access-controlled content. Even "private" Cloudinary URLs can be shared or cached after one successful load.
+- **The pattern**: Create an auth-gated API proxy route (e.g. `/api/read/[orderId]`). The route verifies session + ownership + order status, then fetches the file server-to-server (no CORS/referrer restrictions, no signing needed for `upload`-type resources) and streams the bytes to the client with appropriate headers.
+- **`Content-Disposition: inline`** for in-browser rendering (PDF viewer). `attachment` for forced download.
+- **Always set `Cache-Control: no-store`** on proxied private files — you don't want the browser caching a file and serving it to the next user on a shared device.
+- **PDF.js in Next.js**: Load via `next/script` with an external UMD bundle (cdnjs). Inline `type="module"` scripts are blocked by Vercel's default CSP. Set the worker URL in the `onLoad` callback, not in a `useEffect`.
+- **Signed URLs only work for Cloudinary `authenticated` resource type**, not `upload`. If your files are `upload` type, fetch them directly server-side — signing with expiry on an `upload` resource returns a 502.
+
+---
+
 ## 🤖 62. Telegram Bot State Machine Pattern
 
 - **The core rule**: Telegram bots can ONLY message users who have previously messaged the bot. Store `chatId` in `BotSession.externalId` at `/connect` time — never lose it.
@@ -883,5 +896,7 @@ This guarantees an export that is literally pixel-for-pixel flawless without dis
 - **State machine in JSON**: Store `{ step: 'edit_price', tokenId: '...' }` in `BotSession.state`. On the next text reply, read the state, update the token, reset state to `confirm`, re-send the summary card. One DB write per edit round-trip.
 - **New photo = cancel active edit**: If a seller sends a new photo while mid-edit, treat it as a fresh listing. Creates a cleaner UX than blocking or erroring.
 - **Re-register webhook after deploy**: The Telegram webhook URL is registered once via `GET /api/webhooks/telegram` with `Authorization: Bearer <CRON_SECRET>`. Any URL change (e.g., domain change) requires re-registration.
+- **Callback_data 64-byte limit workaround:** 2 full UUIDs (32 chars each + separators) = ~88 bytes — over the limit. Use 8-char UUID prefixes and resolve full IDs server-side via `prisma.model.findFirst({ where: { id: { startsWith: prefix } } })`. Extract related IDs (e.g. storeId) from the resolved DB row rather than encoding them in callback_data — prevents spoofing.
+- **Ownership check at every state-setting callback, not just at menu entry:** The `lp` menu callback checks product ownership, but `lpname`/`lpprice` etc. (which SET the live-edit state) must ALSO check ownership. Otherwise an attacker can craft `lpname:FOREIGN_UUID` to hijack a product. Rule: any callback that transitions to a mutable state must independently verify ownership, even if the menu that sent the button already checked it.
 
 
