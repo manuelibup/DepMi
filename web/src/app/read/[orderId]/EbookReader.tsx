@@ -8,10 +8,9 @@ interface Props {
   orderId: string;
   productTitle: string;
   buyerUsername: string;
-  fileFormat: string; // e.g. 'pdf', 'docx', 'epub', 'pptx' …
+  fileFormat: string;
 }
 
-// PDF.js types (loaded from CDN at runtime — UMD build attaches to window.pdfjsLib)
 type PDFDocumentProxy = {
   numPages: number;
   getPage: (n: number) => Promise<PDFPageProxy>;
@@ -42,7 +41,18 @@ function formatLabel(ext: string): string {
   return FORMAT_LABELS[ext] ?? ext.toUpperCase() + ' File';
 }
 
-// ─── Non-PDF/DOCX download card ───────────────────────────────────────────────
+// Detect actual format from file magic bytes so we don't rely on the URL extension.
+// DOCX/PPTX/XLSX are ZIP-based: first 4 bytes = PK\x03\x04
+// PDF: first 4 bytes = %PDF
+function detectFormat(buffer: ArrayBuffer, hint: string): 'pdf' | 'docx' | 'other' {
+  const b = new Uint8Array(buffer.slice(0, 4));
+  if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'pdf';
+  if (b[0] === 0x50 && b[1] === 0x4B) return 'docx'; // ZIP → treat as DOCX/Office
+  if (hint === 'pdf') return 'pdf';
+  return 'other';
+}
+
+// ─── Non-renderable download card ────────────────────────────────────────────
 
 function DownloadCard({ orderId, productTitle, fileFormat }: { orderId: string; productTitle: string; fileFormat: string }) {
   const [downloading, setDownloading] = useState(false);
@@ -54,10 +64,7 @@ function DownloadCard({ orderId, productTitle, fileFormat }: { orderId: string; 
     setErr('');
     try {
       const res = await fetch(`/api/download/${orderId}`, { credentials: 'include' });
-      if (!res.ok) {
-        setErr(`Could not download file (${res.status}). Please try again.`);
-        return;
-      }
+      if (!res.ok) { setErr(`Could not download file (${res.status}). Please try again.`); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -83,7 +90,6 @@ function DownloadCard({ orderId, productTitle, fileFormat }: { orderId: string; 
           <span className={styles.readerTitle}>{productTitle}</span>
         </div>
       </div>
-
       <div className={styles.readerBody}>
         <div className={styles.downloadCard}>
           <div className={styles.downloadIcon}>
@@ -95,72 +101,80 @@ function DownloadCard({ orderId, productTitle, fileFormat }: { orderId: string; 
           <h2 className={styles.downloadTitle}>{productTitle}</h2>
           <p className={styles.downloadMeta}>{formatLabel(fileFormat)} · Secured download</p>
           <p className={styles.downloadHint}>
-            This file is in <strong>{fileFormat.toUpperCase()}</strong> format. Tap the button below to download it securely — your copy is protected and linked to your account.
+            This file is in <strong>{fileFormat.toUpperCase()}</strong> format. Tap the button below to download it securely.
           </p>
           {err && <p className={styles.readerError}>{err}</p>}
           {done && <p className={styles.downloadDone}>✓ Download started</p>}
-          <button
-            className={styles.downloadBtn}
-            onClick={handleDownload}
-            disabled={downloading}
-          >
+          <button className={styles.downloadBtn} onClick={handleDownload} disabled={downloading}>
             {downloading ? 'Preparing…' : done ? 'Download again' : `Download ${fileFormat.toUpperCase()}`}
           </button>
-          <p className={styles.downloadNote}>
-            Having trouble? Open your orders page for alternative access options.
-          </p>
+          <p className={styles.downloadNote}>Having trouble? Open your orders page for alternative access options.</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── DOCX reader ──────────────────────────────────────────────────────────────
+// ─── Shared file fetcher + auto-detector ─────────────────────────────────────
 
-function DocxReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFormat'>) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type LoadedFile = { buffer: ArrayBuffer; detected: 'pdf' | 'docx' | 'other' };
+
+function useFileBuffer(orderId: string, hintFormat: string) {
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [file, setFile] = useState<LoadedFile | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-
-    async function loadDoc() {
-      setLoading(true);
-      setError('');
+    async function load() {
+      setState('loading');
+      setErrorMsg('');
       try {
         const res = await fetch(`/api/read/${orderId}`, { credentials: 'include' });
         if (!res.ok) {
-          const msg = res.status === 401 ? 'Please log in to read this document.'
-            : res.status === 403 ? "You don't have access to this document."
+          const msg = res.status === 401 ? 'Please log in to read this file.'
+            : res.status === 403 ? "You don't have access to this file."
             : res.status === 402 ? 'Payment not confirmed yet.'
-            : `Could not load document (${res.status}).`;
-          if (!cancelled) { setError(msg); setLoading(false); }
+            : `Could not load file (${res.status}).`;
+          if (!cancelled) { setErrorMsg(msg); setState('error'); }
           return;
         }
         const buffer = await res.arrayBuffer();
-        if (cancelled || !containerRef.current) return;
-
-        const { renderAsync } = await import('docx-preview');
-        await renderAsync(buffer, containerRef.current, undefined, {
-          className: styles.docxBody,
-          inWrapper: true,
-          ignoreWidth: false,
-          ignoreHeight: false,
-          ignoreFonts: false,
-          breakPages: true,
-          useBase64URL: true,
-        });
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        const detected = detectFormat(buffer, hintFormat);
+        setFile({ buffer, detected });
+        setState('ready');
       } catch (e) {
-        console.error('[DocxReader] error:', e);
-        if (!cancelled) { setError('Failed to load document. Please refresh and try again.'); setLoading(false); }
+        console.error('[EbookReader] load error:', e);
+        if (!cancelled) { setErrorMsg('Failed to load file. Please refresh and try again.'); setState('error'); }
       }
     }
-
-    loadDoc();
+    load();
     return () => { cancelled = true; };
-  }, [orderId]);
+  }, [orderId, hintFormat]);
+
+  return { state, file, errorMsg };
+}
+
+// ─── Main router ──────────────────────────────────────────────────────────────
+
+export default function EbookReader({ orderId, productTitle, buyerUsername, fileFormat }: Props) {
+  const DOC_FORMATS = ['pdf', 'docx', 'doc'];
+  if (!DOC_FORMATS.includes(fileFormat)) {
+    return <DownloadCard orderId={orderId} productTitle={productTitle} fileFormat={fileFormat} />;
+  }
+  return (
+    <DocPicker
+      orderId={orderId}
+      productTitle={productTitle}
+      buyerUsername={buyerUsername}
+      hintFormat={fileFormat}
+    />
+  );
+}
+
+function DocPicker({ orderId, productTitle, buyerUsername, hintFormat }: Omit<Props, 'fileFormat'> & { hintFormat: string }) {
+  const { state, file, errorMsg } = useFileBuffer(orderId, hintFormat);
 
   useEffect(() => {
     const prevent = (e: MouseEvent) => e.preventDefault();
@@ -175,6 +189,64 @@ function DocxReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileF
     };
   }, []);
 
+  if (state === 'loading' || (!file && state !== 'error')) {
+    return (
+      <div className={styles.readerShell}>
+        <div className={styles.readerBar}><div className={styles.readerBarLeft}><span className={styles.readerTitle}>{productTitle}</span></div></div>
+        <div className={styles.readerBody}>
+          <div className={styles.readerLoading}><div className={styles.spinner} /><p>Loading…</p></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 'error' || !file) {
+    return (
+      <div className={styles.readerShell}>
+        <div className={styles.readerBar}><div className={styles.readerBarLeft}><span className={styles.readerTitle}>{productTitle}</span></div></div>
+        <div className={styles.readerBody}><div className={styles.readerError}>{errorMsg}</div></div>
+      </div>
+    );
+  }
+
+  if (file.detected === 'docx') {
+    return <DocxRenderer buffer={file.buffer} productTitle={productTitle} buyerUsername={buyerUsername} />;
+  }
+  return <PdfRenderer buffer={file.buffer} productTitle={productTitle} buyerUsername={buyerUsername} />;
+}
+
+// ─── DOCX renderer ────────────────────────────────────────────────────────────
+
+function DocxRenderer({ buffer, productTitle, buyerUsername }: { buffer: ArrayBuffer; productTitle: string; buyerUsername: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState('');
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    async function render() {
+      try {
+        const { renderAsync } = await import('docx-preview');
+        await renderAsync(buffer, containerRef.current!, undefined, {
+          className: styles.docxBody,
+          inWrapper: true,
+          ignoreWidth: false,
+          ignoreHeight: false,
+          ignoreFonts: false,
+          breakPages: true,
+          useBase64URL: true,
+        });
+        if (!cancelled) setRendered(true);
+      } catch (e) {
+        console.error('[DocxRenderer]', e);
+        if (!cancelled) setError('Failed to render document. Please try again.');
+      }
+    }
+    render();
+    return () => { cancelled = true; };
+  }, [buffer]);
+
   return (
     <div className={styles.readerShell}>
       <div className={styles.readerBar}>
@@ -185,18 +257,10 @@ function DocxReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileF
           <span className={styles.readerTitle}>{productTitle}</span>
         </div>
       </div>
-
       <div className={styles.readerBody}>
-        {loading && (
-          <div className={styles.readerLoading}>
-            <div className={styles.spinner} />
-            <p>Loading document…</p>
-          </div>
-        )}
-        {!loading && error && <div className={styles.readerError}>{error}</div>}
+        {error && <div className={styles.readerError}>{error}</div>}
         <div className={styles.docxWrapper}>
-          {/* Watermark overlay */}
-          {!loading && !error && (
+          {rendered && (
             <div className={styles.docxWatermark} aria-hidden>
               {Array.from({ length: 20 }).map((_, i) => (
                 <span key={i}>depmi • @{buyerUsername}</span>
@@ -210,19 +274,9 @@ function DocxReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileF
   );
 }
 
-// ─── PDF reader ───────────────────────────────────────────────────────────────
+// ─── PDF renderer ─────────────────────────────────────────────────────────────
 
-export default function EbookReader({ orderId, productTitle, buyerUsername, fileFormat }: Props) {
-  if (fileFormat === 'docx' || fileFormat === 'doc') {
-    return <DocxReader orderId={orderId} productTitle={productTitle} buyerUsername={buyerUsername} />;
-  }
-  if (fileFormat !== 'pdf') {
-    return <DownloadCard orderId={orderId} productTitle={productTitle} fileFormat={fileFormat} />;
-  }
-  return <PdfReader orderId={orderId} productTitle={productTitle} buyerUsername={buyerUsername} />;
-}
-
-function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFormat'>) {
+function PdfRenderer({ buffer, productTitle, buyerUsername }: { buffer: ArrayBuffer; productTitle: string; buyerUsername: string }) {
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.2);
@@ -236,22 +290,10 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
   useEffect(() => {
     if (!pdfjsReady) return;
     let cancelled = false;
-
     async function loadDoc() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`/api/read/${orderId}`, { credentials: 'include' });
-        if (!res.ok) {
-          const msg = res.status === 401 ? 'Please log in to read this ebook.'
-            : res.status === 403 ? 'You don\'t have access to this ebook.'
-            : res.status === 402 ? 'Payment not confirmed yet.'
-            : `Could not load ebook (${res.status}).`;
-          if (!cancelled) { setError(msg); setLoading(false); }
-          return;
-        }
-        const buffer = await res.arrayBuffer();
-        if (cancelled) return;
         const doc: PDFDocumentProxy = await window.pdfjsLib.getDocument({ data: buffer }).promise;
         if (cancelled) return;
         docRef.current = doc;
@@ -259,14 +301,13 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
         setCurrentPage(1);
         setLoading(false);
       } catch (e) {
-        console.error('[EbookReader] loadDoc error:', e);
-        if (!cancelled) { setError('Failed to load ebook. Please refresh and try again.'); setLoading(false); }
+        console.error('[PdfRenderer] error:', e);
+        if (!cancelled) { setError('Failed to render PDF. Please refresh and try again.'); setLoading(false); }
       }
     }
-
     loadDoc();
     return () => { cancelled = true; };
-  }, [orderId, pdfjsReady]);
+  }, [pdfjsReady, buffer]);
 
   const renderPage = useCallback(async (pageNum: number) => {
     const doc = docRef.current;
@@ -282,7 +323,6 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Watermark
       ctx.save();
       ctx.globalAlpha = 0.08;
       ctx.font = `bold ${Math.round(viewport.width * 0.045)}px Arial`;
@@ -308,19 +348,6 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
     if (!loading && docRef.current) renderPage(currentPage);
   }, [currentPage, loading, renderPage]);
 
-  useEffect(() => {
-    const prevent = (e: MouseEvent) => e.preventDefault();
-    const preventKeys = (e: KeyboardEvent) => {
-      if (e.ctrlKey && ['s', 'p'].includes(e.key.toLowerCase())) e.preventDefault();
-    };
-    document.addEventListener('contextmenu', prevent);
-    document.addEventListener('keydown', preventKeys);
-    return () => {
-      document.removeEventListener('contextmenu', prevent);
-      document.removeEventListener('keydown', preventKeys);
-    };
-  }, []);
-
   const goTo = (page: number) => setCurrentPage(Math.max(1, Math.min(numPages, page)));
 
   return (
@@ -328,16 +355,9 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
       <Script
         src={PDFJS_SRC}
         strategy="afterInteractive"
-        onLoad={() => {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
-          setPdfjsReady(true);
-        }}
-        onError={() => {
-          setError('Failed to load PDF renderer. Check your internet connection.');
-          setLoading(false);
-        }}
+        onLoad={() => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER; setPdfjsReady(true); }}
+        onError={() => { setError('Failed to load PDF renderer. Check your internet connection.'); setLoading(false); }}
       />
-
       <div className={styles.readerShell}>
         <div className={styles.readerBar}>
           <div className={styles.readerBarLeft}>
@@ -352,33 +372,17 @@ function PdfReader({ orderId, productTitle, buyerUsername }: Omit<Props, 'fileFo
             <button className={styles.zoomBtn} onClick={() => setScale(s => Math.min(3, +(s + 0.2).toFixed(1)))} title="Zoom in">+</button>
           </div>
         </div>
-
         <div className={styles.readerBody}>
-          {loading && (
-            <div className={styles.readerLoading}>
-              <div className={styles.spinner} />
-              <p>Loading ebook…</p>
-            </div>
-          )}
+          {loading && <div className={styles.readerLoading}><div className={styles.spinner} /><p>Loading PDF…</p></div>}
           {!loading && error && <div className={styles.readerError}>{error}</div>}
-          {!loading && !error && (
-            <canvas ref={canvasRef} className={styles.readerCanvas} />
-          )}
+          {!loading && !error && <canvas ref={canvasRef} className={styles.readerCanvas} />}
         </div>
-
         {!loading && !error && numPages > 0 && (
           <div className={styles.readerPager}>
             <button className={styles.pageBtn} onClick={() => goTo(1)} disabled={currentPage === 1} title="First page">«</button>
             <button className={styles.pageBtn} onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} title="Previous page">‹</button>
             <span className={styles.pageInfo}>
-              <input
-                className={styles.pageInput}
-                type="number"
-                min={1}
-                max={numPages}
-                value={currentPage}
-                onChange={e => goTo(Number(e.target.value))}
-              />
+              <input className={styles.pageInput} type="number" min={1} max={numPages} value={currentPage} onChange={e => goTo(Number(e.target.value))} />
               <span>/ {numPages}</span>
             </span>
             <button className={styles.pageBtn} onClick={() => goTo(currentPage + 1)} disabled={currentPage === numPages} title="Next page">›</button>
