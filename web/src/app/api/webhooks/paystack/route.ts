@@ -1,39 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { validateWebhookSignature } from '@/lib/flutterwave'
+import { validateWebhookSignature } from '@/lib/paystack'
 import { notifyOrderUpdate, sendOrderAutoDM } from '@/lib/notifyWatchers'
+import { notifyUserTelegram } from '@/lib/bot/notify'
 import { notifyWhatsAppNewOrder } from '@/lib/whatsapp'
-import { notifySellerNewOrder, notifyUserTelegram } from '@/lib/bot/notify'
 import { bookShipment } from '@/lib/shipbubble'
 
+/**
+ * Paystack payment webhook.
+ * Handles async payment confirmations as a fallback to the redirect callback.
+ *
+ * Security: validates x-paystack-signature HMAC-SHA512 before touching the DB.
+ * Idempotent: re-delivery of same reference is a no-op.
+ *
+ * Webhook URL to register in Paystack dashboard → Settings → API Keys & Webhooks:
+ *   https://depmi.com/api/webhooks/paystack
+ */
 export async function POST(req: NextRequest) {
-    const signature = req.headers.get('verif-hash') ?? ''
-    if (!signature || !validateWebhookSignature(signature)) {
-        console.error('[flutterwave-webhook] Invalid or missing signature')
-        return NextResponse.json({ ok: false }, { status: 401 })
-    }
-
-    let payload: FlutterwaveWebhookPayload
+    let rawBody: string
     try {
-        payload = await req.json()
+        rawBody = await req.text()
     } catch {
         return NextResponse.json({ ok: false }, { status: 400 })
     }
 
-    if (payload.event !== 'charge.completed' || payload.data?.status !== 'successful') {
+    const signature = req.headers.get('x-paystack-signature') ?? ''
+    if (!signature || !validateWebhookSignature(rawBody, signature)) {
+        console.error('[paystack-webhook] Invalid or missing signature')
+        return NextResponse.json({ ok: false }, { status: 401 })
+    }
+
+    let payload: PaystackWebhookPayload
+    try {
+        payload = JSON.parse(rawBody)
+    } catch {
+        return NextResponse.json({ ok: false }, { status: 400 })
+    }
+
+    // Only handle successful charges
+    if (payload.event !== 'charge.success' || payload.data?.status !== 'success') {
         return NextResponse.json({ ok: true })
     }
 
-    const { tx_ref, amount } = payload.data
-    void amount
-    let orderId = tx_ref?.replace('depmi-order-', '')
+    const { reference, amount: amountKobo } = payload.data
+    // amount from Paystack is in kobo — convert to NGN for logging only
+    void amountKobo
 
+    let orderId = reference?.replace('depmi-order-', '')
     if (!orderId) {
-        console.error('[flutterwave-webhook] Could not parse orderId from', tx_ref)
+        console.error('[paystack-webhook] Could not parse orderId from reference:', reference)
         return NextResponse.json({ ok: true })
     }
 
-    type ConfirmedOrder = {
+    type ConfirmedOrderData = {
         storeId: string
         storeName: string
         productTitle: string
@@ -45,7 +64,7 @@ export async function POST(req: NextRequest) {
         isDigital: boolean
     }
     // eslint-disable-next-line prefer-const
-    let confirmedOrder: ConfirmedOrder | null = null
+    let confirmedOrder: ConfirmedOrderData | null = null
 
     try {
         await prisma.$transaction(async (tx) => {
@@ -58,9 +77,10 @@ export async function POST(req: NextRequest) {
                 },
             })
 
+            // Fallback: search by paystackRef in case orderId parse differs
             if (!order) {
                 order = await tx.order.findFirst({
-                    where: { OR: [{ id: tx_ref }, { paystackRef: tx_ref }] },
+                    where: { OR: [{ id: reference }, { paystackRef: reference }] },
                     include: {
                         seller: { include: { owner: true } },
                         buyer: true,
@@ -70,24 +90,41 @@ export async function POST(req: NextRequest) {
                 if (order) orderId = order.id
             }
 
-            if (!order) { console.error('[flutterwave-webhook] Order not found:', orderId); return }
-            if (order.status === 'CONFIRMED' || order.paystackRef === tx_ref) return
+            if (!order) {
+                console.error('[paystack-webhook] Order not found:', orderId)
+                return
+            }
+
+            // Idempotency
+            if (order.status === 'CONFIRMED' || order.paystackRef === reference) return
             if (order.escrowStatus !== 'HELD' || order.status !== 'PENDING') return
 
             const platformFeeNgn = order.platformFeeNgn || 0
+
             await tx.order.update({
                 where: { id: orderId },
-                data: { status: 'CONFIRMED', escrowStatus: 'HELD', paystackRef: tx_ref, platformFeeNgn },
+                data: {
+                    status: 'CONFIRMED',
+                    escrowStatus: 'HELD',
+                    paystackRef: reference,
+                    platformFeeNgn,
+                },
             })
 
+            // Decrement product stock
             for (const item of order.items) {
                 if (!item.product) continue
                 const newStock = Math.max(0, (item.product.stock || 1) - item.quantity)
-                await tx.product.update({ where: { id: item.productId }, data: { stock: newStock, inStock: newStock > 0 } })
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: newStock, inStock: newStock > 0 },
+                })
             }
 
             const isDigitalOrder = order.isDigital || (order.items[0]?.product?.isDigital ?? false)
-            const variantSuffix = order.items[0]?.variantName ? ` — ${order.items[0].variantName}` : ''
+            const variantName = order.items[0]?.variantName
+            const variantSuffix = variantName ? ` — ${variantName}` : ''
+
             await tx.notification.create({
                 data: {
                     userId: order.seller.ownerId,
@@ -125,12 +162,18 @@ export async function POST(req: NextRequest) {
                 isDigital: isDigitalOrder,
             }
 
+            // Auto-book dispatch if store has DepMi Dispatch enabled (skip for digital)
             if (!isDigitalOrder && order.seller.dispatchEnabled && order.shipbubbleReqToken) {
                 try {
                     const booking = await bookShipment(order.shipbubbleReqToken)
                     await tx.order.update({
                         where: { id: orderId },
-                        data: { dispatchOrderId: booking.shipbubbleOrderId, dispatchProvider: 'shipbubble/gigl', trackingNo: booking.trackingUrl ?? booking.trackingCode ?? null, status: 'SHIPPED' },
+                        data: {
+                            dispatchOrderId: booking.shipbubbleOrderId,
+                            dispatchProvider: 'shipbubble/gigl',
+                            trackingNo: booking.trackingUrl ?? booking.trackingCode ?? null,
+                            status: 'SHIPPED',
+                        },
                     })
                     await tx.notification.create({
                         data: {
@@ -142,28 +185,20 @@ export async function POST(req: NextRequest) {
                         },
                     })
                 } catch (dispatchErr) {
-                    console.error('[flutterwave-webhook] Dispatch booking failed:', dispatchErr)
+                    // Don't fail payment confirmation — seller can ship manually
+                    console.error('[paystack-webhook] Dispatch booking failed:', dispatchErr)
                 }
             }
         })
     } catch (err) {
-        console.error('[flutterwave-webhook] DB error:', err)
+        console.error('[paystack-webhook] DB error:', err)
     }
 
-    // TypeScript narrows confirmedOrder to null after try/catch because the assignment
-    // happens inside an async callback (control flow doesn't track closures). Double-cast.
-    const finalOrder = confirmedOrder as unknown as ConfirmedOrder | null
+    // Fire social notifications + auto-DM after transaction — never block payment confirmation
+    // TypeScript can't track assignment inside async closure — double-cast.
+    const finalOrder = confirmedOrder as unknown as ConfirmedOrderData | null
     if (finalOrder) {
         void sendOrderAutoDM(finalOrder.buyerId, finalOrder.sellerOwnerId, orderId)
-        if (finalOrder.sellerPhone) {
-            void notifyWhatsAppNewOrder(finalOrder.sellerPhone, orderId.slice(-6).toUpperCase(), finalOrder.productTitle, finalOrder.totalAmount)
-        }
-        void notifySellerNewOrder(finalOrder.storeId, {
-            shortId: orderId.slice(-6).toUpperCase(),
-            productTitle: finalOrder.productTitle,
-            amount: finalOrder.totalAmount,
-            buyerName: 'a buyer',
-        })
         void notifyUserTelegram(
             finalOrder.buyerId,
             finalOrder.isDigital
@@ -171,11 +206,25 @@ export async function POST(req: NextRequest) {
                 : `✅ <b>Payment confirmed!</b>\n\n🛍 <b>${finalOrder.productTitle}</b> has been paid. The seller will prepare your item shortly.`,
             finalOrder.isDigital
                 ? [{ text: '📖 Read Now', url: `${process.env.NEXTAUTH_URL ?? 'https://depmi.com'}/read/${orderId}` }]
-                : [{ text: '📦 View Order', url: 'https://depmi.com/orders' }],
+                : [{ text: '📦 View Order', url: `${process.env.NEXTAUTH_URL ?? 'https://depmi.com'}/orders` }],
         )
+
+        if (finalOrder.sellerPhone) {
+            void notifyWhatsAppNewOrder(
+                finalOrder.sellerPhone,
+                orderId.slice(-6).toUpperCase(),
+                finalOrder.productTitle,
+                finalOrder.totalAmount,
+            )
+        }
+
         const { storeId, storeName, productTitle, storeSlug } = finalOrder
         try {
-            const followers = await prisma.storeFollow.findMany({ where: { storeId }, select: { userId: true }, take: 100 })
+            const followers = await prisma.storeFollow.findMany({
+                where: { storeId },
+                select: { userId: true },
+                take: 100,
+            })
             if (followers.length > 0) {
                 await prisma.notification.createMany({
                     data: followers.map(f => ({
@@ -189,22 +238,27 @@ export async function POST(req: NextRequest) {
                 })
             }
         } catch (err) {
-            console.error('[flutterwave-webhook] Social notification error:', err)
+            console.error('[paystack-webhook] Social notification error:', err)
         }
     }
 
     return NextResponse.json({ ok: true })
 }
 
-interface FlutterwaveWebhookPayload {
+interface PaystackWebhookPayload {
     event: string
     data?: {
-        id: number
-        tx_ref: string
-        flw_ref: string
-        amount: number
+        reference: string
+        amount: number  // kobo
+        status: string  // 'success' | 'failed'
         currency: string
-        status: string
-        customer: { email: string; name: string }
+        customer: {
+            email: string
+            first_name?: string
+            last_name?: string
+        }
+        metadata?: {
+            orderId?: string
+        }
     }
 }

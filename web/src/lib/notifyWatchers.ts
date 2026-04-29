@@ -291,7 +291,7 @@ export async function notifyStoreOwnersOfDemand({
             type: 'NEW_DEMAND',
             title: `New ${categoryLabel} request`,
             body: `${shortText} — Budget: ₦${Number(budget).toLocaleString()}`,
-            link: `/demand/${demandId}`,
+            link: `/requests/${demandId}`,
             isRead: false,
         })),
         skipDuplicates: true,
@@ -305,12 +305,13 @@ export async function notifyStoreOwnersOfDemand({
 export async function notifyOrderUpdate({
     orderId,
     status,
-    userId,
+    userId: _userId,
     userName,
     userEmail,
     productTitle,
     amount,
     link,
+    isDigital,
 }: {
     orderId: string;
     status: string;
@@ -320,6 +321,7 @@ export async function notifyOrderUpdate({
     productTitle: string;
     amount?: number;
     link: string;
+    isDigital?: boolean;
 }) {
     const shortId = orderId.slice(-6).toUpperCase();
     const safeName = escHtml(userName);
@@ -339,7 +341,12 @@ export async function notifyOrderUpdate({
         case 'PAID':
             subject = `Order #${shortId} confirmed!`;
             headline = `Payment received, ${safeName}!`;
-            body = `Good news! Your payment for <strong>${safeProduct}</strong> was successful. The seller has been notified to ship your item.`;
+            if (isDigital) {
+                body = `Your payment for <strong>${safeProduct}</strong> was successful. Your ebook is ready — tap the button below to start reading.`;
+                buttonText = 'Read Now';
+            } else {
+                body = `Your payment for <strong>${safeProduct}</strong> was successful. The seller has been notified to ship your item.`;
+            }
             break;
         case 'SHIPPED':
             subject = `Your order #${shortId} is on the way!`;

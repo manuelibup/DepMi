@@ -92,16 +92,23 @@ const BUYER_STEPS: TimelineStep[] = [
     { label: 'Shipped', key: 'SHIPPED' },
     { label: 'Received', key: 'COMPLETED' },
 ];
+const DIGITAL_BUYER_STEPS: TimelineStep[] = [
+    { label: 'Placed', key: 'PENDING' },
+    { label: 'Paid', key: 'CONFIRMED' },
+    { label: 'Available', key: 'COMPLETED' },
+];
 const STATUS_ORDER = ['PENDING', 'PAYMENT_VERIFYING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
 function getStepState(stepKey: string, stepIdx: number, currentStatus: string): 'done' | 'current' | 'pending' {
+    // Digital 'Available' step maps to CONFIRMED+ (file is accessible as soon as paid)
+    const resolvedKey = stepKey === 'Available' ? 'CONFIRMED' : stepKey;
     const currentIdx = STATUS_ORDER.indexOf(currentStatus);
-    const stepStatusIdx = STATUS_ORDER.indexOf(stepKey === 'COMPLETED' ? 'COMPLETED' : stepKey);
+    const stepStatusIdx = STATUS_ORDER.indexOf(resolvedKey === 'COMPLETED' ? 'COMPLETED' : resolvedKey);
     if (currentIdx > stepStatusIdx) return 'done';
     if (currentIdx === stepStatusIdx) return 'current';
     // special cases
-    if (currentStatus === 'DELIVERED' && stepKey === 'SHIPPED') return 'done';
-    if (['SHIPPED', 'DELIVERED'].includes(currentStatus) && stepKey === 'CONFIRMED') return 'done';
+    if (currentStatus === 'DELIVERED' && resolvedKey === 'SHIPPED') return 'done';
+    if (['SHIPPED', 'DELIVERED'].includes(currentStatus) && resolvedKey === 'CONFIRMED') return 'done';
     return 'pending';
 }
 
@@ -285,7 +292,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                 {/* Timeline */}
                 {showTimeline && (
                     <div className={styles.timeline}>
-                        {BUYER_STEPS.map((step, i) => {
+                        {(order.product.isDigital ? DIGITAL_BUYER_STEPS : BUYER_STEPS).map((step, i, steps) => {
                             const state = getStepState(step.key, i, localStatus);
                             return (
                                 <React.Fragment key={step.key}>
@@ -298,7 +305,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                                         </div>
                                         <span className={`${styles.timelineLabel}${state === 'done' ? ' ' + styles.done : state === 'current' ? ' ' + styles.current : ''}`}>{step.label}</span>
                                     </div>
-                                    {i < BUYER_STEPS.length - 1 && (
+                                    {i < steps.length - 1 && (
                                         <div className={`${styles.timelineLine}${state === 'done' ? ' ' + styles.done : ''}`} />
                                     )}
                                 </React.Fragment>
@@ -382,16 +389,14 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
 
                         {order.product.isDigital && order.product.fileUrl && ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(localStatus) && (
                             <a
-                                href={order.product.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={`/read/${order.id}`}
                                 className={`${styles.btn} ${styles.btnPrimary}`}
                                 style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                             >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                 </svg>
-                                Download Your File
+                                Read Now
                             </a>
                         )}
 

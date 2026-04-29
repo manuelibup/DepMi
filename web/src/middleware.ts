@@ -7,6 +7,7 @@ const MAINTENANCE_MODE = false;
 // Routes that require authentication (unauthenticated users → /login)
 const AUTH_REQUIRED = [
     '/orders',
+    '/read',
     '/profile',
     '/demand/new',
     '/store/create',
