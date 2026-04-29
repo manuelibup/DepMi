@@ -40,11 +40,16 @@ export default async function ReadPage({ params }: { params: Promise<{ orderId: 
 
   const buyerUsername = order.buyer?.username ?? order.buyer?.displayName ?? 'reader';
 
+  // Detect file format from URL extension so EbookReader can pick the right renderer
+  const extMatch = product.fileUrl.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+  const fileFormat = extMatch ? extMatch[1].toLowerCase() : 'pdf';
+
   return (
     <EbookReader
       orderId={orderId}
       productTitle={product.title}
       buyerUsername={buyerUsername}
+      fileFormat={fileFormat}
     />
   );
 }

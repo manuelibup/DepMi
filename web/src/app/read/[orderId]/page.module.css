@@ -168,3 +168,127 @@
 .pageInput::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
+
+/* DOCX reader */
+.docxWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.docxWatermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 120px 80px;
+  padding: 80px 40px;
+  transform: rotate(-20deg) scale(1.2);
+  transform-origin: center center;
+  overflow: hidden;
+}
+
+.docxWatermark span {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 92, 56, 0.1);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  letter-spacing: 0.05em;
+}
+
+.docxContainer {
+  width: 100%;
+}
+
+/* docx-preview injects its own sections — let them breathe */
+:global(.docx-wrapper) {
+  background: #fff !important;
+  padding: 0 !important;
+}
+
+:global(.docx) {
+  margin: 0 auto !important;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Download card (non-PDF formats) */
+.downloadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  max-width: 400px;
+  width: 100%;
+  padding: 40px 24px;
+  background: #222;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  margin: auto;
+}
+
+.downloadIcon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 92, 56, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.downloadTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.downloadMeta {
+  font-size: 0.78rem;
+  color: #888;
+  margin: 0;
+}
+
+.downloadHint {
+  font-size: 0.85rem;
+  color: #aaa;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.downloadBtn {
+  margin-top: 8px;
+  padding: 12px 28px;
+  background: var(--primary, #FF5C38);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+.downloadBtn:hover:not(:disabled) { opacity: 0.88; }
+.downloadBtn:disabled { opacity: 0.5; cursor: default; }
+
+.downloadDone {
+  font-size: 0.85rem;
+  color: #4ade80;
+  margin: 0;
+}
+
+.downloadNote {
+  font-size: 0.78rem;
+  color: #666;
+  margin: 0;
+}

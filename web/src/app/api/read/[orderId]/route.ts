@@ -95,10 +95,22 @@ export async function GET(
 
     const buffer = await upstream.arrayBuffer();
 
+    const extMatch = product.fileUrl.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+    const MIME: Record<string, string> = {
+        pdf: 'application/pdf',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        doc: 'application/msword',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        epub: 'application/epub+zip',
+    };
+    const contentType = MIME[ext] ?? upstream.headers.get('content-type') ?? 'application/octet-stream';
+
     return new NextResponse(buffer, {
         status: 200,
         headers: {
-            'Content-Type': 'application/pdf',
+            'Content-Type': contentType,
             'Content-Disposition': 'inline',
             'Cache-Control': 'no-store, no-cache, must-revalidate',
             'X-Frame-Options': 'SAMEORIGIN',
