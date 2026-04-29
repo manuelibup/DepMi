@@ -2,25 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
-
-function parseCloudinaryUrl(url: string): { publicId: string; resourceType: string } | null {
-  try {
-    const match = url.match(/\/(?:image|video|raw)\/upload\/(?:v\d+\/)?(.+)$/);
-    const typeMatch = url.match(/\/(image|video|raw)\/upload\//);
-    if (!match || !typeMatch) return null;
-    return { publicId: match[1], resourceType: typeMatch[1] };
-  } catch {
-    return null;
-  }
-}
 
 const DOWNLOADABLE = ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
@@ -56,20 +37,13 @@ export async function GET(
     return NextResponse.json({ error: 'No digital file' }, { status: 404 });
   }
 
-  const parsed = parseCloudinaryUrl(product.fileUrl);
-  if (!parsed) return NextResponse.json({ error: 'Invalid file URL' }, { status: 500 });
-
-  // 5-minute signed URL — fetched server-side, never exposed to the browser
-  const signedUrl = cloudinary.url(parsed.publicId, {
-    resource_type: parsed.resourceType as 'image' | 'video' | 'raw',
-    sign_url: true,
-    expires_at: Math.floor(Date.now() / 1000) + 5 * 60,
-    type: 'upload',
-  });
-
-  const upstream = await fetch(signedUrl);
+  // The fileUrl is a public Cloudinary /upload/ URL — fetch it server-side.
+  // Server-to-server has no CORS or referrer restrictions, so no signing needed.
+  // The raw URL is never exposed to the browser — this route is the only gateway.
+  const upstream = await fetch(product.fileUrl);
   if (!upstream.ok) {
-    return NextResponse.json({ error: 'Failed to fetch file' }, { status: 502 });
+    console.error('[read] Cloudinary fetch failed:', upstream.status, product.fileUrl);
+    return NextResponse.json({ error: `Could not fetch file (${upstream.status})` }, { status: 502 });
   }
 
   const buffer = await upstream.arrayBuffer();
@@ -78,11 +52,8 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      // inline = render in viewer, not trigger a save dialog
       'Content-Disposition': 'inline',
-      // Never cache — each request must be freshly authorized
       'Cache-Control': 'no-store, no-cache, must-revalidate',
-      // Only embeddable within DepMi itself
       'X-Frame-Options': 'SAMEORIGIN',
       'Content-Security-Policy': "frame-ancestors 'self'",
     },
