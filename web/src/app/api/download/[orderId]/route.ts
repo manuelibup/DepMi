@@ -3,9 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { v2 as cloudinary } from 'cloudinary';
-import path from 'path';
 
-export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -39,9 +38,7 @@ export async function GET(
       status: true,
       items: {
         take: 1,
-        select: {
-          product: { select: { title: true, isDigital: true, fileUrl: true } },
-        },
+        select: { product: { select: { title: true, isDigital: true, fileUrl: true } } },
       },
     },
   });
@@ -57,59 +54,32 @@ export async function GET(
     return NextResponse.json({ error: 'No digital file for this order' }, { status: 404 });
   }
 
-  let fetchUrl = product.fileUrl;
-  const rawPublicId = extractPublicId(product.fileUrl);
-  const publicId = rawPublicId ? decodeURIComponent(rawPublicId) : null;
+  // Generate a short-lived signed Cloudinary download URL.
+  // The private_download_url forces Content-Disposition: attachment so the browser downloads.
+  let redirectUrl = product.fileUrl;
+  const rawId = extractPublicId(product.fileUrl);
 
-  if (publicId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
+  if (rawId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
     try {
-      fetchUrl = cloudinary.utils.private_download_url(publicId, '', { resource_type: 'raw' });
+      const decodedId = decodeURIComponent(rawId);
+
+      // Derive the extension for the attachment filename
+      const extMatch = product.fileUrl.match(/\.([a-zA-Z0-9]{2,5})(?:\?|#|$)/);
+      const ext = extMatch ? extMatch[1].toLowerCase() : '';
+      const safeName = (product.title ?? 'download').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'download';
+      const filename = ext ? `${safeName}.${ext}` : safeName;
+
+      redirectUrl = cloudinary.utils.private_download_url(decodedId, ext, {
+        resource_type: 'raw',
+        attachment: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(filename ? { filename_override: filename } as any : {}),
+        expires_at: Math.floor(Date.now() / 1000) + 300,
+      });
     } catch (err) {
-      console.error('[download] private_download_url failed:', err);
+      console.error('[download] signing failed:', err);
     }
   }
 
-  let upstream: Response | undefined;
-
-  try {
-    const r = await fetch(fetchUrl);
-    if (r.ok) upstream = r;
-    else console.error('[download] attempt 1 failed:', r.status, r.statusText);
-  } catch (err) {
-    console.error('[download] attempt 1 threw:', err);
-  }
-
-  if (!upstream) {
-    try {
-      const decoded = decodeURIComponent(product.fileUrl);
-      const r = await fetch(decoded);
-      if (r.ok) upstream = r;
-      else console.error('[download] attempt 2 failed:', r.status);
-    } catch (err) {
-      console.error('[download] attempt 2 threw:', err);
-    }
-  }
-
-  if (!upstream) {
-    return NextResponse.json({ error: 'Could not fetch file from storage' }, { status: 502 });
-  }
-
-  const buffer = await upstream.arrayBuffer();
-
-  // Derive a clean filename from the product title + extension from original URL
-  const extMatch = product.fileUrl.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
-  const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
-  const safeName = (product.title ?? 'download').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'download';
-  const filename = `${safeName}.${ext}`;
-
-  const contentType = upstream.headers.get('content-type') ?? 'application/octet-stream';
-
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: {
-      'Content-Type': contentType,
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.redirect(redirectUrl, { status: 302 });
 }
