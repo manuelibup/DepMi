@@ -780,6 +780,8 @@ async function handleLiveStateMessage(
             await sendLiveEditMenu(chatId, productId);
             return true;
         }
+        default:
+            return false;
     }
 
     await setSessionState(chatId, { step: 'idle' });
@@ -808,8 +810,8 @@ async function handleStateMessage(chatId: number, text: string, state: BotState,
         return true;
     }
 
-    // Dispatch live product edit states
-    if ('productId' in state) {
+    // Dispatch live product edit states — must check step prefix to avoid catching buyer states
+    if (state.step.startsWith('live_edit_') && 'productId' in state) {
         return handleLiveStateMessage(chatId, text, state as Extract<BotState, { productId: string }>);
     }
 

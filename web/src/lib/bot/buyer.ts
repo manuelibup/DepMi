@@ -217,13 +217,33 @@ export async function handleBuyStart(
         return;
     }
 
-    // Logged in — go straight to address
+    // Logged in — digital skips address and goes straight to confirm with button
+    if (isDigital) {
+        await setState(chatId, {
+            step: 'buyer_confirm',
+            productId, storeId, price,
+            variantId, variantName,
+            isDigital,
+            address: '',
+        });
+        const variantLine = variantName ? `\nVariant: <b>${escapeHtml(variantName)}</b>` : '';
+        await sendTelegramMessageWithButtons(
+            chatId,
+            `⚡ <b>Digital product</b> — instant delivery!\n\n` +
+            `📋 <b>Order summary</b>\n\n` +
+            `Amount: <b>₦${price.toLocaleString()}</b>${variantLine}\n\n` +
+            `Payment: <b>Bank transfer</b> (account details sent after confirming)\n\n` +
+            `Confirm order?`,
+            [[{ text: '✅ Confirm & get payment details', callback_data: 'bconfirm' }]],
+            'HTML',
+        );
+        return;
+    }
+
     await setState(chatId, { step: 'buyer_address', productId, storeId, price, variantId, variantName, isDigital });
     await sendTelegramMessage(
         chatId,
-        isDigital
-            ? `⚡ <b>Digital product</b> — no delivery needed!\n\nTap confirm to proceed to payment:`
-            : `📍 Enter your delivery address:\n\n<i>Format: Street, City, State (e.g. 15 Woji Road, Port Harcourt, Rivers)</i>`,
+        `📍 Enter your delivery address:\n\n<i>Format: Street, City, State (e.g. 15 Woji Road, Port Harcourt, Rivers)</i>`,
         'HTML',
     );
 }
