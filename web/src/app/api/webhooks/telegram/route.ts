@@ -1148,29 +1148,29 @@ async function handleCallbackQuery(query: NonNullable<TelegramUpdate['callback_q
         // ── Buyer flow ────────────────────────────────────────────────────────
 
         case 'bstart': {
-            // callback_data: bstart:productId:storeId:price:isDigital
-            const [productId, storeId, priceStr, digitalStr] = tokenId.split(':');
+            // callback_data: bstart:pid8:sid8:price:isDigital
+            const [pidPrefix, , priceStr, digitalStr] = tokenId.split(':');
             const price = parseInt(priceStr ?? '0', 10);
             const isDigital = digitalStr === '1';
-            await handleBuyStart(chatId, productId, storeId, price, isDigital, undefined, undefined, setSessionState, session);
+            await handleBuyStart(chatId, pidPrefix, '', price, isDigital, undefined, undefined, setSessionState, session);
             break;
         }
 
         case 'bvariant': {
-            // callback_data: bvariant:productId:variantId:variantName:variantPrice:storeId:isDigital
-            const [productId, variantId, variantName, priceStr, storeId, digitalStr] = tokenId.split(':');
+            // callback_data: bvariant:pid8:vid8:price:sid8:isDigital
+            const [pidPrefix, vidPrefix, priceStr, , digitalStr] = tokenId.split(':');
             const price = parseInt(priceStr ?? '0', 10);
             const isDigital = digitalStr === '1';
-            await handleBuyStart(chatId, productId, storeId, price, isDigital, variantId, decodeURIComponent(variantName ?? ''), setSessionState, session);
+            await handleBuyStart(chatId, pidPrefix, '', price, isDigital, vidPrefix, undefined, setSessionState, session);
             break;
         }
 
         case 'baddr_reset': {
-            // callback_data: baddr_reset:productId:storeId:price:isDigital
-            const [productId, storeId, priceStr, digitalStr] = tokenId.split(':');
-            const price = parseInt(priceStr ?? '0', 10);
-            const isDigital = digitalStr === '1';
-            if (session) await setSessionState(chatId, { step: 'buyer_address', productId, storeId, price, isDigital });
+            // callback_data: baddr_reset:pid8:price:isDigital — full IDs retrieved from session state
+            const state = session?.state as { productId?: string; storeId?: string; variantId?: string; variantName?: string } | undefined;
+            if (session && state?.productId && state?.storeId) {
+                await setSessionState(chatId, { step: 'buyer_address', productId: state.productId, storeId: state.storeId, price: parseInt(tokenId.split(':')[1] ?? '0', 10), isDigital: tokenId.split(':')[2] === '1', variantId: state.variantId, variantName: state.variantName });
+            }
             await sendTelegramMessage(chatId, `📍 Enter your delivery address:\n\n<i>Format: Street, City, State</i>`, 'HTML');
             break;
         }

@@ -92,13 +92,20 @@ export async function sendProductCard(chatId: number, product: ProductRow) {
     }
 
     // If variants exist, show variant picker instead of direct buy
+    // Telegram callback_data limit is 64 bytes — use 8-char prefix of each UUID.
+    // Handlers resolve full IDs with prisma findFirst({ where: { id: { startsWith } } }).
+    const pid = product.id.slice(0, 8);
+    const sid = product.store.id.slice(0, 8);
+    const dig = product.isDigital ? '1' : '0';
+
     if (product.variants.length > 0) {
         const variantRows: { text: string; callback_data?: string; url?: string }[][] = [];
         for (let i = 0; i < product.variants.length; i += 2) {
             variantRows.push(
                 product.variants.slice(i, i + 2).map(v => ({
                     text: `${v.name} — ₦${toNum(v.price).toLocaleString()}`,
-                    callback_data: `bvariant:${product.id}:${v.id}:${encodeURIComponent(v.name)}:${toNum(v.price)}:${product.store.id}:${product.isDigital ? '1' : '0'}`,
+                    // bvariant:pid8:vid8:price:sid8:digital  (≤ 50 bytes)
+                    callback_data: `bvariant:${pid}:${v.id.slice(0, 8)}:${toNum(v.price)}:${sid}:${dig}`,
                 }))
             );
         }
@@ -117,7 +124,8 @@ export async function sendProductCard(chatId: number, product: ProductRow) {
         chatId,
         text,
         [
-            [{ text: '🛒 Buy now', callback_data: `bstart:${product.id}:${product.store.id}:${price}:${product.isDigital ? '1' : '0'}` }],
+            // bstart:pid8:sid8:price:digital  (≤ 40 bytes)
+            [{ text: '🛒 Buy now', callback_data: `bstart:${pid}:${sid}:${price}:${dig}` }],
             [{ text: '🔗 View on DepMi', url: `https://depmi.com/p/${product.id}` } as { text: string; url: string }],
         ] as { text: string; callback_data?: string; url?: string }[][],
         'HTML',
@@ -167,19 +175,40 @@ export async function handleBuyerDeepLink(
 
 export async function handleBuyStart(
     chatId: number,
-    productId: string,
-    storeId: string,
+    productIdPrefix: string,   // may be full UUID or 8-char prefix
+    storeIdPrefix: string,     // may be full UUID or 8-char prefix
     price: number,
     isDigital: boolean,
-    variantId: string | undefined,
+    variantIdPrefix: string | undefined,
     variantName: string | undefined,
     setState: SetState,
     session: { userId?: string | null } | null,
 ) {
+    // Resolve short prefixes to full IDs
+    const productRow = await prisma.product.findFirst({
+        where: { id: { startsWith: productIdPrefix } },
+        select: { id: true, store: { select: { id: true } } },
+    });
+    if (!productRow) {
+        await sendTelegramMessage(chatId, `⚠️ Product not found. It may have been removed.`, 'none');
+        return;
+    }
+    const productId = productRow.id;
+    const storeId = productRow.store.id;
+
+    let variantId: string | undefined;
+    if (variantIdPrefix) {
+        const vRow = await prisma.productVariant.findFirst({
+            where: { id: { startsWith: variantIdPrefix } },
+            select: { id: true, name: true },
+        });
+        variantId = vRow?.id;
+        if (!variantName && vRow) variantName = vRow.name;
+    }
+
     if (!session?.userId) {
         // Not logged in — collect email first, then resume buy flow
-        const productSlug = productId; // we use id as fallback slug here
-        await setState(chatId, { step: 'buyer_email', productSlug });
+        await setState(chatId, { step: 'buyer_email', productSlug: productId });
         await sendTelegramMessage(
             chatId,
             `📧 Enter your email address to continue:\n\n<i>Already have a DepMi account? Use the same email.</i>`,
@@ -305,7 +334,8 @@ export async function handleBuyerState(
                 [
                     [
                         { text: '✅ Confirm & get payment details', callback_data: 'bconfirm' },
-                        { text: '✏️ Change address', callback_data: `baddr_reset:${state.productId}:${state.storeId}:${state.price}:${state.isDigital ? '1' : '0'}` },
+                        // baddr_reset uses 8-char prefixes — full IDs are in session state
+                        { text: '✏️ Change address', callback_data: `baddr_reset:${state.productId.slice(0, 8)}:${state.price}:${state.isDigital ? '1' : '0'}` },
                     ],
                 ],
                 'HTML',
