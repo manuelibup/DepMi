@@ -58,27 +58,40 @@ export async function GET(
   }
 
   let fetchUrl = product.fileUrl;
-  const publicId = extractPublicId(product.fileUrl);
+  const rawPublicId = extractPublicId(product.fileUrl);
+  const publicId = rawPublicId ? decodeURIComponent(rawPublicId) : null;
 
   if (publicId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
     try {
       fetchUrl = cloudinary.utils.private_download_url(publicId, '', { resource_type: 'raw' });
     } catch (err) {
-      console.error('[download] private_download_url failed, falling back to direct URL:', err);
+      console.error('[download] private_download_url failed:', err);
     }
   }
 
-  let upstream: Response;
+  let upstream: Response | undefined;
+
   try {
-    upstream = await fetch(fetchUrl);
+    const r = await fetch(fetchUrl);
+    if (r.ok) upstream = r;
+    else console.error('[download] attempt 1 failed:', r.status, r.statusText);
   } catch (err) {
-    console.error('[download] fetch threw (network/timeout):', err);
-    return NextResponse.json({ error: 'Could not reach file server' }, { status: 502 });
+    console.error('[download] attempt 1 threw:', err);
   }
 
-  if (!upstream.ok) {
-    console.error('[download] upstream failed:', upstream.status, upstream.statusText);
-    return NextResponse.json({ error: `Could not fetch file (upstream ${upstream.status})` }, { status: 502 });
+  if (!upstream) {
+    try {
+      const decoded = decodeURIComponent(product.fileUrl);
+      const r = await fetch(decoded);
+      if (r.ok) upstream = r;
+      else console.error('[download] attempt 2 failed:', r.status);
+    } catch (err) {
+      console.error('[download] attempt 2 threw:', err);
+    }
+  }
+
+  if (!upstream) {
+    return NextResponse.json({ error: 'Could not fetch file from storage' }, { status: 502 });
   }
 
   const buffer = await upstream.arrayBuffer();

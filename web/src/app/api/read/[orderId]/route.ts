@@ -57,40 +57,63 @@ export async function GET(
         return NextResponse.json({ error: 'No digital file' }, { status: 404 });
     }
 
-    // Build a signed Cloudinary download URL so the server-side fetch always succeeds
-    // regardless of whether the resource was stored as upload or authenticated delivery type.
-    // This uses API key + secret to authenticate — the raw fileUrl is never sent to the browser.
+    // Try fetching via Cloudinary signed URL first, fall back to decoded direct URL.
+    // Decode publicId because stored URLs may contain %20 etc — private_download_url
+    // expects the raw string, not a percent-encoded one.
     let fetchUrl = product.fileUrl;
-    const publicId = extractPublicId(product.fileUrl);
+    const rawPublicId = extractPublicId(product.fileUrl);
+    const publicId = rawPublicId ? decodeURIComponent(rawPublicId) : null;
 
     if (publicId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            // private_download_url signs the request via api.cloudinary.com/v1_1/.../raw/download
-            // Works for both upload-type (public) and authenticated-type resources.
-            fetchUrl = cloudinary.utils.private_download_url(publicId, '', {
-                resource_type: 'raw',
-                // attachment defaults to true inside private_download_url but that only affects
-                // Cloudinary's Content-Disposition — we override it in our response below.
-            });
+            fetchUrl = cloudinary.utils.private_download_url(publicId, '', { resource_type: 'raw' });
         } catch (err) {
-            console.error('[read] private_download_url failed, falling back to direct URL:', err);
+            console.error('[read] private_download_url failed:', err);
         }
     }
 
-    let upstream: Response;
+    let upstream: Response | undefined;
+
+    // Attempt 1: signed URL (or original if signing failed)
     try {
-        upstream = await fetch(fetchUrl);
+        const r = await fetch(fetchUrl);
+        if (r.ok) {
+            upstream = r;
+        } else {
+            console.error('[read] attempt 1 failed:', r.status, r.statusText);
+        }
     } catch (err) {
-        console.error('[read] fetch threw (network/timeout):', err);
-        return NextResponse.json({ error: 'Could not reach file server' }, { status: 502 });
+        console.error('[read] attempt 1 threw:', err);
     }
 
-    if (!upstream.ok) {
-        console.error('[read] upstream failed:', upstream.status, upstream.statusText, fetchUrl);
-        return NextResponse.json(
-            { error: `Could not fetch file (upstream ${upstream.status})` },
-            { status: 502 }
-        );
+    // Attempt 2: decoded direct URL (handles %20 in filenames)
+    if (!upstream) {
+        try {
+            const decoded = decodeURIComponent(product.fileUrl);
+            const r = await fetch(decoded);
+            if (r.ok) {
+                upstream = r;
+            } else {
+                console.error('[read] attempt 2 failed:', r.status, r.statusText);
+            }
+        } catch (err) {
+            console.error('[read] attempt 2 threw:', err);
+        }
+    }
+
+    // Attempt 3: original URL as-is
+    if (!upstream && fetchUrl !== product.fileUrl) {
+        try {
+            const r = await fetch(product.fileUrl);
+            if (r.ok) upstream = r;
+            else console.error('[read] attempt 3 failed:', r.status);
+        } catch (err) {
+            console.error('[read] attempt 3 threw:', err);
+        }
+    }
+
+    if (!upstream) {
+        return NextResponse.json({ error: 'Could not fetch file from storage' }, { status: 502 });
     }
 
     const buffer = await upstream.arrayBuffer();
