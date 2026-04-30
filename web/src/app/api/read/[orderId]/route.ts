@@ -84,11 +84,9 @@ export async function GET(
     // extension — the extension must be passed as the format parameter separately.
     if (decodedId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            const extMatch = decodedId.match(/\.([a-zA-Z0-9]+)$/);
-            const fileExt = extMatch ? extMatch[1] : '';
-            const idWithoutExt = fileExt ? decodedId.slice(0, -(fileExt.length + 1)) : decodedId;
-            console.log('[read] private_download_url idWithoutExt:', idWithoutExt, 'ext:', fileExt);
-            const dlUrl = cloudinary.utils.private_download_url(idWithoutExt, fileExt, { resource_type: 'raw' });
+            // For raw resources the public_id includes the file extension.
+            // Pass it as-is with empty format string — do NOT strip the extension.
+            const dlUrl = cloudinary.utils.private_download_url(decodedId, '', { resource_type: 'raw' });
             upstream = await tryFetch(dlUrl, 'private-download');
         } catch (err) {
             console.error('[read] private_download_url threw:', err);
