@@ -92,6 +92,7 @@ export async function GET(
                     resource_type: resourceType as 'raw' | 'image' | 'video',
                     type: 'upload',
                     sign_url: true,
+                    expires_at: Math.floor(Date.now() / 1000) + 3600,
                     secure: true,
                 });
                 upstream = await tryFetch(signedUrl, 'signed-cdn');
