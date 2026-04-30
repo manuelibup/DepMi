@@ -78,22 +78,24 @@ export async function GET(
 
     let upstream: Response | null = null;
 
-    // Files uploaded with access_mode:authenticated cannot be fetched via CDN URL.
-    // private_download_url hits the Cloudinary API endpoint and bypasses CDN auth.
-    // IMPORTANT: Cloudinary's download API expects the public_id WITHOUT the file
-    // extension — the extension must be passed as the format parameter separately.
+    // Resource is type:upload + access_mode:authenticated.
+    // private_download_url only works for type:private or type:authenticated — not this.
+    // The correct approach is a signed CDN delivery URL (sign_url:true).
     if (decodedId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            // For raw resources the public_id includes the file extension.
-            // Pass it as-is with empty format string — do NOT strip the extension.
-            const dlUrl = cloudinary.utils.private_download_url(decodedId, '', { resource_type: 'raw' });
-            upstream = await tryFetch(dlUrl, 'private-download');
+            const signedUrl = cloudinary.url(decodedId, {
+                resource_type: 'raw',
+                type: 'upload',
+                sign_url: true,
+                secure: true,
+            });
+            upstream = await tryFetch(signedUrl, 'signed-cdn');
         } catch (err) {
-            console.error('[read] private_download_url threw:', err);
+            console.error('[read] cloudinary.url threw:', err);
         }
     }
 
-    // Fallback: try direct URL (works only if access_mode is public)
+    // Fallback: direct URL (only works if access_mode is public)
     if (!upstream) {
         upstream = await tryFetch(product.fileUrl, 'direct-raw');
     }
