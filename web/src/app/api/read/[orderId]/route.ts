@@ -16,9 +16,12 @@ cloudinary.config({
 
 const DOWNLOADABLE = ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-function extractPublicId(fileUrl: string): string | null {
-    const match = fileUrl.match(/res\.cloudinary\.com\/[^/]+\/(?:raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+)$/);
-    return match ? match[1] : null;
+type CloudinaryUrlInfo = { publicId: string; resourceType: string };
+
+function extractUrlInfo(fileUrl: string): CloudinaryUrlInfo | null {
+    const match = fileUrl.match(/res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+)$/);
+    if (!match) return null;
+    return { resourceType: match[1], publicId: decodeURIComponent(match[2]) };
 }
 
 async function tryFetch(url: string, label: string): Promise<Response | null> {
@@ -72,19 +75,20 @@ export async function GET(
     const urlShape = product.fileUrl.replace(/^(https?:\/\/[^/]+)(.{0,60}).*$/, '$1$2...');
     console.log('[read] fileUrl shape:', urlShape);
 
-    const rawId = extractPublicId(product.fileUrl);
-    const decodedId = rawId ? decodeURIComponent(rawId) : null;
-    console.log('[read] publicId:', decodedId ?? 'not extracted');
+    const urlInfo = extractUrlInfo(product.fileUrl);
+    console.log('[read] publicId:', urlInfo?.publicId ?? 'not extracted', '| resourceType:', urlInfo?.resourceType ?? 'unknown');
 
     let upstream: Response | null = null;
 
-    if (decodedId) {
-        // 1. Signed authenticated URL — access_mode:authenticated resources must be
-        //    delivered via type:authenticated, not type:upload (which returns 403).
+    if (urlInfo) {
+        const { publicId, resourceType } = urlInfo;
+
+        // 1. Signed authenticated URL — use the resource_type from the stored URL so we
+        //    don't generate a /raw/ URL for a file Cloudinary stored as /image/.
         if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
             try {
-                const signedUrl = cloudinary.url(decodedId, {
-                    resource_type: 'raw',
+                const signedUrl = cloudinary.url(publicId, {
+                    resource_type: resourceType as 'raw' | 'image' | 'video',
                     type: 'authenticated',
                     sign_url: true,
                     secure: true,
@@ -95,13 +99,11 @@ export async function GET(
             }
         }
 
-        // 2. Unsigned public URL — constructed via SDK so path is always type:upload.
-        //    The stored fileUrl may have /authenticated/ in the path (baked in at upload time)
-        //    which returns 401 even when access_mode is public. The SDK-generated URL is correct.
+        // 2. Unsigned public URL fallback (works if access_mode is public).
         if (!upstream) {
             try {
-                const publicUrl = cloudinary.url(decodedId, {
-                    resource_type: 'raw',
+                const publicUrl = cloudinary.url(publicId, {
+                    resource_type: resourceType as 'raw' | 'image' | 'video',
                     type: 'upload',
                     secure: true,
                 });
