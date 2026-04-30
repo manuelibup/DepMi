@@ -83,13 +83,14 @@ export async function GET(
     if (urlInfo) {
         const { publicId, resourceType } = urlInfo;
 
-        // 1. Signed authenticated URL — use the resource_type from the stored URL so we
-        //    don't generate a /raw/ URL for a file Cloudinary stored as /image/.
+        // 1. Signed upload URL — access_mode:authenticated resources are stored as
+        //    type:upload and must be delivered via signed type:upload URLs.
+        //    type:'authenticated' is a different Cloudinary feature and returns 404.
         if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
             try {
                 const signedUrl = cloudinary.url(publicId, {
                     resource_type: resourceType as 'raw' | 'image' | 'video',
-                    type: 'authenticated',
+                    type: 'upload',
                     sign_url: true,
                     secure: true,
                 });
