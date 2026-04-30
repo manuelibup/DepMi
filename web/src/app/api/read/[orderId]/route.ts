@@ -79,12 +79,13 @@ export async function GET(
     let upstream: Response | null = null;
 
     if (decodedId) {
-        // 1. Signed URL (works regardless of access_mode — needs valid API credentials)
+        // 1. Signed authenticated URL — access_mode:authenticated resources must be
+        //    delivered via type:authenticated, not type:upload (which returns 403).
         if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
             try {
                 const signedUrl = cloudinary.url(decodedId, {
                     resource_type: 'raw',
-                    type: 'upload',
+                    type: 'authenticated',
                     sign_url: true,
                     secure: true,
                 });
