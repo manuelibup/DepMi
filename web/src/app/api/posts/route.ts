@@ -74,6 +74,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const { applyContentFilter, isAdminUser } = await import('@/lib/contentFilter');
+    const immune = await isAdminUser(session.user.id);
+    const violation = await applyContentFilter(session.user.id, parsed.data.body, immune);
+    if (violation) return NextResponse.json({ error: violation }, { status: 403 });
+
     const post = await prisma.post.create({
         data: {
             storeId,

@@ -40,8 +40,9 @@ export async function POST(
         return NextResponse.json({ message: 'Comment must be 500 characters or less' }, { status: 400 });
     }
 
-    const { applyContentFilter } = await import('@/lib/contentFilter');
-    const violation = await applyContentFilter(session.user.id, text);
+    const { applyContentFilter, isAdminUser } = await import('@/lib/contentFilter');
+    const immune = await isAdminUser(session.user.id);
+    const violation = await applyContentFilter(session.user.id, text, immune);
     if (violation) return NextResponse.json({ message: violation }, { status: 403 });
 
     const demand = await prisma.demand.findUnique({

@@ -54,6 +54,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'Min budget must be less than max budget' }, { status: 400 });
         }
 
+        const { applyContentFilter, isAdminUser } = await import('@/lib/contentFilter');
+        const immune = await isAdminUser(session.user.id);
+        const violation = await applyContentFilter(session.user.id, text, immune);
+        if (violation) return NextResponse.json({ message: violation }, { status: 403 });
+
         // NOTE: We do not limit buyers from creating demands based on KYC alone,
         // UNVERIFIED users can browse and create demands (from agent.md).
 

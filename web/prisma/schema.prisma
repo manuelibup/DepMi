@@ -80,6 +80,7 @@ model User {
   strikeCount       Int              @default(0)
   strikes           Strike[]
   botSessions       BotSession[]
+  linkSubmissions   ApprovedLink[]
 
   @@index([lastActiveAt])
   followerCount             Int              @default(0)
@@ -990,4 +991,27 @@ enum BotPlatform {
   INSTAGRAM
   TWITTER
   TELEGRAM
+}
+
+// ─── Approved Links ──────────────────────────────────────────────────────────
+
+model ApprovedLink {
+  id          String     @id @default(cuid())
+  url         String     @unique
+  domain      String
+  submittedBy String
+  user        User       @relation(fields: [submittedBy], references: [id], onDelete: Cascade)
+  status      LinkStatus @default(PENDING)
+  reviewNote  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status])
+  @@index([domain])
+}
+
+enum LinkStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
