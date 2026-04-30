@@ -78,24 +78,40 @@ export async function GET(
 
     let upstream: Response | null = null;
 
-    // Resource is type:upload + access_mode:authenticated.
-    // private_download_url only works for type:private or type:authenticated — not this.
-    // The correct approach is a signed CDN delivery URL (sign_url:true).
-    if (decodedId && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
-        try {
-            const signedUrl = cloudinary.url(decodedId, {
-                resource_type: 'raw',
-                type: 'upload',
-                sign_url: true,
-                secure: true,
-            });
-            upstream = await tryFetch(signedUrl, 'signed-cdn');
-        } catch (err) {
-            console.error('[read] cloudinary.url threw:', err);
+    if (decodedId) {
+        // 1. Signed URL (works regardless of access_mode — needs valid API credentials)
+        if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
+            try {
+                const signedUrl = cloudinary.url(decodedId, {
+                    resource_type: 'raw',
+                    type: 'upload',
+                    sign_url: true,
+                    secure: true,
+                });
+                upstream = await tryFetch(signedUrl, 'signed-cdn');
+            } catch (err) {
+                console.error('[read] cloudinary.url threw:', err);
+            }
+        }
+
+        // 2. Unsigned public URL — constructed via SDK so path is always type:upload.
+        //    The stored fileUrl may have /authenticated/ in the path (baked in at upload time)
+        //    which returns 401 even when access_mode is public. The SDK-generated URL is correct.
+        if (!upstream) {
+            try {
+                const publicUrl = cloudinary.url(decodedId, {
+                    resource_type: 'raw',
+                    type: 'upload',
+                    secure: true,
+                });
+                upstream = await tryFetch(publicUrl, 'public-cdn');
+            } catch (err) {
+                console.error('[read] public url threw:', err);
+            }
         }
     }
 
-    // Fallback: direct URL (only works if access_mode is public)
+    // 3. Last resort: raw stored URL as-is
     if (!upstream) {
         upstream = await tryFetch(product.fileUrl, 'direct-raw');
     }
