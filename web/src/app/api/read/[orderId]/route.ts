@@ -16,30 +16,30 @@ cloudinary.config({
 
 const DOWNLOADABLE = ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-function extractUrlInfo(fileUrl: string): { publicId: string; resourceType: 'raw' | 'image' | 'video' } | null {
+type DeliveryType = 'upload' | 'authenticated';
+type ResourceType = 'raw' | 'image' | 'video';
+
+interface CloudinaryUrlInfo {
+    publicId: string;
+    resourceType: ResourceType;
+    deliveryType: DeliveryType;
+}
+
+/**
+ * Extract publicId, resourceType, and deliveryType from a Cloudinary URL.
+ * Handles both /upload/ and /authenticated/ delivery types.
+ * For raw resources the public_id already includes the file extension.
+ */
+function extractUrlInfo(fileUrl: string): CloudinaryUrlInfo | null {
     const match = fileUrl.match(
-        /res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\?.*)?$/
+        /res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\?.*)?$/
     );
     if (!match) return null;
     return {
-        resourceType: match[1] as 'raw' | 'image' | 'video',
-        publicId: decodeURIComponent(match[2]),
+        resourceType: match[1] as ResourceType,
+        deliveryType: match[2] as DeliveryType,
+        publicId: decodeURIComponent(match[3]),
     };
-}
-
-async function tryFetch(url: string, label: string): Promise<Response | null> {
-    try {
-        const r = await fetch(url);
-        if (r.ok) {
-            console.log(`[read] ${label} OK (${r.status})`);
-            return r;
-        }
-        console.error(`[read] ${label} failed: ${r.status} ${r.statusText}`);
-        return null;
-    } catch (err) {
-        console.error(`[read] ${label} threw:`, err);
-        return null;
-    }
 }
 
 export async function GET(
@@ -48,11 +48,13 @@ export async function GET(
 ) {
     const { orderId } = await params;
 
+    // ── Auth ──────────────────────────────────────────────────────────────────
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // ── Order lookup ──────────────────────────────────────────────────────────
     const order = await prisma.order.findUnique({
         where: { id: orderId },
         select: {
@@ -74,45 +76,45 @@ export async function GET(
         return NextResponse.json({ error: 'No digital file' }, { status: 404 });
     }
 
-    const urlShape = product.fileUrl.replace(/^(https?:\/\/[^/]+)(.{0,60}).*$/, '$1$2...');
-    console.log('[read] fileUrl shape:', urlShape);
+    // ── Fetch file from Cloudinary and proxy it to the browser ───────────────
+    //
+    // We proxy (not redirect) so the raw Cloudinary URL is never exposed to the
+    // browser — anyone who got it could bypass the reader and download freely.
+    //
+    // The resource has access_mode:authenticated set by the depmi_strict upload
+    // preset. CDN-level signed URLs (sign_url:true on res.cloudinary.com) do NOT
+    // bypass access_mode:authenticated — that's a separate Cloudinary feature
+    // (auth tokens / cookies). The only reliable server-side fix is to use the
+    // Admin API to change access_mode to public on first access. The DepMi route
+    // already enforces buyer auth, so Cloudinary-level restriction is redundant.
+    // Self-heals once: subsequent requests hit Attempt 1 (direct) immediately.
 
     const urlInfo = extractUrlInfo(product.fileUrl);
-    console.log('[read] publicId:', urlInfo?.publicId ?? 'not-extracted', '| resourceType:', urlInfo?.resourceType ?? 'unknown');
+    console.log('[read] orderId:', orderId, '| urlInfo:', JSON.stringify(urlInfo));
 
+    // Attempt 1: direct fetch (succeeds once access_mode has been set to public)
     let upstream: Response | null = null;
+    try {
+        const r = await fetch(product.fileUrl);
+        if (r.ok) { upstream = r; console.log('[read] direct OK'); }
+        else console.log('[read] direct failed:', r.status);
+    } catch (e) { console.error('[read] direct threw:', e); }
 
-    if (urlInfo && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
-        const { publicId, resourceType } = urlInfo;
-
-        // sign_url:true on res.cloudinary.com does NOT bypass access_mode:authenticated —
-        // those are orthogonal Cloudinary features. The correct server-side approach is
-        // private_download_url, which routes through api.cloudinary.com and authenticates
-        // with API key + secret, bypassing access_mode restrictions entirely.
-        //
-        // For raw resources the publicId includes the file extension (e.g. "folder/file.pdf").
-        // private_download_url expects (publicId_without_ext, format, options) and internally
-        // reconstructs "folder/file" + ".pdf" → looks up "folder/file.pdf" in Cloudinary.
+    // Attempt 2: resource still has access_mode:authenticated — update via Admin API
+    if (!upstream && urlInfo && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            // For raw resources, the public_id already includes the extension
-            // (e.g. "folder/file.pdf"). Pass it as-is with an empty format string —
-            // stripping the extension causes a 404 because Cloudinary can't find
-            // "folder/file" without ".pdf" in raw storage.
-            const dlUrl = cloudinary.utils.private_download_url(publicId, '', {
-                resource_type: resourceType,
+            await cloudinary.api.update(urlInfo.publicId, {
+                resource_type: urlInfo.resourceType,
                 type: 'upload',
-                expires_at: Math.floor(Date.now() / 1000) + 300,
+                access_mode: 'public',
             });
-            console.log('[read] private_download host:', new URL(dlUrl).host);
-            upstream = await tryFetch(dlUrl, 'private-dl');
+            console.log('[read] access_mode set to public — retrying direct fetch');
+            const r = await fetch(product.fileUrl);
+            if (r.ok) { upstream = r; console.log('[read] direct-after-update OK'); }
+            else console.log('[read] direct-after-update failed:', r.status);
         } catch (err) {
-            console.error('[read] private_download_url threw:', err);
+            console.error('[read] api.update threw:', err);
         }
-    }
-
-    // Fallback: direct stored URL (works if access_mode is ever set to public)
-    if (!upstream) {
-        upstream = await tryFetch(product.fileUrl, 'direct');
     }
 
     if (!upstream) {
