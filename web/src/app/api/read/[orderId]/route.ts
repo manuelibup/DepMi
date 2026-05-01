@@ -16,29 +16,14 @@ cloudinary.config({
 
 const DOWNLOADABLE = ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-type DeliveryType = 'upload' | 'authenticated';
-type ResourceType = 'raw' | 'image' | 'video';
-
-interface CloudinaryUrlInfo {
-    publicId: string;
-    resourceType: ResourceType;
-    deliveryType: DeliveryType;
-}
-
-/**
- * Extract publicId, resourceType, and deliveryType from a Cloudinary URL.
- * Handles both /upload/ and /authenticated/ delivery types.
- * For raw resources the public_id already includes the file extension.
- */
-function extractUrlInfo(fileUrl: string): CloudinaryUrlInfo | null {
+function extractUrlInfo(fileUrl: string): { publicId: string; resourceType: 'raw' | 'image' | 'video' } | null {
     const match = fileUrl.match(
-        /res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\?.*)?$/
+        /res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\?.*)?$/
     );
     if (!match) return null;
     return {
-        resourceType: match[1] as ResourceType,
-        deliveryType: match[2] as DeliveryType,
-        publicId: decodeURIComponent(match[3]),
+        resourceType: match[1] as 'raw' | 'image' | 'video',
+        publicId: decodeURIComponent(match[2]),
     };
 }
 
@@ -48,13 +33,11 @@ export async function GET(
 ) {
     const { orderId } = await params;
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // ── Order lookup ──────────────────────────────────────────────────────────
     const order = await prisma.order.findUnique({
         where: { id: orderId },
         select: {
@@ -76,23 +59,10 @@ export async function GET(
         return NextResponse.json({ error: 'No digital file' }, { status: 404 });
     }
 
-    // ── Fetch file from Cloudinary and proxy it to the browser ───────────────
-    //
-    // We proxy (not redirect) so the raw Cloudinary URL is never exposed to the
-    // browser — anyone who got it could bypass the reader and download freely.
-    //
-    // The resource has access_mode:authenticated set by the depmi_strict upload
-    // preset. CDN-level signed URLs (sign_url:true on res.cloudinary.com) do NOT
-    // bypass access_mode:authenticated — that's a separate Cloudinary feature
-    // (auth tokens / cookies). The only reliable server-side fix is to use the
-    // Admin API to change access_mode to public on first access. The DepMi route
-    // already enforces buyer auth, so Cloudinary-level restriction is redundant.
-    // Self-heals once: subsequent requests hit Attempt 1 (direct) immediately.
-
     const urlInfo = extractUrlInfo(product.fileUrl);
     console.log('[read] orderId:', orderId, '| urlInfo:', JSON.stringify(urlInfo));
 
-    // Attempt 1: direct fetch (succeeds once access_mode has been set to public)
+    // Attempt 1: direct fetch — works once access_mode has been set to public
     let upstream: Response | null = null;
     try {
         const r = await fetch(product.fileUrl);
@@ -100,20 +70,37 @@ export async function GET(
         else console.log('[read] direct failed:', r.status);
     } catch (e) { console.error('[read] direct threw:', e); }
 
-    // Attempt 2: resource still has access_mode:authenticated — update via Admin API
+    // Attempt 2: resource has access_mode:authenticated. Use Admin API (Basic Auth)
+    // to change it to public — the Cloudinary SDK encodes slashes as %2F in the
+    // path which some endpoints reject with 403; raw fetch with literal slashes avoids that.
     if (!upstream && urlInfo && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         try {
-            await cloudinary.api.update(urlInfo.publicId, {
-                resource_type: urlInfo.resourceType,
-                type: 'upload',
-                access_mode: 'public',
+            const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+            const creds = Buffer.from(`${process.env.CLOUDINARY_API_KEY}:${process.env.CLOUDINARY_API_SECRET}`).toString('base64');
+            // Encode each path segment individually so slashes remain literal in the URL path
+            const pathId = urlInfo.publicId.split('/').map(encodeURIComponent).join('/');
+            const updateUrl = `https://api.cloudinary.com/v1_1/${cloudName}/resources/${urlInfo.resourceType}/upload/${pathId}`;
+
+            const updateResp = await fetch(updateUrl, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Basic ${creds}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ access_mode: 'public' }).toString(),
             });
-            console.log('[read] access_mode set to public — retrying direct fetch');
-            const r = await fetch(product.fileUrl);
-            if (r.ok) { upstream = r; console.log('[read] direct-after-update OK'); }
-            else console.log('[read] direct-after-update failed:', r.status);
+            console.log('[read] admin update status:', updateResp.status);
+
+            if (updateResp.ok) {
+                const r = await fetch(product.fileUrl);
+                if (r.ok) { upstream = r; console.log('[read] direct-after-update OK'); }
+                else console.log('[read] direct-after-update failed:', r.status);
+            } else {
+                const errBody = await updateResp.text();
+                console.error('[read] admin update failed:', updateResp.status, errBody);
+            }
         } catch (err) {
-            console.error('[read] api.update threw:', err);
+            console.error('[read] admin update threw:', err);
         }
     }
 
