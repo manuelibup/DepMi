@@ -283,10 +283,10 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                 <div className={styles.detailHeader}>
                     <div>
                         <p className={styles.detailOrderId}>Order #{shortId}</p>
-                        <p className={styles.detailStatus}>{STATUS_LABELS[localStatus] ?? localStatus}</p>
+                        <p className={styles.detailStatus}>{getStatusLabel(localStatus, order.isDigital || order.product.isDigital)}</p>
                         <p className={styles.detailDate}>{new Date(order.createdAt).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                     </div>
-                    <Badge status={localStatus} />
+                    <Badge status={localStatus} isDigital={order.isDigital || order.product.isDigital} />
                 </div>
 
                 {/* Timeline */}
