@@ -457,6 +457,7 @@ function OrderDetail({ order, role, onStatusChange, onClose }: {
                         {localStatus === 'CONFIRMED' && (order.isDigital || order.product.isDigital) && (
                             <div className={styles.infoBanner}>
                                 <p><strong>Digital product sold.</strong> Buyer has download access. Escrow auto-releases in 48h if no dispute.</p>
+                                <DigitalCountdown paidAt={order.paidAt} />
                             </div>
                         )}
                         {localStatus === 'CONFIRMED' && !(order.isDigital || order.product.isDigital) && (
