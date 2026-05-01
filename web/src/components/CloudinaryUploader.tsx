@@ -119,6 +119,49 @@ export default function CloudinaryUploader({
     });
   };
 
+  const uploadToR2 = async (file: File) => {
+    const params = new URLSearchParams({
+      contentType: file.type,
+      fileSize: file.size.toString(),
+      fileName: file.name,
+    });
+    const resSig = await fetch(`/api/upload/r2-sign?${params}`);
+    if (!resSig.ok) {
+      const { error } = await resSig.json().catch(() => ({ error: 'Failed to get upload URL' }));
+      throw new Error(error || 'Failed to get upload URL');
+    }
+    const { uploadUrl, publicUrl } = await resSig.json();
+
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setProgress(30 + Math.round((e.loaded / e.total) * 70));
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          setProgress(100);
+          const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+          onUploadSuccess({
+            public_id: publicUrl,
+            format: ext,
+            secure_url: publicUrl,
+            original_filename: file.name.replace(/\.[^.]+$/, ''),
+          });
+          resolve();
+        } else {
+          reject(new Error('Upload to storage failed. Please try again.'));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Upload failed due to network error.'));
+      xhr.send(file);
+    });
+  };
+
   const uploadToCloudinary = async (file: File) => {
     setIsUploading(true);
     setProgress(10);
@@ -129,6 +172,15 @@ export default function CloudinaryUploader({
         : file.type.startsWith('image/')
           ? 'image'
           : 'raw';
+
+      // Raw files (PDFs, docs, ebooks) go to R2 — Cloudinary is for images/video only
+      if (resourceType === 'raw') {
+        await uploadToR2(file);
+        setIsUploading(false);
+        setProgress(0);
+        return;
+      }
+
       // Step A: Fetch signature from our restricted backend
       const resSig = await fetch(`/api/upload/sign?resourceType=${resourceType}`);
       if (!resSig.ok) throw new Error('Failed to get secure upload signature. Are you logged in?');
