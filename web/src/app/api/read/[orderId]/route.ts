@@ -16,12 +16,15 @@ cloudinary.config({
 
 const DOWNLOADABLE = ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-type CloudinaryUrlInfo = { publicId: string; resourceType: string };
-
-function extractUrlInfo(fileUrl: string): CloudinaryUrlInfo | null {
-    const match = fileUrl.match(/res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+)$/);
+function extractUrlInfo(fileUrl: string): { publicId: string; resourceType: 'raw' | 'image' | 'video' } | null {
+    const match = fileUrl.match(
+        /res\.cloudinary\.com\/[^/]+\/(raw|image|video)\/(?:upload|authenticated)\/(?:v\d+\/)?(.+?)(?:\?.*)?$/
+    );
     if (!match) return null;
-    return { resourceType: match[1], publicId: decodeURIComponent(match[2]) };
+    return {
+        resourceType: match[1] as 'raw' | 'image' | 'video',
+        publicId: decodeURIComponent(match[2]),
+    };
 }
 
 async function tryFetch(url: string, label: string): Promise<Response | null> {
@@ -71,58 +74,49 @@ export async function GET(
         return NextResponse.json({ error: 'No digital file' }, { status: 404 });
     }
 
-    // Log URL shape for debugging (no secrets, just structure)
     const urlShape = product.fileUrl.replace(/^(https?:\/\/[^/]+)(.{0,60}).*$/, '$1$2...');
     console.log('[read] fileUrl shape:', urlShape);
 
     const urlInfo = extractUrlInfo(product.fileUrl);
-    console.log('[read] publicId:', urlInfo?.publicId ?? 'not extracted', '| resourceType:', urlInfo?.resourceType ?? 'unknown');
+    console.log('[read] publicId:', urlInfo?.publicId ?? 'not-extracted', '| resourceType:', urlInfo?.resourceType ?? 'unknown');
 
     let upstream: Response | null = null;
 
-    if (urlInfo) {
+    if (urlInfo && process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
         const { publicId, resourceType } = urlInfo;
 
-        // 1. Signed upload URL — access_mode:authenticated resources are stored as
-        //    type:upload and must be delivered via signed type:upload URLs.
-        //    type:'authenticated' is a different Cloudinary feature and returns 404.
-        if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
-            try {
-                const signedUrl = cloudinary.url(publicId, {
-                    resource_type: resourceType as 'raw' | 'image' | 'video',
-                    type: 'upload',
-                    sign_url: true,
-                    expires_at: Math.floor(Date.now() / 1000) + 3600,
-                    secure: true,
-                });
-                upstream = await tryFetch(signedUrl, 'signed-cdn');
-            } catch (err) {
-                console.error('[read] cloudinary.url threw:', err);
-            }
-        }
+        // sign_url:true on res.cloudinary.com does NOT bypass access_mode:authenticated —
+        // those are orthogonal Cloudinary features. The correct server-side approach is
+        // private_download_url, which routes through api.cloudinary.com and authenticates
+        // with API key + secret, bypassing access_mode restrictions entirely.
+        //
+        // For raw resources the publicId includes the file extension (e.g. "folder/file.pdf").
+        // private_download_url expects (publicId_without_ext, format, options) and internally
+        // reconstructs "folder/file" + ".pdf" → looks up "folder/file.pdf" in Cloudinary.
+        try {
+            const lastDot = publicId.lastIndexOf('.');
+            const baseId = lastDot > 0 ? publicId.slice(0, lastDot) : publicId;
+            const fmt = lastDot > 0 ? publicId.slice(lastDot + 1) : '';
 
-        // 2. Unsigned public URL fallback (works if access_mode is public).
-        if (!upstream) {
-            try {
-                const publicUrl = cloudinary.url(publicId, {
-                    resource_type: resourceType as 'raw' | 'image' | 'video',
-                    type: 'upload',
-                    secure: true,
-                });
-                upstream = await tryFetch(publicUrl, 'public-cdn');
-            } catch (err) {
-                console.error('[read] public url threw:', err);
-            }
+            const dlUrl = cloudinary.utils.private_download_url(baseId, fmt, {
+                resource_type: resourceType,
+                type: 'upload',
+                expires_at: Math.floor(Date.now() / 1000) + 300,
+            });
+            console.log('[read] private_download host:', new URL(dlUrl).host);
+            upstream = await tryFetch(dlUrl, 'private-dl');
+        } catch (err) {
+            console.error('[read] private_download_url threw:', err);
         }
     }
 
-    // 3. Last resort: raw stored URL as-is
+    // Fallback: direct stored URL (works if access_mode is ever set to public)
     if (!upstream) {
-        upstream = await tryFetch(product.fileUrl, 'direct-raw');
+        upstream = await tryFetch(product.fileUrl, 'direct');
     }
 
     if (!upstream) {
-        console.error('[read] all fetch attempts failed for orderId:', orderId);
+        console.error('[read] all attempts failed for orderId:', orderId);
         return NextResponse.json({ error: 'Could not fetch file from storage' }, { status: 502 });
     }
 
