@@ -94,11 +94,11 @@ export async function GET(
         // private_download_url expects (publicId_without_ext, format, options) and internally
         // reconstructs "folder/file" + ".pdf" → looks up "folder/file.pdf" in Cloudinary.
         try {
-            const lastDot = publicId.lastIndexOf('.');
-            const baseId = lastDot > 0 ? publicId.slice(0, lastDot) : publicId;
-            const fmt = lastDot > 0 ? publicId.slice(lastDot + 1) : '';
-
-            const dlUrl = cloudinary.utils.private_download_url(baseId, fmt, {
+            // For raw resources, the public_id already includes the extension
+            // (e.g. "folder/file.pdf"). Pass it as-is with an empty format string —
+            // stripping the extension causes a 404 because Cloudinary can't find
+            // "folder/file" without ".pdf" in raw storage.
+            const dlUrl = cloudinary.utils.private_download_url(publicId, '', {
                 resource_type: resourceType,
                 type: 'upload',
                 expires_at: Math.floor(Date.now() / 1000) + 300,
