@@ -92,15 +92,28 @@ export async function GET(
             console.log('[read] admin update status:', updateResp.status);
 
             if (updateResp.ok) {
-                // CDN invalidation is async — try versionless URL first (different cache key,
-                // forces CDN origin hit where access_mode change is immediately visible),
-                // then fall back to timed retries on the original URL.
-                const versionlessUrl = product.fileUrl.replace(/\/v\d+\//, '/');
-                for (const [waitMs, url] of [[0, versionlessUrl], [1500, versionlessUrl], [1500, product.fileUrl]] as [number, string][]) {
-                    if (waitMs > 0) await new Promise(r => setTimeout(r, waitMs));
-                    const r = await fetch(url);
-                    if (r.ok) { upstream = r; console.log('[read] post-update fetch OK after', waitMs, 'ms'); break; }
-                    console.log('[read] post-update fetch failed:', r.status, 'after', waitMs, 'ms');
+                const updateBody = await updateResp.json().catch(() => ({}));
+                console.log('[read] admin update body access_mode:', (updateBody as Record<string, unknown>).access_mode);
+
+                // CDN propagation for access_mode changes can take minutes even with invalidate:true.
+                // A Cloudinary signed URL (s--HASH-- in path) is a fresh cache key the CDN has
+                // never seen → forces origin hit → origin already has access_mode:public → 200.
+                const signedUrl = cloudinary.url(urlInfo.publicId, {
+                    resource_type: urlInfo.resourceType,
+                    sign_url: true,
+                    secure: true,
+                });
+                console.log('[read] trying signed URL for fresh cache key');
+                const sr = await fetch(signedUrl);
+                if (sr.ok) {
+                    upstream = sr;
+                    console.log('[read] signed URL OK');
+                } else {
+                    console.log('[read] signed URL failed:', sr.status, '— waiting 3s for CDN propagation');
+                    await new Promise(r => setTimeout(r, 3000));
+                    const r2 = await fetch(product.fileUrl);
+                    if (r2.ok) { upstream = r2; console.log('[read] delayed retry OK'); }
+                    else console.log('[read] delayed retry failed:', r2.status);
                 }
             } else {
                 const errBody = await updateResp.text();
