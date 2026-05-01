@@ -87,7 +87,7 @@ export async function GET(
                     Authorization: `Basic ${creds}`,
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: new URLSearchParams({ access_mode: 'public' }).toString(),
+                body: new URLSearchParams({ access_mode: 'public', invalidate: 'true' }).toString(),
             });
             console.log('[read] admin update status:', updateResp.status);
 
