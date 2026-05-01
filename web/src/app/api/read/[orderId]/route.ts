@@ -92,9 +92,16 @@ export async function GET(
             console.log('[read] admin update status:', updateResp.status);
 
             if (updateResp.ok) {
-                const r = await fetch(product.fileUrl);
-                if (r.ok) { upstream = r; console.log('[read] direct-after-update OK'); }
-                else console.log('[read] direct-after-update failed:', r.status);
+                // CDN invalidation is async — try versionless URL first (different cache key,
+                // forces CDN origin hit where access_mode change is immediately visible),
+                // then fall back to timed retries on the original URL.
+                const versionlessUrl = product.fileUrl.replace(/\/v\d+\//, '/');
+                for (const [waitMs, url] of [[0, versionlessUrl], [1500, versionlessUrl], [1500, product.fileUrl]] as [number, string][]) {
+                    if (waitMs > 0) await new Promise(r => setTimeout(r, waitMs));
+                    const r = await fetch(url);
+                    if (r.ok) { upstream = r; console.log('[read] post-update fetch OK after', waitMs, 'ms'); break; }
+                    console.log('[read] post-update fetch failed:', r.status, 'after', waitMs, 'ms');
+                }
             } else {
                 const errBody = await updateResp.text();
                 console.error('[read] admin update failed:', updateResp.status, errBody);
