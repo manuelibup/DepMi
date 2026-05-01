@@ -66,8 +66,15 @@ export async function POST(req: NextRequest) {
 
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     if (order.buyerId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (order.status !== 'COMPLETED') {
-        return NextResponse.json({ error: 'Can only review completed orders' }, { status: 400 })
+    const isDigitalOrder = await prisma.orderItem.findFirst({
+        where: { orderId, product: { isDigital: true } },
+        select: { id: true },
+    })
+    const reviewableStatuses = isDigitalOrder
+        ? ['CONFIRMED', 'DELIVERED', 'COMPLETED']
+        : ['COMPLETED']
+    if (!reviewableStatuses.includes(order.status)) {
+        return NextResponse.json({ error: 'Can only review after purchase is confirmed' }, { status: 400 })
     }
 
     // One review per order
